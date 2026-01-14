@@ -1,4 +1,4 @@
-﻿# CMakeList.txt : CMake project for MountRacer, include source and define
+﻿# CMakeList.txt : CMake project for RacingGame, include source and define
 # project specific logic here.
 #
 cmake_minimum_required (VERSION 3.8)
@@ -9,13 +9,14 @@ if (POLICY CMP0141)
   set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
 endif()
 
-project ("MountRacer")
+project ("RacingGame")
 
 # Add source to this project's executable.
-add_executable (MountRacer "MountRacer.cpp" "MountRacer.h")
+file(GLOB_RECURSE SOURCES "src/*.cpp")
+add_executable(RacingGame ${SOURCES})
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
-  set_property(TARGET MountRacer PROPERTY CXX_STANDARD 20)
+  set_property(TARGET RacingGame PROPERTY CXX_STANDARD 20)
 endif()
 
 # TODO: Add tests and install targets if needed.
