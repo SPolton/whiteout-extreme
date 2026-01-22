@@ -468,3 +468,8 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Custom
+libraries/
+*physx*/
+third*party/
