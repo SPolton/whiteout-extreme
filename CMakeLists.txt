@@ -10,7 +10,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(OpenGL_GL_PREFERENCE GLVND)
 
 set(APP_NAME "WhiteoutExtreme")
-project(${APP_NAME} LANGUAGES CXX)
+project(${APP_NAME} LANGUAGES C CXX)
 
 # --------------------------------------------------
 # Add source to this project's executable
@@ -40,13 +40,19 @@ target_link_libraries(${APP_NAME} PRIVATE OpenGL::GL)
 # Generate GLAD files manually from https://glad.dav1d.de/
 message(STATUS "Using GLAD via libraries")
 
-target_sources(${APP_NAME} PRIVATE
+# Create a separate library for GLAD to ensure proper compilation
+add_library(glad STATIC
     ${CMAKE_SOURCE_DIR}/libraries/glad/src/glad.c
 )
 
-target_include_directories(${APP_NAME} PRIVATE
+# Set the language to C for the GLAD library
+set_target_properties(glad PROPERTIES LINKER_LANGUAGE C)
+
+target_include_directories(glad PUBLIC
     ${CMAKE_SOURCE_DIR}/libraries/glad/include
 )
+
+target_link_libraries(${APP_NAME} PRIVATE glad)
 
 # --------------------------------------------------
 # GLFW
@@ -118,9 +124,38 @@ target_include_directories(${APP_NAME} PRIVATE
 
 # --------------------------------------------------
 # PhysX
-# message(STATUS "Finding PhysX")
+# PhysX is complex to build via FetchContent. For a school project, consider:
+# 1. Download prebuilt PhysX binaries from NVIDIA
+# 2. Use a simpler physics library like Bullet or Jolt Physics
+# 3. Implement simple collision detection yourself
+#
+# Uncomment and configure the following if you have PhysX installed:
 # find_package(PhysX REQUIRED)
 # target_link_libraries(${APP_NAME} PRIVATE PhysX::PhysX)
+#
+# Or use this FetchContent approach (requires many configuration variables):
+# set(PX_GENERATE_STATIC_LIBRARIES ON CACHE BOOL "" FORCE)
+# set(PX_BUILDSNIPPETS OFF CACHE BOOL "" FORCE)
+# set(PX_BUILDPVDRUNTIME OFF CACHE BOOL "" FORCE)
+# set(PX_GENERATE_GPU_PROJECTS OFF CACHE BOOL "" FORCE)
+# set(TARGET_BUILD_PLATFORM "windows" CACHE STRING "" FORCE)
+# set(PX_OUTPUT_LIB_DIR "${CMAKE_BINARY_DIR}/physx_libs" CACHE STRING "" FORCE)
+# set(PX_OUTPUT_BIN_DIR "${CMAKE_BINARY_DIR}/physx_bins" CACHE STRING "" FORCE)
+# set(PHYSX_SLN_FREEGLUT_PATH "${CMAKE_BINARY_DIR}/freeglut" CACHE STRING "" FORCE)
+# set(PHYSX_ROOT_DIR "${CMAKE_BINARY_DIR}/_deps/physx-src/physx" CACHE STRING "" FORCE)
+#
+# FetchContent_Declare(
+#     physx
+#     GIT_REPOSITORY https://github.com/NVIDIA-Omniverse/PhysX.git
+#     GIT_TAG        107.3-omni-and-physx-5.6.1
+#     SOURCE_SUBDIR  physx/compiler/public
+# )
+# FetchContent_MakeAvailable(physx)
+#
+# target_link_libraries(${APP_NAME} PRIVATE 
+#     PhysXExtensions PhysX PhysXPvdSDK PhysXVehicle
+#     PhysXCharacterKinematic PhysXCooking PhysXCommon PhysXFoundation
+# )
 
 # --------------------------------------------------
 # FMOD
