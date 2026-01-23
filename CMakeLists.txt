@@ -3,6 +3,17 @@
 #
 cmake_minimum_required(VERSION 3.20)
 
+# --------------------------------------------------
+# Use static runtime library to match PhysX
+# Our PhysX is built with /MT (Release) and /MTd (Debug)
+# This MUST be set BEFORE the project() command to affect all dependencies
+set(MT_CONFIG "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+if(MSVC)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY ${MT_CONFIG})
+    message(STATUS "Using static runtime library (/MT for Release, /MTd for Debug)")
+endif()
+
+# --------------------------------------------------
 # C++ standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -21,6 +32,11 @@ file(GLOB_RECURSE GAME_SRC CONFIGURE_DEPENDS
 )
 add_executable(${APP_NAME} ${GAME_SRC})
 target_include_directories(${APP_NAME} PRIVATE src)
+
+# Force static runtime library for the target (match PhysX)
+if(MSVC)
+    set_property(TARGET ${APP_NAME} PROPERTY MSVC_RUNTIME_LIBRARY ${MT_CONFIG})
+endif()
 
 # --------------------------------------------------
 # Third-party libraries folder
@@ -48,6 +64,11 @@ add_library(glad STATIC
 # Set the language to C for the GLAD library
 set_target_properties(glad PROPERTIES LINKER_LANGUAGE C)
 
+# Ensure GLAD uses the same runtime library as our project
+if(MSVC)
+    set_property(TARGET glad PROPERTY MSVC_RUNTIME_LIBRARY ${MT_CONFIG})
+endif()
+
 target_include_directories(glad PUBLIC
     ${CMAKE_SOURCE_DIR}/libraries/glad/include
 )
@@ -56,32 +77,33 @@ target_link_libraries(${APP_NAME} PRIVATE glad)
 
 # --------------------------------------------------
 # GLFW
-# Check for precompiled GLFW Windows binaries, otherwise use FetchContent
-# https://www.glfw.org/download.html
-# Put glfw-3.4.bin.WIN64 in the libraries folder
+# Build from source to match our static runtime library (/MT, /MTd)
+# Precompiled binaries are built with dynamic runtime and cause linker errors
+message(STATUS "Building GLFW from source via FetchContent")
 
-set(GLFW_PREBUILT_DIR ${CMAKE_SOURCE_DIR}/libraries/glfw-3.4.bin.WIN64)
-if (NOT EXISTS "${GLFW_PREBUILT_DIR}")
-    set(GLFW_PREBUILT_DIR ${CMAKE_SOURCE_DIR}/libraries/glfw-3.4.bin.WIN32)
-endif()
+# Configure GLFW to not build examples, tests, or docs
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 
-if (WIN32 AND EXISTS "${GLFW_PREBUILT_DIR}")
-    message(STATUS "Using precompiled GLFW binaries")
-    add_library(glfw STATIC IMPORTED)
-    set_target_properties(glfw PROPERTIES
-        IMPORTED_LOCATION
-            ${GLFW_PREBUILT_DIR}/lib-vc2022/glfw3.lib
-        INTERFACE_INCLUDE_DIRECTORIES
-            ${GLFW_PREBUILT_DIR}/include
-    )
-else()
-    message(STATUS "Using GLFW via FetchContent")
+# Use static CRT to match PhysX
+set(GLFW_USE_STATIC_CRT ON CACHE BOOL "" FORCE)
+
+# Disable Vulkan support (only using OpenGL)
+set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_X11 OFF CACHE BOOL "" FORCE)
+
     FetchContent_Declare(
         glfw
         GIT_REPOSITORY https://github.com/glfw/glfw.git
         GIT_TAG 3.4
     )
     FetchContent_MakeAvailable(glfw)
+
+# Ensure GLFW uses the same runtime library as our project
+if(MSVC)
+    set_property(TARGET glfw PROPERTY MSVC_RUNTIME_LIBRARY ${MT_CONFIG})
 endif()
 
 target_link_libraries(${APP_NAME} PRIVATE glfw)
@@ -89,12 +111,21 @@ target_link_libraries(${APP_NAME} PRIVATE glfw)
 # --------------------------------------------------
 # GLM (header-only library)
 message(STATUS "Using GLM via FetchContent")
+
+set(GLM_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLM_BUILD_INSTALL OFF CACHE BOOL "" FORCE)
+
 FetchContent_Declare(
     glm
     GIT_REPOSITORY https://github.com/g-truc/glm.git
     GIT_TAG 1.0.3
 )
 FetchContent_MakeAvailable(glm)
+
+# Ensure GLM uses the same runtime library as our project
+if(MSVC AND TARGET glm)
+    set_property(TARGET glm PROPERTY MSVC_RUNTIME_LIBRARY ${MT_CONFIG})
+endif()
 
 target_link_libraries(${APP_NAME} PRIVATE glm::glm)
 
