@@ -1,12 +1,15 @@
 ﻿#pragma once
 
 #include <iostream>
+#include "core/RenderingSystem.h"
 
 class RacingGame {
 public:
-    // Constructor
     RacingGame() = default;
+    ~RacingGame();
 
-    // Test method
-    void test() const;
+    void run();
+
+private:
+    RenderingSystem renderer;
 };

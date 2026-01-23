@@ -5,11 +5,13 @@
 
 int main()
 {
-    RacingGame game;
-    game.test();
+    std::cout << "Hello Racing Game" << std::endl;
 
-    std::cout << "Press Enter to exit...";
-    std::cin.get();  // wait for user input
+    RacingGame game;
+    game.run();
+
+    //std::cout << "Press Enter to exit...";
+    //std::cin.get();  // wait for user input
 
     return 0;
 }
