@@ -123,39 +123,76 @@ target_include_directories(${APP_NAME} PRIVATE
 )
 
 # --------------------------------------------------
-# PhysX
-# PhysX is complex to build via FetchContent. For a school project, consider:
-# 1. Download prebuilt PhysX binaries from NVIDIA
-# 2. Use a simpler physics library like Bullet or Jolt Physics
-# 3. Implement simple collision detection yourself
-#
-# Uncomment and configure the following if you have PhysX installed:
-# find_package(PhysX REQUIRED)
-# target_link_libraries(${APP_NAME} PRIVATE PhysX::PhysX)
-#
-# Or use this FetchContent approach (requires many configuration variables):
-# set(PX_GENERATE_STATIC_LIBRARIES ON CACHE BOOL "" FORCE)
-# set(PX_BUILDSNIPPETS OFF CACHE BOOL "" FORCE)
-# set(PX_BUILDPVDRUNTIME OFF CACHE BOOL "" FORCE)
-# set(PX_GENERATE_GPU_PROJECTS OFF CACHE BOOL "" FORCE)
-# set(TARGET_BUILD_PLATFORM "windows" CACHE STRING "" FORCE)
-# set(PX_OUTPUT_LIB_DIR "${CMAKE_BINARY_DIR}/physx_libs" CACHE STRING "" FORCE)
-# set(PX_OUTPUT_BIN_DIR "${CMAKE_BINARY_DIR}/physx_bins" CACHE STRING "" FORCE)
-# set(PHYSX_SLN_FREEGLUT_PATH "${CMAKE_BINARY_DIR}/freeglut" CACHE STRING "" FORCE)
-# set(PHYSX_ROOT_DIR "${CMAKE_BINARY_DIR}/_deps/physx-src/physx" CACHE STRING "" FORCE)
-#
-# FetchContent_Declare(
-#     physx
-#     GIT_REPOSITORY https://github.com/NVIDIA-Omniverse/PhysX.git
-#     GIT_TAG        107.3-omni-and-physx-5.6.1
-#     SOURCE_SUBDIR  physx/compiler/public
-# )
-# FetchContent_MakeAvailable(physx)
-#
-# target_link_libraries(${APP_NAME} PRIVATE 
-#     PhysXExtensions PhysX PhysXPvdSDK PhysXVehicle
-#     PhysXCharacterKinematic PhysXCooking PhysXCommon PhysXFoundation
-# )
+# PhysX - Using local installation from physx folder
+message(STATUS "Using local PhysX installation")
+
+set(PHYSX_ROOT_DIR ${CMAKE_SOURCE_DIR}/physx)
+set(PHYSX_INCLUDE_DIRS ${PHYSX_ROOT_DIR}/include)
+set(PHYSX_LIB_DIR ${PHYSX_ROOT_DIR}/bin/win.x86_64.vc143.mt)
+
+# Use debug libraries for Debug builds, checked libraries for Release builds
+# PhysX Debug configuration uses /MTd (matches our Debug)
+# PhysX Checked configuration uses /MT (matches our Release)
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+    set(PHYSX_LIB_SUBDIR "debug")
+    message(STATUS "Using PhysX Debug libraries (built with /MTd)")
+elseif(CMAKE_BUILD_TYPE MATCHES RelWithDebInfo)
+    set(PHYSX_LIB_SUBDIR "checked")
+    message(STATUS "Using PhysX Checked libraries (built with /MT)")
+else()
+    set(PHYSX_LIB_SUBDIR "checked")
+    message(STATUS "Using PhysX Checked libraries (built with /MT)")
+endif()
+
+# Include directories
+target_include_directories(${APP_NAME} PRIVATE 
+    ${PHYSX_INCLUDE_DIRS}
+)
+
+# Core PhysX libraries (order matters for linking)
+set(PHYSX_LIBS
+    PhysXFoundation_64
+    PhysXCommon_64
+    PhysX_64
+    PhysXCooking_64
+    PhysXExtensions_static_64
+    PhysXPvdSDK_static_64
+    PhysXVehicle2_static_64
+    PhysXCharacterKinematic_static_64
+)
+
+# Create imported targets for each PhysX library
+foreach(LIB ${PHYSX_LIBS})
+    add_library(PhysX::${LIB} STATIC IMPORTED)
+    set_target_properties(PhysX::${LIB} PROPERTIES
+        IMPORTED_LOCATION ${PHYSX_LIB_DIR}/${PHYSX_LIB_SUBDIR}/${LIB}.lib
+        INTERFACE_INCLUDE_DIRECTORIES "${PHYSX_INCLUDE_DIRS}"
+    )
+endforeach()
+
+# Link PhysX libraries to the application
+target_link_libraries(${APP_NAME} PRIVATE 
+    PhysX::PhysXFoundation_64
+    PhysX::PhysXCommon_64
+    PhysX::PhysX_64
+    PhysX::PhysXCooking_64
+    PhysX::PhysXExtensions_static_64
+    PhysX::PhysXPvdSDK_static_64
+    PhysX::PhysXVehicle2_static_64
+    PhysX::PhysXCharacterKinematic_static_64
+)
+
+# Copy PhysX DLLs to output directory (if any exist)
+# Note: Static libraries don't need DLLs, but shared ones do
+file(GLOB PHYSX_DLLS ${PHYSX_LIB_DIR}/${PHYSX_LIB_SUBDIR}/*.dll)
+if(PHYSX_DLLS)
+    add_custom_command(TARGET ${APP_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${PHYSX_DLLS}
+        $<TARGET_FILE_DIR:${APP_NAME}>
+        COMMENT "Copying PhysX DLLs to output directory"
+    )
+endif()
 
 # --------------------------------------------------
 # FMOD
