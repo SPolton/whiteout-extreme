@@ -470,6 +470,9 @@ FodyWeavers.xsd
 *.msp
 
 # Custom
-libraries/
+libraries/*
 *physx*/
-third*party/
+third*party/*
+
+# Allow exceptions
+!libraries/glad
