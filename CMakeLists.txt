@@ -153,6 +153,19 @@ target_include_directories(${APP_NAME} PRIVATE
     ${imgui_SOURCE_DIR}/backends
 )
 
+# ImGui build optimizations
+target_compile_definitions(${APP_NAME} PRIVATE
+    # Disable demo window and metrics/debugger to reduce binary size
+    IMGUI_DISABLE_DEMO_WINDOWS
+    IMGUI_DISABLE_DEBUG_TOOLS
+    
+    # Disable obsolete functions for cleaner API
+    IMGUI_DISABLE_OBSOLETE_FUNCTIONS
+    
+    # Optional: Disable file browser (if not using ImGui file dialogs)
+    IMGUI_DISABLE_FILE_FUNCTIONS
+)
+
 # --------------------------------------------------
 # PhysX - Using local installation from physx folder
 message(STATUS "Using local PhysX installation")
