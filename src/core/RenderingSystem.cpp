@@ -74,7 +74,7 @@ bool RenderingSystem::initShaders()
         std::cout << "Failed to load shaders: " << e.what() << std::endl;
         return false;
     }
-    }
+}
 
 bool RenderingSystem::initGeometry()
 {
@@ -95,7 +95,7 @@ bool RenderingSystem::initGeometry()
     // position attribute
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-
+    
     // color attribute
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
@@ -113,6 +113,19 @@ void RenderingSystem::loop()
     glClear(GL_COLOR_BUFFER_BIT);
 
     shader->use();
+    
+    // Example of using shader uniform functions:
+    // shader->setFloat("someUniform", 1.0f);
+    // shader->setInt("textureUnit", 0);
+    // shader->setBool("useColor", true);
+    // 
+    // For matrix uniforms (like in world.vert):
+    // glm::mat4 model = glm::mat4(1.0f);
+    // glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    // glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+    // shader->setMat4("model", model);
+    // shader->setMat4("view", view);
+    // shader->setMat4("projection", projection);
     
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 3);
