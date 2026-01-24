@@ -16,6 +16,15 @@ void RacingGame::run()
 
     while (!renderer.shouldClose())
     {
-        renderer.loop();
+        gameTime.update();
+
+        // Physics System Loop
+        //while (accumulator >= dt) {
+        //    physicsSys->updatePhysics(dt);
+        //    accumulator -= dt;
+        //    t += dt;
+        //}
+
+        renderer.update();
     }
 }

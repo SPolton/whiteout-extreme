@@ -94,6 +94,31 @@ void Shader::setMat4(const std::string& name, glm::mat4& mat) const {
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &mat[0][0]);
 }
 
+// Abstracted VAO initialization
+unsigned int Shader::initVAO(float* vertices, int size) {
+    unsigned int VAO, VBO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+
+    glBindVertexArray(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_STATIC_DRAW);
+
+    //Position vertex attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    //Color vertex attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    //Texture vertex attribute
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+    return VAO;
+}
 
 void Shader::checkCompileErrors(unsigned int shader, std::string type)
 {

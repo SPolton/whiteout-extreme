@@ -102,10 +102,11 @@ bool RenderingSystem::initGeometry()
     return true;
 }
 
-void RenderingSystem::loop()
+void RenderingSystem::update()
 {
     processInput();
 
+    // clear the colorbuffer
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -116,9 +117,11 @@ void RenderingSystem::loop()
     float greenValue = (std::sin(timeValue) / 2.0f) + 0.5f;
     shader->setVec4("ourColor", glm::vec4(0.0f, greenValue, 0.0f, 1.0f));
     
+    // now render the triangle
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 3);
 
+    // swap buffers and poll IO events
     glfwSwapBuffers(window);
     glfwPollEvents();
 }

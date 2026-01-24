@@ -106,7 +106,22 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glm)
 
-target_link_libraries(${APP_NAME} PRIVATE glm::glm)
+target_link_libraries(${APP_NAME} PRIVATE glm)
+target_include_directories(${APP_NAME} PRIVATE ${glm_SOURCE_DIR}/glm)
+
+# --------------------------------------------------
+# FreeType
+message(STATUS "Using FreeType via FetchContent")
+FetchContent_Declare(
+    freetype
+    GIT_REPOSITORY https://gitlab.freedesktop.org/freetype/freetype
+    GIT_TAG VER-2-14-1
+)
+FetchContent_MakeAvailable(freetype)
+
+target_link_libraries(${APP_NAME} PRIVATE freetype)
+target_include_directories(${APP_NAME} PRIVATE ${freetype_SOURCE_DIR}/include)
+add_definitions(-DIMGUI_DISABLE_FREETYPE)
 
 # --------------------------------------------------
 # ImGui
