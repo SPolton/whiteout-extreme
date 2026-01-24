@@ -33,7 +33,7 @@ Follow these steps to set up NVIDIA PhysX for physics simulation:
 1. **Download PhysX SDK**
     - Visit the [NVIDIA PhysX GitHub repository](https://github.com/NVIDIA-Omniverse/PhysX)
     - Download or clone `Omniverse PhysX 107.3 and PhysX SDK 5.6.1`
-    - Move the `physx` folder into the root directory of this project.
+    - Move the `physx` folder into the `libraries` folder or root directory of this project.
 
 2. **Generate PhysX Project Files**
     - Locate `physx/generate_projects.bat` and run it.
