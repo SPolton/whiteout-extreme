@@ -9,11 +9,6 @@ The prefered editor is Visual Studio 2022.
 
 Please refer to the [Coding standards](CODING_STANDARDS.md).
 
-### Clone the project
-
-- HTTPS: `git clone https://github.com/SPolton/racing-game.git`
-- SSH: `git clone git@github.com:SPolton/racing-game.git`
-
 ### Check out a branch
 
 Before working on a change, pull the latest changes and check out a new branch:

@@ -14,8 +14,8 @@ Survival Racing Game
 ### Building the Project
 
 1. **Clone the repository**
-    - HTTPS: `git clone https://github.com/SPolton/racing-game.git`
-    - SSH: `git clone git@github.com:SPolton/racing-game.git`
+    - SSH: `git clone git@github.com:SPolton/whiteout-extreme.git`
+    - HTTPS: `git clone https://github.com/SPolton/whiteout-extreme.git`
 
 2. **Configure with CMake**
     - Visual Studio handles the build system generation automatically.
