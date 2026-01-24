@@ -166,9 +166,29 @@ target_compile_definitions(${APP_NAME} PRIVATE
 # PhysX - Using local installation from physx folder
 message(STATUS "Using local PhysX installation")
 
+# Check if PhysX root directory exists
 set(PHYSX_ROOT_DIR ${CMAKE_SOURCE_DIR}/physx)
+if(NOT EXISTS ${PHYSX_ROOT_DIR})
+    message(FATAL_ERROR "PhysX directory not found at: ${PHYSX_ROOT_DIR}\n"
+        "Please install PhysX SDK:\n"
+        "  1. Download PhysX 5.x from https://github.com/NVIDIA-Omniverse/PhysX\n"
+        "  2. Build the libraries with /MT (Release/Checked) and /MTd (Debug)\n"
+        "See README.md for detailed instructions.")
+endif()
+
+# Check if PhysX include directory exists for headers
 set(PHYSX_INCLUDE_DIRS ${PHYSX_ROOT_DIR}/include)
+if(NOT EXISTS ${PHYSX_INCLUDE_DIRS})
+    message(FATAL_ERROR "PhysX include directory not found at: ${PHYSX_INCLUDE_DIRS}\n"
+        "See README.md for setup instructions.")
+endif()
+
+# Check if PhysX library directory exists for binaries
 set(PHYSX_LIB_DIR ${PHYSX_ROOT_DIR}/bin/win.x86_64.vc143.mt)
+if(NOT EXISTS ${PHYSX_LIB_DIR})
+    message(FATAL_ERROR "PhysX library directory not found at: ${PHYSX_LIB_DIR}\n"
+        "See README.md for setup instructions.")
+endif()
 
 # Use debug libraries for Debug builds, checked libraries for Release builds
 # PhysX Debug configuration uses /MTd (matches our Debug)
@@ -184,10 +204,15 @@ else()
     message(STATUS "Using PhysX Checked libraries (built with /MT)")
 endif()
 
-# Include directories
-target_include_directories(${APP_NAME} PRIVATE 
-    ${PHYSX_INCLUDE_DIRS}
-)
+# Check if the specific configuration directory exists
+set(PHYSX_CONFIG_DIR ${PHYSX_LIB_DIR}/${PHYSX_LIB_SUBDIR})
+if(NOT EXISTS ${PHYSX_CONFIG_DIR})
+    message(FATAL_ERROR "PhysX ${PHYSX_LIB_SUBDIR} configuration directory not found at: ${PHYSX_CONFIG_DIR}\n"
+        "Please build PhysX libraries for the '${PHYSX_LIB_SUBDIR}' configuration.\n"
+        "See README.md for build instructions.")
+endif()
+
+target_include_directories(${APP_NAME} PRIVATE ${PHYSX_INCLUDE_DIRS})
 
 # Core PhysX libraries (order matters for linking)
 set(PHYSX_LIBS
@@ -203,9 +228,17 @@ set(PHYSX_LIBS
 
 # Create imported targets for each PhysX library
 foreach(LIB ${PHYSX_LIBS})
+    set(LIB_PATH ${PHYSX_LIB_DIR}/${PHYSX_LIB_SUBDIR}/${LIB}.lib)
+    if(NOT EXISTS ${LIB_PATH})
+        message(FATAL_ERROR "PhysX library not found: ${LIB_PATH}\n"
+            "Missing library: ${LIB}.lib\n"
+            "Please ensure all required PhysX libraries are built.\n"
+            "See README.md for setup instructions.")
+    endif()
+    
     add_library(PhysX::${LIB} STATIC IMPORTED)
     set_target_properties(PhysX::${LIB} PROPERTIES
-        IMPORTED_LOCATION ${PHYSX_LIB_DIR}/${PHYSX_LIB_SUBDIR}/${LIB}.lib
+        IMPORTED_LOCATION ${LIB_PATH}
         INTERFACE_INCLUDE_DIRECTORIES "${PHYSX_INCLUDE_DIRS}"
     )
 endforeach()
