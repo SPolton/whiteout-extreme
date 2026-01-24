@@ -57,9 +57,7 @@ target_link_libraries(${APP_NAME} PRIVATE OpenGL::GL)
 message(STATUS "Using GLAD via libraries")
 
 # Create a separate library for GLAD to ensure proper compilation
-add_library(glad STATIC
-    ${CMAKE_SOURCE_DIR}/libraries/glad/src/glad.c
-)
+add_library(glad STATIC ${CMAKE_SOURCE_DIR}/libraries/glad/src/glad.c)
 
 # Set the language to C for the GLAD library
 set_target_properties(glad PROPERTIES LINKER_LANGUAGE C)
@@ -69,9 +67,7 @@ if(MSVC)
     set_property(TARGET glad PROPERTY MSVC_RUNTIME_LIBRARY ${MT_CONFIG})
 endif()
 
-target_include_directories(glad PUBLIC
-    ${CMAKE_SOURCE_DIR}/libraries/glad/include
-)
+target_include_directories(glad PUBLIC ${CMAKE_SOURCE_DIR}/libraries/glad/include)
 
 target_link_libraries(${APP_NAME} PRIVATE glad)
 
