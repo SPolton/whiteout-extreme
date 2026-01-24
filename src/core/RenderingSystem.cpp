@@ -1,5 +1,6 @@
 #include "RenderingSystem.h"
 #include <iostream>
+#include <cmath>
 
 void RenderingSystem::framebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
@@ -65,7 +66,7 @@ bool RenderingSystem::initShaders()
 {
     try
     {
-        shader = std::make_unique<Shader>("assets/shaders/test.vert", "assets/shaders/test.frag");
+        shader = std::make_unique<Shader>("assets/shaders/shader.vert", "assets/shaders/shader.frag");
         std::cout << "Shaders loaded successfully" << std::endl;
         return true;
     }
@@ -79,10 +80,10 @@ bool RenderingSystem::initShaders()
 bool RenderingSystem::initGeometry()
 {
     float vertices[] = {
-        // positions         // colors
-        -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
-         0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
-         0.0f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f
+        // positions only (shader.frag uses uniform color)
+        -0.5f, -0.5f, 0.0f,
+         0.5f, -0.5f, 0.0f,
+         0.0f,  0.5f, 0.0f
     };
 
     glGenVertexArrays(1, &VAO);
@@ -93,12 +94,8 @@ bool RenderingSystem::initGeometry()
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    
-    // color attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
 
     glBindVertexArray(0);
 
@@ -114,18 +111,10 @@ void RenderingSystem::loop()
 
     shader->use();
     
-    // Example of using shader uniform functions:
-    // shader->setFloat("someUniform", 1.0f);
-    // shader->setInt("textureUnit", 0);
-    // shader->setBool("useColor", true);
-    // 
-    // For matrix uniforms (like in world.vert):
-    // glm::mat4 model = glm::mat4(1.0f);
-    // glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    // glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-    // shader->setMat4("model", model);
-    // shader->setMat4("view", view);
-    // shader->setMat4("projection", projection);
+    // Set the uniform color (animated over time)
+    float timeValue = static_cast<float>(glfwGetTime());
+    float greenValue = (std::sin(timeValue) / 2.0f) + 0.5f;
+    shader->setVec4("ourColor", glm::vec4(0.0f, greenValue, 0.0f, 1.0f));
     
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 3);
