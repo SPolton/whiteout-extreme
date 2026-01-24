@@ -9,6 +9,7 @@ Survival Racing Game
 - **Windows 10/11**
 - **CMake 3.20+**
 - **Visual Studio 2022** (recommended) or compatible C++20 compiler
+- **PhysX SDK 5.6.1** (Omniverse PhysX 107.3)
 
 ### Building the Project
 
@@ -18,6 +19,35 @@ Survival Racing Game
 
 2. **Configure with CMake**
     - Visual Studio handles the build system generation automatically.
+
+### Setting Up PhysX
+
+Follow these steps to set up NVIDIA PhysX for physics simulation:
+
+1. **Download PhysX SDK**
+    - Visit the [NVIDIA PhysX GitHub repository](https://github.com/NVIDIA-Omniverse/PhysX)
+    - Download or clone `Omniverse PhysX 107.3 and PhysX SDK 5.6.1`
+    - Move the `physx` folder into the root directory of this project.
+
+2. **Generate PhysX Project Files**
+    - Locate `physx/generate_projects.bat` and run it.
+    - Choose `VC17`, the default compiler for Visual Studio 2022.
+    - This creates folders in `physx/compiler`
+
+3. **Build PhysX Libraries**
+    - Locate `physx/compiler/vc17win64` or `physx/compiler/vc17win64-cpu-only`
+    - Open the `PhysXSDK.sln` file in Visual Studio
+    - Build the following configurations:
+      - **Debug** configuration with `/MTd` (Multi-Threaded Debug static runtime)
+      - **Checked** configuration with `/MT` (Multi-Threaded static runtime)
+
+4. **Check Physx Setup**
+    - Confirm the PhysX headers exist in `physx/include/`
+    - Confirm the compiled `.dll` binaries and `.lib` libraries exist in:
+    ```
+    physx/bin/win.x86_64.vc143.mt/debug/
+    physx/bin/win.x86_64.vc143.mt/checked/
+    ```
 
 ### Dependencies
 
