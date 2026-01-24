@@ -4,31 +4,35 @@
 
 RacingGame::~RacingGame()
 {
-    renderer.cleanup();
+    if (renderer) {
+        renderer->cleanup();
+    }
 }
 
 void RacingGame::run()
 {
-    if (!renderer.init())
+    // Initialize smart pointers
+    renderer = std::make_unique<RenderingSystem>();
+    physicsSystem = std::make_unique<PhysicsSystem>();
+    textSystem = std::make_unique<Text>();
+
+    if (!renderer->init())
     {
         std::cout << "Failed to initialize rendering system" << std::endl;
         return;
     }
 
-    PhysicsTest physicsTest;
-    physicsTest.initBoxTest();
-
-    while (!renderer.shouldClose())
+    while (!renderer->shouldClose())
     {
         gameTime.update();
 
         // Physics System Loop
-        //while (accumulator >= dt) {
-        //    physicsSys->updatePhysics(dt);
-        //    accumulator -= dt;
-        //    t += dt;
-        //}
+        while (gameTime.accumulator >= gameTime.dt) {
+            //physicsSystem->update(gameTime.dt);
+            gameTime.accumulator -= gameTime.dt;
+            gameTime.t += gameTime.dt;
+        }
 
-        renderer.update();
+        renderer->update();
     }
 }
