@@ -20,9 +20,15 @@ void RacingGame::run()
 
     while (!renderer.shouldClose())
     {
-        // Temporary PhysX test
-        physicsTest.loop();
+        gameTime.update();
 
-        renderer.loop();
+        // Physics System Loop
+        //while (accumulator >= dt) {
+        //    physicsSys->updatePhysics(dt);
+        //    accumulator -= dt;
+        //    t += dt;
+        //}
+
+        renderer.update();
     }
 }

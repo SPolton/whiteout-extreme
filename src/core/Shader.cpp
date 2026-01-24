@@ -34,6 +34,9 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath)
     catch (std::ifstream::failure& e)
     {
         std::cout << "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: " << e.what() << std::endl;
+        std::cout << "Vertex shader path: " << vertexPath << std::endl;
+        std::cout << "Fragment shader path: " << fragmentPath << std::endl;
+        throw std::runtime_error("Failed to read shader files");
     }
 
     const char* vShaderCode = vertexCode.c_str();
@@ -82,11 +85,40 @@ void Shader::setFloat(const std::string& name, float value) const {
     glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
 }
 
+void Shader::setVec4(const std::string& name, const glm::vec4& value) const {
+    glUniform4f(glGetUniformLocation(ID, name.c_str()), value.x, value.y, value.z, value.w);
+}
+
 void Shader::setMat4(const std::string& name, glm::mat4& mat) const {
     int modelLoc = glGetUniformLocation(ID, name.c_str());
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &mat[0][0]);
 }
 
+// Abstracted VAO initialization
+unsigned int Shader::initVAO(float* vertices, int size) {
+    unsigned int VAO, VBO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+
+    glBindVertexArray(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_STATIC_DRAW);
+
+    //Position vertex attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    //Color vertex attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    //Texture vertex attribute
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+    return VAO;
+}
 
 void Shader::checkCompileErrors(unsigned int shader, std::string type)
 {
