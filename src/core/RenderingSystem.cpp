@@ -145,7 +145,7 @@ bool RenderingSystem::initGeometry()
     return true;
 }
 
-void RenderingSystem::loop()
+void RenderingSystem::update()
 {
     processInput();
 

@@ -9,7 +9,7 @@ public:
     ~RenderingSystem() = default;
 
     bool init();
-    void loop();
+    void update();
     void cleanup();
     bool shouldClose() const;
 
