@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include "core/RenderingSystem.h"
+#include "core/Text.h"
 #include <GLFW/glfw3.h>
 
 struct GameTime {
@@ -29,4 +30,5 @@ public:
 private:
     GameTime gameTime;
     RenderingSystem renderer;
+    Text textSystem;
 };

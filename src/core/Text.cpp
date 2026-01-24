@@ -3,7 +3,7 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-void initTextVAO(unsigned int* VAO, unsigned int* VBO) {
+void Text::initTextVAO(unsigned int* VAO, unsigned int* VBO) {
     glGenVertexArrays(1, VAO);
     glGenBuffers(1, VBO);
 
@@ -19,7 +19,7 @@ void initTextVAO(unsigned int* VAO, unsigned int* VBO) {
     glBindVertexArray(0);
 }
 
-std::map<char, Character> initFont(const char* font) {
+std::map<char, Character> Text::initFont(const char* font) {
     std::map<char, Character> Characters;
     FT_Library ft;
     if (FT_Init_FreeType(&ft))
@@ -78,7 +78,7 @@ std::map<char, Character> initFont(const char* font) {
     return Characters;
 }
 
-void RenderText(Shader& s, unsigned int VAO, unsigned int VBO, std::string text, float x, float y, float scale, glm::vec3 color, std::map<char, Character> Characters)
+void Text::renderText(Shader& s, unsigned int VAO, unsigned int VBO, std::string text, float x, float y, float scale, glm::vec3 color, std::map<char, Character> Characters)
 {
     // activate corresponding render state	
     s.use();
