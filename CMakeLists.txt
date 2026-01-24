@@ -96,7 +96,8 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glm)
 
-target_link_libraries(${APP_NAME} PRIVATE glm::glm)
+target_link_libraries(${APP_NAME} PRIVATE glm)
+target_include_directories(${APP_NAME} PRIVATE ${glm_SOURCE_DIR}/glm)
 
 # --------------------------------------------------
 # ImGui
