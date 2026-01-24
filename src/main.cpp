@@ -7,14 +7,10 @@
 #include "core/PreferDiscreteGPU.h"
 
 #include "app/RacingGame.h"
-#include "physics/PhysicsTest.h"
 
 int main()
 {
     std::cout << "Hello Racing Game" << std::endl;
-
-    // Temporary PhysX test
-    physicsBoxTest();
 
     RacingGame game;
     game.run();

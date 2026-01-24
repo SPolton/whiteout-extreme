@@ -1,19 +1,15 @@
+
+#include "PhysicsTest.h"
 #include <iostream>
 
-#include "PxPhysicsAPI.h"
+PhysicsTest::PhysicsTest() {
+    if (initPhysicsTest() != 0)
+    {
+        throw std::runtime_error("Failed to initialize physics test!");
+    }
+}
 
-int physicsBoxTest()
-{
-    //PhysX management class instances.
-    physx::PxDefaultAllocator gAllocator;
-    physx::PxDefaultErrorCallback gErrorCallback;
-    physx::PxFoundation* gFoundation = NULL;
-    physx::PxPhysics* gPhysics = NULL;
-    physx::PxDefaultCpuDispatcher* gDispatcher = NULL;
-    physx::PxScene* gScene = NULL;
-    physx::PxMaterial* gMaterial = NULL;
-    physx::PxPvd* gPvd = NULL;
-
+int PhysicsTest::initPhysicsTest() {
     // Initialize PhysX
     gFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, gAllocator, gErrorCallback);
     if (!gFoundation)
@@ -57,6 +53,12 @@ int physicsBoxTest()
     physx::PxRigidStatic* groundPlane = physx::PxCreatePlane(*gPhysics, physx::PxPlane(0, 1, 0, 50), *gMaterial);
     gScene->addActor(*groundPlane);
 
+    std::cout << "Physics Test initialized successfully." << std::endl;
+    return 0;
+}
+
+void PhysicsTest::initBoxTest()
+{
     // Define a box
     float halfLen = 0.5f;
     physx::PxShape* shape = gPhysics->createShape(physx::PxBoxGeometry(halfLen, halfLen, halfLen), *gMaterial);
@@ -79,12 +81,11 @@ int physicsBoxTest()
     // Clean up
     shape->release();
 
-    // Simulate at 60fps
-    while (1)
-    {
-        gScene->simulate(1.0f / 60.0f);
-        gScene->fetchResults(true);
-    }
+    std::cout << "Box test spawned successfully." << std::endl;
+}
 
-    return 0;
+void PhysicsTest::loop() {
+    // Simulate at 60fps
+    gScene->simulate(1.0f / 60.0f);
+    gScene->fetchResults(true);
 }
