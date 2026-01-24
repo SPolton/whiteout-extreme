@@ -1,5 +1,6 @@
 ﻿
 #include "RacingGame.h"
+#include "physics/PhysicsTest.h"
 
 RacingGame::~RacingGame()
 {
@@ -14,8 +15,14 @@ void RacingGame::run()
         return;
     }
 
+    PhysicsTest physicsTest;
+    physicsTest.initBoxTest();
+
     while (!renderer.shouldClose())
     {
+        // Temporary PhysX test
+        physicsTest.loop();
+
         renderer.loop();
     }
 }
