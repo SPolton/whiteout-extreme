@@ -126,6 +126,11 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glm)
 
+# Ensure GLM uses the same runtime library as our project
+if(MSVC AND TARGET glm)
+    set_property(TARGET glm PROPERTY MSVC_RUNTIME_LIBRARY ${MT_CONFIG})
+endif()
+
 target_link_libraries(${APP_NAME} PRIVATE glm)
 target_include_directories(${APP_NAME} PRIVATE ${glm_SOURCE_DIR}/glm)
 
