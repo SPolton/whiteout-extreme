@@ -23,6 +23,16 @@ add_executable(${APP_NAME} ${GAME_SRC})
 target_include_directories(${APP_NAME} PRIVATE src)
 
 # --------------------------------------------------
+# Copy assets to build directory
+message(STATUS "Copying assets to build directory")
+add_custom_command(TARGET ${APP_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/assets
+        $<TARGET_FILE_DIR:${APP_NAME}>/assets
+    COMMENT "Copying assets to build directory"
+)
+
+# --------------------------------------------------
 # Third-party libraries folder
 include(FetchContent)
 set(LIB_DIR ${CMAKE_SOURCE_DIR}/libraries)
