@@ -19,6 +19,12 @@ Survival Racing Game
 
 2. **Configure with CMake**
     - Visual Studio handles the build system generation automatically.
+    - If using command line, run:
+    ```bash
+    cmake -B build
+    cmake --build build --config Debug
+    cmake --build build --config Checked
+    ```
 
 ### Setting Up PhysX
 
