@@ -41,7 +41,8 @@ endif()
 # --------------------------------------------------
 # Third-party libraries folder
 include(FetchContent)
-set(LIB_DIR ${CMAKE_SOURCE_DIR}/libraries)
+set(LIB_FOLDER libraries)
+set(LIB_DIR ${CMAKE_SOURCE_DIR}/${LIB_FOLDER})
 target_include_directories(${APP_NAME} PRIVATE ${LIB_DIR})
 
 # --------------------------------------------------
@@ -54,12 +55,9 @@ target_link_libraries(${APP_NAME} PRIVATE OpenGL::GL)
 # GLAD (OpenGL function loader)
 # Note: GLAD v2.x does not provide a pre-built CMake target
 # Generate GLAD files manually from https://glad.dav1d.de/
-message(STATUS "Using GLAD via libraries")
+message(STATUS "Using GLAD in ${LIB_FOLDER}")
 
-# Create a separate library for GLAD to ensure proper compilation
-add_library(glad STATIC ${CMAKE_SOURCE_DIR}/libraries/glad/src/glad.c)
-
-# Set the language to C for the GLAD library
+add_library(glad STATIC ${CMAKE_SOURCE_DIR}/${LIB_FOLDER}/glad/src/glad.c)
 set_target_properties(glad PROPERTIES LINKER_LANGUAGE C)
 
 # Ensure GLAD uses the same runtime library as our project
@@ -67,7 +65,7 @@ if(MSVC)
     set_property(TARGET glad PROPERTY MSVC_RUNTIME_LIBRARY ${MT_CONFIG})
 endif()
 
-target_include_directories(glad PUBLIC ${CMAKE_SOURCE_DIR}/libraries/glad/include)
+target_include_directories(glad PUBLIC ${CMAKE_SOURCE_DIR}/${LIB_FOLDER}/glad/include)
 
 target_link_libraries(${APP_NAME} PRIVATE glad)
 
@@ -90,12 +88,12 @@ set(GLFW_USE_STATIC_CRT ON CACHE BOOL "" FORCE)
 set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_X11 OFF CACHE BOOL "" FORCE)
 
-    FetchContent_Declare(
-        glfw
-        GIT_REPOSITORY https://github.com/glfw/glfw.git
-        GIT_TAG 3.4
-    )
-    FetchContent_MakeAvailable(glfw)
+FetchContent_Declare(
+    glfw
+    GIT_REPOSITORY https://github.com/glfw/glfw.git
+    GIT_TAG 3.4
+)
+FetchContent_MakeAvailable(glfw)
 
 # Ensure GLFW uses the same runtime library as our project
 if(MSVC)
@@ -163,18 +161,22 @@ target_compile_definitions(${APP_NAME} PRIVATE
 )
 
 # --------------------------------------------------
-# PhysX - Using local installation from physx folder
-message(STATUS "Using local PhysX installation")
+# PhysX
 
-# Check if PhysX root directory exists
+# Check if local PhysX directory exists
 set(PHYSX_ROOT_DIR ${CMAKE_SOURCE_DIR}/physx)
 if(NOT EXISTS ${PHYSX_ROOT_DIR})
-    message(FATAL_ERROR "PhysX directory not found at: ${PHYSX_ROOT_DIR}\n"
+    set(PHYSX_ROOT_DIR ${CMAKE_SOURCE_DIR}/${LIB_FOLDER}/physx)
+endif()
+if(NOT EXISTS ${PHYSX_ROOT_DIR})
+    message(FATAL_ERROR "PhysX directory not found at ${PHYSX_ROOT_DIR}\n"
         "Please install PhysX SDK:\n"
         "  1. Download PhysX 5.x from https://github.com/NVIDIA-Omniverse/PhysX\n"
         "  2. Build the libraries with /MT (Release/Checked) and /MTd (Debug)\n"
         "See README.md for detailed instructions.")
 endif()
+
+message(STATUS "Using local PhysX installation")
 
 # Check if PhysX include directory exists for headers
 set(PHYSX_INCLUDE_DIRS ${PHYSX_ROOT_DIR}/include)
