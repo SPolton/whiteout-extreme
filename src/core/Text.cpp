@@ -1,7 +1,25 @@
 #include "Text.h"
 
 #include <ft2build.h>
+#include <gtc/type_ptr.hpp>
 #include FT_FREETYPE_H
+
+Text::Text()
+    : Text("assets/shaders/shader_text.vert", "assets/shaders/shader_text.frag")
+{
+}
+
+Text::Text(std::string vertexPath, std::string fragmentPath)
+    : textShader(vertexPath, fragmentPath)
+{
+    // Make sure paths point to where shaders are stored!
+    characters = initFont("assets/fonts/Arial.ttf");
+    initTextVAO(&textVAO, &textVBO);
+
+    textModel.modelMatrix = glm::ortho(0.0f, static_cast<float>(1440), 0.0f, static_cast<float>(1440));
+    textShader.use();
+    glUniformMatrix4fv(glGetUniformLocation(textShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(textModel.modelMatrix));
+}
 
 void Text::initTextVAO(unsigned int* VAO, unsigned int* VBO) {
     glGenVertexArrays(1, VAO);

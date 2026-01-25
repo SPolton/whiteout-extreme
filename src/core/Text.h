@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/Shader.h"
+#include "components/Model.h"
 #include <glm.hpp>
 #include <map>
 
@@ -15,9 +16,20 @@ using charMap = std::map<char, Character>;
 
 class Text {
 public:
+    Text();
+    Text(std::string vertexPath, std::string fragmentPath);
+
     void initTextVAO(unsigned int* VAO, unsigned int* VBO);
     charMap initFont(const char* font);
 
     void renderText(Shader& s, unsigned int VAO, unsigned int VBO, std::string text,
         float x, float y, float scale, glm::vec3 color, charMap characters);
+
+private:
+    Shader textShader;
+    charMap characters;
+    Model textModel;
+
+    unsigned int textVAO = 0;
+    unsigned int textVBO = 0;
 };
