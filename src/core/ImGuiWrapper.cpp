@@ -53,3 +53,19 @@ void ImGuiWrapper::endFrame()
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
+
+void ImGuiWrapper::renderFPS()
+{
+    if (!initialized) return;
+
+    ImGui::SetNextWindowPos(ImVec2(10, 10));
+    ImGui::Begin("FPS", nullptr,
+        ImGuiWindowFlags_NoDecoration |
+        ImGuiWindowFlags_AlwaysAutoResize |
+        ImGuiWindowFlags_NoBackground
+    );
+
+    ImGuiIO& io = ImGui::GetIO();
+    ImGui::Text("Avg %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+    ImGui::End();
+}

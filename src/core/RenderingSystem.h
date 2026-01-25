@@ -1,10 +1,12 @@
 #pragma once
 
+#include "core/ImGuiWrapper.h"
+#include "core/Shader.h"
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include "Shader.h"
 #include <memory>
 
 class RenderingSystem {
@@ -14,6 +16,7 @@ public:
 
     bool init();
     void update();
+    void updateUI();
     void endFrame();
     void cleanup();
     bool shouldClose() const;
@@ -25,6 +28,9 @@ private:
     std::unique_ptr<Shader> shader;
     unsigned int VAO = 0;
     unsigned int VBO = 0;
+    
+    // ImGui wrapper
+    std::unique_ptr<ImGuiWrapper> imguiWrapper;
     
     void processInput();
     bool initShaders();

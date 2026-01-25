@@ -12,6 +12,8 @@ public:
     void beginFrame();
     void endFrame();
 
+    void renderFPS();
+
 private:
     bool initialized = false;
 };

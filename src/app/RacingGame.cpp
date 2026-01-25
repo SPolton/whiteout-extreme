@@ -34,6 +34,7 @@ void RacingGame::run()
         }
 
         renderer->update();
+        renderer->updateUI();
         renderer->endFrame();
     }
 }
