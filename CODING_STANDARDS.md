@@ -27,13 +27,14 @@ By default, follow the [C++ Core Guidelines](https://github.com/isocpp/CppCoreGu
 
 ### Methods
 
-* Name both free and member methods in `snake_case`.
-* Try to avoid getters and setters. If you have a container class and want a method to get its size, call it `size()`, not `get_size()`.
+* Name both free and member methods in `camelCase`.
+* Try to avoid getters and setters. If you have a container class and want a method to get its size, call it `size()`, not `getSize()`.
   * If you can modify the size as well, overloading will help you: `size()` and `size(std::size_t)`.
 
 ### Variables
 
-* Name variables in `snake_case`. Constants, too.
+* Name class member variables in `camelCase`.
+* For other variables, prefer `snake_case`. Constants, too.
 * Prefer static variables with `s_`.
 * Prefix (non-static) member variables with `m_`.
 * Use descriptive names that are not too long.
