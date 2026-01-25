@@ -14,6 +14,7 @@ public:
 
     bool init();
     void update();
+    void endFrame();
     void cleanup();
     bool shouldClose() const;
 

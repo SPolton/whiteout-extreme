@@ -120,7 +120,10 @@ void RenderingSystem::update()
     // now render the triangle
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 3);
+}
 
+void RenderingSystem::endFrame()
+{
     // swap buffers and poll IO events
     glfwSwapBuffers(window);
     glfwPollEvents();
