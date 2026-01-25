@@ -28,7 +28,21 @@ void RacingGame::run()
 
         renderer->update();
         renderer->updateUI();
-        textSystem->update(gameTime.frameCount);
+
+        // Must be called after renderer update, but before text rendering
+        textSystem->update();
+
+        textSystem->renderText(
+            "Rendered Frames: " + std::to_string(gameTime.frameCount),
+            { 100.f, 1150.f, 0.75f },
+            glm::vec3(0.2f, 0.5f, 0.8f)
+        );
+
+        textSystem->renderText(
+            "Physics Frames: " + std::to_string(gameTime.physicsFrameCount),
+            { 100.f, 1100.f, 0.75f },
+            glm::vec3(0.2f, 0.5f, 0.8f)
+        );
 
         // Must be called last
         renderer->endFrame();

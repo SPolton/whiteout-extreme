@@ -96,9 +96,13 @@ charMap Text::initFont(const char* font) {
     return Characters;
 }
 
+void Text::renderText(std::string text, TextPosition pos, glm::vec3 color)
+{
+    renderText(textShader, textVAO, textVBO, text, pos, color, characters);
+}
+
 void Text::renderText(Shader& s, unsigned int VAO, unsigned int VBO,
-    std::string text, float x, float y, float scale,
-    glm::vec3 color, charMap characters
+    std::string text, TextPosition pos, glm::vec3 color, charMap characters
 ) {
     // activate corresponding render state	
     s.use();
@@ -112,11 +116,11 @@ void Text::renderText(Shader& s, unsigned int VAO, unsigned int VBO,
     {
         Character ch = characters[*c];
 
-        float xpos = x + ch.bearing.x * scale;
-        float ypos = y - (ch.size.y - ch.bearing.y) * scale;
+        float xpos = pos.x + ch.bearing.x * pos.scale;
+        float ypos = pos.y - (ch.size.y - ch.bearing.y) * pos.scale;
 
-        float w = ch.size.x * scale;
-        float h = ch.size.y * scale;
+        float w = ch.size.x * pos.scale;
+        float h = ch.size.y * pos.scale;
         // update VBO for each character
         float vertices[6][4] = {
             { xpos,     ypos + h,   0.0f, 0.0f },
@@ -136,25 +140,18 @@ void Text::renderText(Shader& s, unsigned int VAO, unsigned int VBO,
         // render quad
         glDrawArrays(GL_TRIANGLES, 0, 6);
         // now advance cursors for next glyph (note that advance is number of 1/64 pixels)
-        x += (ch.advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64)
+        pos.x += (ch.advance >> 6) * pos.scale; // bitshift by 6 to get value in pixels (2^6 = 64)
     }
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void Text::update() {
-    update(0);
-}
-
-void Text::update(unsigned int frameCount) {
     textShader.use();
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // Make sure text fits on screen!
-    renderText(textShader, textVAO, textVBO, "Hello!",
-        100.f, 1200.f, 1.f, glm::vec3(0.5f, 0.8f, 0.2f), characters);
-
-    renderText(textShader, textVAO, textVBO, "Frames rendered: " + std::to_string(frameCount),
-        100.f, 1100.f, 0.7f, glm::vec3(0.2f, 0.5f, 0.8f), characters);
+    TextPosition pos = { 100.f, 1200.f, 1.f };
+    renderText("Hello!", pos, glm::vec3(0.5f, 0.8f, 0.2f));
 }

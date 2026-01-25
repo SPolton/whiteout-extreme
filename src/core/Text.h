@@ -14,6 +14,12 @@ struct Character {
 
 using charMap = std::map<char, Character>;
 
+struct TextPosition {
+    float x;
+    float y;
+    float scale;
+};
+
 class Text {
 public:
     Text();
@@ -25,8 +31,9 @@ public:
     void initTextVAO(unsigned int* VAO, unsigned int* VBO);
     charMap initFont(const char* font);
 
+    void renderText(std::string text, TextPosition pos, glm::vec3 color);
     void renderText(Shader& s, unsigned int VAO, unsigned int VBO, std::string text,
-        float x, float y, float scale, glm::vec3 color, charMap characters);
+                    TextPosition pos, glm::vec3 color, charMap characters);
 
 private:
     Shader textShader;
