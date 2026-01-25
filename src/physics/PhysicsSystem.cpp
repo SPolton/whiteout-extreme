@@ -89,7 +89,7 @@ void PhysicsSystem::update(double delta_time) {
     physx::PxVec3 objPos = getPos(50);
     if (objPos.y < last_pos.y) {
         std::cout << "x: " << objPos.x << " y: " << objPos.y << " z: " << objPos.z << std::endl;
-        //std::cout << entityList[50].transform->pos.y << std::endl;
+        std::cout << "Entity y: " << entityList[50].transform->pos.y << std::endl;
     }
     last_pos = objPos;
 }
@@ -110,8 +110,19 @@ void PhysicsSystem::initBoxes()
             physx::PxTransform localTran(physx::PxVec3(physx::PxReal(j * 2) - physx::PxReal(size - i), physx::PxReal(i * 2 - 1), 0) * halfLen);
             physx::PxRigidDynamic* body = gPhysics->createRigidDynamic(tran.transform(localTran));
 
-            // Store entity and transform pointers
+            // Store rigid body
             rigidDynamicList.push_back(body);
+
+            // Create and store Transform
+            Transform* transform = new Transform();
+            transformList.push_back(transform);
+
+            // Create and store Entity
+            Entity entity;
+            entity.name = "Box";
+            entity.transform = transform;
+            entity.model = NULL;
+            entityList.push_back(entity);
 
             body->attachShape(*shape);
             physx::PxRigidBodyExt::updateMassAndInertia(*body, 10.0f);
