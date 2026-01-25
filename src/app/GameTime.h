@@ -9,6 +9,7 @@ struct GameTime {
     double currentTime = glfwGetTime();
     double accumulator = 0.0;
     unsigned int frameCount = 0;
+    unsigned int physicsFrameCount = 0;
 
     void update() {
         // New Time Trackers
@@ -17,5 +18,11 @@ struct GameTime {
         currentTime = newTime;
         accumulator += frameTime;
         frameCount++;
+    }
+
+    void physicsUpdate() {
+        accumulator -= dt;
+        t += dt;
+        physicsFrameCount++;
     }
 };
