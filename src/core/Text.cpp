@@ -19,8 +19,8 @@ void Text::initTextVAO(unsigned int* VAO, unsigned int* VBO) {
     glBindVertexArray(0);
 }
 
-std::map<char, Character> Text::initFont(const char* font) {
-    std::map<char, Character> Characters;
+charMap Text::initFont(const char* font) {
+    charMap Characters;
     FT_Library ft;
     if (FT_Init_FreeType(&ft))
 
@@ -78,8 +78,10 @@ std::map<char, Character> Text::initFont(const char* font) {
     return Characters;
 }
 
-void Text::renderText(Shader& s, unsigned int VAO, unsigned int VBO, std::string text, float x, float y, float scale, glm::vec3 color, std::map<char, Character> Characters)
-{
+void Text::renderText(Shader& s, unsigned int VAO, unsigned int VBO,
+    std::string text, float x, float y, float scale,
+    glm::vec3 color, charMap characters
+) {
     // activate corresponding render state	
     s.use();
     glUniform3f(glGetUniformLocation(s.ID, "textColor"), color.x, color.y, color.z);
@@ -90,7 +92,7 @@ void Text::renderText(Shader& s, unsigned int VAO, unsigned int VBO, std::string
     std::string::const_iterator c;
     for (c = text.begin(); c != text.end(); c++)
     {
-        Character ch = Characters[*c];
+        Character ch = characters[*c];
 
         float xpos = x + ch.bearing.x * scale;
         float ypos = y - (ch.size.y - ch.bearing.y) * scale;

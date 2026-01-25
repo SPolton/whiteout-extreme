@@ -11,11 +11,13 @@ struct Character {
     unsigned int advance;   // Offset to next Glyph
 };
 
+using charMap = std::map<char, Character>;
+
 class Text {
 public:
     void initTextVAO(unsigned int* VAO, unsigned int* VBO);
-    std::map<char, Character> initFont(const char* font);
+    charMap initFont(const char* font);
 
     void renderText(Shader& s, unsigned int VAO, unsigned int VBO, std::string text,
-        float x, float y, float scale, glm::vec3 color, std::map<char, Character> Characters);
+        float x, float y, float scale, glm::vec3 color, charMap characters);
 };
