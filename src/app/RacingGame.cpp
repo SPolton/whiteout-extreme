@@ -28,7 +28,7 @@ void RacingGame::run()
 
         // Physics System Loop
         while (gameTime.accumulator >= gameTime.dt) {
-            //physicsSystem->update(gameTime.dt);
+            physicsSystem->update(gameTime.dt);
             gameTime.accumulator -= gameTime.dt;
             gameTime.t += gameTime.dt;
         }

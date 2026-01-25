@@ -31,6 +31,8 @@ private:
     physx::PxMaterial* gMaterial = NULL;
     physx::PxPvd* gPvd = NULL;
 
+    physx::PxVec3 last_pos; // Box position tracker
+
     void initPhysicsSystem();
     void initBoxes();
 };
