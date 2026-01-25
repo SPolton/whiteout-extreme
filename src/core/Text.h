@@ -20,6 +20,7 @@ public:
     Text(std::string vertexPath, std::string fragmentPath);
 
     void update();
+    void update(unsigned int frameCount);
 
     void initTextVAO(unsigned int* VAO, unsigned int* VBO);
     charMap initFont(const char* font);

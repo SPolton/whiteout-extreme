@@ -29,7 +29,7 @@ void RacingGame::run()
 
         renderer->update();
         renderer->updateUI();
-        textSystem->update();
+        textSystem->update(gameTime.frameCount);
 
         // Must be called last
         renderer->endFrame();
