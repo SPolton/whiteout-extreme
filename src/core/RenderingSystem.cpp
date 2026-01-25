@@ -2,6 +2,13 @@
 #include <iostream>
 #include <cmath>
 
+RenderingSystem::RenderingSystem()
+{
+    if (!init()) {
+        throw std::runtime_error("Failed to initialize RenderingSystem!");
+    }
+}
+
 void RenderingSystem::framebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);

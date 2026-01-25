@@ -11,10 +11,8 @@
 
 class RenderingSystem {
 public:
-    RenderingSystem() = default;
-    ~RenderingSystem() = default;
+    RenderingSystem();
 
-    bool init();
     void update();
     void updateUI();
     void endFrame();
@@ -31,7 +29,8 @@ private:
     
     // ImGui wrapper
     std::unique_ptr<ImGuiWrapper> imguiWrapper;
-    
+
+    bool init();
     void processInput();
     bool initShaders();
     bool initGeometry();

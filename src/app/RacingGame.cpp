@@ -16,12 +16,6 @@ void RacingGame::run()
     physicsSystem = std::make_unique<PhysicsSystem>();
     textSystem = std::make_unique<Text>();
 
-    if (!renderer->init())
-    {
-        std::cout << "Failed to initialize rendering system" << std::endl;
-        return;
-    }
-
     while (!renderer->shouldClose())
     {
         gameTime.update();
