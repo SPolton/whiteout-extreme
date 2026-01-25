@@ -19,6 +19,8 @@ public:
     Text();
     Text(std::string vertexPath, std::string fragmentPath);
 
+    void update();
+
     void initTextVAO(unsigned int* VAO, unsigned int* VBO);
     charMap initFont(const char* font);
 

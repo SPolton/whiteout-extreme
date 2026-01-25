@@ -11,7 +11,7 @@ RacingGame::~RacingGame()
 
 void RacingGame::run()
 {
-    // Initialize smart pointers
+    // Initialize smart pointers for game systems
     renderer = std::make_unique<RenderingSystem>();
     physicsSystem = std::make_unique<PhysicsSystem>();
     textSystem = std::make_unique<Text>();
@@ -29,6 +29,9 @@ void RacingGame::run()
 
         renderer->update();
         renderer->updateUI();
+        textSystem->update();
+
+        // Must be called last
         renderer->endFrame();
     }
 }

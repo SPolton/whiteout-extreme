@@ -141,3 +141,14 @@ void Text::renderText(Shader& s, unsigned int VAO, unsigned int VBO,
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
+
+void Text::update() {
+    // Text
+    textShader.use();
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // Make sure text fits on screen!
+    renderText(textShader, textVAO, textVBO, "Hello!", 100.f,
+        1200.f, 1.f, glm::vec3(0.5f, 0.8f, 0.2f), characters);
+}
