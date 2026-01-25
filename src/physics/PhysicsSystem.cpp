@@ -87,11 +87,11 @@ void PhysicsSystem::update(double delta_time) {
     updateTransforms();
 
     physx::PxVec3 objPos = getPos(50);
-    if (objPos.y < last_pos.y) {
+    if (objPos.y < lastBoxPos.y) {
         std::cout << "x: " << objPos.x << " y: " << objPos.y << " z: " << objPos.z << std::endl;
         std::cout << "Entity y: " << entityList[50].transform->pos.y << std::endl;
     }
-    last_pos = objPos;
+    lastBoxPos = objPos;
 }
 
 void PhysicsSystem::initBoxes()
