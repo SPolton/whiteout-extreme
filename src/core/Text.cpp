@@ -1,7 +1,25 @@
 #include "Text.h"
 
 #include <ft2build.h>
+#include <gtc/type_ptr.hpp>
 #include FT_FREETYPE_H
+
+Text::Text()
+    : Text("assets/shaders/shader_text.vert", "assets/shaders/shader_text.frag")
+{
+}
+
+Text::Text(std::string vertexPath, std::string fragmentPath)
+    : textShader(vertexPath, fragmentPath)
+{
+    // Make sure paths point to where shaders are stored!
+    characters = initFont("assets/fonts/Arial.ttf");
+    initTextVAO(&textVAO, &textVBO);
+
+    textModel.modelMatrix = glm::ortho(0.0f, static_cast<float>(1440), 0.0f, static_cast<float>(1440));
+    textShader.use();
+    glUniformMatrix4fv(glGetUniformLocation(textShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(textModel.modelMatrix));
+}
 
 void Text::initTextVAO(unsigned int* VAO, unsigned int* VBO) {
     glGenVertexArrays(1, VAO);
@@ -19,8 +37,8 @@ void Text::initTextVAO(unsigned int* VAO, unsigned int* VBO) {
     glBindVertexArray(0);
 }
 
-std::map<char, Character> Text::initFont(const char* font) {
-    std::map<char, Character> Characters;
+charMap Text::initFont(const char* font) {
+    charMap Characters;
     FT_Library ft;
     if (FT_Init_FreeType(&ft))
 
@@ -78,8 +96,14 @@ std::map<char, Character> Text::initFont(const char* font) {
     return Characters;
 }
 
-void Text::renderText(Shader& s, unsigned int VAO, unsigned int VBO, std::string text, float x, float y, float scale, glm::vec3 color, std::map<char, Character> Characters)
+void Text::renderText(std::string text, TextPosition pos, glm::vec3 color)
 {
+    renderText(textShader, textVAO, textVBO, text, pos, color, characters);
+}
+
+void Text::renderText(Shader& s, unsigned int VAO, unsigned int VBO,
+    std::string text, TextPosition pos, glm::vec3 color, charMap characters
+) {
     // activate corresponding render state	
     s.use();
     glUniform3f(glGetUniformLocation(s.ID, "textColor"), color.x, color.y, color.z);
@@ -90,13 +114,13 @@ void Text::renderText(Shader& s, unsigned int VAO, unsigned int VBO, std::string
     std::string::const_iterator c;
     for (c = text.begin(); c != text.end(); c++)
     {
-        Character ch = Characters[*c];
+        Character ch = characters[*c];
 
-        float xpos = x + ch.bearing.x * scale;
-        float ypos = y - (ch.size.y - ch.bearing.y) * scale;
+        float xpos = pos.x + ch.bearing.x * pos.scale;
+        float ypos = pos.y - (ch.size.y - ch.bearing.y) * pos.scale;
 
-        float w = ch.size.x * scale;
-        float h = ch.size.y * scale;
+        float w = ch.size.x * pos.scale;
+        float h = ch.size.y * pos.scale;
         // update VBO for each character
         float vertices[6][4] = {
             { xpos,     ypos + h,   0.0f, 0.0f },
@@ -116,8 +140,18 @@ void Text::renderText(Shader& s, unsigned int VAO, unsigned int VBO, std::string
         // render quad
         glDrawArrays(GL_TRIANGLES, 0, 6);
         // now advance cursors for next glyph (note that advance is number of 1/64 pixels)
-        x += (ch.advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64)
+        pos.x += (ch.advance >> 6) * pos.scale; // bitshift by 6 to get value in pixels (2^6 = 64)
     }
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void Text::update() {
+    textShader.use();
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // Make sure text fits on screen!
+    TextPosition pos = { 100.f, 1200.f, 1.f };
+    renderText("Hello!", pos, glm::vec3(0.5f, 0.8f, 0.2f));
 }

@@ -2,6 +2,13 @@
 #include <iostream>
 #include <cmath>
 
+RenderingSystem::RenderingSystem()
+{
+    if (!init()) {
+        throw std::runtime_error("Failed to initialize RenderingSystem!");
+    }
+}
+
 void RenderingSystem::framebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
@@ -32,7 +39,7 @@ bool RenderingSystem::init()
         glfwTerminate();
         return false;
     }
-    
+
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
 
@@ -57,6 +64,13 @@ bool RenderingSystem::init()
     {
         std::cout << "Failed to initialize geometry" << std::endl;
         return false;
+    }
+
+    imguiWrapper = std::make_unique<ImGuiWrapper>();
+    if (!imguiWrapper->init(window))
+    {
+        std::cout << "Failed to initialize ImGui" << std::endl;
+        //return false;
     }
 
     return true;
@@ -111,15 +125,22 @@ void RenderingSystem::update()
     glClear(GL_COLOR_BUFFER_BIT);
 
     shader->use();
-    
+
     // Set the uniform color (animated over time)
     float timeValue = static_cast<float>(glfwGetTime());
     float greenValue = (std::sin(timeValue) / 2.0f) + 0.5f;
     shader->setVec4("ourColor", glm::vec4(0.0f, greenValue, 0.0f, 1.0f));
-    
+
     // now render the triangle
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 3);
+}
+
+void RenderingSystem::updateUI()
+{
+    imguiWrapper->beginFrame();
+    imguiWrapper->renderFPS();
+    imguiWrapper->endFrame();
 }
 
 void RenderingSystem::endFrame()
@@ -131,11 +152,16 @@ void RenderingSystem::endFrame()
 
 void RenderingSystem::cleanup()
 {
+    if (imguiWrapper) {
+        imguiWrapper->shutdown();
+        imguiWrapper.reset();
+    }
+
     if (VAO != 0)
         glDeleteVertexArrays(1, &VAO);
     if (VBO != 0)
         glDeleteBuffers(1, &VBO);
-    
+
     shader.reset();
 
     glfwTerminate();
