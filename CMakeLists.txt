@@ -63,6 +63,9 @@ target_include_directories(${APP_NAME} PRIVATE ${LIB_DIR}/stb)
 # OpenGL, GLAD, GLFW, GLM
 include(cmake/gl.cmake)
 
+# Assimp
+include(cmake/in.cmake)
+
 # FreeType, ImGui
 include(cmake/ui.cmake)
 
