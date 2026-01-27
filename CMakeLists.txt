@@ -56,6 +56,10 @@ set(LIB_DIR ${CMAKE_SOURCE_DIR}/${LIB_FOLDER})
 target_include_directories(${APP_NAME} PRIVATE ${LIB_DIR})
 
 # --------------------------------------------------
+# stb https://github.com/nothings/stb
+message(STATUS "Using stb headers in ${LIB_FOLDER}")
+target_include_directories(${APP_NAME} PRIVATE ${LIB_DIR}/stb)
+
 # OpenGL, GLAD, GLFW, GLM
 include(cmake/gl.cmake)
 
