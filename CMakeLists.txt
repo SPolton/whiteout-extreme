@@ -39,6 +39,16 @@ if(MSVC)
 endif()
 
 # --------------------------------------------------
+# Copy assets to build directory
+message(STATUS "Copying assets to build directory")
+add_custom_command(TARGET ${APP_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/assets
+        $<TARGET_FILE_DIR:${APP_NAME}>/assets
+    COMMENT "Copying assets to build directory"
+)
+
+# --------------------------------------------------
 # Third-party libraries folder
 include(FetchContent)
 set(LIB_FOLDER libraries)
@@ -121,7 +131,22 @@ if(MSVC AND TARGET glm)
     set_property(TARGET glm PROPERTY MSVC_RUNTIME_LIBRARY ${MT_CONFIG})
 endif()
 
-target_link_libraries(${APP_NAME} PRIVATE glm::glm)
+target_link_libraries(${APP_NAME} PRIVATE glm)
+target_include_directories(${APP_NAME} PRIVATE ${glm_SOURCE_DIR}/glm)
+
+# --------------------------------------------------
+# FreeType
+message(STATUS "Using FreeType via FetchContent")
+FetchContent_Declare(
+    freetype
+    GIT_REPOSITORY https://gitlab.freedesktop.org/freetype/freetype
+    GIT_TAG VER-2-14-1
+)
+FetchContent_MakeAvailable(freetype)
+
+target_link_libraries(${APP_NAME} PRIVATE freetype)
+target_include_directories(${APP_NAME} PRIVATE ${freetype_SOURCE_DIR}/include)
+add_definitions(-DIMGUI_DISABLE_FREETYPE)
 
 # --------------------------------------------------
 # ImGui

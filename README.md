@@ -58,9 +58,10 @@ Follow these steps to set up NVIDIA PhysX for physics simulation:
 ### Dependencies
 
 Most dependencies are automatically fetched by CMake:
+- **GLAD** for gl 4.6 - OpenGL loader (included in `libraries/`)
 - **GLFW 3.4** - Window and input management (fetched automatically)
 - **GLM 1.0.3** - Mathematics library (fetched automatically)
-- **GLAD** - OpenGL loader (included in `libraries/`)
+- **Freetype 2.14.1** - Font rendering library (fetched automatically)
 - **ImGui 1.92.5** - UI library (fetched automatically)
 - **PhysX 5.6.1** - Physics engine (manual setup required)
 

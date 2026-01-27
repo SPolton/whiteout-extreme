@@ -1,19 +1,13 @@
 #include "RenderingSystem.h"
 #include <iostream>
+#include <cmath>
 
-const char* vertexShaderSource = "#version 330 core\n"
-    "layout (location = 0) in vec3 aPos;\n"
-    "void main()\n"
-    "{\n"
-    "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-    "}\0";
-
-const char* fragmentShaderSource = "#version 330 core\n"
-    "out vec4 FragColor;\n"
-    "void main()\n"
-    "{\n"
-    "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-    "}\n\0";
+RenderingSystem::RenderingSystem()
+{
+    if (!init()) {
+        throw std::runtime_error("Failed to initialize RenderingSystem!");
+    }
+}
 
 void RenderingSystem::framebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
@@ -45,7 +39,7 @@ bool RenderingSystem::init()
         glfwTerminate();
         return false;
     }
-    
+
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
 
@@ -72,59 +66,35 @@ bool RenderingSystem::init()
         return false;
     }
 
+    imguiWrapper = std::make_unique<ImGuiWrapper>();
+    if (!imguiWrapper->init(window))
+    {
+        std::cout << "Failed to initialize ImGui" << std::endl;
+        //return false;
+    }
+
     return true;
 }
 
 bool RenderingSystem::initShaders()
 {
-    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-
-    int success;
-    char infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success)
+    try
     {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+        shader = std::make_unique<Shader>("assets/shaders/shader.vert", "assets/shaders/shader.frag");
+        std::cout << "Shaders loaded successfully" << std::endl;
+        return true;
+    }
+    catch (const std::exception& e)
+    {
+        std::cout << "Failed to load shaders: " << e.what() << std::endl;
         return false;
     }
-
-    unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-        return false;
-    }
-
-    shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success)
-    {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-        return false;
-    }
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-
-    return true;
 }
 
 bool RenderingSystem::initGeometry()
 {
     float vertices[] = {
+        // positions only (shader.frag uses uniform color)
         -0.5f, -0.5f, 0.0f,
          0.5f, -0.5f, 0.0f,
          0.0f,  0.5f, 0.0f
@@ -137,6 +107,7 @@ bool RenderingSystem::initGeometry()
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
+    // position attribute
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
@@ -145,29 +116,53 @@ bool RenderingSystem::initGeometry()
     return true;
 }
 
-void RenderingSystem::loop()
+void RenderingSystem::update()
 {
     processInput();
 
+    // clear the colorbuffer
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    glUseProgram(shaderProgram);
+    shader->use();
+
+    // Set the uniform color (animated over time)
+    float timeValue = static_cast<float>(glfwGetTime());
+    float greenValue = (std::sin(timeValue) / 2.0f) + 0.5f;
+    shader->setVec4("ourColor", glm::vec4(0.0f, greenValue, 0.0f, 1.0f));
+
+    // now render the triangle
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 3);
+}
 
+void RenderingSystem::updateUI()
+{
+    imguiWrapper->beginFrame();
+    imguiWrapper->renderFPS();
+    imguiWrapper->endFrame();
+}
+
+void RenderingSystem::endFrame()
+{
+    // swap buffers and poll IO events
     glfwSwapBuffers(window);
     glfwPollEvents();
 }
 
 void RenderingSystem::cleanup()
 {
+    if (imguiWrapper) {
+        imguiWrapper->shutdown();
+        imguiWrapper.reset();
+    }
+
     if (VAO != 0)
         glDeleteVertexArrays(1, &VAO);
     if (VBO != 0)
         glDeleteBuffers(1, &VBO);
-    if (shaderProgram != 0)
-        glDeleteProgram(shaderProgram);
+
+    shader.reset();
 
     glfwTerminate();
 }

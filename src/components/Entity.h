@@ -2,6 +2,8 @@
 
 #include <string>
 #include <vector>
+#include "Transform.h"
+#include "Model.h"
 
 enum class PhysType {
     None,
@@ -24,9 +26,9 @@ public:
     std::string name = "unnamed_entity";
     PhysType physType = PhysType::None;
     DrawType drawType = DrawType::Mesh;
-    //Transform* transform;
-    //std::vector<Transform*> localTransforms;
-    //Model* model;
+    Transform* transform;
+    std::vector<Transform*> localTransforms;
+    Model* model;
     //PlayerProperties* playerProperties;
     int nbChildEntities;
 };
