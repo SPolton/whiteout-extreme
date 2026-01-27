@@ -41,7 +41,13 @@ void RacingGame::run()
         textSystem->renderText(
             "Physics Frames: " + std::to_string(gameTime.physicsFrameCount),
             { 100.f, 1100.f, 0.75f },
-            glm::vec3(0.2f, 0.5f, 0.8f)
+            glm::vec3(0.5f, 0.2f, 0.8f)
+        );
+
+        textSystem->renderText(
+            "Game FPS: " + std::to_string(1 / gameTime.fps),
+            { 100.f, 1050.f, 0.75f },
+            glm::vec3(0.8f, 0.8f, 0.2f)
         );
 
         // Must be called last

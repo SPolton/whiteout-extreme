@@ -10,6 +10,7 @@ struct GameTime {
     double accumulator = 0.0;
     unsigned int frameCount = 0;
     unsigned int physicsFrameCount = 0;
+    double fps = 0.0;
 
     void update() {
         // New Time Trackers
@@ -18,11 +19,24 @@ struct GameTime {
         currentTime = newTime;
         accumulator += frameTime;
         frameCount++;
+
+        updateFPS(frameTime);
     }
 
     void physicsUpdate() {
         accumulator -= dt;
         t += dt;
         physicsFrameCount++;
+    }
+
+private:
+    double fpsDelta = 0.0;
+
+    void updateFPS(double frameTime) {
+        fpsDelta += dt;
+        if (fpsDelta >= 0.2) {
+            fps = frameTime;
+            fpsDelta = 0.0;
+        }
     }
 };
