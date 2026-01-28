@@ -5,6 +5,7 @@ FetchContent_Declare(
     freetype
     GIT_REPOSITORY https://gitlab.freedesktop.org/freetype/freetype
     GIT_TAG VER-2-14-1
+    GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(freetype)
 
@@ -19,6 +20,7 @@ FetchContent_Declare(
     imgui
     GIT_REPOSITORY https://github.com/ocornut/imgui.git
     GIT_TAG v1.92.5
+    GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(imgui)
 

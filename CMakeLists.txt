@@ -50,10 +50,13 @@ add_custom_command(TARGET ${APP_NAME} POST_BUILD
 
 # --------------------------------------------------
 # Third-party libraries folder
-include(FetchContent)
 set(LIB_FOLDER libraries)
 set(LIB_DIR ${CMAKE_SOURCE_DIR}/${LIB_FOLDER})
 target_include_directories(${APP_NAME} PRIVATE ${LIB_DIR})
+
+include(FetchContent)
+set(FETCHCONTENT_QUIET ON)
+set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
 
 # --------------------------------------------------
 # stb https://github.com/nothings/stb

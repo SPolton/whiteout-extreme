@@ -6,7 +6,7 @@ target_link_libraries(${APP_NAME} PRIVATE OpenGL::GL)
 
 # --------------------------------------------------
 # GLAD (OpenGL function loader)
-# Note: GLAD v2.x does not provide a pre-built CMake target
+# Note: GLAD does not provide a pre-built CMake target
 # Generate GLAD files manually from https://glad.dav1d.de/
 message(STATUS "Using GLAD in ${LIB_FOLDER}")
 
@@ -45,6 +45,7 @@ FetchContent_Declare(
     glfw
     GIT_REPOSITORY https://github.com/glfw/glfw.git
     GIT_TAG 3.4
+    GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(glfw)
 
@@ -66,6 +67,7 @@ FetchContent_Declare(
     glm
     GIT_REPOSITORY https://github.com/g-truc/glm.git
     GIT_TAG 1.0.3
+    GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(glm)
 
