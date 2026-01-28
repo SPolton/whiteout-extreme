@@ -17,7 +17,16 @@
 #include <fmt/format.h>
 #include <vivid/vivid.h>
 
-
+/// Options:
+/// - trace (grey)
+/// - debug (blue)
+/// - info (green)
+/// - warning (yellow)
+/// - error (red)
+/// - fatal (light red)
+///
+/// Usage example:
+/// - logger::debug("Elapsed time: {0:.2f}", 1.23);
 namespace logger {
     namespace ansi = vivid::ansi;
 
@@ -30,6 +39,11 @@ namespace logger {
             ansi::reset,
             fmt::vformat(format_str, fmt::make_format_args(std::forward<Args>(args)...))
         );
+    }
+
+    template <typename S, typename... Args>
+    void trace(const S& format_str, Args&&... args) {
+        _log("TRACE", ansi::subtleText, format_str, args...);
     }
 
     template <typename S, typename... Args>
@@ -54,6 +68,19 @@ namespace logger {
     template <typename S, typename... Args>
     void error(const S& format_str, Args&&... args) {
         _log("ERROR", ansi::red, format_str, args...);
+    }
+    template <typename S, typename... Args>
+    void fatal(const S& format_str, Args&&... args) {
+        _log("FATAL", ansi::lightRed, format_str, args...);
+    }
+
+    inline void test_logger_messages() {
+        trace("This is {:.2f} trace message", 1.0);
+        debug("This is {:.2f} debug message", 2.0);
+        info("This is {:.2f} info message", 3.0);
+        warning("This is {:.2f} warning message", 4.0);
+        error("This is {:.2f} error message", 5.0);
+        fatal("This is {:.2f} fatal message", 6.0);
     }
 
 } // namespace logger
