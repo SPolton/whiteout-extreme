@@ -4,16 +4,6 @@
 cmake_minimum_required(VERSION 3.20)
 
 # --------------------------------------------------
-# Use static runtime library to match PhysX
-# Our PhysX is built with /MT (Release) and /MTd (Debug)
-# This MUST be set BEFORE the project() command to affect all dependencies
-set(MT_CONFIG "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-if(MSVC)
-    set(CMAKE_MSVC_RUNTIME_LIBRARY ${MT_CONFIG})
-    message(STATUS "Using static runtime library (/MT for Release, /MTd for Debug)")
-endif()
-
-# --------------------------------------------------
 # C++ standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -22,6 +12,15 @@ set(OpenGL_GL_PREFERENCE GLVND)
 
 set(APP_NAME "WhiteoutExtreme")
 project(${APP_NAME} LANGUAGES C CXX)
+
+# --------------------------------------------------
+# Use static runtime library to match PhysX
+# Our PhysX is built with /MT (Release) and /MTd (Debug)
+set(MT_CONFIG "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+if(MSVC)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY ${MT_CONFIG})
+    message(STATUS "Using static runtime library (/MT for Release, /MTd for Debug)")
+endif()
 
 # --------------------------------------------------
 # Add source to this project's executable
