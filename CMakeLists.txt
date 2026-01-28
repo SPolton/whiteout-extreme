@@ -63,6 +63,9 @@ set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
 message(STATUS "Using stb headers in ${LIB_FOLDER}")
 target_include_directories(${APP_NAME} PRIVATE ${LIB_DIR}/stb)
 
+# fmt.dev, vivid
+include(cmake/text.cmake)
+
 # OpenGL, GLAD, GLFW, GLM
 include(cmake/gl.cmake)
 
