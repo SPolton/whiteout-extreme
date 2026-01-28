@@ -1,35 +1,35 @@
 // main.cpp : Defines the entry point for the application.
 //
 
-#include <iostream>
-
 // Force discrete GPU on hybrid graphics systems (NVIDIA/AMD)
 #include "core/PreferDiscreteGPU.h"
 
 #include "app/RacingGame.h"
+#include "utils/logger.h"
 
 int main()
 {
-    std::cout << "Hello Racing Game" << std::endl;
+    logger::info("Starting main");
 
     try
     {
+        logger::info("Hello Racing Game");
         RacingGame game;
         game.run();
     }
     catch (const std::runtime_error& e)
     {
-        std::cout << "Runtime error: " << e.what() << std::endl;
+        logger::error("Runtime error: {}", e.what());
         return -1;
     }
     catch (const std::exception& e)
     {
-        std::cout << "Exception caught: " << e.what() << std::endl;
+        logger::error("Exception caught: {}", e.what());
         return -1;
     }
     catch (...)
     {
-        std::cout << "Unknown exception caught" << std::endl;
+        logger::error("Unknown exception caught");
         return -1;
     }
 
