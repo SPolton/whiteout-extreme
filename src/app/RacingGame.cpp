@@ -1,6 +1,6 @@
 ﻿
 
-#include "RacingGame.h"
+#include "RacingGame.hpp"
 #include "physics/PhysicsTest.hpp"
 
 void RacingGame::run()

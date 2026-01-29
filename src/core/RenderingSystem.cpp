@@ -1,4 +1,4 @@
-#include "RenderingSystem.h"
+#include "RenderingSystem.hpp"
 #include "utils/logger.h"
 
 #include <iostream>

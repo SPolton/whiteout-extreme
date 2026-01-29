@@ -1,7 +1,7 @@
 ﻿#pragma once
 
-#include "app/GameTime.h"
-#include "core/RenderingSystem.h"
+#include "app/GameTime.hpp"
+#include "core/RenderingSystem.hpp"
 #include "core/Text.h"
 #include "physics/PhysicsSystem.hpp"
 
