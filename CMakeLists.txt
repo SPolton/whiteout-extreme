@@ -27,6 +27,7 @@ endif()
 message(STATUS "Adding source files to executable")
 file(GLOB_RECURSE GAME_SRC CONFIGURE_DEPENDS
     src/*.cpp
+    src/*.hpp
     src/*.h
 )
 add_executable(${APP_NAME} ${GAME_SRC})
