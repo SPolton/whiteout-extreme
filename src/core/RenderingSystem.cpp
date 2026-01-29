@@ -1,4 +1,6 @@
 #include "RenderingSystem.h"
+#include "utils/logger.h"
+
 #include <iostream>
 #include <cmath>
 
@@ -24,7 +26,7 @@ bool RenderingSystem::init()
 {
     if (!glfwInit())
     {
-        std::cout << "Failed to initialize GLFW" << std::endl;
+        logger::error("Failed to initialize GLFW");
         return false;
     }
 
@@ -45,18 +47,18 @@ bool RenderingSystem::init()
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
-        std::cout << "Failed to initialize GLAD" << std::endl;
+        logger::error("Failed to initialize GLAD");
         return false;
     }
 
-    std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
-    std::cout << "OpenGL Renderer: " << glGetString(GL_RENDERER) << std::endl;
+    logger::info("OpenGL Version: {0}", (const char*)glGetString(GL_VERSION));
+    logger::info("OpenGL Renderer: {0}", (const char*)glGetString(GL_RENDERER));
 
     glViewport(0, 0, 800, 600);
 
     if (!initShaders())
     {
-        std::cout << "Failed to initialize shaders" << std::endl;
+        logger::error("Failed to initialize ImGui");
         return false;
     }
 
@@ -86,7 +88,7 @@ bool RenderingSystem::initShaders()
     }
     catch (const std::exception& e)
     {
-        std::cout << "Failed to load shaders: " << e.what() << std::endl;
+        logger::error("Failed to load shaders: {0}", e.what());
         return false;
     }
 }
