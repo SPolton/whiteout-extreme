@@ -13,23 +13,22 @@ int main()
 
     try
     {
-        logger::info("Hello Racing Game");
         RacingGame game;
         game.run();
     }
     catch (const std::runtime_error& e)
     {
-        logger::error("Runtime error: {}", e.what());
+        logger::fatal("Runtime error: {}", e.what());
         return -1;
     }
     catch (const std::exception& e)
     {
-        logger::error("Exception caught: {}", e.what());
+        logger::fatal("Exception caught: {}", e.what());
         return -1;
     }
     catch (...)
     {
-        logger::error("Unknown exception caught");
+        logger::fatal("Unknown exception caught");
         return -1;
     }
 
