@@ -271,5 +271,54 @@ CPU_Geometry ShapeGenerator::Triangle()
         glm::vec3(0.0f, 0.0f, 1.0f)
     };
     
+    geom.uvs = {
+        glm::vec2(0.0f, 0.0f),  // Bottom-left
+        glm::vec2(1.0f, 0.0f),  // Bottom-right
+        glm::vec2(0.5f, 1.0f)   // Top-center
+    };
+    
+    return geom;
+}
+
+CPU_Geometry ShapeGenerator::Square()
+{
+    CPU_Geometry geom{};
+    
+    geom.positions = {
+        glm::vec3(-0.5f, -0.5f, 0.0f),  // Bottom-left
+        glm::vec3( 0.5f, -0.5f, 0.0f),  // Bottom-right
+        glm::vec3( 0.5f,  0.5f, 0.0f),  // Top-right
+        glm::vec3( 0.5f,  0.5f, 0.0f),  // Top-right
+        glm::vec3(-0.5f,  0.5f, 0.0f),  // Top-left
+        glm::vec3(-0.5f, -0.5f, 0.0f)   // Bottom-left
+    };
+    
+    geom.colors = {
+        glm::vec3(1.0f, 0.0f, 0.0f),  // Red
+        glm::vec3(0.0f, 1.0f, 0.0f),  // Green
+        glm::vec3(0.0f, 0.0f, 1.0f),  // Blue
+        glm::vec3(0.0f, 0.0f, 1.0f),  // Blue
+        glm::vec3(1.0f, 1.0f, 0.0f),  // Yellow
+        glm::vec3(1.0f, 0.0f, 0.0f)   // Red
+    };
+    
+    geom.normals = {
+        glm::vec3(0.0f, 0.0f, 1.0f),
+        glm::vec3(0.0f, 0.0f, 1.0f),
+        glm::vec3(0.0f, 0.0f, 1.0f),
+        glm::vec3(0.0f, 0.0f, 1.0f),
+        glm::vec3(0.0f, 0.0f, 1.0f),
+        glm::vec3(0.0f, 0.0f, 1.0f)
+    };
+    
+    geom.uvs = {
+        glm::vec2(0.0f, 0.0f),  // Bottom-left
+        glm::vec2(1.0f, 0.0f),  // Bottom-right
+        glm::vec2(1.0f, 1.0f),  // Top-right
+        glm::vec2(1.0f, 1.0f),  // Top-right
+        glm::vec2(0.0f, 1.0f),  // Top-left
+        glm::vec2(0.0f, 0.0f)   // Bottom-left
+    };
+    
     return geom;
 }

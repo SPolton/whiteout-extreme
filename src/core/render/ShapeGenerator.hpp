@@ -10,4 +10,6 @@ namespace ShapeGenerator
     CPU_Geometry UnitCube();
 
     CPU_Geometry Triangle();
+
+    CPU_Geometry Square();
 };
