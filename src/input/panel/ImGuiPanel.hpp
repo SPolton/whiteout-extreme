@@ -24,8 +24,8 @@ public:
     float animationSpeed = 1.0;
     
     // Camera control settings
-    float camSpeed = 50.0f;
-    float camZoomSpeed = 5.0f;
+    float camSpeed = 2.0f;
+    float camZoomSpeed = 10.0f;
 
     // Window settings
     bool showDebugWindow = true;

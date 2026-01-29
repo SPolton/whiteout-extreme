@@ -75,7 +75,7 @@ void ImGuiPanel::renderCameraInfo()
         ImGui::Text("Aspect: %.2f", cameraStats.aspect);
         
         ImGui::Separator();
-        ImGui::SliderFloat("Camera Speed", &camSpeed, 1.0f, 200.0f);
+        ImGui::SliderFloat("Camera Speed", &camSpeed, 1.0f, 10.0f);
         ImGui::SliderFloat("Zoom Speed", &camZoomSpeed, 0.1f, 20.0f);
     }
 }
