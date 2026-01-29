@@ -1,13 +1,7 @@
 ﻿
+
 #include "RacingGame.h"
 #include "physics/PhysicsTest.h"
-
-RacingGame::~RacingGame()
-{
-    if (renderer) {
-        renderer->cleanup();
-    }
-}
 
 void RacingGame::run()
 {

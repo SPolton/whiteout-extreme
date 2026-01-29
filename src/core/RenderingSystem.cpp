@@ -11,9 +11,21 @@ RenderingSystem::RenderingSystem()
     }
 }
 
-void RenderingSystem::framebufferSizeCallback(GLFWwindow* window, int width, int height)
+RenderingSystem::~RenderingSystem()
 {
-    glViewport(0, 0, width, height);
+    // ImGui cleanup via wrapper
+    if (imguiWrapper) {
+        imguiWrapper->shutdown();
+    }
+
+    if (VAO != 0)
+        glDeleteVertexArrays(1, &VAO);
+    if (VBO != 0)
+        glDeleteBuffers(1, &VBO);
+
+    shader.reset();
+
+    glfwTerminate();
 }
 
 void RenderingSystem::processInput()
@@ -149,23 +161,6 @@ void RenderingSystem::endFrame()
     // swap buffers and poll IO events
     glfwSwapBuffers(window);
     glfwPollEvents();
-}
-
-void RenderingSystem::cleanup()
-{
-    if (imguiWrapper) {
-        imguiWrapper->shutdown();
-        imguiWrapper.reset();
-    }
-
-    if (VAO != 0)
-        glDeleteVertexArrays(1, &VAO);
-    if (VBO != 0)
-        glDeleteBuffers(1, &VBO);
-
-    shader.reset();
-
-    glfwTerminate();
 }
 
 bool RenderingSystem::shouldClose() const

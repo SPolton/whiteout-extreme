@@ -13,11 +13,11 @@
 class RenderingSystem {
 public:
     RenderingSystem();
+    ~RenderingSystem();
 
     void update();
     void updateUI();
     void endFrame();
-    void cleanup();
     bool shouldClose() const;
 
 private:
