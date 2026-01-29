@@ -2,7 +2,7 @@
 //
 
 // Force discrete GPU on hybrid graphics systems (NVIDIA/AMD)
-#include "core/PreferDiscreteGPU.h"
+#include "utils/prefer_discrete_GPU.h"
 
 #include "app/RacingGame.h"
 #include "utils/logger.h"
