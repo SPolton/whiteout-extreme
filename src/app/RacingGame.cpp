@@ -27,7 +27,7 @@ void RacingGame::run()
             gameTime.physicsUpdate();
         }
 
-        renderer->update();
+        renderer->update(gameTime.fps);
         renderer->updateUI();
 
         // Must be called after renderer update, but before text rendering

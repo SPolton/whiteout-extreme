@@ -19,10 +19,26 @@ RenderingSystem::~RenderingSystem()
     }
 }
 
-void RenderingSystem::processInput()
+void RenderingSystem::processInput(float deltaTime)
 {
     if (glfwGetKey(window->getGLFWwindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window->getGLFWwindow(), true);
+
+    // Mouse camera controls
+    auto const cursorPosition = inputManager->CursorPosition();
+
+    if (cursorPositionIsSetOnce == true) {
+        if (inputManager->IsMouseButtonDown(GLFW_MOUSE_BUTTON_RIGHT) == true)
+        {
+            float const aspectRatio = static_cast<float>(window->getWidth()) / static_cast<float>(window->getHeight());
+            auto const deltaPosition = cursorPosition - previousCursorPosition;
+            camera->adjustTheta(-static_cast<float>(deltaPosition.x) * deltaTime * imguiPanel->camSpeed * (1 / aspectRatio));
+            camera->adjustPhi(-static_cast<float>(deltaPosition.y) * deltaTime * imguiPanel->camSpeed);
+        }
+    }
+
+    cursorPositionIsSetOnce = true;
+    previousCursorPosition = cursorPosition;
 }
 
 bool RenderingSystem::init()
@@ -65,6 +81,15 @@ bool RenderingSystem::init()
     imguiPanel = std::make_unique<ImGuiPanel>();
     logger::info("ImGui initialized");
 
+    // Initialize input manager with callbacks
+    inputManager = std::make_shared<InputManager>(
+        [this](int const width, int const height)->void { onResize(width, height); },
+        [this](double const xOffset, double const yOffset)->void { onMouseWheelChange(xOffset, yOffset); }
+    );
+    
+    window->setCallbacks(inputManager);
+    logger::info("Input manager initialized");
+
     // Create shader using ShaderProgram (RAII)
     try
     {
@@ -86,15 +111,14 @@ bool RenderingSystem::init()
     
     // Generate triangle using ShapeGenerator
     *triangleCPUData = ShapeGenerator::Triangle();
-    
+
     // Upload to GPU
     triangleGeometry->Update(*triangleCPUData);
     
     logger::info("Geometry initialized");
 
     // Create camera
-    camera = std::make_unique<Camera>();
-    camera->isCamera2D = true; // Simple 2D setup for now
+    camera = std::make_unique<TurnTableCamera>();
     
     logger::info("Camera initialized");
 
@@ -138,19 +162,13 @@ glm::mat4 RenderingSystem::getProjectionMatrix() const
 {
     float const aspectRatio = static_cast<float>(window->getWidth()) / static_cast<float>(window->getHeight());
     
-    // Use orthographic projection for simple 2D rendering
-    if (camera->isCamera2D) {
-        float scale = camera->getScale();
-        return glm::ortho(-scale * aspectRatio, scale * aspectRatio, -scale, scale, -1.0f, 1.0f);
-    }
-    
-    // Perspective projection
+    // Perspective projection for TurnTableCamera
     return glm::perspective(camera->getFOV(), aspectRatio, 0.1f, 100.0f);
 }
 
-void RenderingSystem::update()
+void RenderingSystem::update(float deltaTime)
 {
-    processInput();
+    processInput(deltaTime);
 
     // Get settings from panel
     glm::vec3 bgColor = imguiPanel->getBackgroundColor();
@@ -165,6 +183,10 @@ void RenderingSystem::update()
     } else {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
+    
+    // Update camera stats for UI
+    imguiPanel->cameraStats = camera->getStats();
+    imguiPanel->cameraStats.aspect = static_cast<float>(window->getWidth()) / static_cast<float>(window->getHeight());
     
     // Render the scene
     render();
@@ -193,4 +215,16 @@ void RenderingSystem::endFrame()
 bool RenderingSystem::shouldClose() const
 {
     return window->shouldClose();
+}
+
+void RenderingSystem::onResize(int width, int height)
+{
+    glViewport(0, 0, width, height);
+    logger::info("Window resized to {}x{}", width, height);
+}
+
+void RenderingSystem::onMouseWheelChange(double xOffset, double yOffset)
+{
+    float scroll = -static_cast<float>(yOffset) * imguiPanel->camZoomSpeed * 0.016f;
+    camera->adjustRadius(scroll);
 }
