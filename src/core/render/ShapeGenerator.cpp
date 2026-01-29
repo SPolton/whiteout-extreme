@@ -167,6 +167,12 @@ void positiveZFace(std::vector<glm::vec3> const &originQuad, CPU_Geometry &geom)
     geom.normals.emplace_back(0.0, 0.0, 1.0);
     geom.normals.emplace_back(0.0, 0.0, 1.0);
     geom.normals.emplace_back(0.0, 0.0, 1.0);
+    geom.uvs.emplace_back(0.0f, 1.0f);
+    geom.uvs.emplace_back(0.0f, 0.0f);
+    geom.uvs.emplace_back(1.0f, 1.0f);
+    geom.uvs.emplace_back(0.0f, 0.0f);
+    geom.uvs.emplace_back(1.0f, 0.0f);
+    geom.uvs.emplace_back(1.0f, 1.0f);
 }
 
 void positiveXFace(std::vector<glm::vec3> const &originQuad, CPU_Geometry &geom)
@@ -183,6 +189,12 @@ void positiveXFace(std::vector<glm::vec3> const &originQuad, CPU_Geometry &geom)
     geom.normals.emplace_back(glm::vec3(1.0, 0.0, 0.0));
     geom.normals.emplace_back(glm::vec3(1.0, 0.0, 0.0));
     geom.normals.emplace_back(glm::vec3(1.0, 0.0, 0.0));
+    geom.uvs.emplace_back(0.0f, 1.0f);
+    geom.uvs.emplace_back(0.0f, 0.0f);
+    geom.uvs.emplace_back(1.0f, 1.0f);
+    geom.uvs.emplace_back(0.0f, 0.0f);
+    geom.uvs.emplace_back(1.0f, 0.0f);
+    geom.uvs.emplace_back(1.0f, 1.0f);
 }
 
 void negativeZFace(std::vector<glm::vec3> const &originQuad, CPU_Geometry &geom)
@@ -199,6 +211,12 @@ void negativeZFace(std::vector<glm::vec3> const &originQuad, CPU_Geometry &geom)
     geom.normals.emplace_back(glm::vec3(0.0, 0.0, -1.0));
     geom.normals.emplace_back(glm::vec3(0.0, 0.0, -1.0));
     geom.normals.emplace_back(glm::vec3(0.0, 0.0, -1.0));
+    geom.uvs.emplace_back(0.0f, 1.0f);
+    geom.uvs.emplace_back(0.0f, 0.0f);
+    geom.uvs.emplace_back(1.0f, 1.0f);
+    geom.uvs.emplace_back(0.0f, 0.0f);
+    geom.uvs.emplace_back(1.0f, 0.0f);
+    geom.uvs.emplace_back(1.0f, 1.0f);
 }
 
 void negativeXFace(std::vector<glm::vec3> const &originQuad, CPU_Geometry &geom)
@@ -215,6 +233,12 @@ void negativeXFace(std::vector<glm::vec3> const &originQuad, CPU_Geometry &geom)
     geom.normals.emplace_back(glm::vec3(-1.0, 0.0, 0.0));
     geom.normals.emplace_back(glm::vec3(-1.0, 0.0, 0.0));
     geom.normals.emplace_back(glm::vec3(-1.0, 0.0, 0.0));
+    geom.uvs.emplace_back(0.0f, 1.0f);
+    geom.uvs.emplace_back(0.0f, 0.0f);
+    geom.uvs.emplace_back(1.0f, 1.0f);
+    geom.uvs.emplace_back(0.0f, 0.0f);
+    geom.uvs.emplace_back(1.0f, 0.0f);
+    geom.uvs.emplace_back(1.0f, 1.0f);
 }
 
 void positiveYFace(std::vector<glm::vec3> const &originQuad, CPU_Geometry &geom)
@@ -231,6 +255,12 @@ void positiveYFace(std::vector<glm::vec3> const &originQuad, CPU_Geometry &geom)
     geom.normals.emplace_back(glm::vec3(0.0, 1.0, 0.0));
     geom.normals.emplace_back(glm::vec3(0.0, 1.0, 0.0));
     geom.normals.emplace_back(glm::vec3(0.0, 1.0, 0.0));
+    geom.uvs.emplace_back(0.0f, 1.0f);
+    geom.uvs.emplace_back(0.0f, 0.0f);
+    geom.uvs.emplace_back(1.0f, 1.0f);
+    geom.uvs.emplace_back(0.0f, 0.0f);
+    geom.uvs.emplace_back(1.0f, 0.0f);
+    geom.uvs.emplace_back(1.0f, 1.0f);
 }
 
 void negativeYFace(std::vector<glm::vec3> const &originQuad, CPU_Geometry &geom)
@@ -247,6 +277,12 @@ void negativeYFace(std::vector<glm::vec3> const &originQuad, CPU_Geometry &geom)
     geom.normals.emplace_back(glm::vec3(0.0, -1.0, 0.0));
     geom.normals.emplace_back(glm::vec3(0.0, -1.0, 0.0));
     geom.normals.emplace_back(glm::vec3(0.0, -1.0, 0.0));
+    geom.uvs.emplace_back(0.0f, 1.0f);
+    geom.uvs.emplace_back(0.0f, 0.0f);
+    geom.uvs.emplace_back(1.0f, 1.0f);
+    geom.uvs.emplace_back(0.0f, 0.0f);
+    geom.uvs.emplace_back(1.0f, 0.0f);
+    geom.uvs.emplace_back(1.0f, 1.0f);
 }
 
 CPU_Geometry ShapeGenerator::triangle_2D()
@@ -280,7 +316,7 @@ CPU_Geometry ShapeGenerator::triangle_2D()
     return geom;
 }
 
-CPU_Geometry ShapeGenerator::Square()
+CPU_Geometry ShapeGenerator::square_2D()
 {
     CPU_Geometry geom{};
     
