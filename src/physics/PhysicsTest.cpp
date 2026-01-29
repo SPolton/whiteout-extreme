@@ -1,4 +1,4 @@
-#include "PhysicsTest.h"
+#include "PhysicsTest.hpp"
 #include "utils/logger.h"
 
 PhysicsTest::PhysicsTest() {

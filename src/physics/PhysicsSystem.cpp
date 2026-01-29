@@ -1,4 +1,4 @@
-#include "PhysicsSystem.h"
+#include "PhysicsSystem.hpp"
 #include "utils/logger.h"
 
 PhysicsSystem::PhysicsSystem() {
