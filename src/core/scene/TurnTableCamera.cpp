@@ -65,7 +65,7 @@ void TurnTableCamera::updateViewMatrix()
     {
         _isDirty = false;
 
-        auto const hRot = glm::rotate(glm::mat4(1.0f), _theta, math::transform::UpVec3);
+        auto const hRot = glm::rotate(glm::mat4(1.0f), _theta, _up);
         auto const vRot = glm::rotate(glm::mat4(1.0f), _phi, math::transform::RightVec3);
 
         _position = glm::vec3(hRot * vRot * glm::vec4{math::transform::ForwardVec3, 0.0f}) * _distance;

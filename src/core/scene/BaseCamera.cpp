@@ -9,13 +9,19 @@ BaseCamera::BaseCamera()
 BaseCamera::BaseCamera(float fov, float scale)
     : _fov(fov)
     , _scale(scale)
+    , _radius(3.0f)
+    , _theta(0.0f)
+    , _phi(0.0f)
+    , _up(0.0f, 1.0f, 0.0f)
+    , _target(0.0f)
+    , _position(0.0f, 0.0f, 1.0f)
     , _isDirty(true)
 {
 }
 
 void BaseCamera::adjustFOV(float deltaFOV)
 {
-    float const newFOV = clampValue(_fov + deltaFOV, 1.0f, 180.0f);
+    float const newFOV = std::clamp(_fov + deltaFOV, 1.0f, 180.0f);
     if (newFOV != _fov)
     {
         _fov = newFOV;
@@ -25,7 +31,7 @@ void BaseCamera::adjustFOV(float deltaFOV)
 
 void BaseCamera::adjustScale(float deltaScale)
 {
-    float const newScale = clampValue(_scale + deltaScale, 0.01f, 1000.0f);
+    float const newScale = std::clamp(_scale + deltaScale, 0.01f, 1000.0f);
     if (newScale != _scale)
     {
         _scale = newScale;
@@ -33,19 +39,30 @@ void BaseCamera::adjustScale(float deltaScale)
     }
 }
 
+void BaseCamera::adjustRadius(float deltaRadius)
+{
+    float const newRadius = std::clamp(_radius + deltaRadius, 0.1f, 1000.0f);
+    if (newRadius != _radius)
+    {
+        _radius = newRadius;
+        _isDirty = true;
+    }
+}
+
 void BaseCamera::setFOV(float fov)
 {
-    _fov = clampValue(fov, 1.0f, 180.0f);
+    _fov = std::clamp(fov, 1.0f, 180.0f);
     _isDirty = true;
 }
 
 void BaseCamera::setScale(float scale)
 {
-    _scale = clampValue(scale, 0.01f, 1000.0f);
+    _scale = std::clamp(scale, 0.01f, 1000.0f);
     _isDirty = true;
 }
 
-float BaseCamera::clampValue(float value, float min, float max)
+void BaseCamera::setRadius(float radius)
 {
-    return std::clamp(value, min, max);
+    _radius = std::clamp(radius, 0.1f, 1000.0f);
+    _isDirty = true;
 }

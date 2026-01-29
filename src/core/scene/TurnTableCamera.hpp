@@ -28,12 +28,11 @@ public:
     explicit TurnTableCamera(Transform & target);
     explicit TurnTableCamera(Transform & target, const Params &params);
 
-    // For the bonus camera needs to be able to follow a target
     void setTarget(Transform & target);
 
     void adjustTheta(float deltaTheta);
     void adjustPhi(float deltaPhi);
-    void adjustRadius(float deltaRadius);
+    void adjustRadius(float deltaRadius) override;
 
     [[nodiscard]]
     glm::mat4 getViewMatrix() override;
@@ -56,10 +55,6 @@ private:
     float _minDistance{};
     float _maxDistance{};
 
-    float _theta {};
-    float _phi {};
-
     glm::mat4 _viewMatrix {};
-    glm::vec3 _position {};
     glm::vec3 _targetPosition {};
 };

@@ -20,18 +20,17 @@ public:
     glm::mat4 getViewMatrix() override;
 
     [[nodiscard]]
-    glm::vec3 getPosition() override { return camPos; }
+    glm::vec3 getPosition() override { return _position; }
 
     [[nodiscard]]
-    glm::vec3 getCamPos() { return camPos; }
+    glm::vec3 getCamPos() { return _position; }
 
     CameraStats getStats() override;
 
 private:
-    glm::vec3 camPos, camFront, camUp, target;
-    float radius, verticalAngle, horizontalAngle;
+glm::vec3 camFront;
 
-    void prepareTurnTable();
+void prepareTurnTable();
 protected:
     float bound(float value, float min, float max);
 };
