@@ -19,6 +19,8 @@ void ImGuiPanel::update()
 
     // Settings window
     if (showSettingsWindow) {
+        ImGui::SetNextWindowPos(ImVec2(600, 10), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
         ImGui::Begin("Settings", &showSettingsWindow);
         renderRenderSettings();
         renderCameraInfo();
@@ -29,6 +31,8 @@ void ImGuiPanel::update()
 
 void ImGuiPanel::renderDebugInfo()
 {
+    ImGui::SetNextWindowPos(ImVec2(10, 450), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(300, 150), ImGuiCond_FirstUseEver);
     ImGui::Begin("Debug Info", &showDebugWindow);
     
     // FPS counter

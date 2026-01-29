@@ -11,6 +11,10 @@ bool ImGuiWrapper::init(GLFWwindow* window)
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.IniFilename = "imgui.ini";
+    
     if (!ImGui_ImplGlfw_InitForOpenGL(window, true))
     {
         return false;
