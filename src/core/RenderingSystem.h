@@ -5,6 +5,7 @@
 #include "core/buffer/Geometry.h"
 #include "core/scene/Camera.hpp"
 #include "input/panel/ImGuiWrapper.hpp"
+#include "input/panel/ImGuiPanel.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -31,7 +32,8 @@ private:
     std::unique_ptr<CPU_Geometry> triangleCPUData;
     
     // ImGui management (separated concerns)
-    std::unique_ptr<ImGuiWrapper> imguiWrapper;
+    std::unique_ptr<ImGuiWrapper> imguiWrapper;  // Handles lifecycle
+    std::unique_ptr<ImGuiPanel> imguiPanel;       // Handles content
     
     bool init();
     void processInput();

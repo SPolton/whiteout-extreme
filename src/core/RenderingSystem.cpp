@@ -59,6 +59,10 @@ bool RenderingSystem::init()
         logger::error("Failed to initialize ImGui");
         return false;
     }
+    
+    // Create ImGui panel (handles content)
+    imguiPanel = std::make_unique<ImGuiPanel>();
+    logger::info("ImGui initialized");
 
     // Create shader using ShaderProgram (RAII)
     try
@@ -165,11 +169,18 @@ void RenderingSystem::update()
     processInput();
 
     // Get settings from panel
-    glm::vec3 bgColor = {0.2, 0.5, 0.8};
+    glm::vec3 bgColor = imguiPanel->getBackgroundColor();
     glClearColor(bgColor.r, bgColor.g, bgColor.b, 1.0f);
     
     // Set viewport
     glViewport(0, 0, window->getWidth(), window->getHeight());
+    
+    // Apply wireframe mode if enabled
+    if (imguiPanel->getShowWireframe()) {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    } else {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
     
     // Render the scene
     render();
@@ -177,8 +188,14 @@ void RenderingSystem::update()
 
 void RenderingSystem::updateUI()
 {
+    // Begin ImGui frame
     imguiWrapper->beginFrame();
+
     imguiWrapper->renderFPS();
+    imguiPanel->cameraStats = camera->getStats();
+    imguiPanel->update();
+    
+    // Finish ImGui frame
     imguiWrapper->endFrame();
 }
 
