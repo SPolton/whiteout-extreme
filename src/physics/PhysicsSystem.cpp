@@ -114,7 +114,7 @@ void PhysicsSystem::initBoxes()
             rigidDynamicList.push_back(body);
 
             // Create and store Transform
-            Transform* transform = new Transform();
+            PhysxTransform* transform = new PhysxTransform();
             transformList.push_back(transform);
 
             // Create and store Entity

@@ -26,8 +26,8 @@ public:
     std::string name = "unnamed_entity";
     PhysType physType = PhysType::None;
     DrawType drawType = DrawType::Mesh;
-    Transform* transform;
-    std::vector<Transform*> localTransforms;
+    PhysxTransform* transform;
+    std::vector<PhysxTransform*> localTransforms;
     Model* model;
     //PlayerProperties* playerProperties;
     int nbChildEntities;

@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-class Transform {
+class PhysxTransform {
 public:
     glm::vec3 pos;
     glm::quat rot;
