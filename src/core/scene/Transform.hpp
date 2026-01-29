@@ -12,16 +12,16 @@
 
 // Transform class that contains information for each 3D object.
 // This includes local position, uniform scale, and local rotation.
-class Transform
+class SceneTransform
 {
 public:
     bool DEBUG = false;
 
-    Transform();
-    Transform(float scale);
-    virtual ~Transform() = default;
+    SceneTransform();
+    SceneTransform(float scale);
+    virtual ~SceneTransform() = default;
 
-    void setParent(std::shared_ptr<Transform> parent) { this->parent = parent; }
+    void setParent(std::shared_ptr<SceneTransform> parent) { this->parent = parent; }
     bool hasParent() { return parent != nullptr; }
 
     void setPosition(glm::vec3 position);
@@ -70,7 +70,7 @@ private:
     glm::mat4 translation = glm::mat4(1.0f);
     glm::mat4 A, B; // A is the full local matrix, B is inherited by children
 
-    std::shared_ptr<Transform> parent;
+    std::shared_ptr<SceneTransform> parent;
     glm::mat4 savedParentMatrix;
     glm::mat4 getParentMatrix();
 };

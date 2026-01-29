@@ -11,17 +11,17 @@ TurnTableCamera::TurnTableCamera()
 }
 
 TurnTableCamera::TurnTableCamera(Params const &params)
-    : TurnTableCamera(*new Transform(), params)
+    : TurnTableCamera(*new SceneTransform(), params)
 {
     _target->setPosition({0,0,0});
 }
 
-TurnTableCamera::TurnTableCamera(Transform & target)
+TurnTableCamera::TurnTableCamera(SceneTransform & target)
     : TurnTableCamera(target, Params{})
 {
 }
 
-TurnTableCamera::TurnTableCamera(Transform & target, Params const &params)
+TurnTableCamera::TurnTableCamera(SceneTransform & target, Params const &params)
     : BaseCamera()
 {
     _target = &target;
@@ -31,7 +31,7 @@ TurnTableCamera::TurnTableCamera(Transform & target, Params const &params)
     _maxDistance = params.maxDistance;
 }
 
-void TurnTableCamera::setTarget(Transform &target)
+void TurnTableCamera::setTarget(SceneTransform &target)
 {
     _target = &target;
     _isDirty = true;

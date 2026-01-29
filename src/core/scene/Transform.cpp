@@ -1,7 +1,7 @@
 #include "Transform.hpp"
 
 // Initialize with reasonable defaults
-Transform::Transform()
+SceneTransform::SceneTransform()
 {
     setScale(1);
     setRotationAxis({0, 1, 0});   // Rotate by the y-axis
@@ -9,12 +9,12 @@ Transform::Transform()
     setPosition(glm::vec3(0.0f)); // Origin in local space
 }
 
-Transform::Transform(float scale) : Transform() {
+SceneTransform::SceneTransform(float scale) : SceneTransform() {
     setScale(scale);
 }
 
 // Override the uniform scale of the object
-void Transform::setScale(float uniform)
+void SceneTransform::setScale(float uniform)
 {
     updated();
     uniformScale = bound(uniform, 0, uniform);
@@ -23,13 +23,13 @@ void Transform::setScale(float uniform)
 }
 
 // Add to the current uniform scale of the object
-void Transform::adjustScale(float uniform) {
+void SceneTransform::adjustScale(float uniform) {
     setScale(uniformScale + uniform);
 }
 
 // Override the local rotation of the object.
 // Positive = counterclockwise, Negative = clockwise
-void Transform::setRotation(float radians)
+void SceneTransform::setRotation(float radians)
 {
     updated();
     angle = normalizeAngle(radians);
@@ -38,19 +38,19 @@ void Transform::setRotation(float radians)
 
 // Add to the current local rotation of the object.
 // Positive = counterclockwise, Negative = clockwise
-void Transform::adjustRotation(float radians) {
+void SceneTransform::adjustRotation(float radians) {
     setRotation(angle + radians);
 }
 
 // Set the axis of the local rotation
-void Transform::setRotationAxis(glm::vec3 axis)
+void SceneTransform::setRotationAxis(glm::vec3 axis)
 {
     rotationAxis = axis;
     updated();
 }
 
 // Override the local position of the object
-void Transform::setPosition(glm::vec3 position)
+void SceneTransform::setPosition(glm::vec3 position)
 {
     updated();
     this->position = position;
@@ -60,7 +60,7 @@ void Transform::setPosition(glm::vec3 position)
 }
 
 // Returns the world space position of this transform
-glm::vec3 Transform::getWorldPosition()
+glm::vec3 SceneTransform::getWorldPosition()
 {
     if (parent) {
         // Using parent transform to get to world space, discard the w.
@@ -70,7 +70,7 @@ glm::vec3 Transform::getWorldPosition()
 }
 
 // Returns the parent matrix, or the identity matrix if no parent is set.
-glm::mat4 Transform::getParentMatrix() {
+glm::mat4 SceneTransform::getParentMatrix() {
     if (parent)
         return parent->B; // The one with elements we want to inherit
     else
@@ -78,7 +78,7 @@ glm::mat4 Transform::getParentMatrix() {
 }
 
 // Returns the combined matrix of Scale -> Roation -> Translation
-glm::mat4 Transform::getCompleteMatrix()
+glm::mat4 SceneTransform::getCompleteMatrix()
 {
     glm::mat4 parentM = getParentMatrix();
     if (isUpdated || savedParentMatrix != parentM) {
@@ -94,14 +94,14 @@ glm::mat4 Transform::getCompleteMatrix()
 }
 
 // Returns true if the whole sphere radius is outside the screen
-bool Transform::isOffScreen()
+bool SceneTransform::isOffScreen()
 {
     return false;
 }
 
 // Helper function to bound a value between a min and max
 // Made in the first assignment and copied here
-float Transform::bound(float value, float min, float max)
+float SceneTransform::bound(float value, float min, float max)
 {
 	if (value < min)
 		return min;
@@ -113,7 +113,7 @@ float Transform::bound(float value, float min, float max)
 
 // Helper to normalize the angle to between 0 and 2*pi radians
 // Not strictly necessary
-float Transform::normalizeAngle(float radians)
+float SceneTransform::normalizeAngle(float radians)
 {
     radians = fmod(radians, glm::two_pi<float>());
     if (radians < 0)

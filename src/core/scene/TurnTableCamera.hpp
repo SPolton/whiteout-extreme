@@ -25,10 +25,10 @@ public:
     explicit TurnTableCamera(Params const &params);
 
     // Angles are in radians
-    explicit TurnTableCamera(Transform & target);
-    explicit TurnTableCamera(Transform & target, const Params &params);
+    explicit TurnTableCamera(SceneTransform & target);
+    explicit TurnTableCamera(SceneTransform & target, const Params &params);
 
-    void setTarget(Transform & target);
+    void setTarget(SceneTransform & target);
 
     void adjustTheta(float deltaTheta);
     void adjustPhi(float deltaPhi);
@@ -49,7 +49,7 @@ private:
 
     void updateViewMatrix();
 
-    Transform * _target;
+    SceneTransform * _target;
 
     float _distance{};
     float _minDistance{};
