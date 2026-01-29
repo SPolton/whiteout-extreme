@@ -1,7 +1,7 @@
 #pragma once
 
-#include "VertexArray.h"
-#include "VertexBuffer.h"
+#include "VertexArray.hpp"
+#include "VertexBuffer.hpp"
 
 #include <glm/glm.hpp>
 #include <vector>

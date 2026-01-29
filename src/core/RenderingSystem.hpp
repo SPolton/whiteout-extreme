@@ -2,7 +2,7 @@
 
 #include "input/Window.hpp"
 #include "core/render/ShaderProgram.hpp"
-#include "core/buffer/Geometry.h"
+#include "core/buffer/Geometry.hpp"
 #include "core/scene/Camera.hpp"
 #include "input/panel/ImGuiWrapper.hpp"
 #include "input/panel/ImGuiPanel.hpp"

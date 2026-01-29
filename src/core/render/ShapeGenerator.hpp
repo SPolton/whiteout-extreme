@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/buffer/Geometry.h"
+#include "core/buffer/Geometry.hpp"
 
 namespace ShapeGenerator
 {
