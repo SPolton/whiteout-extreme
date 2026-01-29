@@ -4,7 +4,7 @@
 #include "core/render/ShaderProgram.h"
 #include "core/buffer/Geometry.h"
 #include "core/scene/Camera.hpp"
-#include "core/ImGuiWrapper.h"
+#include "input/panel/ImGuiWrapper.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
