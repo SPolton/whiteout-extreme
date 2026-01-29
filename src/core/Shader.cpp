@@ -1,5 +1,7 @@
 #include "Shader.h"
 
+namespace legacy {
+
 Shader::Shader(std::string vertexPath, std::string fragmentPath)
     : Shader(vertexPath.c_str(), fragmentPath.c_str())
 {
@@ -143,8 +145,10 @@ void Shader::checkCompileErrors(unsigned int shader, std::string type)
         glGetProgramiv(shader, GL_LINK_STATUS, &success);
         if (!success)
         {
-            glGetProgramInfoLog(shader, 1024, NULL, infoLog);
+        glGetProgramInfoLog(shader, 1024, NULL, infoLog);
             std::cout << "ERROR::PROGRAM_LINKING_ERROR of type: " << type << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
         }
     }
 }
+
+} // namespace legacy

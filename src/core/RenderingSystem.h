@@ -1,11 +1,11 @@
 #pragma once
 
 #include "input/Window.hpp"
+#include "core/render/ShaderProgram.h"
+#include "core/buffer/Geometry.h"
+#include "core/scene/Camera.hpp"
 #include "core/ImGuiWrapper.h"
-#include "core/Shader.h"
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <memory>
@@ -21,20 +21,20 @@ public:
     bool shouldClose() const;
 
 private:
-    GLFWwindow* window = nullptr;
+    // Core components following modular architecture
     std::unique_ptr<Window> window;
+    std::unique_ptr<ShaderProgram> shader;
+    std::unique_ptr<Camera> camera;
     
-    // OpenGL objects
-    std::unique_ptr<Shader> shader;
-    unsigned int VAO = 0;
-    unsigned int VBO = 0;
+    // Geometry using RAII wrappers
+    std::unique_ptr<GPU_Geometry> triangleGeometry;
+    std::unique_ptr<CPU_Geometry> triangleCPUData;
     
-    // ImGui wrapper
+    // ImGui management (separated concerns)
     std::unique_ptr<ImGuiWrapper> imguiWrapper;
-
+    
     bool init();
     void processInput();
-    bool initShaders();
+    void render();
     glm::mat4 getProjectionMatrix() const;
-    static void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 };

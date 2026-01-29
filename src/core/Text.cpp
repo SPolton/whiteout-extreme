@@ -101,7 +101,7 @@ void Text::renderText(std::string text, TextPosition pos, glm::vec3 color)
     renderText(textShader, textVAO, textVBO, text, pos, color, characters);
 }
 
-void Text::renderText(Shader& s, unsigned int VAO, unsigned int VBO,
+void Text::renderText(legacy::Shader& s, unsigned int VAO, unsigned int VBO,
     std::string text, TextPosition pos, glm::vec3 color, charMap characters
 ) {
     // activate corresponding render state	

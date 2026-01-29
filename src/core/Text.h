@@ -32,11 +32,11 @@ public:
     charMap initFont(const char* font);
 
     void renderText(std::string text, TextPosition pos, glm::vec3 color);
-    void renderText(Shader& s, unsigned int VAO, unsigned int VBO, std::string text,
+    void renderText(legacy::Shader& s, unsigned int VAO, unsigned int VBO, std::string text,
                     TextPosition pos, glm::vec3 color, charMap characters);
 
 private:
-    Shader textShader;
+    legacy::Shader textShader;
     charMap characters;
     Model textModel;
 

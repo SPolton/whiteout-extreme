@@ -7,6 +7,9 @@
 #include <sstream>
 #include <iostream>
 
+// Legacy shader class - kept for backward compatibility with Text system
+// For new code, use core/render/ShaderProgram instead
+namespace legacy {
 
 class Shader
 {
@@ -31,3 +34,5 @@ public:
 private:
     void checkCompileErrors(unsigned int shader, std::string type);
 };
+
+} // namespace legacy
