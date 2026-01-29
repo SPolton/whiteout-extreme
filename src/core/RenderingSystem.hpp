@@ -7,6 +7,7 @@
 #include "input/panel/ImGuiWrapper.hpp"
 #include "input/panel/ImGuiPanel.hpp"
 #include "input/InputManager.hpp"
+#include "core/assets/Texture.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -31,6 +32,9 @@ private:
     // Geometry using RAII wrappers
     std::unique_ptr<GPU_Geometry> triangleGeometry;
     std::unique_ptr<CPU_Geometry> triangleCPUData;
+    
+    // Texture
+    std::unique_ptr<Texture> texture;
     
     // ImGui management (separated concerns)
     std::unique_ptr<ImGuiWrapper> imguiWrapper;  // Handles lifecycle

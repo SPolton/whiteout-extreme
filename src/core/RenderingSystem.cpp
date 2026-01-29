@@ -94,8 +94,8 @@ bool RenderingSystem::init()
     try
     {
         shader = std::make_unique<ShaderProgram>(
-            "assets/shaders/shader.vert", 
-            "assets/shaders/shader.frag"
+            "assets/shaders/textured.vert", 
+            "assets/shaders/textured.frag"
         );
         logger::info("Shaders loaded successfully");
     }
@@ -105,12 +105,27 @@ bool RenderingSystem::init()
         return false;
     }
 
+    // Load texture
+    try
+    {
+        texture = std::make_unique<Texture>(
+            "assets/textures/2k_earth_daymap.jpg",
+            GL_LINEAR
+        );
+        logger::info("Texture loaded successfully");
+    }
+    catch (const std::exception& e)
+    {
+        logger::error("Failed to load texture: {0}", e.what());
+        return false;
+    }
+
     // Create geometry using GPU_Geometry (RAII)
     triangleGeometry = std::make_unique<GPU_Geometry>();
     triangleCPUData = std::make_unique<CPU_Geometry>();
     
-    // Generate triangle using ShapeGenerator
-    *triangleCPUData = ShapeGenerator::triangle_2D();
+    // Generate square using ShapeGenerator (better for textures)
+    *triangleCPUData = ShapeGenerator::sphere(1, 16, 16);
 
     // Upload to GPU
     triangleGeometry->Update(*triangleCPUData);
@@ -136,10 +151,10 @@ void RenderingSystem::render()
     // Use shader
     shader->use();
     
-    // Set the uniform color (animated over time)
-    float timeValue = static_cast<float>(glfwGetTime());
-    float greenValue = (std::sin(timeValue) / 2.0f) + 0.5f;
-    glUniform4f(glGetUniformLocation(*shader, "ourColor"), 0.0f, greenValue, 0.0f, 1.0f);
+    // Bind texture to texture unit 0
+    glActiveTexture(GL_TEXTURE0);
+    texture->bind();
+    glUniform1i(glGetUniformLocation(*shader, "baseColorTexture"), 0);
     
     // Get projection matrix
     glm::mat4 projection = getProjectionMatrix();
@@ -153,9 +168,17 @@ void RenderingSystem::render()
     glm::mat4 model = glm::mat4(1.0f);
     glUniformMatrix4fv(glGetUniformLocation(*shader, "model"), 1, GL_FALSE, &model[0][0]);
     
-    // Bind and render triangle
+    // Bind and render geometry
     triangleGeometry->bind();
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    
+    // Check if using indexed rendering (sphere/indexed shapes) or array rendering (triangle/square)
+    if (!triangleCPUData->indices.empty()) {
+        // Indexed rendering for sphere and other indexed geometry
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(triangleCPUData->indices.size()), GL_UNSIGNED_INT, nullptr);
+    } else {
+        // Array rendering for simple shapes
+        glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(triangleCPUData->positions.size()));
+    }
 }
 
 glm::mat4 RenderingSystem::getProjectionMatrix() const
