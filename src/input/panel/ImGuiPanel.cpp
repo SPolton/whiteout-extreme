@@ -73,6 +73,10 @@ void ImGuiPanel::renderCameraInfo()
         ImGui::Text("FOV: %.2f", cameraStats.fov);
         ImGui::Text("Scale: %.2f", cameraStats.scale);
         ImGui::Text("Aspect: %.2f", cameraStats.aspect);
+        
+        ImGui::Separator();
+        ImGui::SliderFloat("Camera Speed", &camSpeed, 1.0f, 200.0f);
+        ImGui::SliderFloat("Zoom Speed", &camZoomSpeed, 0.1f, 20.0f);
     }
 }
 
@@ -80,7 +84,7 @@ void ImGuiPanel::renderControls()
 {
     if (ImGui::CollapsingHeader("Controls")) {
         ImGui::BulletText("ESC - Exit application");
-        ImGui::BulletText("Right Mouse - Rotate camera");
-        ImGui::BulletText("Mouse Wheel - Zoom");
+        ImGui::BulletText("Right Mouse + Drag - Rotate camera");
+        ImGui::BulletText("Mouse Wheel - Zoom in/out");
     }
 }

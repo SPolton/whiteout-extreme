@@ -12,7 +12,8 @@ public:
     virtual ~ImGuiPanel() = default;
 
     void update();
-    
+
+    // For simplicity, expose settings directly (no getters)
     // Camera stats (set by rendering system)
     CameraStats cameraStats;
 
@@ -21,6 +22,10 @@ public:
     bool showWireframe = false;
     bool showNormals = false;
     float animationSpeed = 1.0;
+    
+    // Camera control settings
+    float camSpeed = 50.0f;
+    float camZoomSpeed = 5.0f;
 
     // Window settings
     bool showDebugWindow = true;
