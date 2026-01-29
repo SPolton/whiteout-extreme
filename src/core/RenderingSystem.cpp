@@ -1,5 +1,6 @@
 #include "RenderingSystem.hpp"
 #include "utils/logger.h"
+#include "core/render/ShapeGenerator.hpp"
 
 #include <iostream>
 #include <cmath>
@@ -83,26 +84,9 @@ bool RenderingSystem::init()
     triangleGeometry = std::make_unique<GPU_Geometry>();
     triangleCPUData = std::make_unique<CPU_Geometry>();
     
-    // Define triangle vertices
-    triangleCPUData->positions = {
-        glm::vec3(-0.5f, -0.5f, 0.0f),
-        glm::vec3( 0.5f, -0.5f, 0.0f),
-        glm::vec3( 0.0f,  0.5f, 0.0f)
-    };
+    // Generate triangle using ShapeGenerator
+    *triangleCPUData = ShapeGenerator::Triangle();
     
-    triangleCPUData->colors = {
-        glm::vec3(1.0f, 0.0f, 0.0f),  // Red
-        glm::vec3(0.0f, 1.0f, 0.0f),  // Green
-        glm::vec3(0.0f, 0.0f, 1.0f)   // Blue
-    };
-    
-    // Normals pointing towards camera (for 2D, all point in +Z direction)
-    triangleCPUData->normals = {
-        glm::vec3(0.0f, 0.0f, 1.0f),
-        glm::vec3(0.0f, 0.0f, 1.0f),
-        glm::vec3(0.0f, 0.0f, 1.0f)
-    };
-
     // Upload to GPU
     triangleGeometry->Update(*triangleCPUData);
     

@@ -248,3 +248,28 @@ void negativeYFace(std::vector<glm::vec3> const &originQuad, CPU_Geometry &geom)
     geom.normals.emplace_back(glm::vec3(0.0, -1.0, 0.0));
     geom.normals.emplace_back(glm::vec3(0.0, -1.0, 0.0));
 }
+
+CPU_Geometry ShapeGenerator::Triangle()
+{
+    CPU_Geometry geom{};
+    
+    geom.positions = {
+        glm::vec3(-0.5f, -0.5f, 0.0f),
+        glm::vec3( 0.5f, -0.5f, 0.0f),
+        glm::vec3( 0.0f,  0.5f, 0.0f)
+    };
+    
+    geom.colors = {
+        glm::vec3(1.0f, 0.0f, 0.0f),  // Red
+        glm::vec3(0.0f, 1.0f, 0.0f),  // Green
+        glm::vec3(0.0f, 0.0f, 1.0f)   // Blue
+    };
+    
+    geom.normals = {
+        glm::vec3(0.0f, 0.0f, 1.0f),
+        glm::vec3(0.0f, 0.0f, 1.0f),
+        glm::vec3(0.0f, 0.0f, 1.0f)
+    };
+    
+    return geom;
+}

@@ -8,4 +8,6 @@ namespace ShapeGenerator
     CPU_Geometry Sphere(float radius, int slices, int stacks);
 
     CPU_Geometry UnitCube();
+
+    CPU_Geometry Triangle();
 };
