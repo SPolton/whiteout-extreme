@@ -1,5 +1,6 @@
 #pragma once
 
+#include "input/Window.hpp"
 #include "core/ImGuiWrapper.h"
 #include "core/Shader.h"
 
@@ -21,6 +22,7 @@ public:
 
 private:
     GLFWwindow* window = nullptr;
+    std::unique_ptr<Window> window;
     
     // OpenGL objects
     std::unique_ptr<Shader> shader;
@@ -33,6 +35,6 @@ private:
     bool init();
     void processInput();
     bool initShaders();
-    bool initGeometry();
+    glm::mat4 getProjectionMatrix() const;
     static void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 };

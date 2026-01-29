@@ -18,8 +18,8 @@ void RenderingSystem::framebufferSizeCallback(GLFWwindow* window, int width, int
 
 void RenderingSystem::processInput()
 {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
+    if (glfwGetKey(window->getGLFWwindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window->getGLFWwindow(), true);
 }
 
 bool RenderingSystem::init()
@@ -34,17 +34,11 @@ bool RenderingSystem::init()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    window = glfwCreateWindow(800, 600, "Racing Game", nullptr, nullptr);
-    if (window == nullptr)
-    {
-        std::cout << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        return false;
-    }
+    // Create window using our Window wrapper (RAII)
+    window = std::make_unique<Window>(800, 600, "Racing Game");
+    window->makeContextCurrent();
 
-    glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
-
+    // Initialize GLAD
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         logger::error("Failed to initialize GLAD");
@@ -136,6 +130,11 @@ void RenderingSystem::update()
     // now render the triangle
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 3);
+}
+
+glm::mat4 RenderingSystem::getProjectionMatrix() const
+{
+    float const aspectRatio = static_cast<float>(window->getWidth()) / static_cast<float>(window->getHeight());
 }
 
 void RenderingSystem::updateUI()
