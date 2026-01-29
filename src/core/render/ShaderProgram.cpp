@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include "core/assets/AssetPath.h"
+#include "core/assets/AssetPath.hpp"
 #include "utils/logger.h"
 
 ShaderProgram::ShaderProgram(const std::string &vertexPath,

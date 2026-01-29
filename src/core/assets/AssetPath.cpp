@@ -1,4 +1,4 @@
-#include "AssetPath.h"
+#include "AssetPath.hpp"
 
 #include "utils/logger.h"
 

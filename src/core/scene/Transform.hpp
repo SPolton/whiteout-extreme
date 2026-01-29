@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "core/assets/AssetPath.h"
+#include "core/assets/AssetPath.hpp"
 #include "utils/logger.h"
 
 // Transform class that contains information for each 3D object.
