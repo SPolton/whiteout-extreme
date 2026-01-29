@@ -176,7 +176,7 @@ void RenderingSystem::update()
     glViewport(0, 0, window->getWidth(), window->getHeight());
     
     // Apply wireframe mode if enabled
-    if (imguiPanel->getShowWireframe()) {
+    if (imguiPanel->showWireframe) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     } else {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);

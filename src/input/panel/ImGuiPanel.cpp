@@ -2,11 +2,6 @@
 
 ImGuiPanel::ImGuiPanel()
     : backgroundColor(0.2f, 0.3f, 0.3f)
-    , showWireframe(false)
-    , showNormals(false)
-    , animationSpeed(1.0f)
-    , showDebugWindow(true)
-    , showSettingsWindow(true)
 {
 }
 

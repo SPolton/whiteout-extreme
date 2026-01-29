@@ -12,15 +12,19 @@ public:
     virtual ~ImGuiPanel() = default;
 
     void update();
-
-    // GETTERS for rendering system to use
-    glm::vec3 getBackgroundColor() const { return backgroundColor; }
-    bool getShowWireframe() const { return showWireframe; }
-    bool getShowNormals() const { return showNormals; }
-    float getAnimationSpeed() const { return animationSpeed; }
     
     // Camera stats (set by rendering system)
     CameraStats cameraStats;
+
+    // Rendering settings
+    glm::vec3 getBackgroundColor() const { return backgroundColor; }
+    bool showWireframe = false;
+    bool showNormals = false;
+    float animationSpeed = 1.0;
+
+    // Window settings
+    bool showDebugWindow = true;
+    bool showSettingsWindow = true;
 
 protected:
     // Individual panel sections
@@ -30,13 +34,5 @@ protected:
     void renderControls();
 
 private:
-    // Rendering settings
     glm::vec3 backgroundColor;
-    bool showWireframe;
-    bool showNormals;
-    float animationSpeed;
-    
-    // Window settings
-    bool showDebugWindow;
-    bool showSettingsWindow;
 };
