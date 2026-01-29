@@ -110,7 +110,7 @@ bool RenderingSystem::init()
     triangleCPUData = std::make_unique<CPU_Geometry>();
     
     // Generate triangle using ShapeGenerator
-    *triangleCPUData = ShapeGenerator::Triangle();
+    *triangleCPUData = ShapeGenerator::triangle_2D();
 
     // Upload to GPU
     triangleGeometry->Update(*triangleCPUData);

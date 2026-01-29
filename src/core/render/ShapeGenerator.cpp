@@ -4,7 +4,7 @@
 
 // Returns an index vector where every 3 indices form a triangle.
 // https://songho.ca/opengl/gl_sphere.html#sphere
-std::vector<Index> getTriangleIndices(int const slices, int const stacks)
+static std::vector<Index> getTriangleIndices(int const slices, int const stacks)
 {
     // generate CCW index list of sphere triangles
     // k1--k1+1
@@ -42,7 +42,7 @@ std::vector<Index> getTriangleIndices(int const slices, int const stacks)
 // Returns all points, normals, and UVs of the sphere with +Y as up.
 // Surface of revolution (SOR) is used to generate the positions.
 // https://songho.ca/opengl/gl_sphere.html#sphere
-CPU_Geometry SpherePointsSOR(float const radius, int const slices, int const stacks)
+static CPU_Geometry spherePointsSOR(float const radius, int const slices, int const stacks)
 {
     CPU_Geometry geom{};
     
@@ -90,9 +90,9 @@ CPU_Geometry SpherePointsSOR(float const radius, int const slices, int const sta
 }
 
 // Returns the completed geometry for a SOR sphere, with the up axis in the +Y direction.
-CPU_Geometry ShapeGenerator::Sphere(float const radius, int const slices, int const stacks)
+CPU_Geometry ShapeGenerator::sphere(float const radius, int const slices, int const stacks)
 {
-    CPU_Geometry geom = SpherePointsSOR(radius, slices, stacks);
+    CPU_Geometry geom = spherePointsSOR(radius, slices, stacks);
     geom.colors = std::vector<Color>(geom.positions.size(), {1.f, 1.f, 0.f});
     geom.indices = getTriangleIndices(slices, stacks);
 
@@ -110,7 +110,7 @@ static void positiveYFace(std::vector<glm::vec3> const &originQuad, CPU_Geometry
 static void negativeYFace(std::vector<glm::vec3> const &originQuad, CPU_Geometry &geom);
 
 // Returns a 1x1x1 cube with different color sides.
-CPU_Geometry ShapeGenerator::UnitCube()
+CPU_Geometry ShapeGenerator::unit_cube()
 {
     std::vector<glm::vec3> originQuad{};
     originQuad.emplace_back(-0.5, 0.5, 0.0); // top-left
@@ -249,7 +249,7 @@ void negativeYFace(std::vector<glm::vec3> const &originQuad, CPU_Geometry &geom)
     geom.normals.emplace_back(glm::vec3(0.0, -1.0, 0.0));
 }
 
-CPU_Geometry ShapeGenerator::Triangle()
+CPU_Geometry ShapeGenerator::triangle_2D()
 {
     CPU_Geometry geom{};
     

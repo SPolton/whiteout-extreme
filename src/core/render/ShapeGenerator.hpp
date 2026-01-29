@@ -5,11 +5,14 @@
 namespace ShapeGenerator
 {
     [[nodiscard]]
-    CPU_Geometry Sphere(float radius, int slices, int stacks);
+    CPU_Geometry sphere(float radius, int slices, int stacks);
 
-    CPU_Geometry UnitCube();
+    [[nodiscard]]
+    CPU_Geometry unit_cube();
 
-    CPU_Geometry Triangle();
+    [[nodiscard]]
+    CPU_Geometry triangle_2D();
 
-    CPU_Geometry Square();
+    [[nodiscard]]
+    CPU_Geometry square_2D();
 };
