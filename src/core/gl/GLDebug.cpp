@@ -1,4 +1,4 @@
-#include "GLDebug.h"
+#include "GLDebug.hpp"
 #include "utils/logger.h"
 
 #include <regex>
