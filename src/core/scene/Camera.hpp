@@ -1,34 +1,35 @@
 #pragma once
 
+#include "BaseCamera.hpp"
 #include "CameraStats.hpp"
 #include "utils/logger.h"
 
-class Camera {
+class Camera : public BaseCamera {
 public:
     bool isCamera2D = false;
 
     Camera();
     Camera(glm::vec3 up_vec);
 
-    void adjustFOV(float amount);
-    void adjustScale(float amount);
     void adjustRadius(float amount);
 
     void moveVertically(float speed);
     void moveHorizontally(float speed);
 
-    glm::mat4 getViewMatrix();
+    [[nodiscard]]
+    glm::mat4 getViewMatrix() override;
 
-    float getFOV() { return fov; }
-    float getScale() { return scale; }
+    [[nodiscard]]
+    glm::vec3 getPosition() override { return camPos; }
+
+    [[nodiscard]]
     glm::vec3 getCamPos() { return camPos; }
 
-    CameraStats getStats();
+    CameraStats getStats() override;
 
 private:
     glm::vec3 camPos, camFront, camUp, target;
     float radius, verticalAngle, horizontalAngle;
-    float fov, scale;
 
     void prepareTurnTable();
 protected:

@@ -2,10 +2,11 @@
 
 #include "utils/math.hpp"
 
+#include "BaseCamera.hpp"
 #include "Transform.hpp"
 #include "CameraStats.hpp"
 
-class TurnTableCamera {
+class TurnTableCamera : public BaseCamera {
 public:
 
     struct Params
@@ -28,29 +29,26 @@ public:
     explicit TurnTableCamera(Transform & target, const Params &params);
 
     // For the bonus camera needs to be able to follow a target
-    void ChangeTarget(Transform & target);
+    void setTarget(Transform & target);
 
-    void ChangeTheta(float deltaTheta);
-    void ChangePhi(float deltaPhi);
-    void ChangeRadius(float deltaRadius);
-
-    void ChangeFOV(float deltaFOV);
-    void ChangeScale(float deltaScale);
-    
-    float getFOV() { return _fov; }
-    float getScale() { return _scale; }
-
-    CameraStats getStats();
+    void adjustTheta(float deltaTheta);
+    void adjustPhi(float deltaPhi);
+    void adjustRadius(float deltaRadius);
 
     [[nodiscard]]
-    glm::mat4 ViewMatrix();
+    glm::mat4 getViewMatrix() override;
 
     [[nodiscard]]
-    glm::vec3 Position();
+    glm::vec3 getPosition() override;
+
+    CameraStats getStats() override;
+
+    glm::mat4 viewMatrix();
+    glm::vec3 position();
 
 private:
 
-    void UpdateViewMatrix();
+    void updateViewMatrix();
 
     Transform * _target;
 
@@ -60,11 +58,6 @@ private:
 
     float _theta {};
     float _phi {};
-
-    float _fov = 120.0f;
-    float _scale = 1.0f;
-
-    bool _isDirty = true;
 
     glm::mat4 _viewMatrix {};
     glm::vec3 _position {};

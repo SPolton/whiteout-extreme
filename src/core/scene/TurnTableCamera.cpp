@@ -22,6 +22,7 @@ TurnTableCamera::TurnTableCamera(Transform & target)
 }
 
 TurnTableCamera::TurnTableCamera(Transform & target, Params const &params)
+    : BaseCamera()
 {
     _target = &target;
 
@@ -30,25 +31,35 @@ TurnTableCamera::TurnTableCamera(Transform & target, Params const &params)
     _maxDistance = params.maxDistance;
 }
 
-void TurnTableCamera::ChangeTarget(Transform &target)
+void TurnTableCamera::setTarget(Transform &target)
 {
     _target = &target;
     _isDirty = true;
 }
 
-glm::mat4 TurnTableCamera::ViewMatrix()
+glm::mat4 TurnTableCamera::getViewMatrix()
 {
-    UpdateViewMatrix();
+    return viewMatrix();
+}
+
+glm::vec3 TurnTableCamera::getPosition()
+{
+    return position();
+}
+
+glm::mat4 TurnTableCamera::viewMatrix()
+{
+    updateViewMatrix();
     return _viewMatrix;
 }
 
-glm::vec3 TurnTableCamera::Position()
+glm::vec3 TurnTableCamera::position()
 {
-    UpdateViewMatrix();
+    updateViewMatrix();
     return _position;
 }
 
-void TurnTableCamera::UpdateViewMatrix()
+void TurnTableCamera::updateViewMatrix()
 {
     if (_isDirty == true || _targetPosition != _target->getWorldPosition())
     {
@@ -67,7 +78,7 @@ void TurnTableCamera::UpdateViewMatrix()
     }
 }
 
-void TurnTableCamera::ChangeTheta(float const deltaTheta)
+void TurnTableCamera::adjustTheta(float const deltaTheta)
 {
     auto newTheta = _theta + deltaTheta;
     if (newTheta != _theta)
@@ -77,7 +88,7 @@ void TurnTableCamera::ChangeTheta(float const deltaTheta)
     }
 }
 
-void TurnTableCamera::ChangePhi(float const deltaPhi)
+void TurnTableCamera::adjustPhi(float const deltaPhi)
 {
     float const newPhi = std::clamp(
         _phi + deltaPhi,
@@ -91,7 +102,7 @@ void TurnTableCamera::ChangePhi(float const deltaPhi)
     }
 }
 
-void TurnTableCamera::ChangeRadius(float const deltaRadius)
+void TurnTableCamera::adjustRadius(float const deltaRadius)
 {
     float const newDistance =  std::clamp(_distance + deltaRadius, _minDistance, _maxDistance);
     if (newDistance != _distance)
@@ -101,29 +112,6 @@ void TurnTableCamera::ChangeRadius(float const deltaRadius)
     }
 }
 
-// The FOV when in perspective view
-void TurnTableCamera::ChangeFOV(float deltaFOV)
-{
-    float const newFOV =  std::clamp(_fov + deltaFOV, 1.0f, 180.0f);
-    if (newFOV != _fov)
-    {
-        _isDirty = true;
-        _fov = newFOV;
-    }
-}
-
-// The scale when in orthographic view
-void TurnTableCamera::ChangeScale(float deltaScale)
-{
-    float const newScale =  std::clamp(_scale + deltaScale, 0.01f, 1000.0f);
-    if (newScale != _scale)
-    {
-        _isDirty = true;
-        _scale = newScale;
-    }
-}
-
-// Package camera stats to print in ImGui
 CameraStats TurnTableCamera::getStats()
 {
     return CameraStats(_position, _targetPosition, _distance, _fov, _scale);

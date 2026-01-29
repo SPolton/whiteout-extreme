@@ -2,27 +2,15 @@
 
 Camera::Camera() : Camera(glm::vec3(0.0f, 1.0f, 0.0f)) {}
 
-// https://learnopengl.com/Getting-Started/Camera
 Camera::Camera(glm::vec3 up_vec)
+    : BaseCamera(120.0f, 1.0f)
 {
     camUp = up_vec;
     camPos = glm::vec3(0.0f, 0.0f, 1.0f);
     camFront = glm::vec3(0.0f, 0.0f, -1.0f);
     radius = 3.0f;
-    fov = 120.0f;
-    scale = 1.0f;
     verticalAngle = 0.0f;
     horizontalAngle = glm::radians(180.0f);
-}
-
-// The fov when in perspective view
-void Camera::adjustFOV(float amount) {
-    fov = bound(fov + amount, 1.0f, 180.0f);
-}
-
-// The scale when in orthographic view
-void Camera::adjustScale(float amount) {
-    scale = bound(scale + amount, 0.01f, 100.0f);
 }
 
 // The actual distance of the camera from the origin
@@ -66,7 +54,7 @@ glm::mat4 Camera::getViewMatrix()
 
 // Package camera stats to print in ImGui
 CameraStats Camera::getStats() {
-    return CameraStats(camPos, target, radius, fov, scale);
+    return CameraStats(camPos, target, radius, _fov, _scale);
 }
 
 // Set the position and target for a turn table camera
