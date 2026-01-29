@@ -1,7 +1,7 @@
 #pragma once
 
 #include "input/Window.hpp"
-#include "core/render/ShaderProgram.h"
+#include "core/render/ShaderProgram.hpp"
 #include "core/buffer/Geometry.h"
 #include "core/scene/Camera.hpp"
 #include "input/panel/ImGuiWrapper.hpp"
