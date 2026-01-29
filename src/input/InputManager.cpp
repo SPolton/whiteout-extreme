@@ -1,6 +1,6 @@
 #include "InputManager.hpp"
 
-//#include "Log.h"
+#include "utils/logger.h"
 #include <utility>
 
 InputManager::InputManager(
@@ -19,7 +19,7 @@ void InputManager::keyCallback(
     int const mods
 )
 {
-    //Log::info("KeyCallback: key={}, action={}", key, action);
+    logger::info("KeyCallback: key={}, action={}", key, action);
     if (action == GLFW_PRESS)
     {
         mKeyStatusMap[key] = true;
@@ -32,7 +32,7 @@ void InputManager::keyCallback(
 
 void InputManager::windowSizeCallback(int const width, int const height)
 {
-    //Log::info("WindowSizeCallback: width={}, height={}", width, height);
+    logger::info("WindowSizeCallback: width={}, height={}", width, height);
     if (mResizeCallback != nullptr)
     {
         mResizeCallback(width, height);
@@ -41,13 +41,13 @@ void InputManager::windowSizeCallback(int const width, int const height)
 
 void InputManager::mouseButtonCallback(int const button, int const action, int mods)
 {
-    //Log::info("MouseButtonCallback: button={}, action={}", button, action);
+    logger::info("MouseButtonCallback: button={}, action={}", button, action);
     mMouseStatusMap[button] = action;
 }
 
 void InputManager::cursorPosCallback(double const xpos, double const ypos)
 {
-    //Log::info("CursorPosCallback: xpos={}, ypos={}", xpos, ypos);
+    logger::debug("CursorPosCallback: xpos={}, ypos={}", xpos, ypos);
     mCursorPosition.x = xpos;
     mCursorPosition.y = ypos;
 }

@@ -1,6 +1,6 @@
 #include "Window.hpp"
 
-//#include "Log.h"
+#include "utils/logger.h"
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
@@ -106,7 +106,7 @@ Window::Window(
 	// create window
 	window = std::unique_ptr<GLFWwindow, WindowDeleter>(glfwCreateWindow(width, height, title, monitor, share));
 	if (window == nullptr) {
-		//Log::error("WINDOW failed to create GLFW window");
+		logger::error("WINDOW failed to create GLFW window");
 		throw std::runtime_error("Failed to create GLFW window.");
 	}
 	glfwMakeContextCurrent(window.get());
