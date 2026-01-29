@@ -1,15 +1,15 @@
 #pragma once
 
-#include "core/Shader.h"
-#include "components/Model.h"
-#include <glm.hpp>
+#include "core/render/ShaderProgram.hpp"
+#include "core/gl/GLHandles.hpp"
+#include <glm/glm.hpp>
 #include <map>
 
 struct Character {
-    unsigned int textureID; // ID handle of texture
-    glm::ivec2 size;        // Size of Glyph
-    glm::ivec2 bearing;     // Offset from baseline
-    unsigned int advance;   // Offset to next Glyph
+    TextureHandle textureID; // ID handle of texture
+    glm::ivec2 size;         // Size of Glyph
+    glm::ivec2 bearing;      // Offset from baseline
+    unsigned int advance;    // Offset to next Glyph
 };
 
 using charMap = std::map<char, Character>;
@@ -23,23 +23,19 @@ struct TextPosition {
 class Text {
 public:
     Text();
-    Text(std::string vertexPath, std::string fragmentPath);
+    Text(const std::string& vertexPath, const std::string& fragmentPath);
 
-    void update();
-    void update(unsigned int frameCount);
-
-    void initTextVAO(unsigned int* VAO, unsigned int* VBO);
-    charMap initFont(const char* font);
-
-    void renderText(std::string text, TextPosition pos, glm::vec3 color);
-    void renderText(legacy::Shader& s, unsigned int VAO, unsigned int VBO, std::string text,
-                    TextPosition pos, glm::vec3 color, charMap characters);
+    void beginText();
+    void endText();
+    void setProjection(float width, float height);
+    void renderText(const std::string& text, TextPosition pos, glm::vec3 color);
 
 private:
-    legacy::Shader textShader;
+    ShaderProgram textShader;
     charMap characters;
-    Model textModel;
-
-    unsigned int textVAO = 0;
-    unsigned int textVBO = 0;
+    
+    VertexArrayHandle textVAO;
+    VertexBufferHandle textVBO;
+    
+    charMap initFont(const char* font);
 };

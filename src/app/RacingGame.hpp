@@ -10,7 +10,7 @@
 
 class RacingGame {
 public:
-    RacingGame() = default;
+    RacingGame();
 
     void run();
 

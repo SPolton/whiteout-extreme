@@ -1,59 +1,54 @@
 #include "Text.h"
 
 #include <ft2build.h>
-#include <gtc/type_ptr.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include FT_FREETYPE_H
+#include "utils/logger.h"
 
 Text::Text()
     : Text("assets/shaders/shader_text.vert", "assets/shaders/shader_text.frag")
 {
 }
 
-Text::Text(std::string vertexPath, std::string fragmentPath)
+Text::Text(const std::string& vertexPath, const std::string& fragmentPath)
     : textShader(vertexPath, fragmentPath)
 {
-    // Make sure paths point to where shaders are stored!
     characters = initFont("assets/fonts/Arial.ttf");
-    initTextVAO(&textVAO, &textVBO);
-
-    textModel.modelMatrix = glm::ortho(0.0f, static_cast<float>(1440), 0.0f, static_cast<float>(1440));
-    textShader.use();
-    glUniformMatrix4fv(glGetUniformLocation(textShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(textModel.modelMatrix));
-}
-
-void Text::initTextVAO(unsigned int* VAO, unsigned int* VBO) {
-    glGenVertexArrays(1, VAO);
-    glGenBuffers(1, VBO);
-
-    glBindVertexArray(*VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, *VBO);
+    
+    glBindVertexArray(textVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, textVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
-
+    
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
     glEnableVertexAttribArray(0);
-
+    
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+    
+    logger::info("Text renderer initialized with {} characters", characters.size());
 }
 
 charMap Text::initFont(const char* font) {
     charMap Characters;
     FT_Library ft;
     if (FT_Init_FreeType(&ft))
-
     {
-        std::cout << "ERROR::FREETYPE: Could not init FreeType Library" << std::endl;
+        logger::error("FREETYPE: Could not init FreeType Library");
         return Characters;
     }
 
     FT_Face face;
     if (FT_New_Face(ft, font, 0, &face))
     {
-        std::cout << "ERROR::FREETYPE: Failed to load font" << std::endl;
+        logger::error("FREETYPE: Failed to load font: {}", font);
+        FT_Done_FreeType(ft);
         return Characters;
     }
+    
     FT_Set_Pixel_Sizes(face, 0, 48);
+    
+    GLint previousUnpackAlignment;
+    glGetIntegerv(GL_UNPACK_ALIGNMENT, &previousUnpackAlignment);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
     //Initialize characters
@@ -61,11 +56,11 @@ charMap Text::initFont(const char* font) {
         // load character glyph 
         if (FT_Load_Char(face, c, FT_LOAD_RENDER))
         {
-            std::cout << "ERROR::FREETYTPE: Failed to load Glyph" << std::endl;
+            logger::warn("FREETYPE: Failed to load Glyph: {}", c);
             continue;
         }
-        unsigned int texture;
-        glGenTextures(1, &texture);
+        
+        TextureHandle texture;
         glBindTexture(GL_TEXTURE_2D, texture);
         glTexImage2D(
             GL_TEXTURE_2D,
@@ -82,39 +77,48 @@ charMap Text::initFont(const char* font) {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        Character character = {
-            texture,
-            glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
-            glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
-            static_cast<unsigned int>(face->glyph->advance.x)
-        };
-        Characters.insert(std::pair<char, Character>(c, character));
+        
+        Characters.emplace(
+            c,
+            Character{
+                std::move(texture),
+                glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
+                glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
+                static_cast<unsigned int>(face->glyph->advance.x)
+            }
+        );
     }
+    
     FT_Done_Face(face);
     FT_Done_FreeType(ft);
+    
+    glPixelStorei(GL_UNPACK_ALIGNMENT, previousUnpackAlignment);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     return Characters;
 }
 
-void Text::renderText(std::string text, TextPosition pos, glm::vec3 color)
+void Text::setProjection(float width, float height)
 {
-    renderText(textShader, textVAO, textVBO, text, pos, color, characters);
+    glm::mat4 projection = glm::ortho(0.0f, width, 0.0f, height);
+    textShader.use();
+    glUniformMatrix4fv(glGetUniformLocation(textShader, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+    glUseProgram(0);
 }
 
-void Text::renderText(legacy::Shader& s, unsigned int VAO, unsigned int VBO,
-    std::string text, TextPosition pos, glm::vec3 color, charMap characters
-) {
+void Text::renderText(const std::string& text, TextPosition pos, glm::vec3 color)
+{
     // activate corresponding render state	
-    s.use();
-    glUniform3f(glGetUniformLocation(s.ID, "textColor"), color.x, color.y, color.z);
+    textShader.use();
+    glUniform3f(glGetUniformLocation(textShader, "textColor"), color.x, color.y, color.z);
+    glUniform1i(glGetUniformLocation(textShader, "text"), 0);
     glActiveTexture(GL_TEXTURE0);
-    glBindVertexArray(VAO);
-
+    glBindVertexArray(textVAO);
+    
     // iterate through all characters
-    std::string::const_iterator c;
-    for (c = text.begin(); c != text.end(); c++)
+    for (char c : text)
     {
-        Character ch = characters[*c];
+        const Character& ch = characters[c];
 
         float xpos = pos.x + ch.bearing.x * pos.scale;
         float ypos = pos.y - (ch.size.y - ch.bearing.y) * pos.scale;
@@ -134,7 +138,7 @@ void Text::renderText(legacy::Shader& s, unsigned int VAO, unsigned int VBO,
         // render glyph texture over quad
         glBindTexture(GL_TEXTURE_2D, ch.textureID);
         // update content of VBO memory
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBindBuffer(GL_ARRAY_BUFFER, textVBO);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         // render quad
@@ -142,16 +146,21 @@ void Text::renderText(legacy::Shader& s, unsigned int VAO, unsigned int VBO,
         // now advance cursors for next glyph (note that advance is number of 1/64 pixels)
         pos.x += (ch.advance >> 6) * pos.scale; // bitshift by 6 to get value in pixels (2^6 = 64)
     }
+    
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
+    glUseProgram(0);
 }
 
-void Text::update() {
+void Text::beginText() {
     textShader.use();
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_DEPTH_TEST);
+}
 
-    // Make sure text fits on screen!
-    TextPosition pos = { 100.f, 1200.f, 1.f };
-    renderText("Hello!", pos, glm::vec3(0.5f, 0.8f, 0.2f));
+void Text::endText() {
+    glDisable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
+    glUseProgram(0);
 }
