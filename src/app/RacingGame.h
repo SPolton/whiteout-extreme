@@ -3,7 +3,7 @@
 #include "app/GameTime.h"
 #include "core/RenderingSystem.h"
 #include "core/Text.h"
-#include "physics/PhysicsSystem.h"
+#include "physics/PhysicsSystem.hpp"
 
 #include <iostream>
 #include <memory>

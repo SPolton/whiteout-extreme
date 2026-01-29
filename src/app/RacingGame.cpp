@@ -1,7 +1,7 @@
 ﻿
 
 #include "RacingGame.h"
-#include "physics/PhysicsTest.h"
+#include "physics/PhysicsTest.hpp"
 
 void RacingGame::run()
 {
