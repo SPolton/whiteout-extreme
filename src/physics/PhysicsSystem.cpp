@@ -1,5 +1,5 @@
-
-#include "PhysicsSystem.h"
+#include "PhysicsSystem.hpp"
+#include "utils/logger.h"
 
 PhysicsSystem::PhysicsSystem() {
     initPhysicsSystem();
@@ -14,7 +14,7 @@ void PhysicsSystem::initPhysicsSystem() {
     gFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, gAllocator, gErrorCallback);
     if (!gFoundation)
     {
-        std::cout << "PxCreateFoundation failed!" << std::endl;
+        logger::error("PxCreateFoundation failed!");
         throw std::runtime_error("Failed to create PhysX foundation!");
     }
 
@@ -27,7 +27,7 @@ void PhysicsSystem::initPhysicsSystem() {
     gPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gFoundation, physx::PxTolerancesScale(), true, gPvd);
     if (!gPhysics)
     {
-        std::cout << "PxCreatePhysics failed!" << std::endl;
+        logger::error("PxCreatePhysics failed!");
         throw std::runtime_error("Failed to create PhysX physics!");
     }
 
@@ -53,7 +53,7 @@ void PhysicsSystem::initPhysicsSystem() {
     physx::PxRigidStatic* groundPlane = physx::PxCreatePlane(*gPhysics, physx::PxPlane(0, 1, 0, 50), *gMaterial);
     gScene->addActor(*groundPlane);
 
-    std::cout << "Physics Test initialized successfully." << std::endl;
+    logger::info("Physics Test initialized successfully.");
 }
 
 physx::PxVec3 PhysicsSystem::getPos(int i)
@@ -88,8 +88,8 @@ void PhysicsSystem::update(double delta_time) {
 
     physx::PxVec3 objPos = getPos(50);
     if (objPos.y < lastBoxPos.y) {
-        std::cout << "x: " << objPos.x << " y: " << objPos.y << " z: " << objPos.z << std::endl;
-        std::cout << "Entity y: " << entityList[50].transform->pos.y << std::endl;
+        logger::debug("x: {0} y: {1} z: {2}", objPos.x, objPos.y, objPos.z);
+        logger::debug("Entity y: {0}", entityList[50].transform->pos.y);
     }
     lastBoxPos = objPos;
 }
@@ -114,7 +114,7 @@ void PhysicsSystem::initBoxes()
             rigidDynamicList.push_back(body);
 
             // Create and store Transform
-            Transform* transform = new Transform();
+            PhysxTransform* transform = new PhysxTransform();
             transformList.push_back(transform);
 
             // Create and store Entity
@@ -136,5 +136,5 @@ void PhysicsSystem::initBoxes()
     // Clean up
     shape->release();
 
-    std::cout << "Box test spawned successfully." << std::endl;
+    logger::info("Box test spawned successfully.");
 }

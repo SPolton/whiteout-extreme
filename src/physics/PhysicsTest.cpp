@@ -1,6 +1,5 @@
-
-#include "PhysicsTest.h"
-#include <iostream>
+#include "PhysicsTest.hpp"
+#include "utils/logger.h"
 
 PhysicsTest::PhysicsTest() {
     if (initPhysicsTest() != 0)
@@ -14,7 +13,7 @@ int PhysicsTest::initPhysicsTest() {
     gFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, gAllocator, gErrorCallback);
     if (!gFoundation)
     {
-        std::cout << "PxCreateFoundation failed!" << std::endl;
+        logger::error("PxCreateFoundation failed!");
         return -1;
     }
 
@@ -27,7 +26,7 @@ int PhysicsTest::initPhysicsTest() {
     gPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gFoundation, physx::PxTolerancesScale(), true, gPvd);
     if (!gPhysics)
     {
-        std::cout << "PxCreatePhysics failed!" << std::endl;
+        logger::error("PxCreatePhysics failed!");
         return -1;
     }
 
@@ -53,7 +52,7 @@ int PhysicsTest::initPhysicsTest() {
     physx::PxRigidStatic* groundPlane = physx::PxCreatePlane(*gPhysics, physx::PxPlane(0, 1, 0, 50), *gMaterial);
     gScene->addActor(*groundPlane);
 
-    std::cout << "Physics Test initialized successfully." << std::endl;
+    logger::info("Physics Test initialized successfully.");
     return 0;
 }
 
@@ -81,7 +80,7 @@ void PhysicsTest::initBoxTest()
     // Clean up
     shape->release();
 
-    std::cout << "Box test spawned successfully." << std::endl;
+    logger::info("Box test spawned successfully.");
 }
 
 void PhysicsTest::loop() {

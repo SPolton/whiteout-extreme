@@ -1,17 +1,16 @@
 ﻿#pragma once
 
-#include "app/GameTime.h"
-#include "core/RenderingSystem.h"
+#include "app/GameTime.hpp"
+#include "core/RenderingSystem.hpp"
 #include "core/Text.h"
-#include "physics/PhysicsSystem.h"
+#include "physics/PhysicsSystem.hpp"
 
 #include <iostream>
 #include <memory>
 
 class RacingGame {
 public:
-    RacingGame() = default;
-    ~RacingGame();
+    RacingGame();
 
     void run();
 

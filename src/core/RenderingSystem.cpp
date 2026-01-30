@@ -1,173 +1,253 @@
-#include "RenderingSystem.h"
+#include "RenderingSystem.hpp"
+#include "utils/logger.h"
+#include "core/render/ShapeGenerator.hpp"
+
 #include <iostream>
 #include <cmath>
 
-RenderingSystem::RenderingSystem()
-{
+RenderingSystem::RenderingSystem() {
     if (!init()) {
         throw std::runtime_error("Failed to initialize RenderingSystem!");
     }
 }
 
-void RenderingSystem::framebufferSizeCallback(GLFWwindow* window, int width, int height)
+RenderingSystem::~RenderingSystem()
 {
-    glViewport(0, 0, width, height);
+    // ImGui cleanup via wrapper
+    if (imguiWrapper) {
+        imguiWrapper->shutdown();
+    }
 }
 
-void RenderingSystem::processInput()
+void RenderingSystem::processInput(float deltaTime)
 {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
+    if (glfwGetKey(window->getGLFWwindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window->getGLFWwindow(), true);
+
+    // Mouse camera controls
+    auto const cursorPosition = inputManager->CursorPosition();
+
+    if (cursorPositionIsSetOnce == true) {
+        if (inputManager->IsMouseButtonDown(GLFW_MOUSE_BUTTON_RIGHT) == true)
+        {
+            float const aspectRatio = static_cast<float>(window->getWidth()) / static_cast<float>(window->getHeight());
+            auto const deltaPosition = cursorPosition - previousCursorPosition;
+            camera->adjustTheta(-static_cast<float>(deltaPosition.x) * deltaTime * imguiPanel->camSpeed * (1 / aspectRatio));
+            camera->adjustPhi(-static_cast<float>(deltaPosition.y) * deltaTime * imguiPanel->camSpeed);
+        }
+    }
+
+    cursorPositionIsSetOnce = true;
+    previousCursorPosition = cursorPosition;
 }
 
 bool RenderingSystem::init()
 {
+    // Initialize GLFW (needs to be done before creating Window)
     if (!glfwInit())
     {
-        std::cout << "Failed to initialize GLFW" << std::endl;
+        logger::error("Failed to initialize GLFW");
         return false;
     }
 
+    // Set OpenGL version hints
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    window = glfwCreateWindow(800, 600, "Racing Game", nullptr, nullptr);
-    if (window == nullptr)
-    {
-        std::cout << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        return false;
-    }
+    // Create window using our Window wrapper (RAII)
+    window = std::make_unique<Window>(800, 600, "Racing Game");
+    window->makeContextCurrent();
 
-    glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
-
+    // Initialize GLAD
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
-        std::cout << "Failed to initialize GLAD" << std::endl;
+        logger::error("Failed to initialize GLAD");
         return false;
     }
 
-    std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
-    std::cout << "OpenGL Renderer: " << glGetString(GL_RENDERER) << std::endl;
+    logger::info("OpenGL Version: {0}", (const char*)glGetString(GL_VERSION));
+    logger::info("OpenGL Renderer: {0}", (const char*)glGetString(GL_RENDERER));
 
-    glViewport(0, 0, 800, 600);
-
-    if (!initShaders())
-    {
-        std::cout << "Failed to initialize shaders" << std::endl;
-        return false;
-    }
-
-    if (!initGeometry())
-    {
-        std::cout << "Failed to initialize geometry" << std::endl;
-        return false;
-    }
-
+    // Initialize ImGui using wrapper (handles lifecycle)
     imguiWrapper = std::make_unique<ImGuiWrapper>();
-    if (!imguiWrapper->init(window))
+    if (!imguiWrapper->init(window->getGLFWwindow()))
     {
-        std::cout << "Failed to initialize ImGui" << std::endl;
-        //return false;
+        logger::error("Failed to initialize ImGui");
+        return false;
     }
+    
+    // Create ImGui panel (handles content)
+    imguiPanel = std::make_unique<ImGuiPanel>();
+    logger::info("ImGui initialized");
 
-    return true;
-}
+    // Initialize input manager with callbacks
+    inputManager = std::make_shared<InputManager>(
+        [this](int const width, int const height)->void { onResize(width, height); },
+        [this](double const xOffset, double const yOffset)->void { onMouseWheelChange(xOffset, yOffset); }
+    );
+    
+    window->setCallbacks(inputManager);
+    logger::info("Input manager initialized");
 
-bool RenderingSystem::initShaders()
-{
+    // Create shader using ShaderProgram (RAII)
     try
     {
-        shader = std::make_unique<Shader>("assets/shaders/shader.vert", "assets/shaders/shader.frag");
-        std::cout << "Shaders loaded successfully" << std::endl;
-        return true;
+        shader = std::make_unique<ShaderProgram>(
+            "assets/shaders/textured.vert", 
+            "assets/shaders/textured.frag"
+        );
+        logger::info("Shaders loaded successfully");
     }
     catch (const std::exception& e)
     {
-        std::cout << "Failed to load shaders: " << e.what() << std::endl;
+        logger::error("Failed to load shaders: {0}", e.what());
         return false;
     }
-}
 
-bool RenderingSystem::initGeometry()
-{
-    float vertices[] = {
-        // positions only (shader.frag uses uniform color)
-        -0.5f, -0.5f, 0.0f,
-         0.5f, -0.5f, 0.0f,
-         0.0f,  0.5f, 0.0f
-    };
+    // Load texture
+    try
+    {
+        texture = std::make_unique<Texture>(
+            "assets/textures/2k_earth_daymap.jpg",
+            GL_LINEAR
+        );
+        logger::info("Texture loaded successfully");
+    }
+    catch (const std::exception& e)
+    {
+        logger::error("Failed to load texture: {0}", e.what());
+        return false;
+    }
 
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
+    // Create geometry using GPU_Geometry (RAII)
+    triangleGeometry = std::make_unique<GPU_Geometry>();
+    triangleCPUData = std::make_unique<CPU_Geometry>();
+    
+    // Generate square using ShapeGenerator (better for textures)
+    *triangleCPUData = ShapeGenerator::sphere(1, 16, 16);
 
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    // Upload to GPU
+    triangleGeometry->Update(*triangleCPUData);
+    
+    logger::info("Geometry initialized");
 
-    // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
+    // Create camera
+    camera = std::make_unique<TurnTableCamera>();
+    
+    logger::info("Camera initialized");
 
-    glBindVertexArray(0);
+    // Enable depth testing
+    glEnable(GL_DEPTH_TEST);
 
     return true;
 }
 
-void RenderingSystem::update()
+void RenderingSystem::render()
 {
-    processInput();
-
-    // clear the colorbuffer
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-
+    // Clear buffers
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    
+    // Use shader
     shader->use();
+    
+    // Bind texture to texture unit 0
+    glActiveTexture(GL_TEXTURE0);
+    texture->bind();
+    glUniform1i(glGetUniformLocation(*shader, "baseColorTexture"), 0);
+    
+    // Get projection matrix
+    glm::mat4 projection = getProjectionMatrix();
+    glUniformMatrix4fv(glGetUniformLocation(*shader, "projection"), 1, GL_FALSE, &projection[0][0]);
+    
+    // Get view matrix from camera
+    glm::mat4 view = camera->getViewMatrix();
+    glUniformMatrix4fv(glGetUniformLocation(*shader, "view"), 1, GL_FALSE, &view[0][0]);
+    
+    // Simple identity model matrix
+    glm::mat4 model = glm::mat4(1.0f);
+    glUniformMatrix4fv(glGetUniformLocation(*shader, "model"), 1, GL_FALSE, &model[0][0]);
+    
+    // Bind and render geometry
+    triangleGeometry->bind();
+    
+    // Check if using indexed rendering (sphere/indexed shapes) or array rendering (triangle/square)
+    if (!triangleCPUData->indices.empty()) {
+        // Indexed rendering for sphere and other indexed geometry
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(triangleCPUData->indices.size()), GL_UNSIGNED_INT, nullptr);
+    } else {
+        // Array rendering for simple shapes
+        glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(triangleCPUData->positions.size()));
+    }
+}
 
-    // Set the uniform color (animated over time)
-    float timeValue = static_cast<float>(glfwGetTime());
-    float greenValue = (std::sin(timeValue) / 2.0f) + 0.5f;
-    shader->setVec4("ourColor", glm::vec4(0.0f, greenValue, 0.0f, 1.0f));
+glm::mat4 RenderingSystem::getProjectionMatrix() const
+{
+    float const aspectRatio = static_cast<float>(window->getWidth()) / static_cast<float>(window->getHeight());
+    
+    // Perspective projection for TurnTableCamera
+    return glm::perspective(camera->getFOV(), aspectRatio, 0.1f, 100.0f);
+}
 
-    // now render the triangle
-    glBindVertexArray(VAO);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+void RenderingSystem::update(float deltaTime)
+{
+    processInput(deltaTime);
+
+    // Get settings from panel
+    glm::vec3 bgColor = imguiPanel->getBackgroundColor();
+    glClearColor(bgColor.r, bgColor.g, bgColor.b, 1.0f);
+    
+    // Set viewport
+    glViewport(0, 0, window->getWidth(), window->getHeight());
+    
+    // Apply wireframe mode if enabled
+    if (imguiPanel->showWireframe) {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    } else {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+    
+    // Update camera stats for UI
+    imguiPanel->cameraStats = camera->getStats();
+    imguiPanel->cameraStats.aspect = static_cast<float>(window->getWidth()) / static_cast<float>(window->getHeight());
+    
+    // Render the scene
+    render();
 }
 
 void RenderingSystem::updateUI()
 {
+    // Begin ImGui frame
     imguiWrapper->beginFrame();
+
     imguiWrapper->renderFPS();
+    imguiPanel->cameraStats = camera->getStats();
+    imguiPanel->update();
+    
+    // Finish ImGui frame
     imguiWrapper->endFrame();
 }
 
 void RenderingSystem::endFrame()
 {
-    // swap buffers and poll IO events
-    glfwSwapBuffers(window);
+    // Swap buffers and poll events
+    window->swapBuffers();
     glfwPollEvents();
-}
-
-void RenderingSystem::cleanup()
-{
-    if (imguiWrapper) {
-        imguiWrapper->shutdown();
-        imguiWrapper.reset();
-    }
-
-    if (VAO != 0)
-        glDeleteVertexArrays(1, &VAO);
-    if (VBO != 0)
-        glDeleteBuffers(1, &VBO);
-
-    shader.reset();
-
-    glfwTerminate();
 }
 
 bool RenderingSystem::shouldClose() const
 {
-    return window != nullptr && glfwWindowShouldClose(window);
+    return window->shouldClose();
+}
+
+void RenderingSystem::onResize(int width, int height)
+{
+    glViewport(0, 0, width, height);
+    logger::info("Window resized to {}x{}", width, height);
+}
+
+void RenderingSystem::onMouseWheelChange(double xOffset, double yOffset)
+{
+    float scroll = -static_cast<float>(yOffset) * imguiPanel->camZoomSpeed * 0.016f;
+    camera->adjustRadius(scroll);
 }

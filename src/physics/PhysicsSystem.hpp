@@ -16,7 +16,7 @@ public:
     void update(double delta_time);
     physx::PxVec3 getPos(int i);
 
-    std::vector<Transform*> transformList;
+    std::vector<PhysxTransform*> transformList;
     void updateTransforms();
 private:
     std::vector<physx::PxRigidDynamic*> rigidDynamicList;
