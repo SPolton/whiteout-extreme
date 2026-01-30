@@ -22,6 +22,10 @@ target_link_libraries(${APP_NAME} PRIVATE fmt::fmt)
 
 # vivid
 message(STATUS "Using vivid via FetchContent")
+
+set(VIVID_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(VIVID_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+
 FetchContent_Declare(
     vivid
     GIT_REPOSITORY https://github.com/gurki/vivid
