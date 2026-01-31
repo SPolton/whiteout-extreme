@@ -40,6 +40,26 @@ void RenderingSystem::processInput(float deltaTime)
     cursorPositionIsSetOnce = true;
     previousCursorPosition = cursorPosition;
 
+    // poll controller state first
+    inputManager->pollControllerInputs();
+
+    // based on whether controller is connected, choose the correct input system
+    if (inputManager->IsControllerConnected()) {
+        processControllerInput();
+    }
+    else {
+        processKeyboardInput();
+    }
+}
+
+// Input Systems (Keyboard or Controller)
+//==================================================================================================================//
+
+void RenderingSystem::processControllerInput() {
+
+}
+    
+void RenderingSystem::processKeyboardInput() {
     /*
     * WASD (or arrow keys) to move/steer
     * W (up arrow) = accelerate
@@ -56,10 +76,10 @@ void RenderingSystem::processInput(float deltaTime)
     }
 
     // Should be able to steer left or right while accelerating
-    if (inputManager->IsKeyboardButtonDown(GLFW_KEY_D) || inputManager->IsKeyboardButtonDown(GLFW_KEY_LEFT)) {
+    if (inputManager->IsKeyboardButtonDown(GLFW_KEY_D) || inputManager->IsKeyboardButtonDown(GLFW_KEY_RIGHT)) {
         steerRight();
     }
-    else if (inputManager->IsKeyboardButtonDown(GLFW_KEY_A) || inputManager->IsKeyboardButtonDown(GLFW_KEY_RIGHT)) {
+    else if (inputManager->IsKeyboardButtonDown(GLFW_KEY_A) || inputManager->IsKeyboardButtonDown(GLFW_KEY_LEFT)) {
         steerLeft();
     }
 
@@ -78,7 +98,7 @@ void RenderingSystem::processInput(float deltaTime)
     }
 }
 
-// Input to Movement
+// Input -> Movement
 //==================================================================================================================//
 
 void RenderingSystem::accelerate()
@@ -105,7 +125,7 @@ void RenderingSystem::steerLeft()
     // apply transformation here steer the car to the left
 }
 
-// Input to Activate Skills
+// Input -> Activate Skills
 //==================================================================================================================//
 
 void RenderingSystem::boost()

@@ -57,6 +57,8 @@ private:
     
     bool init();
     void processInput(float deltaTime);
+    void processKeyboardInput();
+    void processControllerInput();
     void render();
     void onResize(int width, int height);
     void onMouseWheelChange(double xOffset, double yOffset);
