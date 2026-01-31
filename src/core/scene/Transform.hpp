@@ -21,10 +21,10 @@ public:
     SceneTransform(float scale);
     virtual ~SceneTransform() = default;
 
-    void setParent(std::shared_ptr<SceneTransform> parent) { this->parent = parent; }
+    void setParent(std::shared_ptr<SceneTransform> newParent) { this->parent = newParent; }
     bool hasParent() { return parent != nullptr; }
 
-    void setPosition(glm::vec3 position);
+    void setPosition(glm::vec3 newPosition);
     glm::vec3 getPosition() { return position; }
     glm::vec3 getWorldPosition();
 

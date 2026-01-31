@@ -42,7 +42,7 @@ bool Shader::compile() {
 		// convert stream into string
 		sourceString = sourceStream.str();
 	}
-	catch (std::ifstream::failure &e) {
+	catch (std::ifstream::failure& /*e*/) {
 		logger::error("SHADER reading {}:\n{}", path, strerror(errno));
 		return false;
 	}
