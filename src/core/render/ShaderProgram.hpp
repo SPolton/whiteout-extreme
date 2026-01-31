@@ -10,29 +10,29 @@
 
 class ShaderProgram {
 public:
-	ShaderProgram(const std::string& vertexPath, const std::string& fragmentPath);
-	// Because we're using the ShaderProgramHandle to do RAII for the shader for us
-	// and our other types are trivial or provide their own RAII
-	// we don't have to provide any specialized functions here. Rule of zero
-	//
-	// https://en.cppreference.com/w/cpp/language/rule_of_three
-	// https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#Rc-zero
+    ShaderProgram(const std::string& vertexPath, const std::string& fragmentPath);
+    // Because we're using the ShaderProgramHandle to do RAII for the shader for us
+    // and our other types are trivial or provide their own RAII
+    // we don't have to provide any specialized functions here. Rule of zero
+    //
+    // https://en.cppreference.com/w/cpp/language/rule_of_three
+    // https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#Rc-zero
 
-	// Public interface
-	bool recompile();
-	void use() const { glUseProgram(programID); }
+    // Public interface
+    bool recompile();
+    void use() const { glUseProgram(programID); }
 
-	void friend attach(ShaderProgram& sp, Shader& s);
+    void friend attach(ShaderProgram& sp, Shader& s);
 
-	operator GLuint() const {
-		return programID;
-	}
+    operator GLuint() const {
+        return programID;
+    }
 
 private:
-	ShaderProgramHandle programID;
+    ShaderProgramHandle programID;
 
-	Shader vertex;
-	Shader fragment;
+    Shader vertex;
+    Shader fragment;
 
-	bool checkAndLogLinkSuccess() const;
+    bool checkAndLogLinkSuccess() const;
 };
