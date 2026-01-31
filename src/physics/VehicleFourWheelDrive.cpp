@@ -84,11 +84,9 @@
 #include <ctype.h>
 
 #include "VehicleFourWheelDrive.hpp"
-#include "PxPhysicsAPI.h"
 #include "vehiclecommon/enginedrivetrain/EngineDrivetrain.h"
 #include "vehiclecommon/serialization/BaseSerialization.h"
 #include "vehiclecommon/serialization/EngineDrivetrainSerialization.h"
-#include "vehiclecommon/SnippetVehicleHelpers.h"
 
 #include "common/PVD.h"
 
@@ -99,19 +97,6 @@ using namespace snippetvehicle;
 
 //The vehicle with engine drivetrain
 EngineDriveVehicle gVehicle;
-
-//Vehicle simulation needs a simulation context
-//to store global parameters of the simulation such as 
-//gravitational acceleration.
-PxVehiclePhysXSimulationContext gVehicleSimulationContext;
-
-//Gravitational acceleration
-const PxVec3 gGravity(0.0f, -9.81f, 0.0f);
-
-//The mapping between PxMaterial and friction.
-PxVehiclePhysXMaterialFriction gPhysXMaterialFrictions[16];
-PxU32 gNbPhysXMaterialFrictions = 0;
-PxReal gPhysXDefaultMaterialFriction = 1.0f;
 
 //Give the vehicle a name so it can be identified in PVD.
 const char gVehicleName[] = "engineDrive";
@@ -138,8 +123,6 @@ const PxU32 gNbCommands = sizeof(gCommands) / sizeof(Command);
 PxReal gCommandTime = 0.0f;			//Time spent on current command
 PxU32 gCommandProgress = 0;			//The id of the current command.
 
-//A ground plane to drive on.
-PxRigidStatic* gGroundPlane = NULL;
 
 VehicleFourWheelDrive::VehicleFourWheelDrive(const char* vehicleDataPath)
     : gVehicleDataPath(vehicleDataPath)
