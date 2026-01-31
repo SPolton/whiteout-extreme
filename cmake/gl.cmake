@@ -18,7 +18,7 @@ if(MSVC)
     set_property(TARGET glad PROPERTY MSVC_RUNTIME_LIBRARY ${MT_CONFIG})
 endif()
 
-target_include_directories(glad PUBLIC ${CMAKE_SOURCE_DIR}/${LIB_FOLDER}/glad/include)
+target_include_directories(glad SYSTEM PUBLIC ${CMAKE_SOURCE_DIR}/${LIB_FOLDER}/glad/include)
 
 target_link_libraries(${APP_NAME} PRIVATE glad)
 
@@ -78,4 +78,4 @@ if(MSVC AND TARGET glm)
 endif()
 
 target_link_libraries(${APP_NAME} PRIVATE glm)
-target_include_directories(${APP_NAME} PRIVATE ${glm_SOURCE_DIR}/glm)
+target_include_directories(${APP_NAME} SYSTEM PRIVATE ${glm_SOURCE_DIR}/glm)

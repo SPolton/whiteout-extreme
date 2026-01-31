@@ -52,7 +52,7 @@ if(NOT EXISTS ${PHYSX_CONFIG_DIR})
         "See README.md for build instructions.")
 endif()
 
-target_include_directories(${APP_NAME} PRIVATE ${PHYSX_INCLUDE_DIRS})
+target_include_directories(${APP_NAME} SYSTEM PRIVATE ${PHYSX_INCLUDE_DIRS})
 
 # Core PhysX libraries (order matters for linking)
 set(PHYSX_LIBS

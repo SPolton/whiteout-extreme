@@ -1,4 +1,4 @@
-# rapidjson (header only)
+# rapidjson (header-only)
 message(STATUS "Using rapidjson via FetchContent")
 
 set(RAPIDJSON_BUILD_DOC OFF CACHE BOOL "" FORCE)
@@ -13,7 +13,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(rapidjson)
 
-target_include_directories(${APP_NAME} PRIVATE ${rapidjson_SOURCE_DIR}/include)
+target_include_directories(${APP_NAME} SYSTEM PRIVATE ${rapidjson_SOURCE_DIR}/include)
 
 
 # Assimp

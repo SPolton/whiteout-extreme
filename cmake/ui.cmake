@@ -32,7 +32,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(freetype)
 
 target_link_libraries(${APP_NAME} PRIVATE freetype)
-target_include_directories(${APP_NAME} PRIVATE ${freetype_SOURCE_DIR}/include)
+target_include_directories(${APP_NAME} SYSTEM PRIVATE ${freetype_SOURCE_DIR}/include)
 add_definitions(-DIMGUI_DISABLE_FREETYPE)
 
 # --------------------------------------------------
@@ -55,7 +55,7 @@ target_sources(${APP_NAME} PRIVATE
     ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
 )
 
-target_include_directories(${APP_NAME} PRIVATE
+target_include_directories(${APP_NAME} SYSTEM PRIVATE
     ${imgui_SOURCE_DIR}
     ${imgui_SOURCE_DIR}/backends
 )
