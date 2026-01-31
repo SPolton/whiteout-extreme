@@ -39,6 +39,54 @@ void RenderingSystem::processInput(float deltaTime)
 
     cursorPositionIsSetOnce = true;
     previousCursorPosition = cursorPosition;
+
+    /*
+    * WASD (or arrow keys) to move/steer
+    * W (up arrow) = accelerate
+    * S (down arrow) = brake
+    * A (left arrow) = steer left
+    * D (right arrow) = steer right
+    */
+
+    if (inputManager->IsKeyboardButtonDown(GLFW_KEY_W) || inputManager->IsKeyboardButtonDown(GLFW_KEY_UP)) {
+        accelerate();
+    }
+    else if (inputManager->IsKeyboardButtonDown(GLFW_KEY_S) || inputManager->IsKeyboardButtonDown(GLFW_KEY_DOWN)) {
+        brake();
+    }
+
+    // Should be able to steer left or right while accelerating
+    if (inputManager->IsKeyboardButtonDown(GLFW_KEY_D) || inputManager->IsKeyboardButtonDown(GLFW_KEY_LEFT)) {
+        steerRight();
+    }
+    else if (inputManager->IsKeyboardButtonDown(GLFW_KEY_A) || inputManager->IsKeyboardButtonDown(GLFW_KEY_RIGHT)) {
+        steerLeft();
+    }
+
+}
+
+void RenderingSystem::accelerate()
+{
+    logger::info("Pressed W (UP). Accelerating...");
+    // apply transformation here to move car forward
+}
+
+void RenderingSystem::brake()
+{
+    logger::info("Pressed S (DOWN). Braking...");
+    // apply transformation here to slow car down
+}
+
+void RenderingSystem::steerRight()
+{
+    logger::info("Pressed D (RIGHT). Steer Right.");
+    // apply transformation here to steer the car to the right
+}
+
+void RenderingSystem::steerLeft()
+{
+    logger::info("Pressed A (LEFT). Steer Left.");
+    // apply transformation here steer the car to the left
 }
 
 bool RenderingSystem::init()

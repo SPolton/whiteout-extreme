@@ -44,6 +44,12 @@ private:
     std::shared_ptr<InputManager> inputManager;
     glm::dvec2 previousCursorPosition{};
     bool cursorPositionIsSetOnce = false;
+
+    // Movement
+    void accelerate();
+    void brake();
+    void steerRight();
+    void steerLeft();
     
     bool init();
     void processInput(float deltaTime);
