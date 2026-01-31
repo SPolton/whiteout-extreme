@@ -63,7 +63,23 @@ void RenderingSystem::processInput(float deltaTime)
         steerLeft();
     }
 
+    /*
+    * Key Mappings for additional game functions
+    * Left Shift = Nitro
+    * Space Bar = Throw Snowball (assuming auto aim for now...otherwise mouse input needed)
+    */
+
+    // let us just assume we use one skill at a time
+    if (inputManager->IsKeyboardButtonDown(GLFW_KEY_LEFT_SHIFT)) {
+        boost();
+    }
+    else if (inputManager->IsKeyboardButtonDown(GLFW_KEY_SPACE)) {
+        throwSnowball();
+    }
 }
+
+// Input to Movement
+//==================================================================================================================//
 
 void RenderingSystem::accelerate()
 {
@@ -79,15 +95,34 @@ void RenderingSystem::brake()
 
 void RenderingSystem::steerRight()
 {
-    logger::info("Pressed D (RIGHT). Steer Right.");
+    logger::info("Pressed D (RIGHT). Steer Right...");
     // apply transformation here to steer the car to the right
 }
 
 void RenderingSystem::steerLeft()
 {
-    logger::info("Pressed A (LEFT). Steer Left.");
+    logger::info("Pressed A (LEFT). Steer Left...");
     // apply transformation here steer the car to the left
 }
+
+// Input to Activate Skills
+//==================================================================================================================//
+
+void RenderingSystem::boost()
+{
+    logger::info("Pressed Left Shift. Activate Boost...");
+    // apply transformation here accelerate car even faster due to boost.
+    // probably need a CD for this?
+}
+
+void RenderingSystem::throwSnowball()
+{
+    logger::info("Pressed Space Bar. Throw Snowball...");
+    // logic to throw snowball here.
+    // Will need a CD for this...and how many snowballs can we stack again?
+}
+
+//==================================================================================================================//
 
 bool RenderingSystem::init()
 {

@@ -45,11 +45,15 @@ private:
     glm::dvec2 previousCursorPosition{};
     bool cursorPositionIsSetOnce = false;
 
-    // Movement
+    // Basic Movement
     void accelerate();
     void brake();
     void steerRight();
     void steerLeft();
+
+    // Skills
+    void boost();
+    void throwSnowball();
     
     bool init();
     void processInput(float deltaTime);
