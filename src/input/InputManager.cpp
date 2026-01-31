@@ -19,7 +19,7 @@ void InputManager::keyCallback(
     int const /*mods*/
 )
 {
-    logger::info("KeyCallback: key={}, scancode={}, action={}", key, action);
+    logger::info("KeyCallback: key={}, action={}", key, action);
     if (action == GLFW_PRESS)
     {
         mKeyStatusMap[key] = true;
