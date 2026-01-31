@@ -34,7 +34,8 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 
-# Use static CRT to match PhysX
+# Use static library to match PhysX
+set(GLFW_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 set(GLFW_USE_STATIC_CRT ON CACHE BOOL "" FORCE)
 
 # Disable Vulkan support (only using OpenGL)

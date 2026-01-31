@@ -58,6 +58,9 @@ include(FetchContent)
 set(FETCHCONTENT_QUIET ON)
 set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
 
+# Force static builds for FetchContent libraries
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+
 # --------------------------------------------------
 # stb https://github.com/nothings/stb
 message(STATUS "Using stb headers in ${LIB_FOLDER}")
