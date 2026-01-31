@@ -41,7 +41,11 @@ namespace logger {
         OFF
     };
 
+#ifndef NDEBUG
     static inline Level current_level = Level::DEBUG;
+#else
+    static inline Level current_level = Level::INFO;
+#endif
 
     inline bool is_level_enabled(Level level) {
         return level >= current_level;
