@@ -1,4 +1,21 @@
-# --------------------------------------------------
+# rapidjson (header only)
+message(STATUS "Using rapidjson via FetchContent")
+
+set(RAPIDJSON_BUILD_DOC OFF CACHE BOOL "" FORCE)
+set(RAPIDJSON_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(RAPIDJSON_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+
+FetchContent_Declare(
+    rapidjson
+    GIT_REPOSITORY https://github.com/Tencent/rapidjson.git
+    GIT_TAG v1.1.0
+    GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(rapidjson)
+
+target_include_directories(${APP_NAME} PRIVATE ${rapidjson_SOURCE_DIR}/include)
+
+
 # Assimp
 message(STATUS "Using Assimp via FetchContent")
 
