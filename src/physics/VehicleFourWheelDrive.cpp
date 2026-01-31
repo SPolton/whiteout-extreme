@@ -83,6 +83,7 @@
 
 #include <ctype.h>
 
+#include "VehicleFourWheelDrive.hpp"
 #include "PxPhysicsAPI.h"
 #include "vehiclecommon/enginedrivetrain/EngineDrivetrain.h"
 #include "vehiclecommon/serialization/BaseSerialization.h"
@@ -91,24 +92,10 @@
 
 #include "common/PVD.h"
 
+// OK in cpp files, not in headers
 using namespace physx;
 using namespace physx::vehicle2;
 using namespace snippetvehicle;
-
-
-//PhysX management class instances.
-
-PxDefaultAllocator		gAllocator;
-PxDefaultErrorCallback	gErrorCallback;
-PxFoundation*			gFoundation = NULL;
-PxPhysics*				gPhysics	= NULL;
-PxDefaultCpuDispatcher*	gDispatcher = NULL;
-PxScene*				gScene		= NULL;
-PxMaterial*				gMaterial	= NULL;
-PxPvd*                  gPvd        = NULL;
-
-//The path to the vehicle json files to be loaded.
-const char* gVehicleDataPath = NULL;
 
 //The vehicle with engine drivetrain
 EngineDriveVehicle gVehicle;
@@ -132,29 +119,40 @@ const char gVehicleName[] = "engineDrive";
 //Commands are issued to the vehicle in a pre-choreographed sequence.
 struct Command
 {
-	PxF32 brake;
-	PxF32 throttle;
-	PxF32 steer;
-	PxU32 gear;
-	PxF32 duration;
+    PxF32 brake;
+    PxF32 throttle;
+    PxF32 steer;
+    PxU32 gear;
+    PxF32 duration;
 };
 const PxU32 gTargetGearCommand = PxVehicleEngineDriveTransmissionCommandState::eAUTOMATIC_GEAR;
 Command gCommands[] =
 {
-	{0.5f, 0.0f, 0.0f, gTargetGearCommand, 2.0f},	//brake on and come to rest for 2 seconds
-	{0.0f, 0.65f, 0.0f, gTargetGearCommand, 5.0f},	//throttle for 5 seconds
-	{0.5f, 0.0f, 0.0f, gTargetGearCommand, 5.0f},	//brake for 5 seconds
-	{0.0f, 0.75f, 0.0f, gTargetGearCommand, 5.0f},	//throttle for 5 seconds
-	{0.0f, 0.25f, 0.5f, gTargetGearCommand, 5.0f}	//light throttle and steer for 5 seconds.
+    {0.5f, 0.0f, 0.0f, gTargetGearCommand, 2.0f},	//brake on and come to rest for 2 seconds
+    {0.0f, 0.65f, 0.0f, gTargetGearCommand, 5.0f},	//throttle for 5 seconds
+    {0.5f, 0.0f, 0.0f, gTargetGearCommand, 5.0f},	//brake for 5 seconds
+    {0.0f, 0.75f, 0.0f, gTargetGearCommand, 5.0f},	//throttle for 5 seconds
+    {0.0f, 0.25f, 0.5f, gTargetGearCommand, 5.0f}	//light throttle and steer for 5 seconds.
 };
 const PxU32 gNbCommands = sizeof(gCommands) / sizeof(Command);
 PxReal gCommandTime = 0.0f;			//Time spent on current command
 PxU32 gCommandProgress = 0;			//The id of the current command.
 
 //A ground plane to drive on.
-PxRigidStatic*	gGroundPlane = NULL;
+PxRigidStatic* gGroundPlane = NULL;
 
-void initPhysX()
+VehicleFourWheelDrive::VehicleFourWheelDrive(const char* vehicleDataPath)
+    : gVehicleDataPath(vehicleDataPath)
+{
+    initPhysics();
+}
+
+VehicleFourWheelDrive::~VehicleFourWheelDrive()
+{
+    cleanupPhysics();
+}
+
+void VehicleFourWheelDrive::initPhysX()
 {
 	gFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, gAllocator, gErrorCallback);
 	gPvd = PxCreatePvd(*gFoundation);
@@ -183,7 +181,7 @@ void initPhysX()
 	PxInitVehicleExtension(*gFoundation);
 }
 
-void cleanupPhysX()
+void VehicleFourWheelDrive::cleanupPhysX()
 {
 	PxCloseVehicleExtension();
 
@@ -200,7 +198,7 @@ void cleanupPhysX()
 	PX_RELEASE(gFoundation);
 }
 
-void initGroundPlane()
+void VehicleFourWheelDrive::initGroundPlane()
 {
 	gGroundPlane = PxCreatePlane(*gPhysics, PxPlane(0, 1, 0, 0), *gMaterial);
 	for (PxU32 i = 0; i < gGroundPlane->getNbShapes(); i++)
@@ -214,12 +212,12 @@ void initGroundPlane()
 	gScene->addActor(*gGroundPlane);
 }
 
-void cleanupGroundPlane()
+void VehicleFourWheelDrive::cleanupGroundPlane()
 {
 	gGroundPlane->release();
 }
 
-void initMaterialFrictionTable()
+void VehicleFourWheelDrive::initMaterialFrictionTable()
 {
 	//Each physx material can be mapped to a tire friction value on a per tire basis.
 	//If a material is encountered that is not mapped to a friction value, the friction value used is the specified default value.
@@ -231,7 +229,7 @@ void initMaterialFrictionTable()
 	gNbPhysXMaterialFrictions = 1;
 }
 
-bool initVehicles()
+bool VehicleFourWheelDrive::initVehicles()
 {
 	//Load the params from json or set directly.
 	readBaseParamsFromJsonFile(gVehicleDataPath, "Base.json", gVehicle.mBaseParams);
@@ -275,12 +273,12 @@ bool initVehicles()
 	return true;
 }
 
-void cleanupVehicles()
+void VehicleFourWheelDrive::cleanupVehicles()
 {
 	gVehicle.destroy();
 }
 
-bool initPhysics()
+bool VehicleFourWheelDrive::initPhysics()
 {
 	initPhysX();
 	initGroundPlane();
@@ -290,7 +288,7 @@ bool initPhysics()
 	return true;
 }
 
-void cleanupPhysics()
+void VehicleFourWheelDrive::cleanupPhysics()
 {
 	cleanupVehicles();
 	cleanupGroundPlane();
@@ -298,7 +296,7 @@ void cleanupPhysics()
 	printf("SnippetVehicleFourWheelDrive done.\n");
 }
 
-void stepPhysics()
+void VehicleFourWheelDrive::stepPhysics()
 {
 	if (gNbCommands == gCommandProgress)
 		return;
@@ -335,7 +333,8 @@ void stepPhysics()
 		gCommandTime = 0.0f;
 	}
 }
-	
+
+/* For reference
 int snippetMain(int argc, const char*const* argv)
 {
 	if (!parseVehicleDataPath(argc, argv, "SnippetVehicleFourWheelDrive", gVehicleDataPath))
@@ -368,3 +367,4 @@ int snippetMain(int argc, const char*const* argv)
 
 	return 0;
 }
+*/
