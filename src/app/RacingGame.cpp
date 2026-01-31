@@ -23,11 +23,11 @@ void RacingGame::run()
 
         // Physics System Loop
         while (gameTime.accumulator >= gameTime.dt) {
-            physicsSystem->update(gameTime.dt);
+            physicsSystem->update(gameTime.dtF());
             gameTime.physicsUpdate();
         }
 
-        renderer->update(gameTime.fps);
+        renderer->update(gameTime.fpsF());
         renderer->updateUI();
 
         // Must be called after renderer update, but before text rendering
@@ -45,7 +45,7 @@ void RacingGame::run()
             { 100.f, 1100.f, 0.75f }, { 0.5f, 0.2f, 0.8f });
 
         textSystem->renderText(
-            "Game FPS: " + std::to_string(1 / gameTime.fps),
+            "Game FPS: " + std::to_string(1.0f / gameTime.fpsF()),
             { 100.f, 1050.f, 0.75f }, { 0.8f, 0.8f, 0.2f });
 
         textSystem->endText();

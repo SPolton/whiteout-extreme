@@ -80,9 +80,9 @@ void PhysicsSystem::updateTransforms() {
     }
 }
 
-void PhysicsSystem::update(double delta_time) {
-    gScene->simulate(delta_time);
-    gScene->fetchResults(true);
+void PhysicsSystem::update(float delta_time) {
+gScene->simulate(delta_time);
+gScene->fetchResults(true);
 
     updateTransforms();
 
