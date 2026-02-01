@@ -174,7 +174,7 @@ bool InputManager::IsControllerButtonDown(int const controllerButton) const
 
 float InputManager::GetControllerAxis(int const controllerAxis) const
 {
-    // initialize to 0
+    // initialize to 0 (0 = not pressed, 1 = fully pressed)
     bool axisValue = 0;
 
     axisValue = controllerAxes.at(controllerAxis);

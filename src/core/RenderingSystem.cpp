@@ -56,7 +56,46 @@ void RenderingSystem::processInput(float deltaTime)
 //==================================================================================================================//
 
 void RenderingSystem::processControllerInput() {
+    /*
+    * Right Trigger = accelerate
+    * Left Trigger = brake
+    * Left Stick = steering
+    * X (switch) = Y (Xbox) = Nitro
+    * Y (switch) = X (Xbox) = Throw Snowball (assuming auto aim for now...right stick input needed?)
+    */
 
+    // check for throttle/braking
+    // anything greater than 0 means it is pressed
+    if (inputManager->GetControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER) > 0.0f) {
+        accelerate();
+    }
+    else if (inputManager->GetControllerAxis(GLFW_GAMEPAD_AXIS_LEFT_TRIGGER) > 0.0f) {
+        brake();
+    }
+
+    // check for steering on left joystick
+    // if positive, it is steering right
+    // if negative, it is steering left
+    if (inputManager->GetControllerAxis(GLFW_GAMEPAD_AXIS_LEFT_X) > 0.0f) {
+        steerRight();
+    }
+    else if (inputManager->GetControllerAxis(GLFW_GAMEPAD_AXIS_LEFT_X) < 0.0f) {
+        steerLeft();
+    }
+
+    // if top button pressed, activate boost
+    // if left button pressed, throw projectile
+    if (inputManager->IsControllerButtonDown(GLFW_GAMEPAD_BUTTON_Y)) {
+        boost();
+    }
+    else if (inputManager->IsControllerButtonDown(GLFW_GAMEPAD_BUTTON_X)) {
+        throwSnowball();
+    }
+
+    // triggers menu/pause
+    if (inputManager->IsControllerButtonDown(GLFW_GAMEPAD_BUTTON_START)) {
+        gamePaused();
+    }
 }
     
 void RenderingSystem::processKeyboardInput() {
@@ -96,6 +135,11 @@ void RenderingSystem::processKeyboardInput() {
     else if (inputManager->IsKeyboardButtonDown(GLFW_KEY_SPACE)) {
         throwSnowball();
     }
+
+    // triggers menu/pause
+    if (inputManager->IsKeyboardButtonDown(GLFW_KEY_P)) {
+        gamePaused();
+    }
 }
 
 // Input -> Movement
@@ -103,25 +147,25 @@ void RenderingSystem::processKeyboardInput() {
 
 void RenderingSystem::accelerate()
 {
-    logger::info("Pressed W (UP). Accelerating...");
+    logger::info("Accelerating...");
     // apply transformation here to move car forward
 }
 
 void RenderingSystem::brake()
 {
-    logger::info("Pressed S (DOWN). Braking...");
+    logger::info("Braking...");
     // apply transformation here to slow car down
 }
 
 void RenderingSystem::steerRight()
 {
-    logger::info("Pressed D (RIGHT). Steer Right...");
+    logger::info("Steer Right...");
     // apply transformation here to steer the car to the right
 }
 
 void RenderingSystem::steerLeft()
 {
-    logger::info("Pressed A (LEFT). Steer Left...");
+    logger::info("Steer Left...");
     // apply transformation here steer the car to the left
 }
 
@@ -130,19 +174,24 @@ void RenderingSystem::steerLeft()
 
 void RenderingSystem::boost()
 {
-    logger::info("Pressed Left Shift. Activate Boost...");
+    logger::info("Activate Boost...");
     // apply transformation here accelerate car even faster due to boost.
     // probably need a CD for this?
 }
 
 void RenderingSystem::throwSnowball()
 {
-    logger::info("Pressed Space Bar. Throw Snowball...");
+    logger::info("Throw Snowball...");
     // logic to throw snowball here.
     // Will need a CD for this...and how many snowballs can we stack again?
 }
 
 //==================================================================================================================//
+
+void RenderingSystem::gamePaused() {
+    isGamePaused = !isGamePaused;
+    logger::info("Game is paused...");
+}
 
 bool RenderingSystem::init()
 {
