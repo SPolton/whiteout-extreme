@@ -61,7 +61,7 @@ void RenderingSystem::processControllerInput() {
     * Left Trigger = brake
     * Left Stick = steering
     * X (switch) = Y (Xbox) = Nitro
-    * Y (switch) = X (Xbox) = Throw Snowball (assuming auto aim for now...right stick input needed?)
+    * Y (switch) = X (Xbox) = Throw Snowball (assuming auto aim for now...otherwise right stick input needed?)
     */
 
     // check for throttle/braking
