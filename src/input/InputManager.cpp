@@ -91,7 +91,7 @@ glm::dvec2 const &InputManager::CursorPosition() const
 void InputManager::pollControllerInputs() {
     // use gamepad mapping (need to test)
     // we are assuming only one controller right now: GLFW_JOYSTICK_1
-    
+
     // check if joystick is present AND has a gamepad mapping
     // use gamepad functions for standard gamepads like Xbox controllers
     if (glfwJoystickIsGamepad(GLFW_JOYSTICK_1))
@@ -101,6 +101,8 @@ void InputManager::pollControllerInputs() {
         
         // reteives name of the gamepad mapping
         const char* name = glfwGetGamepadName(GLFW_JOYSTICK_1);
+
+        printf("Controller %s connected.\n", name);
 
         // retreive gamepad state
         GLFWgamepadstate state;
@@ -113,43 +115,16 @@ void InputManager::pollControllerInputs() {
 
             // GLFW_GAMEPAD_BUTTON_LAST is a constant equal to the largest available index in the button array
             // go through each button index and store its state in our array
-            for (int i = 0; i < GLFW_GAMEPAD_BUTTON_LAST; ++i) {
+            for (int i = 0; i < GLFW_GAMEPAD_BUTTON_LAST + 1; i++) {
                 controllerButtons[i] = state.buttons[i];
             }
 
             // GLFW_GAMEPAD_AXIS_LAST is a constant equal to the largest available index in the axis array
             // go through each axis index and store its state in our array
-            for (int j = 0; j < GLFW_GAMEPAD_AXIS_LAST; ++j) {
+            for (int j = 0; j < GLFW_GAMEPAD_AXIS_LAST + 1; j++) {
                 controllerAxes[j] = state.axes[j];
             }
         }
-
-        // using pure joystick inputs
-        /*
-        // get positions of all axes of a joystick
-        int countAxes;
-        // Each element in the returned array is a value between -1.0 and 1.0
-        const float* axes = glfwGetJoystickAxes(GLFW_JOYSTICK_1, &countAxes);
-        // store the retreived info to the maps
-        for (int i = 0; i < countAxes; i++) {
-            controllerAxes[i] = axes[i];
-        }
-
-        // get all button states
-        int countButtons;
-        // Each element in the returned array is either GLFW_PRESS or GLFW_RELEASE
-        const unsigned char* buttons = glfwGetJoystickButtons(GLFW_JOYSTICK_1, &countButtons);
-        // store the retreived info to the maps
-        for (int i = 0; i < countButtons; i++) {
-            // if it is GLFW_PRESS, then store true, otherwise store false to represent GLFW_RELEASE
-            if (buttons[i] == buttons[i]) {
-                controllerButtons[i] = true;
-            }
-            else {
-                controllerButtons[i] = false;
-            }
-        }
-        */
     }
     else {
         // controller has disconnected, clear all controller state info
@@ -174,12 +149,7 @@ bool InputManager::IsControllerButtonDown(int const controllerButton) const
 
 float InputManager::GetControllerAxis(int const controllerAxis) const
 {
-    // initialize to 0 (0 = not pressed, 1 = fully pressed)
-    bool axisValue = 0;
-
-    axisValue = controllerAxes.at(controllerAxis);
-
-    return axisValue;
+    return controllerAxes.at(controllerAxis);
 }
 
 bool InputManager::IsControllerConnected() {

@@ -73,13 +73,16 @@ void RenderingSystem::processControllerInput() {
         brake();
     }
 
+    // add "deadzone" (since most controllers won't return back to 0.0 exactly)
+    float deadZone = 0.2f;
+
     // check for steering on left joystick
     // if positive, it is steering right
     // if negative, it is steering left
-    if (inputManager->GetControllerAxis(GLFW_GAMEPAD_AXIS_LEFT_X) > 0.0f) {
+    if (inputManager->GetControllerAxis(GLFW_GAMEPAD_AXIS_LEFT_X) > deadZone) {
         steerRight();
     }
-    else if (inputManager->GetControllerAxis(GLFW_GAMEPAD_AXIS_LEFT_X) < 0.0f) {
+    else if (inputManager->GetControllerAxis(GLFW_GAMEPAD_AXIS_LEFT_X) < -deadZone) {
         steerLeft();
     }
 
