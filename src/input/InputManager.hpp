@@ -29,6 +29,15 @@ public:
     [[nodiscard]]
     glm::dvec2 const & CursorPosition() const;
 
+    // controller queries
+    void pollControllerInputs();
+
+    bool IsControllerButtonDown(int controllerButton) const;
+
+    float GetControllerAxis(int controllerAxis) const;
+
+    bool IsControllerConnected();
+
 private:
 
     void keyCallback(
@@ -46,10 +55,17 @@ private:
 
     void scrollCallback(double xoffset, double yoffset) override;
 
+    // keyboard input
     std::unordered_map<int, bool> mKeyStatusMap{};
+
+    // mouse input
     std::unordered_map<int, bool> mMouseStatusMap{};
     glm::dvec2 mCursorPosition{};
     ResizeCallback mResizeCallback;
     MouseWheelCallback mMouseWheelCallback;
 
+    // controller input
+    std::unordered_map<int, bool> controllerButtons;
+    std::unordered_map<int, float> controllerAxes;
+    bool controllerConnected;
 };

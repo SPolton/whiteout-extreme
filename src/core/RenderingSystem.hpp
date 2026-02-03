@@ -44,11 +44,27 @@ private:
     std::shared_ptr<InputManager> inputManager;
     glm::dvec2 previousCursorPosition{};
     bool cursorPositionIsSetOnce = false;
+
+    // Basic Movement
+    void accelerate();
+    void brake();
+    void steerRight();
+    void steerLeft();
+
+    // Skills
+    void boost();
+    void throwSnowball();
     
     bool init();
     void processInput(float deltaTime);
+    void processKeyboardInput();
+    void processControllerInput();
     void render();
     void onResize(int width, int height);
     void onMouseWheelChange(double xOffset, double yOffset);
     glm::mat4 getProjectionMatrix() const;
+
+    // Pause/Menu
+    bool isGamePaused = false;
+    void gamePaused();
 };
