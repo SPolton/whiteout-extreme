@@ -12,6 +12,12 @@ struct GameTime {
     unsigned int physicsFrameCount = 0;
     double fps = 0.0;
 
+    // convenience getters for float values
+    float dtF() const { return static_cast<float>(dt); }
+    float tF() const { return static_cast<float>(t); }
+    float fpsF() const { return static_cast<float>(fps); }
+    float accF() const { return static_cast<float>(accumulator); }
+
     void update() {
         // New Time Trackers
         double newTime = glfwGetTime();

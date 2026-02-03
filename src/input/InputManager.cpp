@@ -14,9 +14,9 @@ InputManager::InputManager(
 
 void InputManager::keyCallback(
     int const key,
-    int const scancode,
+    int const /*scancode*/,
     int const action,
-    int const mods
+    int const /*mods*/
 )
 {
     logger::info("KeyCallback: key={}, action={}", key, action);
@@ -39,7 +39,7 @@ void InputManager::windowSizeCallback(int const width, int const height)
     }
 }
 
-void InputManager::mouseButtonCallback(int const button, int const action, int mods)
+void InputManager::mouseButtonCallback(int const button, int const action, int /*mods*/)
 {
     logger::info("MouseButtonCallback: button={}, action={}", button, action);
     mMouseStatusMap[button] = action;

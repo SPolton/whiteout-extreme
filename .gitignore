@@ -497,12 +497,12 @@ FodyWeavers.xsd
 *.msp
 
 # Custom
-libraries/*
-*physx*/
-third*party/*
+/libraries/*
+/*physx*/
+/third*party/*
 
 # Allow exceptions
 !libraries/glad
 !libraries/stb
-libraries/stb/*
+/libraries/stb/*
 !libraries/stb/stb_image.*

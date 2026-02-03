@@ -58,6 +58,9 @@ include(FetchContent)
 set(FETCHCONTENT_QUIET ON)
 set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
 
+# Force static builds for FetchContent libraries
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+
 # --------------------------------------------------
 # stb https://github.com/nothings/stb
 message(STATUS "Using stb headers in ${LIB_FOLDER}")
@@ -66,11 +69,11 @@ target_include_directories(${APP_NAME} PRIVATE ${LIB_DIR}/stb)
 # fmt.dev, vivid
 include(cmake/text.cmake)
 
+# rapidjson, Assimp
+include(cmake/in.cmake)
+
 # OpenGL, GLAD, GLFW, GLM
 include(cmake/gl.cmake)
-
-# Assimp
-include(cmake/in.cmake)
 
 # FreeType, ImGui
 include(cmake/ui.cmake)

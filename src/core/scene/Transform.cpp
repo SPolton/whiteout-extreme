@@ -50,13 +50,13 @@ void SceneTransform::setRotationAxis(glm::vec3 axis)
 }
 
 // Override the local position of the object
-void SceneTransform::setPosition(glm::vec3 position)
+void SceneTransform::setPosition(glm::vec3 newPosition)
 {
     updated();
-    this->position = position;
-    // if (DEBUG) logger::debug("Position: ({}, {}, {})", position.x, position.y, position.z);
+    this->position = newPosition;
+    // if (DEBUG) logger::debug("Position: ({}, {}, {})", newPosition.x, newPosition.y, newPosition.z);
 
-    translation = glm::translate(glm::mat4(1.0f), position);
+    translation = glm::translate(glm::mat4(1.0f), newPosition);
 }
 
 // Returns the world space position of this transform

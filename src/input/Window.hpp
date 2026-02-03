@@ -18,10 +18,10 @@
 // extends this one and overrides the implementations with your own
 class CallbackInterface {
 public:
-	virtual void keyCallback(int key, int scancode, int action, int mods) {}
-	virtual void mouseButtonCallback(int button, int action, int mods) {}
-	virtual void cursorPosCallback(double xpos, double ypos) {}
-	virtual void scrollCallback(double xoffset, double yoffset) {}
+	virtual void keyCallback(int /*key*/, int /*scancode*/, int /*action*/, int /*mods*/) {}
+	virtual void mouseButtonCallback(int /*button*/, int /*action*/, int /*mods*/) {}
+	virtual void cursorPosCallback(double /*xpos*/, double /*ypos*/) {}
+	virtual void scrollCallback(double /*xoffset*/, double /*yoffset*/) {}
 	virtual void windowSizeCallback(int width, int height) { glViewport(0, 0, width, height); }
 };
 
@@ -40,7 +40,6 @@ struct WindowDeleter {
 // Main class for creating and interacting with a GLFW window.
 // Only wraps the most fundamental parts of the API
 class Window {
-
 public:
 	Window(
 		std::shared_ptr<CallbackInterface> callbacks, int width, int height,
@@ -71,7 +70,7 @@ private:
 
 	void connectCallbacks();
 
-	static void defaultWindowSizeCallback(GLFWwindow* window, int width, int height) { glViewport(0, 0, width, height); }
+	static void defaultWindowSizeCallback(GLFWwindow* /*window*/, int width, int height) { glViewport(0, 0, width, height); }
 
 	// Meta callback functions. These bind to the actual glfw callback,
 	// get the actual callback method from user data, and then call that.

@@ -18,7 +18,7 @@ if(MSVC)
     set_property(TARGET glad PROPERTY MSVC_RUNTIME_LIBRARY ${MT_CONFIG})
 endif()
 
-target_include_directories(glad PUBLIC ${CMAKE_SOURCE_DIR}/${LIB_FOLDER}/glad/include)
+target_include_directories(glad SYSTEM PUBLIC ${CMAKE_SOURCE_DIR}/${LIB_FOLDER}/glad/include)
 
 target_link_libraries(${APP_NAME} PRIVATE glad)
 
@@ -34,7 +34,8 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 
-# Use static CRT to match PhysX
+# Use static library to match PhysX
+set(GLFW_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 set(GLFW_USE_STATIC_CRT ON CACHE BOOL "" FORCE)
 
 # Disable Vulkan support (only using OpenGL)
@@ -57,7 +58,7 @@ endif()
 target_link_libraries(${APP_NAME} PRIVATE glfw)
 
 # --------------------------------------------------
-# GLM (header-only library)
+# GLM (header-only)
 message(STATUS "Using GLM via FetchContent")
 
 set(GLM_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -71,10 +72,4 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glm)
 
-# Ensure GLM uses the same runtime library as our project
-if(MSVC AND TARGET glm)
-    set_property(TARGET glm PROPERTY MSVC_RUNTIME_LIBRARY ${MT_CONFIG})
-endif()
-
-target_link_libraries(${APP_NAME} PRIVATE glm)
-target_include_directories(${APP_NAME} PRIVATE ${glm_SOURCE_DIR}/glm)
+target_include_directories(${APP_NAME} SYSTEM PRIVATE ${glm_SOURCE_DIR}/glm)

@@ -13,7 +13,7 @@ public:
     // Constructor
     PhysicsSystem();
 
-    void update(double delta_time);
+    void update(float delta_time);
     physx::PxVec3 getPos(int i);
 
     std::vector<PhysxTransform*> transformList;
