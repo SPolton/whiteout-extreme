@@ -311,16 +311,24 @@ void RenderingSystem::render()
     texture->bind();
     glUniform1i(glGetUniformLocation(*shader, "baseColorTexture"), 0);
     
-    // Get projection matrix
+    // Get projection matrix (perspective projection for 3D)
     glm::mat4 projection = getProjectionMatrix();
     glUniformMatrix4fv(glGetUniformLocation(*shader, "projection"), 1, GL_FALSE, &projection[0][0]);
     
-    // Get view matrix from camera
+    // Get view matrix from camera (transforms world coords to camera/view space)
     glm::mat4 view = camera->getViewMatrix();
     glUniformMatrix4fv(glGetUniformLocation(*shader, "view"), 1, GL_FALSE, &view[0][0]);
     
-    // Simple identity model matrix
+    // Model matrix to transforms object's local coords to world space
+    // Start with identity matrix
     glm::mat4 model = glm::mat4(1.0f);
+    
+    // Apply transformations: translate, rotate, scale
+    // Note: transformations are applied in reverse order (read right to left)
+    // For a rotating sphere, we can add a rotation based on time
+    model = glm::rotate(model, static_cast<float>(glfwGetTime()) * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
+    
+    // Send model matrix to shader
     glUniformMatrix4fv(glGetUniformLocation(*shader, "model"), 1, GL_FALSE, &model[0][0]);
     
     // Bind and render geometry
