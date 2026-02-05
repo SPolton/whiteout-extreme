@@ -81,6 +81,7 @@ void TurnTableCamera::updateViewMatrix()
 void TurnTableCamera::adjustTheta(float const deltaTheta)
 {
     auto newTheta = _theta + deltaTheta;
+    // auto newTheta = std::fmod(_theta + deltaTheta, 2*M_PI);
     if (newTheta != _theta)
     {
         _theta = newTheta;
@@ -114,5 +115,11 @@ void TurnTableCamera::adjustRadius(float const deltaRadius)
 
 CameraStats TurnTableCamera::getStats()
 {
-    return CameraStats(_position, _targetPosition, _distance, _fov, _scale);
+    CameraStats stats = CameraStats(_position, _targetPosition);
+    stats.distance = _distance;
+    stats.fov = glm::degrees(_fov);
+    stats.scale = _scale;
+    stats.yaw = glm::degrees(_theta);
+    stats.pitch = glm::degrees(_phi);
+    return stats;
 }

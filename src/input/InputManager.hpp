@@ -24,7 +24,13 @@ public:
     bool IsKeyboardButtonDown(int keyboardButton) const;
 
     [[nodiscard]]
+    bool isKeyPressedOnce(int keyboardButton);
+
+    [[nodiscard]]
     bool IsMouseButtonDown(int mouseButton) const;
+
+    [[nodiscard]]
+    bool isMousePressedOnce(int mouseButton);
 
     [[nodiscard]]
     glm::dvec2 const & CursorPosition() const;
@@ -57,9 +63,11 @@ private:
 
     // keyboard input
     std::unordered_map<int, bool> mKeyStatusMap{};
+    std::unordered_map<int, bool> mKeyConsumedMap{};
 
     // mouse input
     std::unordered_map<int, bool> mMouseStatusMap{};
+    std::unordered_map<int, bool> mMouseConsumedMap{};
     glm::dvec2 mCursorPosition{};
     ResizeCallback mResizeCallback;
     MouseWheelCallback mMouseWheelCallback;

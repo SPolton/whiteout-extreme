@@ -55,7 +55,11 @@ glm::mat4 Camera::getViewMatrix()
 
 // Package camera stats to print in ImGui
 CameraStats Camera::getStats() {
-    return CameraStats(_position, _target, _radius, _fov, _scale);
+    auto stats = CameraStats(_position, _target);
+    stats.distance = _radius;
+    stats.fov = glm::degrees(_fov);
+    stats.scale = _scale;
+    return stats;
 }
 
 // Set the position and target for a turn table camera

@@ -27,6 +27,7 @@ void InputManager::keyCallback(
     else if (action == GLFW_RELEASE)
     {
         mKeyStatusMap[key] = false;
+        mKeyConsumedMap[key] = false;
     }
 }
 
@@ -43,6 +44,10 @@ void InputManager::mouseButtonCallback(int const button, int const action, int /
 {
     logger::info("MouseButtonCallback: button={}, action={}", button, action);
     mMouseStatusMap[button] = action;
+    if (action == GLFW_RELEASE)
+    {
+        mMouseConsumedMap[button] = false;
+    }
 }
 
 void InputManager::cursorPosCallback(double const xpos, double const ypos)
@@ -69,6 +74,21 @@ bool InputManager::IsKeyboardButtonDown(int const keyboardButton) const
     return isButtonDown;
 }
 
+bool InputManager::isKeyPressedOnce(int const keyboardButton)
+{
+    auto const findResult = mKeyStatusMap.find(keyboardButton);
+    if (findResult != mKeyStatusMap.end() && findResult->second)
+    {
+        auto const consumedResult = mKeyConsumedMap.find(keyboardButton);
+        if (consumedResult == mKeyConsumedMap.end() || !consumedResult->second)
+        {
+            mKeyConsumedMap[keyboardButton] = true;
+            return true;
+        }
+    }
+    return false;
+}
+
 bool InputManager::IsMouseButtonDown(int const mouseButton) const
 {
     bool isButtonDown = false;
@@ -78,6 +98,21 @@ bool InputManager::IsMouseButtonDown(int const mouseButton) const
         isButtonDown = findResult->second;
     }
     return isButtonDown;
+}
+
+bool InputManager::isMousePressedOnce(int const mouseButton)
+{
+    auto const findResult = mMouseStatusMap.find(mouseButton);
+    if (findResult != mMouseStatusMap.end() && findResult->second)
+    {
+        auto const consumedResult = mMouseConsumedMap.find(mouseButton);
+        if (consumedResult == mMouseConsumedMap.end() || !consumedResult->second)
+        {
+            mMouseConsumedMap[mouseButton] = true;
+            return true;
+        }
+    }
+    return false;
 }
 
 glm::dvec2 const &InputManager::CursorPosition() const
