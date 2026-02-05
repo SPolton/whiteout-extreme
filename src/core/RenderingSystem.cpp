@@ -21,8 +21,13 @@ RenderingSystem::~RenderingSystem()
 
 void RenderingSystem::processInput(float deltaTime)
 {
-    if (glfwGetKey(window->getGLFWwindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    if (inputManager->IsKeyboardButtonDown(GLFW_KEY_ESCAPE))
         glfwSetWindowShouldClose(window->getGLFWwindow(), true);
+
+    // Handle camera toggle with F key
+    if (inputManager->IsKeyboardButtonDown(GLFW_KEY_F)) {
+        toggleCamera();
+    }
 
     // Mouse camera controls
     auto const cursorPosition = inputManager->CursorPosition();
@@ -32,8 +37,8 @@ void RenderingSystem::processInput(float deltaTime)
         {
             float const aspectRatio = static_cast<float>(window->getWidth()) / static_cast<float>(window->getHeight());
             auto const deltaPosition = cursorPosition - previousCursorPosition;
-            camera->adjustTheta(-static_cast<float>(deltaPosition.x) * deltaTime * imguiPanel->camSpeed * (1 / aspectRatio));
-            camera->adjustPhi(-static_cast<float>(deltaPosition.y) * deltaTime * imguiPanel->camSpeed);
+            turntableCamera->adjustTheta(-static_cast<float>(deltaPosition.x) * deltaTime * imguiPanel->camSpeed * (1 / aspectRatio));
+            turntableCamera->adjustPhi(-static_cast<float>(deltaPosition.y) * deltaTime * imguiPanel->camSpeed);
         }
     }
 
@@ -287,8 +292,10 @@ bool RenderingSystem::init()
     
     logger::info("Geometry initialized");
 
-    // Create camera
-    camera = std::make_unique<TurnTableCamera>();
+    // Create cameras
+    turntableCamera = std::make_unique<TurnTableCamera>();
+    freeCamera = std::make_unique<FreeCamera>();
+    activeCamera = turntableCamera.get();  // Non-owning raw pointer to turntable camera
     
     logger::info("Camera initialized");
 
@@ -315,11 +322,11 @@ void RenderingSystem::render()
     glm::mat4 projection = getProjectionMatrix();
     glUniformMatrix4fv(glGetUniformLocation(*shader, "projection"), 1, GL_FALSE, &projection[0][0]);
     
-    // Get view matrix from camera (transforms world coords to camera/view space)
-    glm::mat4 view = camera->getViewMatrix();
+    // Get view matrix from active camera (transforms world coords to camera/view space)
+    glm::mat4 view = activeCamera->getViewMatrix();
     glUniformMatrix4fv(glGetUniformLocation(*shader, "view"), 1, GL_FALSE, &view[0][0]);
     
-    // Model matrix to transforms object's local coords to world space
+    // Model matrix to transform local coords to world space
     // Start with identity matrix
     glm::mat4 model = glm::mat4(1.0f);
     
@@ -348,8 +355,9 @@ glm::mat4 RenderingSystem::getProjectionMatrix() const
 {
     float const aspectRatio = static_cast<float>(window->getWidth()) / static_cast<float>(window->getHeight());
     
-    // Perspective projection for TurnTableCamera
-    return glm::perspective(camera->getFOV(), aspectRatio, 0.1f, 100.0f);
+    // Perspective projection for active camera
+    // FOV is already in radians, no conversion needed
+    return glm::perspective(activeCamera->getFOV(), aspectRatio, 0.1f, 100.0f);
 }
 
 void RenderingSystem::update(float deltaTime)
@@ -371,7 +379,7 @@ void RenderingSystem::update(float deltaTime)
     }
     
     // Update camera stats for UI
-    imguiPanel->cameraStats = camera->getStats();
+    imguiPanel->cameraStats = activeCamera->getStats();
     imguiPanel->cameraStats.aspect = static_cast<float>(window->getWidth()) / static_cast<float>(window->getHeight());
     
     // Render the scene
@@ -384,7 +392,7 @@ void RenderingSystem::updateUI()
     imguiWrapper->beginFrame();
 
     imguiWrapper->renderFPS();
-    imguiPanel->cameraStats = camera->getStats();
+    imguiPanel->cameraStats = activeCamera->getStats();
     imguiPanel->update();
     
     // Finish ImGui frame
@@ -412,5 +420,19 @@ void RenderingSystem::onResize(int width, int height)
 void RenderingSystem::onMouseWheelChange(double xOffset, double yOffset)
 {
     float scroll = -static_cast<float>(yOffset) * imguiPanel->camZoomSpeed * 0.016f;
-    camera->adjustRadius(scroll);
+    activeCamera->adjustRadius(scroll);
+}
+
+void RenderingSystem::toggleCamera()
+{
+    if (activeCamera == turntableCamera.get())
+    {
+        activeCamera = freeCamera.get();
+        logger::info("Switched to FreeCamera (FPS-style)");
+    }
+    else
+    {
+        activeCamera = turntableCamera.get();
+        logger::info("Switched to TurnTableCamera (Orbit)");
+    }
 }

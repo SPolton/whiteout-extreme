@@ -4,6 +4,7 @@
 #include "core/render/ShaderProgram.hpp"
 #include "core/buffer/Geometry.hpp"
 #include "core/scene/TurnTableCamera.hpp"
+#include "core/scene/FreeCamera.hpp"
 #include "input/panel/ImGuiWrapper.hpp"
 #include "input/panel/ImGuiPanel.hpp"
 #include "input/InputManager.hpp"
@@ -27,7 +28,9 @@ private:
     // Core components following modular architecture
     std::unique_ptr<Window> window;
     std::unique_ptr<ShaderProgram> shader;
-    std::unique_ptr<TurnTableCamera> camera;
+    std::unique_ptr<TurnTableCamera> turntableCamera;
+    std::unique_ptr<FreeCamera> freeCamera;
+    BaseCamera* activeCamera;  // Pointer to the currently active camera
     
     // Geometry using RAII wrappers
     std::unique_ptr<GPU_Geometry> triangleGeometry;
@@ -59,6 +62,7 @@ private:
     void processInput(float deltaTime);
     void processKeyboardInput();
     void processControllerInput();
+    void toggleCamera();
     void render();
     void onResize(int width, int height);
     void onMouseWheelChange(double xOffset, double yOffset);

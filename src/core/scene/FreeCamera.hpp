@@ -42,7 +42,7 @@ public:
     [[nodiscard]]
     glm::vec3 getPosition() override;
 
-    void adjustRadius(float deltaRadius) override {};  // Not used for FreeCamera, but required by interface
+    void adjustRadius(float /*deltaRadius*/) override {};  // Not used for FreeCamera, but required by interface
 
     CameraStats getStats() override;
 
