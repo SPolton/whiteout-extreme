@@ -64,15 +64,17 @@ void ImGuiPanel::renderRenderSettings()
 void ImGuiPanel::renderCameraInfo()
 {
     if (ImGui::CollapsingHeader("Camera")) {
-        glm::vec3 pos = cameraStats.camPos;
+        glm::vec3 pos = cameraStats.position;
         glm::vec3 target = cameraStats.target;
         
         ImGui::Text("Position: (%.2f, %.2f, %.2f)", pos.x, pos.y, pos.z);
         ImGui::Text("Target:   (%.2f, %.2f, %.2f)", target.x, target.y, target.z);
-        ImGui::Text("Radius: %.2f", cameraStats.radius);
+        ImGui::Text("Distance: %.2f", cameraStats.distance);
         ImGui::Text("FOV: %.2f", cameraStats.fov);
         ImGui::Text("Scale: %.2f", cameraStats.scale);
         ImGui::Text("Aspect: %.2f", cameraStats.aspect);
+        ImGui::Text("Yaw: %.2f", cameraStats.yaw);
+        ImGui::Text("Pitch: %.2f", cameraStats.pitch);
         
         ImGui::Separator();
         ImGui::SliderFloat("Camera Speed", &camSpeed, 1.0f, 10.0f);

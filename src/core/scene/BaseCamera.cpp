@@ -63,8 +63,8 @@ void BaseCamera::setScale(float scale)
     _isDirty = true;
 }
 
-void BaseCamera::setRadius(float radius)
+void BaseCamera::setRadius(float distance)
 {
-    _radius = std::clamp(radius, 0.1f, 1000.0f);
+    _radius = std::clamp(distance, 0.1f, 1000.0f);
     _isDirty = true;
 }
