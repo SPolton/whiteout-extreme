@@ -29,21 +29,7 @@ void RenderingSystem::processInput(float deltaTime)
         toggleCamera();
     }
 
-    // Mouse camera controls
-    auto const cursorPosition = inputManager->CursorPosition();
-
-    if (cursorPositionIsSetOnce == true) {
-        if (inputManager->IsMouseButtonDown(GLFW_MOUSE_BUTTON_RIGHT) == true)
-        {
-            float const aspectRatio = static_cast<float>(window->getWidth()) / static_cast<float>(window->getHeight());
-            auto const deltaPosition = cursorPosition - previousCursorPosition;
-            turntableCamera->adjustTheta(-static_cast<float>(deltaPosition.x) * deltaTime * imguiPanel->camSpeed * (1 / aspectRatio));
-            turntableCamera->adjustPhi(-static_cast<float>(deltaPosition.y) * deltaTime * imguiPanel->camSpeed);
-        }
-    }
-
-    cursorPositionIsSetOnce = true;
-    previousCursorPosition = cursorPosition;
+    processCameraInput(deltaTime);
 
     // poll controller state first
     inputManager->pollControllerInputs();
@@ -55,6 +41,57 @@ void RenderingSystem::processInput(float deltaTime)
     else {
         processKeyboardInput();
     }
+}
+
+// Camera Input Processing
+void RenderingSystem::processCameraInput(float deltaTime)
+{
+    auto const cursorPosition = inputManager->CursorPosition();
+
+    // Check if we're using FreeCamera
+    if (activeCamera == freeCamera.get())
+    {
+        // FreeCamera uses mouse movement when right mouse button is held
+        if (inputManager->IsMouseButtonDown(GLFW_MOUSE_BUTTON_RIGHT)) {
+            if (cursorPositionIsSetOnce) {
+                auto const deltaPosition = cursorPosition - previousCursorPosition;
+                freeCamera->processMouseMovement(
+                    static_cast<float>(deltaPosition.x),
+                    static_cast<float>(-deltaPosition.y)  // Invert Y for natural feel
+                );
+            }
+        }
+
+        // IJKL/UO controls for FreeCamera movement (don't interfere with WASD game controls)
+        if (inputManager->IsKeyboardButtonDown(GLFW_KEY_I))
+            freeCamera->processKeyboard(FreeCamera::Movement::FORWARD, deltaTime);
+        if (inputManager->IsKeyboardButtonDown(GLFW_KEY_K))
+            freeCamera->processKeyboard(FreeCamera::Movement::BACKWARD, deltaTime);
+        if (inputManager->IsKeyboardButtonDown(GLFW_KEY_J))
+            freeCamera->processKeyboard(FreeCamera::Movement::LEFT, deltaTime);
+        if (inputManager->IsKeyboardButtonDown(GLFW_KEY_L))
+            freeCamera->processKeyboard(FreeCamera::Movement::RIGHT, deltaTime);
+        if (inputManager->IsKeyboardButtonDown(GLFW_KEY_U))
+            freeCamera->processKeyboard(FreeCamera::Movement::UP, deltaTime);
+        if (inputManager->IsKeyboardButtonDown(GLFW_KEY_O))
+            freeCamera->processKeyboard(FreeCamera::Movement::DOWN, deltaTime);
+    }
+    else if (activeCamera == turntableCamera.get())
+    {
+        // TurnTableCamera uses right-click drag
+        if (inputManager->IsMouseButtonDown(GLFW_MOUSE_BUTTON_RIGHT)) {
+            if (cursorPositionIsSetOnce) {
+                float const aspectRatio = static_cast<float>(window->getWidth()) / static_cast<float>(window->getHeight());
+                auto const deltaPosition = cursorPosition - previousCursorPosition;
+                turntableCamera->adjustTheta(-static_cast<float>(deltaPosition.x) * deltaTime * imguiPanel->camSpeed * (1 / aspectRatio));
+                turntableCamera->adjustPhi(-static_cast<float>(deltaPosition.y) * deltaTime * imguiPanel->camSpeed);
+            }
+        }
+    }
+
+    // Always update cursor position tracking
+    cursorPositionIsSetOnce = true;
+    previousCursorPosition = cursorPosition;
 }
 
 // Input Systems (Keyboard or Controller)

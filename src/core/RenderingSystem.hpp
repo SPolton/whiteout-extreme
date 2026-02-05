@@ -62,6 +62,7 @@ private:
     void processInput(float deltaTime);
     void processKeyboardInput();
     void processControllerInput();
+    void processCameraInput(float deltaTime);
     void toggleCamera();
     void render();
     void onResize(int width, int height);
