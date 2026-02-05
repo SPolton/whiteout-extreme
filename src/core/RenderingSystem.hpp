@@ -9,10 +9,13 @@
 #include "input/panel/ImGuiPanel.hpp"
 #include "input/InputManager.hpp"
 #include "core/assets/Texture.hpp"
+#include "components/Entity.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/quaternion.hpp>
 #include <memory>
+#include <vector>
 
 class RenderingSystem {
 public:
@@ -23,6 +26,9 @@ public:
     void updateUI();
     void endFrame();
     bool shouldClose() const;
+
+    // For rendering physics entities
+    void renderEntities(const std::vector<Entity>& entityList);
 
 private:
     // Core components following modular architecture
@@ -35,6 +41,10 @@ private:
     // Geometry using RAII wrappers
     std::unique_ptr<GPU_Geometry> triangleGeometry;
     std::unique_ptr<CPU_Geometry> triangleCPUData;
+    
+    // Cube geometry for physics objects
+    std::unique_ptr<GPU_Geometry> cubeGeometry;
+    std::unique_ptr<CPU_Geometry> cubeCPUData;
     
     // Texture
     std::unique_ptr<Texture> texture;

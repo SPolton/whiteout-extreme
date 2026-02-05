@@ -329,6 +329,18 @@ bool RenderingSystem::init()
     
     logger::info("Geometry initialized");
 
+    // Create cube geometry for physics objects
+    cubeGeometry = std::make_unique<GPU_Geometry>();
+    cubeCPUData = std::make_unique<CPU_Geometry>();
+    
+    // Generate cube using ShapeGenerator
+    *cubeCPUData = ShapeGenerator::unit_cube();
+    
+    // Upload cube to GPU
+    cubeGeometry->Update(*cubeCPUData);
+    
+    logger::info("Cube geometry initialized");
+
     // Create cameras
     turntableCamera = std::make_unique<TurnTableCamera>();
     freeCamera = std::make_unique<FreeCamera>();
@@ -388,6 +400,50 @@ void RenderingSystem::render()
     }
 }
 
+void RenderingSystem::renderEntities(const std::vector<Entity>& entityList)
+{
+    // Use shader
+    shader->use();
+    
+    // Bind texture to texture unit 0
+    glActiveTexture(GL_TEXTURE0);
+    texture->bind();
+    glUniform1i(glGetUniformLocation(*shader, "baseColorTexture"), 0);
+    
+    // Get projection matrix (perspective projection for 3D)
+    glm::mat4 projection = getProjectionMatrix();
+    glUniformMatrix4fv(glGetUniformLocation(*shader, "projection"), 1, GL_FALSE, &projection[0][0]);
+    
+    // Get view matrix from active camera (transforms world coords to camera/view space)
+    glm::mat4 view = activeCamera->getViewMatrix();
+    glUniformMatrix4fv(glGetUniformLocation(*shader, "view"), 1, GL_FALSE, &view[0][0]);
+    
+    // Bind cube geometry once
+    cubeGeometry->bind();
+    
+    // Render each entity
+    for (size_t i = 0; i < entityList.size(); i++) {
+        glm::vec3 pos = entityList[i].transform->pos;
+        glm::quat rot = entityList[i].transform->rot;
+        
+        // Model matrix: Scale -> Rotate -> Translate (SRT)
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, pos);       // Translate
+        model = model * glm::mat4_cast(rot);      // Rotate
+        model = glm::scale(model, glm::vec3(1.0f)); // Scale
+        
+        // Send model matrix to shader
+        glUniformMatrix4fv(glGetUniformLocation(*shader, "model"), 1, GL_FALSE, &model[0][0]);
+        
+        // Draw the cube
+        if (!cubeCPUData->indices.empty()) {
+            glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(cubeCPUData->indices.size()), GL_UNSIGNED_INT, nullptr);
+        } else {
+            glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(cubeCPUData->positions.size()));
+        }
+    }
+}
+
 glm::mat4 RenderingSystem::getProjectionMatrix() const
 {
     float const aspectRatio = static_cast<float>(window->getWidth()) / static_cast<float>(window->getHeight());
@@ -419,7 +475,7 @@ void RenderingSystem::update(float deltaTime)
     imguiPanel->cameraStats = activeCamera->getStats();
     imguiPanel->cameraStats.aspect = static_cast<float>(window->getWidth()) / static_cast<float>(window->getHeight());
     
-    // Render the scene
+    // Render the rotating sphere (demo)
     render();
 }
 

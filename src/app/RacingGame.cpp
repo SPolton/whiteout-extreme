@@ -28,6 +28,10 @@ void RacingGame::run()
         }
 
         renderer->update(gameTime.fpsF());
+        
+        // Render physics entities
+        renderer->renderEntities(physicsSystem->entityList);
+        
         renderer->updateUI();
 
         // Must be called after renderer update, but before text rendering
