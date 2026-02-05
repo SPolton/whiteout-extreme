@@ -27,6 +27,7 @@ void InputManager::keyCallback(
     else if (action == GLFW_RELEASE)
     {
         mKeyStatusMap[key] = false;
+        mKeyConsumedMap[key] = false;
     }
 }
 
@@ -43,6 +44,10 @@ void InputManager::mouseButtonCallback(int const button, int const action, int /
 {
     logger::info("MouseButtonCallback: button={}, action={}", button, action);
     mMouseStatusMap[button] = action;
+    if (action == GLFW_RELEASE)
+    {
+        mMouseConsumedMap[button] = false;
+    }
 }
 
 void InputManager::cursorPosCallback(double const xpos, double const ypos)
@@ -69,6 +74,21 @@ bool InputManager::IsKeyboardButtonDown(int const keyboardButton) const
     return isButtonDown;
 }
 
+bool InputManager::isKeyPressedOnce(int const keyboardButton)
+{
+    auto const findResult = mKeyStatusMap.find(keyboardButton);
+    if (findResult != mKeyStatusMap.end() && findResult->second)
+    {
+        auto const consumedResult = mKeyConsumedMap.find(keyboardButton);
+        if (consumedResult == mKeyConsumedMap.end() || !consumedResult->second)
+        {
+            mKeyConsumedMap[keyboardButton] = true;
+            return true;
+        }
+    }
+    return false;
+}
+
 bool InputManager::IsMouseButtonDown(int const mouseButton) const
 {
     bool isButtonDown = false;
@@ -80,7 +100,93 @@ bool InputManager::IsMouseButtonDown(int const mouseButton) const
     return isButtonDown;
 }
 
+bool InputManager::isMousePressedOnce(int const mouseButton)
+{
+    auto const findResult = mMouseStatusMap.find(mouseButton);
+    if (findResult != mMouseStatusMap.end() && findResult->second)
+    {
+        auto const consumedResult = mMouseConsumedMap.find(mouseButton);
+        if (consumedResult == mMouseConsumedMap.end() || !consumedResult->second)
+        {
+            mMouseConsumedMap[mouseButton] = true;
+            return true;
+        }
+    }
+    return false;
+}
+
 glm::dvec2 const &InputManager::CursorPosition() const
 {
     return mCursorPosition;
+}
+
+// Controller Input Handling
+//==================================================================================================================//
+
+void InputManager::pollControllerInputs() {
+    // use gamepad mapping (need to test)
+    // we are assuming only one controller right now: GLFW_JOYSTICK_1
+
+    // check if joystick is present AND has a gamepad mapping
+    // use gamepad functions for standard gamepads like Xbox controllers
+    if (glfwJoystickIsGamepad(GLFW_JOYSTICK_1))
+    {
+        // if successful, means we are connected. Update connection state
+        controllerConnected = true;
+        
+        // reteives name of the gamepad mapping
+        const char* name = glfwGetGamepadName(GLFW_JOYSTICK_1);
+
+        printf("Controller %s connected.\n", name);
+
+        // retreive gamepad state
+        GLFWgamepadstate state;
+
+        if (glfwGetGamepadState(GLFW_JOYSTICK_1, &state))
+        {
+            // if state retreived, save all info to the maps
+            // Each element in the state.button array is either GLFW_PRESS or GLFW_RELEASE
+            // Each element in the state.axes array is a value between -1.0 and 1.0
+
+            // GLFW_GAMEPAD_BUTTON_LAST is a constant equal to the largest available index in the button array
+            // go through each button index and store its state in our array
+            for (int i = 0; i < GLFW_GAMEPAD_BUTTON_LAST + 1; i++) {
+                controllerButtons[i] = state.buttons[i];
+            }
+
+            // GLFW_GAMEPAD_AXIS_LAST is a constant equal to the largest available index in the axis array
+            // go through each axis index and store its state in our array
+            for (int j = 0; j < GLFW_GAMEPAD_AXIS_LAST + 1; j++) {
+                controllerAxes[j] = state.axes[j];
+            }
+        }
+    }
+    else {
+        // controller has disconnected, clear all controller state info
+        controllerConnected = false;
+        controllerButtons.clear();
+        controllerAxes.clear();
+    }
+}
+
+bool InputManager::IsControllerButtonDown(int const controllerButton) const
+{
+    // initialize to false
+    bool isButtonDown = false;
+
+    // only if it is pressed, return true
+    if (controllerButtons.at(controllerButton) == GLFW_PRESS) {
+        return true;
+    };
+
+    return isButtonDown;
+}
+
+float InputManager::GetControllerAxis(int const controllerAxis) const
+{
+    return controllerAxes.at(controllerAxis);
+}
+
+bool InputManager::IsControllerConnected() {
+    return controllerConnected;
 }

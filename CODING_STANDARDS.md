@@ -23,7 +23,7 @@ By default, follow the [C++ Core Guidelines](https://github.com/isocpp/CppCoreGu
 
 ### Types
 
-* Name all types (classes, typedefs, enums, etc) in `PascalCase`.
+* Name all types (classes, structs, typedefs, enums) in `PascalCase`.
 
 ### Methods
 
@@ -33,12 +33,10 @@ By default, follow the [C++ Core Guidelines](https://github.com/isocpp/CppCoreGu
 
 ### Variables
 
-* Name class member variables in `camelCase`.
-* For other variables, prefer `snake_case`. Constants, too.
-* Prefer static variables with `s_`.
-* Prefix (non-static) member variables with `m_`.
+* Name all variables in `camelCase`. Constants, too.
 * Use descriptive names that are not too long.
-* Loop indices can be `i`, `j`, etc, if their meaning is otherwise irrelevant.
+* Class member variables may have a suffix underscore `_`.
+* Loop indices can be `i`, `j`, `k`, if their meaning is otherwise irrelevant.
 
 ### Macros
 
