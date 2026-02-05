@@ -22,14 +22,14 @@ private:
     std::vector<physx::PxRigidDynamic*> rigidDynamicList;
 
     // PhysX management class instances.
-    physx::PxDefaultAllocator gAllocator;
-    physx::PxDefaultErrorCallback gErrorCallback;
-    physx::PxFoundation* gFoundation = NULL;
-    physx::PxPhysics* gPhysics = NULL;
-    physx::PxDefaultCpuDispatcher* gDispatcher = NULL;
-    physx::PxScene* gScene = NULL;
-    physx::PxMaterial* gMaterial = NULL;
-    physx::PxPvd* gPvd = NULL;
+    physx::PxDefaultAllocator mAllocator;
+    physx::PxDefaultErrorCallback mErrorCallback;
+    physx::PxFoundation* mFoundation = NULL;
+    physx::PxPhysics* mPhysics = NULL;
+    physx::PxDefaultCpuDispatcher* mDispatcher = NULL;
+    physx::PxScene* mScene = NULL;
+    physx::PxMaterial* mMaterial = NULL;
+    physx::PxPvd* mPvd = NULL;
 
     physx::PxVec3 lastBoxPos; // Box position tracker
 

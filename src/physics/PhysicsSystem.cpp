@@ -14,36 +14,36 @@ PhysicsSystem::PhysicsSystem() {
 
 void PhysicsSystem::initPhysicsSystem() {
     // Initialize PhysX
-    gFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, gAllocator, gErrorCallback);
-    if (!gFoundation)
+    mFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, mAllocator, mErrorCallback);
+    if (!mFoundation)
     {
         logger::error("PxCreateFoundation failed!");
         throw std::runtime_error("Failed to create PhysX foundation!");
     }
 
     // PVD
-    gPvd = PxCreatePvd(*gFoundation);
+    mPvd = PxCreatePvd(*mFoundation);
     PxPvdTransport* transport = PxDefaultPvdSocketTransportCreate("127.0.0.1", 5425, 10);
-    gPvd->connect(*transport, PxPvdInstrumentationFlag::eALL);
+    mPvd->connect(*transport, PxPvdInstrumentationFlag::eALL);
 
     // Physics
-    gPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gFoundation, PxTolerancesScale(), true, gPvd);
-    if (!gPhysics)
+    mPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *mFoundation, PxTolerancesScale(), true, mPvd);
+    if (!mPhysics)
     {
         logger::error("PxCreatePhysics failed!");
         throw std::runtime_error("Failed to create PhysX physics!");
     }
 
     // Scene
-    PxSceneDesc sceneDesc(gPhysics->getTolerancesScale());
+    PxSceneDesc sceneDesc(mPhysics->getTolerancesScale());
     sceneDesc.gravity = PxVec3(0.0f, -9.81f, 0.0f);
-    gDispatcher = PxDefaultCpuDispatcherCreate(2);
-    sceneDesc.cpuDispatcher = gDispatcher;
+    mDispatcher = PxDefaultCpuDispatcherCreate(2);
+    sceneDesc.cpuDispatcher = mDispatcher;
     sceneDesc.filterShader = PxDefaultSimulationFilterShader;
-    gScene = gPhysics->createScene(sceneDesc);
+    mScene = mPhysics->createScene(sceneDesc);
 
     // Prep PVD
-    PxPvdSceneClient* pvdClient = gScene->getScenePvdClient();
+    PxPvdSceneClient* pvdClient = mScene->getScenePvdClient();
     if (pvdClient)
     {
         pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_CONSTRAINTS, true);
@@ -52,9 +52,9 @@ void PhysicsSystem::initPhysicsSystem() {
     }
 
     // Simulate
-    gMaterial = gPhysics->createMaterial(0.5f, 0.5f, 0.6f);
-    PxRigidStatic* groundPlane = PxCreatePlane(*gPhysics, PxPlane(0, 1, 0, 50), *gMaterial);
-    gScene->addActor(*groundPlane);
+    mMaterial = mPhysics->createMaterial(0.5f, 0.5f, 0.6f);
+    PxRigidStatic* groundPlane = PxCreatePlane(*mPhysics, PxPlane(0, 1, 0, 50), *mMaterial);
+    mScene->addActor(*groundPlane);
 
     logger::info("Physics Test initialized successfully.");
 }
@@ -84,8 +84,8 @@ void PhysicsSystem::updateTransforms() {
 }
 
 void PhysicsSystem::update(float delta_time) {
-gScene->simulate(delta_time);
-gScene->fetchResults(true);
+mScene->simulate(delta_time);
+mScene->fetchResults(true);
 
     updateTransforms();
 
@@ -101,7 +101,7 @@ void PhysicsSystem::initBoxes()
 {
     // Define a box
     float halfLen = 0.5f;
-    PxShape* shape = gPhysics->createShape(PxBoxGeometry(halfLen, halfLen, halfLen), *gMaterial);
+    PxShape* shape = mPhysics->createShape(PxBoxGeometry(halfLen, halfLen, halfLen), *mMaterial);
     PxU32 size = 30;
     PxTransform tran(PxVec3(0));
 
@@ -111,7 +111,7 @@ void PhysicsSystem::initBoxes()
         for (PxU32 j = 0; j < size - i; j++)
         {
             PxTransform localTran(PxVec3(PxReal(j * 2) - PxReal(size - i), PxReal(i * 2 - 1), 0) * halfLen);
-            PxRigidDynamic* body = gPhysics->createRigidDynamic(tran.transform(localTran));
+            PxRigidDynamic* body = mPhysics->createRigidDynamic(tran.transform(localTran));
 
             // Store rigid body
             rigidDynamicList.push_back(body);
@@ -129,7 +129,7 @@ void PhysicsSystem::initBoxes()
 
             body->attachShape(*shape);
             PxRigidBodyExt::updateMassAndInertia(*body, 10.0f);
-            gScene->addActor(*body);
+            mScene->addActor(*body);
         }
     }
 

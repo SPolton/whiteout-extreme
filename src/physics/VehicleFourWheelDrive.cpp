@@ -125,7 +125,7 @@ PxU32 gCommandProgress = 0;			//The id of the current command.
 
 
 VehicleFourWheelDrive::VehicleFourWheelDrive(const char* vehicleDataPath)
-    : gVehicleDataPath(vehicleDataPath)
+    : mVehicleDataPath(vehicleDataPath)
 {
     initPhysics();
 }
@@ -137,67 +137,67 @@ VehicleFourWheelDrive::~VehicleFourWheelDrive()
 
 void VehicleFourWheelDrive::initPhysX()
 {
-	gFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, gAllocator, gErrorCallback);
-	gPvd = PxCreatePvd(*gFoundation);
+	mFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, mAllocator, mErrorCallback);
+	mPvd = PxCreatePvd(*mFoundation);
 	PxPvdTransport* transport = PxDefaultPvdSocketTransportCreate(PVD_HOST, 5425, 10);
-	gPvd->connect(*transport,PxPvdInstrumentationFlag::eALL);
-	gPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gFoundation, PxTolerancesScale(), true, gPvd);
+	mPvd->connect(*transport,PxPvdInstrumentationFlag::eALL);
+	mPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *mFoundation, PxTolerancesScale(), true, mPvd);
 		
-	PxSceneDesc sceneDesc(gPhysics->getTolerancesScale());
-	sceneDesc.gravity = gGravity;
+	PxSceneDesc sceneDesc(mPhysics->getTolerancesScale());
+	sceneDesc.gravity = mGravity;
 	
 	PxU32 numWorkers = 1;
-	gDispatcher = PxDefaultCpuDispatcherCreate(numWorkers);
-	sceneDesc.cpuDispatcher	= gDispatcher;
+	mDispatcher = PxDefaultCpuDispatcherCreate(numWorkers);
+	sceneDesc.cpuDispatcher	= mDispatcher;
 	sceneDesc.filterShader	= VehicleFilterShader;
 
-	gScene = gPhysics->createScene(sceneDesc);
-	PxPvdSceneClient* pvdClient = gScene->getScenePvdClient();
+	mScene = mPhysics->createScene(sceneDesc);
+	PxPvdSceneClient* pvdClient = mScene->getScenePvdClient();
 	if(pvdClient)
 	{
 		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_CONSTRAINTS, true);
 		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_CONTACTS, true);
 		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
 	}
-	gMaterial = gPhysics->createMaterial(0.5f, 0.5f, 0.6f);
+	mMaterial = mPhysics->createMaterial(0.5f, 0.5f, 0.6f);
 
-	PxInitVehicleExtension(*gFoundation);
+	PxInitVehicleExtension(*mFoundation);
 }
 
 void VehicleFourWheelDrive::cleanupPhysX()
 {
 	PxCloseVehicleExtension();
 
-	PX_RELEASE(gMaterial);
-	PX_RELEASE(gScene);
-	PX_RELEASE(gDispatcher);
-	PX_RELEASE(gPhysics);
-	if (gPvd)
+	PX_RELEASE(mMaterial);
+	PX_RELEASE(mScene);
+	PX_RELEASE(mDispatcher);
+	PX_RELEASE(mPhysics);
+	if (mPvd)
 	{
-		PxPvdTransport* transport = gPvd->getTransport();
-		PX_RELEASE(gPvd);
+		PxPvdTransport* transport = mPvd->getTransport();
+		PX_RELEASE(mPvd);
 		PX_RELEASE(transport);
 	}
-	PX_RELEASE(gFoundation);
+	PX_RELEASE(mFoundation);
 }
 
 void VehicleFourWheelDrive::initGroundPlane()
 {
-	gGroundPlane = PxCreatePlane(*gPhysics, PxPlane(0, 1, 0, 0), *gMaterial);
-	for (PxU32 i = 0; i < gGroundPlane->getNbShapes(); i++)
+	mGroundPlane = PxCreatePlane(*mPhysics, PxPlane(0, 1, 0, 0), *mMaterial);
+	for (PxU32 i = 0; i < mGroundPlane->getNbShapes(); i++)
 	{
 		PxShape* shape = NULL;
-		gGroundPlane->getShapes(&shape, 1, i);
+		mGroundPlane->getShapes(&shape, 1, i);
 		shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
 		shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
 		shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
 	}
-	gScene->addActor(*gGroundPlane);
+	mScene->addActor(*mGroundPlane);
 }
 
 void VehicleFourWheelDrive::cleanupGroundPlane()
 {
-	gGroundPlane->release();
+	mGroundPlane->release();
 }
 
 void VehicleFourWheelDrive::initMaterialFrictionTable()
@@ -206,31 +206,31 @@ void VehicleFourWheelDrive::initMaterialFrictionTable()
 	//If a material is encountered that is not mapped to a friction value, the friction value used is the specified default value.
 	//In this snippet there is only a single material so there can only be a single mapping between material and friction.
 	//In this snippet the same mapping is used by all tires.
-	gPhysXMaterialFrictions[0].friction = 1.0f;
-	gPhysXMaterialFrictions[0].material = gMaterial;
-	gPhysXDefaultMaterialFriction = 1.0f;
-	gNbPhysXMaterialFrictions = 1;
+	mPhysXMaterialFrictions[0].friction = 1.0f;
+	mPhysXMaterialFrictions[0].material = mMaterial;
+	mPhysXDefaultMaterialFriction = 1.0f;
+	mNbPhysXMaterialFrictions = 1;
 }
 
 bool VehicleFourWheelDrive::initVehicles()
 {
 	//Load the params from json or set directly.
-	readBaseParamsFromJsonFile(gVehicleDataPath, "Base.json", gVehicle.mBaseParams);
+	readBaseParamsFromJsonFile(mVehicleDataPath, "Base.json", gVehicle.mBaseParams);
 	setPhysXIntegrationParams(gVehicle.mBaseParams.axleDescription,
-		gPhysXMaterialFrictions, gNbPhysXMaterialFrictions, gPhysXDefaultMaterialFriction,
+		mPhysXMaterialFrictions, mNbPhysXMaterialFrictions, mPhysXDefaultMaterialFriction,
 		gVehicle.mPhysXParams);
-	readEngineDrivetrainParamsFromJsonFile(gVehicleDataPath, "EngineDrive.json", 
+	readEngineDrivetrainParamsFromJsonFile(mVehicleDataPath, "EngineDrive.json", 
 		gVehicle.mEngineDriveParams);
 
 	//Set the states to default.
-	if (!gVehicle.initialize(*gPhysics, PxCookingParams(PxTolerancesScale()), *gMaterial, EngineDriveVehicle::eDIFFTYPE_FOURWHEELDRIVE))
+	if (!gVehicle.initialize(*mPhysics, PxCookingParams(PxTolerancesScale()), *mMaterial, EngineDriveVehicle::eDIFFTYPE_FOURWHEELDRIVE))
 	{
 		return false;
 	}
 
 	//Apply a start pose to the physx actor and add it to the physx scene.
 	PxTransform pose(PxVec3(0.000000000f, -0.0500000119f, -1.59399998f), PxQuat(PxIdentity));
-	gVehicle.setUpActor(*gScene, pose, gVehicleName);
+	gVehicle.setUpActor(*mScene, pose, gVehicleName);
 
 	//Set the vehicle in 1st gear.
 	gVehicle.mEngineDriveState.gearboxState.currentGear = gVehicle.mEngineDriveParams.gearBoxParams.neutralGear + 1;
@@ -245,14 +245,14 @@ bool VehicleFourWheelDrive::initVehicles()
 	//b) x as the lateral axis
 	//c) y as the vertical axis.
 	//d) metres  as the lengthscale.
-	gVehicleSimulationContext.setToDefault();
-	gVehicleSimulationContext.frame.lngAxis = PxVehicleAxes::ePosZ;
-	gVehicleSimulationContext.frame.latAxis = PxVehicleAxes::ePosX;
-	gVehicleSimulationContext.frame.vrtAxis = PxVehicleAxes::ePosY;
-	gVehicleSimulationContext.scale.scale = 1.0f;
-	gVehicleSimulationContext.gravity = gGravity;
-	gVehicleSimulationContext.physxScene = gScene;
-	gVehicleSimulationContext.physxActorUpdateMode = PxVehiclePhysXActorUpdateMode::eAPPLY_ACCELERATION;
+	mVehicleSimulationContext.setToDefault();
+	mVehicleSimulationContext.frame.lngAxis = PxVehicleAxes::ePosZ;
+	mVehicleSimulationContext.frame.latAxis = PxVehicleAxes::ePosX;
+	mVehicleSimulationContext.frame.vrtAxis = PxVehicleAxes::ePosY;
+	mVehicleSimulationContext.scale.scale = 1.0f;
+	mVehicleSimulationContext.gravity = mGravity;
+	mVehicleSimulationContext.physxScene = mScene;
+	mVehicleSimulationContext.physxActorUpdateMode = PxVehiclePhysXActorUpdateMode::eAPPLY_ACCELERATION;
 	return true;
 }
 
@@ -301,11 +301,11 @@ void VehicleFourWheelDrive::stepPhysics()
 	const PxReal forwardSpeed = linVel.dot(forwardDir);
 	const PxU8 nbSubsteps = (forwardSpeed < 5.0f ? 3 : 1);
 	gVehicle.mComponentSequence.setSubsteps(gVehicle.mComponentSequenceSubstepGroupHandle, nbSubsteps);
-	gVehicle.step(timestep, gVehicleSimulationContext);
+	gVehicle.step(timestep, mVehicleSimulationContext);
 
 	//Forward integrate the phsyx scene by a single timestep.
-	gScene->simulate(timestep);
-	gScene->fetchResults(true);
+	mScene->simulate(timestep);
+	mScene->fetchResults(true);
 
 	//Increment the time spent on the current command.
 	//Move to the next command in the list if enough time has lapsed.
@@ -320,17 +320,17 @@ void VehicleFourWheelDrive::stepPhysics()
 /* For reference
 int snippetMain(int argc, const char*const* argv)
 {
-	if (!parseVehicleDataPath(argc, argv, "SnippetVehicleFourWheelDrive", gVehicleDataPath))
+	if (!parseVehicleDataPath(argc, argv, "SnippetVehicleFourWheelDrive", mVehicleDataPath))
 		return 1;
 
 	//Check that we can read from the json file before continuing.
 	BaseVehicleParams baseParams;
-	if (!readBaseParamsFromJsonFile(gVehicleDataPath, "Base.json", baseParams))
+	if (!readBaseParamsFromJsonFile(mVehicleDataPath, "Base.json", baseParams))
 		return 1;
 
 	//Check that we can read from the json file before continuing.
 	EngineDrivetrainParams engineDrivetrainParams;
-	if (!readEngineDrivetrainParamsFromJsonFile(gVehicleDataPath, "EngineDrive.json",
+	if (!readEngineDrivetrainParamsFromJsonFile(mVehicleDataPath, "EngineDrive.json",
 		engineDrivetrainParams))
 		return 1;
 
