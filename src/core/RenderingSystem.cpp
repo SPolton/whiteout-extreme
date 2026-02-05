@@ -21,11 +21,11 @@ RenderingSystem::~RenderingSystem()
 
 void RenderingSystem::processInput(float deltaTime)
 {
-    if (inputManager->IsKeyboardButtonDown(GLFW_KEY_ESCAPE))
+    if (inputManager->isKeyPressedOnce(GLFW_KEY_ESCAPE))
         glfwSetWindowShouldClose(window->getGLFWwindow(), true);
 
     // Handle camera toggle with F key
-    if (inputManager->IsKeyboardButtonDown(GLFW_KEY_F)) {
+    if (inputManager->isKeyPressedOnce(GLFW_KEY_F)) {
         toggleCamera();
     }
 
