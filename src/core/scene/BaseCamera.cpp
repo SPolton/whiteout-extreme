@@ -2,7 +2,7 @@
 #include <algorithm>
 
 BaseCamera::BaseCamera()
-    : BaseCamera(glm::radians(120.0f), 1.0f)  // Convert to radians
+    : BaseCamera(glm::radians(60.0f), 1.0f)  // Convert to radians
 {
 }
 
