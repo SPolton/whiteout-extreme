@@ -31,7 +31,7 @@ protected:
     void setScale(float scale);
     void setRadius(float radius);
 
-    float _fov = 120.0f;
+    float _fov = glm::radians(120.0f);  // FOV stored in radians
     float _scale = 1.0f;
     float _radius = 3.0f;
 

@@ -2,7 +2,7 @@
 #include <algorithm>
 
 BaseCamera::BaseCamera()
-    : BaseCamera(120.0f, 1.0f)
+    : BaseCamera(glm::radians(120.0f), 1.0f)  // Convert to radians
 {
 }
 
@@ -21,7 +21,8 @@ BaseCamera::BaseCamera(float fov, float scale)
 
 void BaseCamera::adjustFOV(float deltaFOV)
 {
-    float const newFOV = std::clamp(_fov + deltaFOV, 1.0f, 180.0f);
+    // deltaFOV is in degrees for user convenience, convert to radians
+    float const newFOV = std::clamp(_fov + glm::radians(deltaFOV), glm::radians(1.0f), glm::radians(180.0f));
     if (newFOV != _fov)
     {
         _fov = newFOV;
@@ -51,7 +52,8 @@ void BaseCamera::adjustRadius(float deltaRadius)
 
 void BaseCamera::setFOV(float fov)
 {
-    _fov = std::clamp(fov, 1.0f, 180.0f);
+    // fov parameter is in degrees for user convenience, convert to radians for storage
+    _fov = std::clamp(glm::radians(fov), glm::radians(1.0f), glm::radians(180.0f));
     _isDirty = true;
 }
 
