@@ -341,8 +341,12 @@ bool RenderingSystem::init()
     
     logger::info("Cube geometry initialized");
 
+    // Create object tracking transform for camera (vehicle tracking)
+    targetTransform = std::make_unique<SceneTransform>();
+    targetTransform->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+
     // Create cameras
-    turntableCamera = std::make_unique<TurnTableCamera>();
+    turntableCamera = std::make_unique<TurnTableCamera>(*targetTransform);
     freeCamera = std::make_unique<FreeCamera>();
     activeCamera = turntableCamera.get();  // Non-owning raw pointer to turntable camera
     
@@ -402,6 +406,10 @@ void RenderingSystem::render()
 
 void RenderingSystem::renderEntities(const std::vector<Entity>& entityList)
 {
+    // Update camera target to first entity (assuming player vehicle)
+    if (!entityList.empty())
+        updateCameraTarget(entityList[0].transform->pos);
+
     // Use shader
     shader->use();
     
@@ -527,5 +535,12 @@ void RenderingSystem::toggleCamera()
     {
         activeCamera = turntableCamera.get();
         logger::info("Switched to TurnTableCamera (Orbit)");
+    }
+}
+
+void RenderingSystem::updateCameraTarget(const glm::vec3& position)
+{
+    if (targetTransform) {
+        targetTransform->setPosition(position);
     }
 }
