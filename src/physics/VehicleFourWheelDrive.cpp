@@ -189,7 +189,7 @@ bool VehicleFourWheelDrive::initVehicles(ConstructData info)
 	}
 
 	//Apply a start pose to the physx actor and add it to the physx scene.
-	PxTransform pose(PxVec3(0.000000000f, -0.0500000119f, -1.59399998f), PxQuat(PxIdentity));
+	PxTransform pose(PxVec3(0.000000000f, -0.0500000119f, -10.59399998f), PxQuat(PxIdentity));
 	gVehicle.setUpActor(*info.scene, pose, info.vehicleName);
 
 	//Set the vehicle in 1st gear.
@@ -198,6 +198,18 @@ bool VehicleFourWheelDrive::initVehicles(ConstructData info)
 
 	//Set the vehicle to use the automatic gearbox.
 	gVehicle.mTransmissionCommandState.targetGear = PxVehicleEngineDriveTransmissionCommandState::eAUTOMATIC_GEAR;
+
+    // Loop through each shape and set the query and simulation flags.
+    // This is required for collision detection with other objects.
+    PxU32 shapes = gVehicle.mPhysXState.physxActor.rigidBody->getNbShapes();
+    for (PxU32 i = 0; i < shapes; i++) {
+        PxShape* shape = NULL;
+        gVehicle.mPhysXState.physxActor.rigidBody->getShapes(&shape, 1, i);
+
+        shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
+        shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
+        shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
+    }
 
 	//Set up the simulation context.
 	//The snippet is set up with
