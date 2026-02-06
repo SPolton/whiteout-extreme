@@ -122,7 +122,8 @@ PxU32 gCommandProgress = 0;			//The id of the current command.
 
 
 VehicleFourWheelDrive::VehicleFourWheelDrive(ConstructData info)
-    : mVehicleDataPath(info.vehicleDataPath)
+    : PhysicsObject(info.vehicleName)
+    , mVehicleDataPath(info.vehicleDataPath)
 {
     if (!info.material || !info.physics || !info.scene) {
         logger::error("Invalid ConstructData provided to VehicleFourWheelDrive.");
@@ -259,3 +260,9 @@ void VehicleFourWheelDrive::stepPhysics(float deltaTime)
 		gCommandTime = 0.0f;
 	}
 }
+
+physx::PxRigidActor* VehicleFourWheelDrive::getRigidActor()
+{
+	return gVehicle.mPhysXState.physxActor.rigidBody;
+}
+
