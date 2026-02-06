@@ -1,18 +1,42 @@
 #include "PhysicsSystem.hpp"
+#include "common/PVD.h"
 #include "utils/logger.h"
 
 // OK in cpp files, not in headers
 using namespace physx;
 
 PhysicsSystem::PhysicsSystem() {
-    initPhysicsSystem();
+    initPhysX();
+    initGroundPlane();
+
+    // Init vehicle system here
+    VehicleFourWheelDrive::ConstructData vehicleData{
+        .vehicleName = "VehiclePlayer1",
+        .vehicleDataPath = "assets/vehicledata",
+        .gravity = mGravity,
+        .physics = mPhysics,
+        .scene = mScene,
+        .material = mMaterial
+    };
+    mVehicleSystem = new VehicleFourWheelDrive(vehicleData);
 
     // Reserve space for boxes in entity list
     entityList.reserve(465);
     initBoxes();
 }
 
-void PhysicsSystem::initPhysicsSystem() {
+PhysicsSystem::~PhysicsSystem() {
+    // Clean up vehicle system first
+    if (mVehicleSystem) {
+        delete mVehicleSystem;
+        mVehicleSystem = nullptr;
+    }
+    cleanupGroundPlane();
+    cleanupPhysX();
+}
+
+void PhysicsSystem::initPhysX()
+{
     // Initialize PhysX
     mFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, mAllocator, mErrorCallback);
     if (!mFoundation)
@@ -23,7 +47,7 @@ void PhysicsSystem::initPhysicsSystem() {
 
     // PVD
     mPvd = PxCreatePvd(*mFoundation);
-    PxPvdTransport* transport = PxDefaultPvdSocketTransportCreate("127.0.0.1", 5425, 10);
+    PxPvdTransport* transport = PxDefaultPvdSocketTransportCreate(PVD_HOST, 5425, 10);
     mPvd->connect(*transport, PxPvdInstrumentationFlag::eALL);
 
     // Physics
@@ -36,10 +60,13 @@ void PhysicsSystem::initPhysicsSystem() {
 
     // Scene
     PxSceneDesc sceneDesc(mPhysics->getTolerancesScale());
-    sceneDesc.gravity = PxVec3(0.0f, -9.81f, 0.0f);
-    mDispatcher = PxDefaultCpuDispatcherCreate(2);
+    sceneDesc.gravity = mGravity;
+
+    PxU32 numWorkers = 1;
+    mDispatcher = PxDefaultCpuDispatcherCreate(numWorkers);
     sceneDesc.cpuDispatcher = mDispatcher;
-    sceneDesc.filterShader = PxDefaultSimulationFilterShader;
+    sceneDesc.filterShader = snippetvehicle::VehicleFilterShader;
+
     mScene = mPhysics->createScene(sceneDesc);
 
     // Prep PVD
@@ -50,13 +77,52 @@ void PhysicsSystem::initPhysicsSystem() {
         pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_CONTACTS, true);
         pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
     }
-
-    // Simulate
     mMaterial = mPhysics->createMaterial(0.5f, 0.5f, 0.6f);
-    PxRigidStatic* groundPlane = PxCreatePlane(*mPhysics, PxPlane(0, 1, 0, 50), *mMaterial);
-    mScene->addActor(*groundPlane);
 
-    logger::info("Physics Test initialized successfully.");
+    // Initialize once for vehicle simulation
+    vehicle2::PxInitVehicleExtension(*mFoundation);
+
+    logger::info("PhysX initialized successfully.");
+}
+
+void PhysicsSystem::cleanupPhysX()
+{
+    vehicle2::PxCloseVehicleExtension();
+
+    PX_RELEASE(mMaterial);
+    PX_RELEASE(mScene);
+    PX_RELEASE(mDispatcher);
+    PX_RELEASE(mPhysics);
+    if (mPvd)
+    {
+        PxPvdTransport* transport = mPvd->getTransport();
+        PX_RELEASE(mPvd);
+        PX_RELEASE(transport);
+    }
+    PX_RELEASE(mFoundation);
+
+    logger::info("PhysX cleaned up successfully.");
+}
+
+void PhysicsSystem::initGroundPlane()
+{
+    mGroundPlane = PxCreatePlane(*mPhysics, PxPlane(0, 1, 0, 0), *mMaterial);
+    for (PxU32 i = 0; i < mGroundPlane->getNbShapes(); i++)
+    {
+        PxShape* shape = NULL;
+        mGroundPlane->getShapes(&shape, 1, i);
+        shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
+        shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+        shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
+    }
+    mScene->addActor(*mGroundPlane);
+    logger::info("Ground plane created successfully.");
+}
+
+void PhysicsSystem::cleanupGroundPlane()
+{
+    mGroundPlane->release();
+    logger::info("Ground plane cleaned up successfully.");
 }
 
 PxVec3 PhysicsSystem::getPos(int i)
@@ -83,9 +149,12 @@ void PhysicsSystem::updateTransforms() {
     }
 }
 
-void PhysicsSystem::update(float delta_time) {
-mScene->simulate(delta_time);
-mScene->fetchResults(true);
+void PhysicsSystem::update(float deltaTime)
+{
+    mVehicleSystem->stepPhysics(deltaTime);
+
+    mScene->simulate(deltaTime);
+    mScene->fetchResults(true);
 
     updateTransforms();
 

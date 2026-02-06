@@ -5,36 +5,25 @@
 
 class VehicleFourWheelDrive {
 public:
-    VehicleFourWheelDrive(const char* vehicleDataPath);
+    struct ConstructData {
+        //Give the vehicle a name so it can be identified in PVD.
+        const char* vehicleName;
+        const char* vehicleDataPath;
+        const physx::PxVec3 gravity;
+        physx::PxPhysics* physics;
+        physx::PxScene* scene;
+        physx::PxMaterial* material;
+    };
+    VehicleFourWheelDrive(ConstructData info);
     ~VehicleFourWheelDrive();
 
-    void stepPhysics();
+    void stepPhysics(float deltaTime);
 
 private:
-    // Initialization and cleanup functions
-    void initPhysX();
-    void cleanupPhysX();
+    void initMaterialFrictionTable(ConstructData info);
 
-    void initGroundPlane();
-    void cleanupGroundPlane();
-
-    void initMaterialFrictionTable();
-
-    bool initVehicles();
+    bool initVehicles(ConstructData info);
     void cleanupVehicles();
-
-    bool initPhysics();
-    void cleanupPhysics();
-
-    //PhysX management class instances.
-    physx::PxDefaultAllocator mAllocator;
-    physx::PxDefaultErrorCallback mErrorCallback;
-    physx::PxFoundation* mFoundation = NULL;
-    physx::PxPhysics* mPhysics = NULL;
-    physx::PxDefaultCpuDispatcher* mDispatcher = NULL;
-    physx::PxScene* mScene = NULL;
-    physx::PxMaterial* mMaterial = NULL;
-    physx::PxPvd* mPvd = NULL;
 
     //The path to the vehicle json files to be loaded.
     const char* mVehicleDataPath = NULL;
@@ -44,14 +33,8 @@ private:
     //gravitational acceleration.
     physx::vehicle2::PxVehiclePhysXSimulationContext mVehicleSimulationContext;
 
-    //Gravitational acceleration
-    const physx::PxVec3 mGravity = physx::PxVec3(0.0f, -9.81f, 0.0f);
-
     //The mapping between PxMaterial and friction.
     physx::vehicle2::PxVehiclePhysXMaterialFriction mPhysXMaterialFrictions[16];
     physx::PxU32 mNbPhysXMaterialFrictions = 0;
     physx::PxReal mPhysXDefaultMaterialFriction = 1.0f;
-
-    //A ground plane to drive on.
-    physx::PxRigidStatic* mGroundPlane = NULL;
 };

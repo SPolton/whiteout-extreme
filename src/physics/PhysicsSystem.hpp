@@ -1,6 +1,7 @@
 #pragma once
 
 #include "PxPhysicsAPI.h"
+#include "VehicleFourWheelDrive.hpp"
 #include "components/Entity.h"
 #include "components/Transform.h"
 #include <vector>
@@ -10,15 +11,22 @@ class PhysicsSystem {
 public:
     std::vector<Entity> entityList;
 
-    // Constructor
     PhysicsSystem();
+    ~PhysicsSystem();
 
-    void update(float delta_time);
+    void update(float deltaTime);
     physx::PxVec3 getPos(int i);
 
     std::vector<PhysxTransform*> transformList;
     void updateTransforms();
 private:
+    // Initialization and cleanup functions
+    void initPhysX();
+    void cleanupPhysX();
+
+    void initGroundPlane();
+    void cleanupGroundPlane();
+
     std::vector<physx::PxRigidDynamic*> rigidDynamicList;
 
     // PhysX management class instances.
@@ -31,8 +39,17 @@ private:
     physx::PxMaterial* mMaterial = NULL;
     physx::PxPvd* mPvd = NULL;
 
-    physx::PxVec3 lastBoxPos; // Box position tracker
+    //Gravitational acceleration
+    const physx::PxVec3 mGravity = physx::PxVec3(0.0f, -9.81f, 0.0f);
 
-    void initPhysicsSystem();
+    //A ground plane to drive on.
+    physx::PxRigidStatic* mGroundPlane = NULL;
+
+    // Vehicle system
+    VehicleFourWheelDrive* mVehicleSystem = NULL;
+
+    // Box position tracker
+    physx::PxVec3 lastBoxPos;
+
     void initBoxes();
 };
