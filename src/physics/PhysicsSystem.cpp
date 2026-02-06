@@ -1,65 +1,134 @@
 #include "PhysicsSystem.hpp"
+#include "common/PVD.h"
 #include "utils/logger.h"
 
+// OK in cpp files, not in headers
+using namespace physx;
+
 PhysicsSystem::PhysicsSystem() {
-    initPhysicsSystem();
+    initPhysX();
+    initGroundPlane();
+
+    // Init vehicle system here
+    VehicleFourWheelDrive::ConstructData vehicleData{
+        .vehicleName = "VehiclePlayer1",
+        .vehicleDataPath = "assets/vehicledata",
+        .gravity = mGravity,
+        .physics = mPhysics,
+        .scene = mScene,
+        .material = mMaterial
+    };
+    mVehicleSystem = new VehicleFourWheelDrive(vehicleData);
 
     // Reserve space for boxes in entity list
     entityList.reserve(465);
     initBoxes();
 }
 
-void PhysicsSystem::initPhysicsSystem() {
+PhysicsSystem::~PhysicsSystem() {
+    // Clean up vehicle system first
+    if (mVehicleSystem) {
+        delete mVehicleSystem;
+        mVehicleSystem = nullptr;
+    }
+    cleanupGroundPlane();
+    cleanupPhysX();
+}
+
+void PhysicsSystem::initPhysX()
+{
     // Initialize PhysX
-    gFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, gAllocator, gErrorCallback);
-    if (!gFoundation)
+    mFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, mAllocator, mErrorCallback);
+    if (!mFoundation)
     {
         logger::error("PxCreateFoundation failed!");
         throw std::runtime_error("Failed to create PhysX foundation!");
     }
 
     // PVD
-    gPvd = PxCreatePvd(*gFoundation);
-    physx::PxPvdTransport* transport = physx::PxDefaultPvdSocketTransportCreate("127.0.0.1", 5425, 10);
-    gPvd->connect(*transport, physx::PxPvdInstrumentationFlag::eALL);
+    mPvd = PxCreatePvd(*mFoundation);
+    PxPvdTransport* transport = PxDefaultPvdSocketTransportCreate(PVD_HOST, 5425, 10);
+    mPvd->connect(*transport, PxPvdInstrumentationFlag::eALL);
 
     // Physics
-    gPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gFoundation, physx::PxTolerancesScale(), true, gPvd);
-    if (!gPhysics)
+    mPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *mFoundation, PxTolerancesScale(), true, mPvd);
+    if (!mPhysics)
     {
         logger::error("PxCreatePhysics failed!");
         throw std::runtime_error("Failed to create PhysX physics!");
     }
 
     // Scene
-    physx::PxSceneDesc sceneDesc(gPhysics->getTolerancesScale());
-    sceneDesc.gravity = physx::PxVec3(0.0f, -9.81f, 0.0f);
-    gDispatcher = physx::PxDefaultCpuDispatcherCreate(2);
-    sceneDesc.cpuDispatcher = gDispatcher;
-    sceneDesc.filterShader = physx::PxDefaultSimulationFilterShader;
-    gScene = gPhysics->createScene(sceneDesc);
+    PxSceneDesc sceneDesc(mPhysics->getTolerancesScale());
+    sceneDesc.gravity = mGravity;
+
+    PxU32 numWorkers = 1;
+    mDispatcher = PxDefaultCpuDispatcherCreate(numWorkers);
+    sceneDesc.cpuDispatcher = mDispatcher;
+    sceneDesc.filterShader = snippetvehicle::VehicleFilterShader;
+
+    mScene = mPhysics->createScene(sceneDesc);
 
     // Prep PVD
-    physx::PxPvdSceneClient* pvdClient = gScene->getScenePvdClient();
+    PxPvdSceneClient* pvdClient = mScene->getScenePvdClient();
     if (pvdClient)
     {
-        pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_CONSTRAINTS, true);
-        pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_CONTACTS, true);
-        pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
+        pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_CONSTRAINTS, true);
+        pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_CONTACTS, true);
+        pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
     }
+    mMaterial = mPhysics->createMaterial(0.5f, 0.5f, 0.6f);
 
-    // Simulate
-    gMaterial = gPhysics->createMaterial(0.5f, 0.5f, 0.6f);
-    physx::PxRigidStatic* groundPlane = physx::PxCreatePlane(*gPhysics, physx::PxPlane(0, 1, 0, 50), *gMaterial);
-    gScene->addActor(*groundPlane);
+    // Initialize once for vehicle simulation
+    vehicle2::PxInitVehicleExtension(*mFoundation);
 
-    logger::info("Physics Test initialized successfully.");
+    logger::info("PhysX initialized successfully.");
 }
 
-physx::PxVec3 PhysicsSystem::getPos(int i)
+void PhysicsSystem::cleanupPhysX()
+{
+    vehicle2::PxCloseVehicleExtension();
+
+    PX_RELEASE(mMaterial);
+    PX_RELEASE(mScene);
+    PX_RELEASE(mDispatcher);
+    PX_RELEASE(mPhysics);
+    if (mPvd)
+    {
+        PxPvdTransport* transport = mPvd->getTransport();
+        PX_RELEASE(mPvd);
+        PX_RELEASE(transport);
+    }
+    PX_RELEASE(mFoundation);
+
+    logger::info("PhysX cleaned up successfully.");
+}
+
+void PhysicsSystem::initGroundPlane()
+{
+    mGroundPlane = PxCreatePlane(*mPhysics, PxPlane(0, 1, 0, 0), *mMaterial);
+    for (PxU32 i = 0; i < mGroundPlane->getNbShapes(); i++)
+    {
+        PxShape* shape = NULL;
+        mGroundPlane->getShapes(&shape, 1, i);
+        shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
+        shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+        shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
+    }
+    mScene->addActor(*mGroundPlane);
+    logger::info("Ground plane created successfully.");
+}
+
+void PhysicsSystem::cleanupGroundPlane()
+{
+    mGroundPlane->release();
+    logger::info("Ground plane cleaned up successfully.");
+}
+
+PxVec3 PhysicsSystem::getPos(int i)
 {
     // get position
-    physx::PxVec3 position = rigidDynamicList[i]->getGlobalPose().p;
+    PxVec3 position = rigidDynamicList[i]->getGlobalPose().p;
     return position;
 }
 
@@ -80,13 +149,16 @@ void PhysicsSystem::updateTransforms() {
     }
 }
 
-void PhysicsSystem::update(float delta_time) {
-gScene->simulate(delta_time);
-gScene->fetchResults(true);
+void PhysicsSystem::update(float deltaTime)
+{
+    mVehicleSystem->stepPhysics(deltaTime);
+
+    mScene->simulate(deltaTime);
+    mScene->fetchResults(true);
 
     updateTransforms();
 
-    physx::PxVec3 objPos = getPos(50);
+    PxVec3 objPos = getPos(50);
     if (objPos.y < lastBoxPos.y) {
         logger::debug("x: {0} y: {1} z: {2}", objPos.x, objPos.y, objPos.z);
         logger::debug("Entity y: {0}", entityList[50].transform->pos.y);
@@ -98,17 +170,17 @@ void PhysicsSystem::initBoxes()
 {
     // Define a box
     float halfLen = 0.5f;
-    physx::PxShape* shape = gPhysics->createShape(physx::PxBoxGeometry(halfLen, halfLen, halfLen), *gMaterial);
-    physx::PxU32 size = 30;
-    physx::PxTransform tran(physx::PxVec3(0));
+    PxShape* shape = mPhysics->createShape(PxBoxGeometry(halfLen, halfLen, halfLen), *mMaterial);
+    PxU32 size = 30;
+    PxTransform tran(PxVec3(0));
 
     // Create a pyramid of physics-enabled boxes
-    for (physx::PxU32 i = 0; i < size; i++)
+    for (PxU32 i = 0; i < size; i++)
     {
-        for (physx::PxU32 j = 0; j < size - i; j++)
+        for (PxU32 j = 0; j < size - i; j++)
         {
-            physx::PxTransform localTran(physx::PxVec3(physx::PxReal(j * 2) - physx::PxReal(size - i), physx::PxReal(i * 2 - 1), 0) * halfLen);
-            physx::PxRigidDynamic* body = gPhysics->createRigidDynamic(tran.transform(localTran));
+            PxTransform localTran(PxVec3(PxReal(j * 2) - PxReal(size - i), PxReal(i * 2 - 1), 0) * halfLen);
+            PxRigidDynamic* body = mPhysics->createRigidDynamic(tran.transform(localTran));
 
             // Store rigid body
             rigidDynamicList.push_back(body);
@@ -125,8 +197,8 @@ void PhysicsSystem::initBoxes()
             entityList.push_back(entity);
 
             body->attachShape(*shape);
-            physx::PxRigidBodyExt::updateMassAndInertia(*body, 10.0f);
-            gScene->addActor(*body);
+            PxRigidBodyExt::updateMassAndInertia(*body, 10.0f);
+            mScene->addActor(*body);
         }
     }
 
