@@ -116,7 +116,7 @@ void PhysicsSystem::initGroundPlane()
         PxShape* shape = NULL;
         mGroundPlane->getShapes(&shape, 1, i);
         shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
-        shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+        shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
         shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
     }
     mScene->addActor(*mGroundPlane);
