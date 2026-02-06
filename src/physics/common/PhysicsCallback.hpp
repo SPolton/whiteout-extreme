@@ -8,17 +8,32 @@ class ContactReportCallback : public physx::PxSimulationEventCallback {
         PX_UNUSED(pairs);
         PX_UNUSED(nbPairs);
 
-        logger::trace("Contact reported between actors {} and {}", 
+        logger::debug("Contact reported between actors {} and {}", 
             pairHeader.actors[0]->getName() ? pairHeader.actors[0]->getName() : "Unnamed",
             pairHeader.actors[1]->getName() ? pairHeader.actors[1]->getName() : "Unnamed"
         );
     }
-    void onConstraintBreak(physx::PxConstraintInfo* constraints, physx::PxU32 count) {}
-    void onWake(physx::PxActor** actors, physx::PxU32 count) {}
-    void onSleep(physx::PxActor** actors, physx::PxU32 count) {}
-    void onTrigger(physx::PxTriggerPair* pairs, physx::PxU32 count) {}
+    void onConstraintBreak(physx::PxConstraintInfo* constraints, physx::PxU32 count) {
+        PX_UNUSED(constraints);
+        logger::trace("Constraint break reported, count: {}", count);
+    }
+    void onWake(physx::PxActor** actors, physx::PxU32 count) {
+        PX_UNUSED(actors);
+        logger::trace("Actor wake reported, count: {}", count);
+    }
+    void onSleep(physx::PxActor** actors, physx::PxU32 count) {
+        PX_UNUSED(actors);
+        logger::trace("Actor sleep reported, count: {}", count);
+    }
+    void onTrigger(physx::PxTriggerPair* pairs, physx::PxU32 count) {
+        PX_UNUSED(pairs);
+        logger::trace("Trigger reported, count: {}", count);
+    }
     void onAdvance(const physx::PxRigidBody* const* bodyBuffer,
         const physx::PxTransform* poseBuffer,
         const physx::PxU32 count) {
+        PX_UNUSED(bodyBuffer);
+        PX_UNUSED(poseBuffer);
+        logger::trace("Advance reported, count: {}", count);
     }
 };
