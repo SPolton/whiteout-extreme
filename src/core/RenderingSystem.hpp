@@ -49,8 +49,9 @@ private:
     std::unique_ptr<GPU_Geometry> cubeGeometry;
     std::unique_ptr<CPU_Geometry> cubeCPUData;
     
-    // Texture
+    // Textures
     std::unique_ptr<Texture> texture;
+    std::unique_ptr<Texture> vehicleTexture;
     
     // ImGui management (separated concerns)
     std::unique_ptr<ImGuiWrapper> imguiWrapper;  // Handles lifecycle

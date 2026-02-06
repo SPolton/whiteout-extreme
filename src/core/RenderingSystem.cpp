@@ -317,6 +317,21 @@ bool RenderingSystem::init()
         return false;
     }
 
+    // Load vehicle texture
+    try
+    {
+        vehicleTexture = std::make_unique<Texture>(
+            "assets/textures/carbon_fiber.jpg",
+            GL_LINEAR
+        );
+        logger::info("Vehicle texture loaded successfully");
+    }
+    catch (const std::exception& e)
+    {
+        logger::error("Failed to load vehicle texture: {0}", e.what());
+        return false;
+    }
+
     // Create geometry using GPU_Geometry (RAII)
     triangleGeometry = std::make_unique<GPU_Geometry>();
     triangleCPUData = std::make_unique<CPU_Geometry>();
@@ -413,9 +428,9 @@ void RenderingSystem::renderEntities(const std::vector<Entity>& entityList)
     // Use shader
     shader->use();
     
-    // Bind texture to texture unit 0
+    // Bind vehicle texture to texture unit 0
     glActiveTexture(GL_TEXTURE0);
-    texture->bind();
+    vehicleTexture->bind();
     glUniform1i(glGetUniformLocation(*shader, "baseColorTexture"), 0);
     
     // Get projection matrix (perspective projection for 3D)
