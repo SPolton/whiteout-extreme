@@ -88,6 +88,7 @@
 #include "vehiclecommon/serialization/BaseSerialization.h"
 #include "vehiclecommon/serialization/EngineDrivetrainSerialization.h"
 
+#include "common/Flags.hpp"
 #include "utils/logger.h"
 
 // OK in cpp files, not in headers
@@ -199,12 +200,18 @@ bool VehicleFourWheelDrive::initVehicles(ConstructData info)
 	//Set the vehicle to use the automatic gearbox.
 	gVehicle.mTransmissionCommandState.targetGear = PxVehicleEngineDriveTransmissionCommandState::eAUTOMATIC_GEAR;
 
+    // Collision filtering for the vehicle
+    PxFilterData vehicleFilter(COLLISION_FLAG_CHASSIS, COLLISION_FLAG_CHASSIS_AGAINST, 0, 0);
+
     // Loop through each shape and set the query and simulation flags.
     // This is required for collision detection with other objects.
     PxU32 shapes = gVehicle.mPhysXState.physxActor.rigidBody->getNbShapes();
     for (PxU32 i = 0; i < shapes; i++) {
         PxShape* shape = NULL;
         gVehicle.mPhysXState.physxActor.rigidBody->getShapes(&shape, 1, i);
+
+        // Add filter to our shader
+        shape -> setSimulationFilterData(vehicleFilter);
 
         shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
         shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);

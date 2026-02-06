@@ -1,4 +1,5 @@
 #include "PhysicsSystem.hpp"
+#include "common/Flags.hpp"
 #include "common/PVD.h"
 #include "utils/logger.h"
 
@@ -183,6 +184,10 @@ void PhysicsSystem::initBoxes()
     // Define a box
     float halfLen = 0.5f;
     PxShape* shape = mPhysics->createShape(PxBoxGeometry(halfLen, halfLen, halfLen), *mMaterial);
+
+    PxFilterData boxFilter(COLLISION_FLAG_OBSTACLE, COLLISION_FLAG_OBSTACLE_AGAINST, 0, 0);
+    shape->setSimulationFilterData(boxFilter);
+
     PxU32 size = 30;
     PxTransform tran(PxVec3(0));
 
