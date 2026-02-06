@@ -30,7 +30,8 @@
 #include <ctype.h>
 
 #include "SnippetVehicleHelpers.h"
-
+#include "../common/Flags.hpp"
+#include "utils/logger.h"
 
 using namespace physx;
 
@@ -54,7 +55,17 @@ PxPairFlags& pairFlags, const void* constantBlock, PxU32 constantBlockSize)
     return PxFilterFlag::eSUPPRESS;
     */
     pairFlags = PxPairFlag::eCONTACT_DEFAULT;
-    return PxFilterFlag::eDEFAULT;
+
+    if ((filterData0.word0 == COLLISION_FLAG_OBSTACLE && filterData1.word0 == COLLISION_FLAG_CHASSIS) ||
+        (filterData0.word0 == COLLISION_FLAG_CHASSIS && filterData1.word0 == COLLISION_FLAG_OBSTACLE)) {
+
+        pairFlags |= physx::PxPairFlag::eNOTIFY_TOUCH_FOUND;
+        logger::debug("Collision detected between OBSTACLE and CHASSIS");
+    }
+    pairFlags |= physx::PxPairFlags(physx::PxU16(filterData0.word2 | filterData1.word2)); // Remember, our enums are bitwise
+    return physx::PxFilterFlags();
+
+    //return PxFilterFlag::eDEFAULT;
 }
 
 

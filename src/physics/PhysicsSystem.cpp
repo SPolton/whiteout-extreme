@@ -72,6 +72,10 @@ void PhysicsSystem::initPhysX()
     sceneDesc.cpuDispatcher = mDispatcher;
     sceneDesc.filterShader = snippetvehicle::VehicleFilterShader;
 
+    // Create a new Callback
+    mContactReportCallback = new ContactReportCallback();
+    sceneDesc.simulationEventCallback = mContactReportCallback; // Assign it to our scene
+
     mScene = mPhysics->createScene(sceneDesc);
 
     // Prep PVD
@@ -173,8 +177,8 @@ void PhysicsSystem::update(float deltaTime)
     // Box at index 51 (50 + 1 for vehicle offset)
     PxVec3 objPos = getPos(50);
     if (objPos.y < lastBoxPos.y) {
-        logger::debug("x: {0} y: {1} z: {2}", objPos.x, objPos.y, objPos.z);
-        logger::debug("Entity y: {0}", entityList[51].transform->pos.y);
+        //logger::debug("x: {0} y: {1} z: {2}", objPos.x, objPos.y, objPos.z);
+        //logger::debug("Entity y: {0}", entityList[51].transform->pos.y);
     }
     lastBoxPos = objPos;
 }

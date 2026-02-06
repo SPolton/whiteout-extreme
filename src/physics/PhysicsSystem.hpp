@@ -2,6 +2,7 @@
 
 #include "PxPhysicsAPI.h"
 #include "VehicleFourWheelDrive.hpp"
+#include "common/PhysicsCallback.hpp"
 #include "components/Entity.h"
 #include "components/Transform.h"
 #include <vector>
@@ -47,6 +48,8 @@ private:
 
     // Vehicle system
     VehicleFourWheelDrive* mVehicleSystem = NULL;
+
+    ContactReportCallback* mContactReportCallback = NULL;
 
     // Box position tracker
     physx::PxVec3 lastBoxPos;
