@@ -10,7 +10,7 @@
 
 class PhysicsSystem {
 public:
-    std::vector<Entity> entityList;
+    std::vector<EntityPx> entityList;
 
     PhysicsSystem();
     ~PhysicsSystem();

@@ -211,7 +211,7 @@ void PhysicsSystem::initBoxes()
             transformList.push_back(transform);
 
             // Create and store Entity
-            Entity entity;
+            EntityPx entity;
             entity.name = "Box";
             entity.transform = transform;
             entity.model = NULL;
