@@ -8,18 +8,35 @@
 #include <vector>
 #include <iostream>
 
-class PhysicsSystem {
+#include "ecs/Coordinator.hpp"
+#include "components/Renderable.h"
+#include "components/Transform.h"
+#include "components/RigidBody.h"
+#include "components/VehicleComponent.h"
+#include "core/RenderingSystem.hpp"
+
+#include "core/render/ShaderProgram.hpp"
+#include "core/buffer/Geometry.hpp"
+
+extern Coordinator gCoordinator;
+
+class PhysicsSystem : public System {
 public:
     std::vector<EntityPx> entityList;
 
     PhysicsSystem();
+    void init();
     ~PhysicsSystem();
 
     void update(float deltaTime);
     physx::PxVec3 getPos(int i);
 
     std::vector<PhysxTransform*> transformList;
-    void updateTransforms();
+    //void updateTransforms();
+
+    Entity createVehicleEntity();
+    void spawnBoxPyramid(physx::PxU32 size, float halfLen, Renderable cubeRenderable);
+
 private:
     // Initialization and cleanup functions
     void initPhysX();
@@ -54,5 +71,5 @@ private:
     // Box position tracker
     physx::PxVec3 lastBoxPos;
 
-    void initBoxes();
+    //void initBoxes();
 };

@@ -43,6 +43,16 @@ public:
 		mComponentManager->RegisterComponent<T>();
 	}
 
+    template<typename T>
+    bool HasComponent(Entity entity)
+    {
+        auto const& signature = mEntityManager->GetSignature(entity);
+        auto componentType = mComponentManager->GetComponentType<T>();
+
+        // Check if the bit for this component type is set in the entity's signature
+        return signature.test(componentType);
+    }
+
 	template<typename T>
 	void AddComponent(Entity entity, T component)
 	{

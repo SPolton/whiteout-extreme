@@ -2,9 +2,10 @@
 
 #include "RacingGame.hpp"
 #include "ecs/Coordinator.hpp"
-#include "components/CameraComponent.h"
+//#include "components/CameraComponent.h"
 #include "components/Renderable.h"
 #include "components/Transform.h"
+#include "components/VehicleComponent.h"
 
 //ECS global coordinator
 Coordinator gCoordinator;
@@ -17,9 +18,11 @@ RacingGame::RacingGame()
     gCoordinator.Init();
 
     // 1.Register Components
-    gCoordinator.RegisterComponent<CameraComponent>();
+    //gCoordinator.RegisterComponent<CameraComponent>();
     gCoordinator.RegisterComponent<Renderable>();
     gCoordinator.RegisterComponent<PhysxTransform>();
+    gCoordinator.RegisterComponent<RigidBody>();
+    gCoordinator.RegisterComponent<VehicleComponent>();
 
     // 2.Create Systems and Set Signatures
     // Rendering System signature is made of Renderable + Transform components
@@ -30,6 +33,17 @@ RacingGame::RacingGame()
         signature.set(gCoordinator.GetComponentType<PhysxTransform>());
         gCoordinator.SetSystemSignature<RenderingSystem>(signature);
     }
+    physicsSystem = gCoordinator.RegisterSystem<PhysicsSystem>();
+    {
+        Signature signature;
+        signature.set(gCoordinator.GetComponentType<PhysxTransform>());
+        signature.set(gCoordinator.GetComponentType<RigidBody>());
+
+        gCoordinator.SetSystemSignature<PhysicsSystem>(signature);
+    }
+
+    physicsSystem->init();
+    physicsSystem->spawnBoxPyramid(10, 0.5f, renderingSystem->getCubeRenderable());
 
     // 3.Create Entities and add Components to them:
     // Create a sphere entity for Earth
@@ -42,6 +56,15 @@ RacingGame::RacingGame()
     //      - gCoordinator.AddComponent(sphere,Renderable{...});
     // Same components signature as RenderingSystem, so will be added to that system's entity list.
 
+    // Create the player vehicle entity with physics components
+    playerVehicleEntity = physicsSystem->createVehicleEntity();
+    gCoordinator.AddComponent(playerVehicleEntity, Renderable{
+        renderingSystem->getCubeRenderable().geometry,
+        renderingSystem->getCubeRenderable().cpuData,
+        renderingSystem->getCubeRenderable().shader,
+        renderingSystem->vehicleTexture.get() // Use the same texture as the spheres for simplicity
+        });
+
     // 4.You can modify Component Data for entities
     gCoordinator.GetComponent<PhysxTransform>(sphere2).pos = glm::vec3(-1.3f, 0.7f, -0.4f); // Move Mars slightly
     gCoordinator.GetComponent<PhysxTransform>(sphere2).scale = glm::vec3(0.3f); // Scale down Mars
@@ -50,10 +73,6 @@ RacingGame::RacingGame()
 
     ///---- END OF ECS SETUP ----///
 
-
-
-
-    physicsSystem = std::make_unique<PhysicsSystem>();
     textSystem = std::make_unique<Text>();
 
     textSystem->setProjection(1440.0f, 1440.0f);
@@ -85,7 +104,12 @@ void RacingGame::run()
         }
 
         renderingSystem->update(gameTime.fpsF());
-        
+
+        //if entity exists, update camera target to follow the player vehicle
+        if (gCoordinator.HasComponent<PhysxTransform>(playerVehicleEntity)) {
+            renderingSystem->updateCameraTarget(gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos);
+        }
+
         // Render physics entities
         //renderingSystem->renderEntities(physicsSystem->entityList);
         

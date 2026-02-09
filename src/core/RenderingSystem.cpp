@@ -7,7 +7,7 @@
 
 #include "ecs/Coordinator.hpp"
 #include "components/Transform.h"
-#include "components/CameraComponent.h"
+//#include "components/CameraComponent.h"
 #include "components/Renderable.h"
 
 RenderingSystem::RenderingSystem() {
@@ -384,6 +384,15 @@ bool RenderingSystem::init()
     return true;
 }
 
+Renderable RenderingSystem::getCubeRenderable()
+{
+    return Renderable{
+        .geometry = cubeGeometry.get(),
+        .cpuData = cubeCPUData.get(),
+        .shader = shader.get(),
+        .texture = vehicleTexture.get()
+    };
+}
 
 Entity RenderingSystem::createSphereEntity()
 {
@@ -428,7 +437,7 @@ void RenderingSystem::render()
 
     for (auto const& entity : mEntities) // entities = signature Transform + Renderable
     {
-        logger::debug("Rendering entity{0}", entity);
+        //logger::debug("Rendering entity{0}", entity);
         auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
         auto& renderable = gCoordinator.GetComponent<Renderable>(entity);
 
