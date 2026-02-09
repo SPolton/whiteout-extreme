@@ -346,3 +346,35 @@ void PhysicsSystem::spawnBoxPyramid(physx::PxU32 size, float halfLen, Renderable
     }
     shape->release();
 }
+
+RigidBody PhysicsSystem::createRigidBodyFromSphere(Entity entity) {
+    // 1. Retrieve the transform component from the entity
+    auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
+
+    // 2. Convert the transform to PhysX format
+    physx::PxTransform pxTran(
+        physx::PxVec3(transform.pos.x, transform.pos.y, transform.pos.z),
+        physx::PxQuat(transform.rot.x, transform.rot.y, transform.rot.z, transform.rot.w)
+    );
+
+    // 3. Create the rigid dynamic actor in PhysX
+    physx::PxRigidDynamic* body = mPhysics->createRigidDynamic(pxTran);
+
+    //Create a simple shape (sphere) and attach it to the body
+    physx::PxShape* shape = mPhysics->createShape(physx::PxSphereGeometry(1.0f), *mMaterial);
+    body->attachShape(*shape);
+
+    // Set mass and inertia
+    physx::PxRigidBodyExt::updateMassAndInertia(*body, 10.0f);
+
+    // 4. Add the actor to the PhysX scene
+    mScene->addActor(*body);
+
+    // Clean up shape as it's now attached to the body
+    shape->release();
+
+    logger::info("Physics body created for entity {}", entity);
+
+    // 5. Return the RigidBody component
+    return RigidBody{ body };
+}

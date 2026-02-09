@@ -22,4 +22,6 @@ private:
     std::unique_ptr<Text> textSystem;
 
     Entity playerVehicleEntity;
+    Entity Earth;
+    Entity Mars;
 };

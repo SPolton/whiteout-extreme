@@ -47,9 +47,9 @@ RacingGame::RacingGame()
 
     // 3.Create Entities and add Components to them:
     // Create a sphere entity for Earth
-    Entity sphere1 = renderingSystem->createSphereEntity();
+    Earth = renderingSystem->createSphereEntity();
     // Create a second sphere entity for Mars
-    Entity sphere2 = renderingSystem->createSphereEntity();
+    Mars = renderingSystem->createSphereEntity();
     // Note:
     // The createSphereEntity() method calls:
     //      - gCoordinator.AddComponent(sphere,PhysxTransform{...});
@@ -66,10 +66,10 @@ RacingGame::RacingGame()
         });
 
     // 4.You can modify Component Data for entities
-    gCoordinator.GetComponent<PhysxTransform>(sphere2).pos = glm::vec3(-1.3f, 0.7f, -0.4f); // Move Mars slightly
-    gCoordinator.GetComponent<PhysxTransform>(sphere2).scale = glm::vec3(0.3f); // Scale down Mars
-    gCoordinator.GetComponent<PhysxTransform>(sphere2).rot = glm::angleAxis(glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f)); // Rotate Mars
-    gCoordinator.GetComponent<Renderable>(sphere2).texture = renderingSystem->texture2.get(); // Mars texture
+    gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(-1.3f, 0.7f, -0.4f); // Move Mars slightly
+    gCoordinator.GetComponent<PhysxTransform>(Mars).scale = glm::vec3(0.3f); // Scale down Mars
+    gCoordinator.GetComponent<PhysxTransform>(Mars).rot = glm::angleAxis(glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f)); // Rotate Mars
+    gCoordinator.GetComponent<Renderable>(Mars).texture = renderingSystem->texture2.get(); // Mars texture
 
     ///---- END OF ECS SETUP ----///
 
@@ -82,9 +82,24 @@ RacingGame::RacingGame()
 /// Main game loop
 void RacingGame::run()
 {
+    bool addedRigidBodyToMars = false;
+
     while (!renderingSystem->shouldClose())
     {
         gameTime.update();
+
+        // After 20 seconds, add a RigidBody component to sphere2 (Mars) to make it fall
+        if (gameTime.currentTime >= 20.0 && !addedRigidBodyToMars) {
+            gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(0.f, 20.f, 0.f);
+            gCoordinator.GetComponent<PhysxTransform>(Mars).scale = glm::vec3(1.f);
+
+            gCoordinator.AddComponent(
+                Mars,
+                physicsSystem->createRigidBodyFromSphere(Mars)
+            );
+            addedRigidBodyToMars = true;
+            logger::info("Added RigidBody component to Entity at t = {} seconds", gameTime.tF());
+        }
 
         // Physics System Loop, adaptive based on performance
         int maxPhysicsSteps = gameTime.maxPhysicsSteps();
