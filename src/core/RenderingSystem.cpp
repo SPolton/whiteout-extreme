@@ -5,12 +5,17 @@
 #include <iostream>
 #include <cmath>
 
+#include "ecs/Coordinator.hpp"
+#include "components/Transform.h"
+#include "components/Renderable.h"
+
 RenderingSystem::RenderingSystem() {
     if (!init()) {
         throw std::runtime_error("Failed to initialize RenderingSystem!");
     }
 }
 
+/*
 RenderingSystem::~RenderingSystem()
 {
     // ImGui cleanup via wrapper
@@ -18,6 +23,7 @@ RenderingSystem::~RenderingSystem()
         imguiWrapper->shutdown();
     }
 }
+*/
 
 void RenderingSystem::processInput(float deltaTime)
 {
@@ -316,6 +322,10 @@ bool RenderingSystem::init()
             "assets/textures/2k_earth_daymap.jpg",
             GL_LINEAR
         );
+        texture2 = std::make_unique<Texture>(
+            "assets/textures/2k_mars.jpg",
+            GL_LINEAR
+        );
         logger::info("Texture loaded successfully");
     }
     catch (const std::exception& e)
@@ -365,7 +375,7 @@ bool RenderingSystem::init()
 
     // Create object tracking transform for camera (vehicle tracking)
     targetTransform = std::make_unique<SceneTransform>();
-    targetTransform->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    targetTransform->setPosition(glm::vec3(0.f, 0.f, 0.f));
 
     // Create cameras
     turntableCamera = std::make_unique<TurnTableCamera>(*targetTransform);
@@ -380,53 +390,113 @@ bool RenderingSystem::init()
     return true;
 }
 
+Renderable RenderingSystem::getCubeRenderable()
+{
+    return Renderable{
+        .geometry = cubeGeometry.get(),
+        .cpuData = cubeCPUData.get(),
+        .shader = shader.get(),
+        .texture = vehicleTexture.get()
+    };
+}
+
+Entity RenderingSystem::createSphereEntity()
+{
+    // Create sphere entity with earth texture as a basis
+    Entity sphere = gCoordinator.CreateEntity();
+
+    gCoordinator.AddComponent(
+        sphere,
+        PhysxTransform{
+            glm::vec3(0.f, 0.f, 0.f),
+            glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
+            glm::vec3(1.f)
+        }
+    );
+
+    gCoordinator.AddComponent(
+        sphere,
+        Renderable{
+            triangleGeometry.get(),
+            triangleCPUData.get(),
+            shader.get(),
+            texture.get()
+        }
+    );
+
+    logger::info("Sphere initialized");
+
+    return sphere;
+}
+
 void RenderingSystem::render()
 {
     // Clear buffers
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
-    // Use shader
-    shader->use();
-    
-    // Bind texture to texture unit 0
-    glActiveTexture(GL_TEXTURE0);
-    texture->bind();
-    glUniform1i(glGetUniformLocation(*shader, "baseColorTexture"), 0);
-    
-    // Get projection matrix (perspective projection for 3D)
-    glm::mat4 projection = getProjectionMatrix();
-    glUniformMatrix4fv(glGetUniformLocation(*shader, "projection"), 1, GL_FALSE, &projection[0][0]);
-    
-    // Get view matrix from active camera (transforms world coords to camera/view space)
+
+    //auto& camTransform = gCoordinator.GetComponent<PhysxTransform>(cameraEntity);
+    //auto& camComp = gCoordinator.GetComponent<CameraComponent>(cameraEntity);
+
     glm::mat4 view = activeCamera->getViewMatrix();
-    glUniformMatrix4fv(glGetUniformLocation(*shader, "view"), 1, GL_FALSE, &view[0][0]);
-    
-    // Model matrix to transform local coords to world space
-    // Start with identity matrix
-    glm::mat4 model = glm::mat4(1.0f);
-    
-    // Apply transformations: translate, rotate, scale
-    // Note: transformations are applied in reverse order (read right to left)
-    // For a rotating sphere, we can add a rotation based on time
-    model = glm::rotate(model, static_cast<float>(glfwGetTime()) * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
-    
-    // Send model matrix to shader
-    glUniformMatrix4fv(glGetUniformLocation(*shader, "model"), 1, GL_FALSE, &model[0][0]);
-    
-    // Bind and render geometry
-    triangleGeometry->bind();
-    
-    // Check if using indexed rendering (sphere/indexed shapes) or array rendering (triangle/square)
-    if (!triangleCPUData->indices.empty()) {
-        // Indexed rendering for sphere and other indexed geometry
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(triangleCPUData->indices.size()), GL_UNSIGNED_INT, nullptr);
-    } else {
-        // Array rendering for simple shapes
-        glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(triangleCPUData->positions.size()));
+    glm::mat4 projection = getProjectionMatrix();
+
+
+    for (auto const& entity : mEntities) // entities = signature Transform + Renderable
+    {
+        //logger::debug("Rendering entity{0}", entity);
+        auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
+        auto& renderable = gCoordinator.GetComponent<Renderable>(entity);
+
+        renderable.shader->use();
+
+        glActiveTexture(GL_TEXTURE0);
+        renderable.texture->bind();
+        glUniform1i(
+            glGetUniformLocation(*renderable.shader, "baseColorTexture"),
+            0
+        );
+
+        glm::mat4 model =
+            glm::translate(glm::mat4(1.f), transform.pos)
+            * glm::toMat4(transform.rot)
+            * glm::scale(glm::mat4(1.f), transform.scale);
+
+        glUniformMatrix4fv(
+            glGetUniformLocation(*renderable.shader, "model"),
+            1, GL_FALSE, &model[0][0]
+        );
+
+        glUniformMatrix4fv(
+            glGetUniformLocation(*renderable.shader, "view"),
+            1, GL_FALSE, &view[0][0]
+        );
+
+        glUniformMatrix4fv(
+            glGetUniformLocation(*renderable.shader, "projection"),
+            1, GL_FALSE, &projection[0][0]
+        );
+
+        renderable.geometry->bind();
+
+        if (!renderable.cpuData->indices.empty()) {
+            glDrawElements(
+                GL_TRIANGLES,
+                renderable.cpuData->indices.size(),
+                GL_UNSIGNED_INT,
+                nullptr
+            );
+        }
+        else {
+            glDrawArrays(
+                GL_TRIANGLES,
+                0,
+                renderable.cpuData->positions.size()
+            );
+        }
     }
 }
 
-void RenderingSystem::renderEntities(const std::vector<Entity>& entityList)
+void RenderingSystem::renderEntities(const std::vector<EntityPx>& entityList)
 {
     // Update camera target to first entity (assuming player vehicle)
     if (!entityList.empty())
@@ -480,13 +550,13 @@ glm::mat4 RenderingSystem::getProjectionMatrix() const
     
     // Perspective projection for active camera
     // FOV is already in radians, no conversion needed
-    return glm::perspective(activeCamera->getFOV(), aspectRatio, 0.1f, 100.0f);
+    return glm::perspective(activeCamera->getFOV(), aspectRatio, 0.1f, 300.0f);
 }
 
 void RenderingSystem::update(float deltaTime)
 {
     processInput(deltaTime);
-
+    
     // Get settings from panel
     glm::vec3 bgColor = imguiPanel->getBackgroundColor();
     glClearColor(bgColor.r, bgColor.g, bgColor.b, 1.0f);
@@ -564,5 +634,12 @@ void RenderingSystem::updateCameraTarget(const glm::vec3& position)
 {
     if (targetTransform) {
         targetTransform->setPosition(position);
+    }
+}
+
+void RenderingSystem::cleanup() {
+    if (imguiWrapper) {
+        imguiWrapper->shutdown();
+        imguiWrapper.reset();
     }
 }

@@ -7,10 +7,27 @@
 using namespace physx;
 
 PhysicsSystem::PhysicsSystem() {
+    // Core PhysX Initialization only (Foundation, PVD, Physics, Scene)
     initPhysX();
-    initGroundPlane();
+}
 
-    // Init vehicle system here
+void PhysicsSystem::init() {
+    
+
+    // Create the Ground Plane Entity
+    // We treat the ground as an entity so other systems (like Rendering) can interact with it
+    Entity ground = gCoordinator.CreateEntity();
+
+    // Create the static actor
+    mGroundPlane = PxCreatePlane(*mPhysics, PxPlane(0, 1, 0, 0), *mMaterial);
+    mScene->addActor(*mGroundPlane);
+
+    // Add the RigidBody component (Static actors don't necessarily need a Transform component 
+    // unless they move, but they MUST have a RigidBody for the PhysicsSystem signature)
+    gCoordinator.AddComponent(ground, RigidBody{ mGroundPlane });
+
+
+    // Create the Player Vehicle Entity
     VehicleFourWheelDrive::ConstructData vehicleData{
         .vehicleName = "VehiclePlayer1",
         .vehicleDataPath = "assets/vehicledata",
@@ -19,15 +36,32 @@ PhysicsSystem::PhysicsSystem() {
         .scene = mScene,
         .material = mMaterial
     };
-    mVehicleSystem = new VehicleFourWheelDrive(vehicleData);
 
-    // Reserve space for vehicle + boxes in entity list
-    entityList.reserve(466);
+    // Create the vehicle instance
+    mVehicleSystem = new VehicleFourWheelDrive(vehicleData);
+}
+
+Entity PhysicsSystem::createVehicleEntity() {
+        // 1. Create a new entity for the vehicle
+        Entity vehicleEntity = gCoordinator.CreateEntity();
     
-    // Add vehicle entity to the list first
-    entityList.push_back(mVehicleSystem->getEntity());
+        // 2. Add necessary components to the vehicle entity
+        // Transform
+        gCoordinator.AddComponent(vehicleEntity, PhysxTransform{
+            glm::vec3(0.f, 2.f, 0.f),                // Spawn slightly above ground
+            glm::quat(1.f, 0.f, 0.f, 0.f),           // Identity rotation
+            glm::vec3(1.8f, 2.9f, 7.f)                           // Scale
+            });
     
-    initBoxes();
+        // RigidBody (using the chassis actor from the vehicle)
+        gCoordinator.AddComponent(vehicleEntity, RigidBody{ mVehicleSystem->getRigidActor()});
+    
+        // VehicleComponent (store the vehicle instance for later updates and access)
+        gCoordinator.AddComponent(vehicleEntity, VehicleComponent{.instance = mVehicleSystem});
+    
+        logger::info("Vehicle entity created with ID: {}", vehicleEntity);
+        
+        return vehicleEntity;
 }
 
 PhysicsSystem::~PhysicsSystem() {
@@ -141,93 +175,110 @@ PxVec3 PhysicsSystem::getPos(int i)
     return position;
 }
 
-void PhysicsSystem::updateTransforms() {
-    // Update vehicle transform first (at index 0)
-    if (mVehicleSystem) {
-        mVehicleSystem->updateTransform();
-        // Update the entity list reference
-        entityList[0] = mVehicleSystem->getEntity();
-    }
+void PhysicsSystem::update(float deltaTime) {
+    // 1. PRE-SIMULATION PHASE: Handle specialized logic (like Vehicles)
+    for (auto const& entity : mEntities) {
+        // If the entity is a vehicle, we need to process its specialized driving logic
+        if (gCoordinator.HasComponent<VehicleComponent>(entity)) {
+            auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(entity);
 
-    // Update box transforms (starting from index 1)
-    for (int i = 0; i < transformList.size(); i++) {
-
-        // store positions
-        transformList[i]->pos.x = rigidDynamicList[i]->getGlobalPose().p.x;
-        transformList[i]->pos.y = rigidDynamicList[i]->getGlobalPose().p.y;
-        transformList[i]->pos.z = rigidDynamicList[i]->getGlobalPose().p.z;
-
-        // store rotations
-        transformList[i]->rot.x = rigidDynamicList[i]->getGlobalPose().q.x;
-        transformList[i]->rot.y = rigidDynamicList[i]->getGlobalPose().q.y;
-        transformList[i]->rot.z = rigidDynamicList[i]->getGlobalPose().q.z;
-        transformList[i]->rot.w = rigidDynamicList[i]->getGlobalPose().q.w;
-    }
-}
-
-void PhysicsSystem::update(float deltaTime)
-{
-    mVehicleSystem->stepPhysics(deltaTime);
-
-    mScene->simulate(deltaTime);
-    mScene->fetchResults(true);
-
-    updateTransforms();
-
-    // Box at index 51 (50 + 1 for vehicle offset)
-    PxVec3 objPos = getPos(50);
-    if (objPos.y < lastBoxPos.y) {
-        //logger::debug("x: {0} y: {1} z: {2}", objPos.x, objPos.y, objPos.z);
-        //logger::debug("Entity y: {0}", entityList[51].transform->pos.y);
-    }
-    lastBoxPos = objPos;
-}
-
-void PhysicsSystem::initBoxes()
-{
-    // Define a box
-    float halfLen = 0.5f;
-    PxShape* shape = mPhysics->createShape(PxBoxGeometry(halfLen, halfLen, halfLen), *mMaterial);
-
-    PxFilterData boxFilter(COLLISION_FLAG_OBSTACLE, COLLISION_FLAG_OBSTACLE_AGAINST, 0, 0);
-    shape->setSimulationFilterData(boxFilter);
-
-    PxU32 size = 30;
-    PxTransform tran(PxVec3(0));
-
-    // Create a pyramid of physics-enabled boxes
-    for (PxU32 i = 0; i < size; i++)
-    {
-        for (PxU32 j = 0; j < size - i; j++)
-        {
-            PxTransform localTran(PxVec3(PxReal(j * 2) - PxReal(size - i), PxReal(i * 2 - 1), 0) * halfLen);
-            PxRigidDynamic* body = mPhysics->createRigidDynamic(tran.transform(localTran));
-
-            // Store rigid body
-            rigidDynamicList.push_back(body);
-
-            // Create and store Transform
-            PhysxTransform* transform = new PhysxTransform();
-            transformList.push_back(transform);
-
-            // Create and store Entity
-            Entity entity;
-            entity.name = "Box";
-            entity.transform = transform;
-            entity.model = NULL;
-            entityList.push_back(entity);
-
-            body->attachShape(*shape);
-            PxRigidBodyExt::updateMassAndInertia(*body, 10.0f);
-            mScene->addActor(*body);
+            // Apply the control inputs 
+            // For now, it uses the values stored in the component
+            vehicle.instance->stepPhysics(deltaTime);
         }
     }
 
-    // Prepare transform list for updates
-    updateTransforms();
+    // 2. SIMULATION PHASE: Step the PhysX Scene
+    mScene->simulate(deltaTime);
+    mScene->fetchResults(true);
 
-    // Clean up
+    // 3. POST-SIMULATION PHASE: Synchronize PhysX back to ECS
+    for (auto const& entity : mEntities) {
+        auto& rb = gCoordinator.GetComponent<RigidBody>(entity);
+        auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
+
+        // We only want to sync entities that actually move (Dynamic bodies)
+        // Static bodies (like the ground) don't need their transform updated every frame
+        physx::PxRigidDynamic* dynamicActor = rb.actor->is<physx::PxRigidDynamic>();
+
+        if (dynamicActor) {
+            physx::PxTransform pxPose = dynamicActor->getGlobalPose();
+
+            // Sync Position
+            transform.pos = glm::vec3(pxPose.p.x, pxPose.p.y, pxPose.p.z);
+
+            // Sync Rotation (PhysX Quat to GLM Quat)
+            transform.rot = glm::quat(pxPose.q.w, pxPose.q.x, pxPose.q.y, pxPose.q.z);
+        }
+    }
+}
+
+void PhysicsSystem::spawnBoxPyramid(physx::PxU32 size, float halfLen, Renderable cubeRenderable) {
+    physx::PxShape* shape = mPhysics->createShape(physx::PxBoxGeometry(halfLen, halfLen, halfLen), *mMaterial);
+    physx::PxFilterData boxFilter(COLLISION_FLAG_OBSTACLE, COLLISION_FLAG_OBSTACLE_AGAINST, 0, 0);
+    shape->setSimulationFilterData(boxFilter);
+
+    for (physx::PxU32 i = 0; i < size; i++) {
+        for (physx::PxU32 j = 0; j < size - i; j++) {
+            // 1. Calculate Position
+            physx::PxVec3 pos(
+                physx::PxReal(j * 2) - physx::PxReal(size - i),
+                physx::PxReal(i * 2 + 5), // Added +5 to drop them from the air
+                0.0f
+            );
+            pos *= halfLen;
+
+            // 2. Create PhysX Actor
+            physx::PxRigidDynamic* body = mPhysics->createRigidDynamic(physx::PxTransform(pos));
+            body->attachShape(*shape);
+            physx::PxRigidBodyExt::updateMassAndInertia(*body, 10.0f);
+            mScene->addActor(*body);
+
+            // 3. Create ECS Entity
+            Entity box = gCoordinator.CreateEntity();
+
+            // PHYSICS: Add RigidBody and Transform for the PhysicsSystem to track
+            gCoordinator.AddComponent(box, RigidBody{ body });
+            gCoordinator.AddComponent(box, PhysxTransform{
+                glm::vec3(pos.x, pos.y, pos.z),
+                glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
+                glm::vec3(1.f) // Scale
+                });
+
+            gCoordinator.AddComponent(box, cubeRenderable);
+        }
+    }
+    shape->release();
+}
+
+RigidBody PhysicsSystem::createRigidBodyFromSphere(Entity entity) {
+    // 1. Retrieve the transform component from the entity
+    auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
+
+    // 2. Convert the transform to PhysX format
+    physx::PxTransform pxTran(
+        physx::PxVec3(transform.pos.x, transform.pos.y, transform.pos.z),
+        physx::PxQuat(transform.rot.x, transform.rot.y, transform.rot.z, transform.rot.w)
+    );
+
+    // 3. Create the rigid dynamic actor in PhysX
+    physx::PxRigidDynamic* body = mPhysics->createRigidDynamic(pxTran);
+
+    //Create a simple shape (sphere) and attach it to the body
+    physx::PxShape* shape = mPhysics->createShape(physx::PxSphereGeometry(1.0f), *mMaterial);
+    body->attachShape(*shape);
+
+    // Set mass and inertia
+    physx::PxRigidBodyExt::updateMassAndInertia(*body, 10.0f);
+
+    // 4. Add the actor to the PhysX scene
+    mScene->addActor(*body);
+
+    // Clean up shape as it's now attached to the body
     shape->release();
 
-    logger::info("Box test spawned successfully.");
+    logger::info("Physics body created for entity {}", entity);
+
+    // 5. Return the RigidBody component
+    return RigidBody{ body };
 }

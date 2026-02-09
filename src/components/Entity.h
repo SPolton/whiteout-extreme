@@ -21,7 +21,7 @@ enum class DrawType {
 
 // Entity Class
 // Contains individual object information
-class Entity {
+class EntityPx {
 public:
     std::string name = "unnamed_entity";
     PhysType physType = PhysType::None;
