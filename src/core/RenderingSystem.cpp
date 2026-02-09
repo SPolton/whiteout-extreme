@@ -7,7 +7,6 @@
 
 #include "ecs/Coordinator.hpp"
 #include "components/Transform.h"
-//#include "components/CameraComponent.h"
 #include "components/Renderable.h"
 
 RenderingSystem::RenderingSystem() {

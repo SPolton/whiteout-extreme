@@ -7,27 +7,8 @@
 using namespace physx;
 
 PhysicsSystem::PhysicsSystem() {
-    // Core PhysX Initialization (Foundation, PVD, Physics, Scene)
+    // Core PhysX Initialization only (Foundation, PVD, Physics, Scene)
     initPhysX();
-    //initGroundPlane();
-
-    // Init vehicle system here
-    /*
-    VehicleFourWheelDrive::ConstructData vehicleData{
-        .vehicleName = "VehiclePlayer1",
-        .vehicleDataPath = "assets/vehicledata",
-        .gravity = mGravity,
-        .physics = mPhysics,
-        .scene = mScene,
-        .material = mMaterial
-    };
-    mVehicleSystem = new VehicleFourWheelDrive(vehicleData);
-
-    // Reserve space for vehicle + boxes in entity list
-    entityList.reserve(466);
-    
-    // Add vehicle entity to the list first
-    entityList.push_back(mVehicleSystem->getEntity());*/
 }
 
 void PhysicsSystem::init() {
@@ -194,32 +175,6 @@ PxVec3 PhysicsSystem::getPos(int i)
     return position;
 }
 
-/*
-void PhysicsSystem::updateTransforms() {
-    // Update vehicle transform first (at index 0)
-    if (mVehicleSystem) {
-        mVehicleSystem->updateTransform();
-        // Update the entity list reference
-        entityList[0] = mVehicleSystem->getEntity();
-    }
-
-    // Update box transforms (starting from index 1)
-    for (int i = 0; i < transformList.size(); i++) {
-
-        // store positions
-        transformList[i]->pos.x = rigidDynamicList[i]->getGlobalPose().p.x;
-        transformList[i]->pos.y = rigidDynamicList[i]->getGlobalPose().p.y;
-        transformList[i]->pos.z = rigidDynamicList[i]->getGlobalPose().p.z;
-
-        // store rotations
-        transformList[i]->rot.x = rigidDynamicList[i]->getGlobalPose().q.x;
-        transformList[i]->rot.y = rigidDynamicList[i]->getGlobalPose().q.y;
-        transformList[i]->rot.z = rigidDynamicList[i]->getGlobalPose().q.z;
-        transformList[i]->rot.w = rigidDynamicList[i]->getGlobalPose().q.w;
-    }
-}
-*/
-
 void PhysicsSystem::update(float deltaTime) {
     // 1. PRE-SIMULATION PHASE: Handle specialized logic (like Vehicles)
     for (auto const& entity : mEntities) {
@@ -257,57 +212,6 @@ void PhysicsSystem::update(float deltaTime) {
         }
     }
 }
-
-/*
-void PhysicsSystem::initBoxes()
-{
-    // Define a box
-    float halfLen = 0.5f;
-    PxShape* shape = mPhysics->createShape(PxBoxGeometry(halfLen, halfLen, halfLen), *mMaterial);
-
-    PxFilterData boxFilter(COLLISION_FLAG_OBSTACLE, COLLISION_FLAG_OBSTACLE_AGAINST, 0, 0);
-    shape->setSimulationFilterData(boxFilter);
-
-    PxU32 size = 30;
-    PxTransform tran(PxVec3(0));
-
-    // Create a pyramid of physics-enabled boxes
-    for (PxU32 i = 0; i < size; i++)
-    {
-        for (PxU32 j = 0; j < size - i; j++)
-        {
-            PxTransform localTran(PxVec3(PxReal(j * 2) - PxReal(size - i), PxReal(i * 2 - 1), 0) * halfLen);
-            PxRigidDynamic* body = mPhysics->createRigidDynamic(tran.transform(localTran));
-
-            // Store rigid body
-            rigidDynamicList.push_back(body);
-
-            // Create and store Transform
-            PhysxTransform* transform = new PhysxTransform();
-            transformList.push_back(transform);
-
-            // Create and store Entity
-            EntityPx entity;
-            entity.name = "Box";
-            entity.transform = transform;
-            entity.model = NULL;
-            entityList.push_back(entity);
-
-            body->attachShape(*shape);
-            PxRigidBodyExt::updateMassAndInertia(*body, 10.0f);
-            mScene->addActor(*body);
-        }
-    }
-
-    // Prepare transform list for updates
-    updateTransforms();
-
-    // Clean up
-    shape->release();
-
-    logger::info("Box test spawned successfully.");
-}
-*/
 
 void PhysicsSystem::spawnBoxPyramid(physx::PxU32 size, float halfLen, Renderable cubeRenderable) {
     physx::PxShape* shape = mPhysics->createShape(physx::PxBoxGeometry(halfLen, halfLen, halfLen), *mMaterial);

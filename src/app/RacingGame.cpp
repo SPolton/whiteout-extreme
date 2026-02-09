@@ -88,6 +88,7 @@ void RacingGame::run()
     {
         gameTime.update();
 
+        // 5. You can also add/remove components at runtime to change entity behavior
         // After 20 seconds, add a RigidBody component to sphere2 (Mars) to make it fall
         if (gameTime.currentTime >= 20.0 && !addedRigidBodyToMars) {
             gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(0.f, 20.f, 0.f);
@@ -96,9 +97,9 @@ void RacingGame::run()
             gCoordinator.AddComponent(
                 Mars,
                 physicsSystem->createRigidBodyFromSphere(Mars)
-            );
+            ); // This will add the Mars entity to the PhysicsSystem's entity list and it will start falling due to gravity
             addedRigidBodyToMars = true;
-            logger::info("Added RigidBody component to Entity at t = {} seconds", gameTime.tF());
+            logger::info("Added RigidBody component to Entity Mars at t = {} seconds", gameTime.tF());
         }
 
         // Physics System Loop, adaptive based on performance
@@ -120,14 +121,12 @@ void RacingGame::run()
 
         renderingSystem->update(gameTime.fpsF());
 
-        //if entity exists, update camera target to follow the player vehicle
+        // If entity exists, update camera target to follow the player vehicle
+        // We don't assume anymore that it's in the first position of the entity list, so we directly access it by its Entity ID
         if (gCoordinator.HasComponent<PhysxTransform>(playerVehicleEntity)) {
             renderingSystem->updateCameraTarget(gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos);
         }
 
-        // Render physics entities
-        //renderingSystem->renderEntities(physicsSystem->entityList);
-        
         renderingSystem->updateUI();
 
         // Must be called after renderer update, but before text rendering
