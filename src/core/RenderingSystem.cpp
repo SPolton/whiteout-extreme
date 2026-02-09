@@ -138,7 +138,7 @@ void RenderingSystem::processControllerInput() {
     }
 
     // triggers menu/pause
-    if (inputManager->IsControllerButtonDown(GLFW_GAMEPAD_BUTTON_START)) {
+    if (inputManager->isKeyPressedOnce(GLFW_GAMEPAD_BUTTON_START)) {
         gamePaused();
     }
 }
@@ -182,7 +182,7 @@ void RenderingSystem::processKeyboardInput() {
     }
 
     // triggers menu/pause
-    if (inputManager->IsKeyboardButtonDown(GLFW_KEY_P)) {
+    if (inputManager->isKeyPressedOnce(GLFW_KEY_P)) {
         gamePaused();
     }
 }
@@ -234,8 +234,15 @@ void RenderingSystem::throwSnowball()
 //==================================================================================================================//
 
 void RenderingSystem::gamePaused() {
+    // update game status
     isGamePaused = !isGamePaused;
-    logger::info("Game is paused...");
+
+    if (isGamePaused) {
+        logger::info("Game is paused...");
+    }
+    else {
+        logger::info("Game resumed...");
+    }
 }
 
 bool RenderingSystem::init()
