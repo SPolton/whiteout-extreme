@@ -18,21 +18,53 @@ struct GameTime {
     float fpsF() const { return static_cast<float>(fps); }
     float accF() const { return static_cast<float>(accumulator); }
 
+    // Call at the start of each frame
     void update() {
         // New Time Trackers
         double newTime = glfwGetTime();
         double frameTime = newTime - currentTime;
         currentTime = newTime;
+        
+        // Clamp frame time to prevent spiral of death
+        // Max 0.25 seconds (4 frames at 60fps) prevents teleporting after freezes
+        if (frameTime > 0.25) {
+            frameTime = 0.25;
+        }
+        
         accumulator += frameTime;
         frameCount++;
 
         updateFPS(frameTime);
     }
 
+    // Call after each physics update
     void physicsUpdate() {
         accumulator -= dt;
         t += dt;
         physicsFrameCount++;
+    }
+
+    // Calculate max physics steps based on frame time to prevent spiral of death
+    int maxPhysicsSteps() const {
+        // If frame time (fps) is greater than dt, game is running slow
+        // Limit physics updates to reduce load
+        if (fps > dt * 2.0) {
+            // Frame is taking longer than 2 physics steps, limit to 1 step
+            return 1;
+        }
+        else if (fps > dt) {
+            // Frame is taking longer than 1 physics step, limit to 2 steps
+            return 2;
+        }
+        // Performance is good, allow up to 8 catch-up steps
+        return 8;
+    }
+    
+    // Discard excess accumulator when performance is poor
+    void discardExcessTime() {
+        if (accumulator > dt * 2.0) {
+            accumulator = dt * 2.0;
+        }
     }
 
 private:

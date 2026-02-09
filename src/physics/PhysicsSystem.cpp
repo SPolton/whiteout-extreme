@@ -1,4 +1,5 @@
 #include "PhysicsSystem.hpp"
+#include "common/Flags.hpp"
 #include "common/PVD.h"
 #include "utils/logger.h"
 
@@ -20,8 +21,12 @@ PhysicsSystem::PhysicsSystem() {
     };
     mVehicleSystem = new VehicleFourWheelDrive(vehicleData);
 
-    // Reserve space for boxes in entity list
-    entityList.reserve(465);
+    // Reserve space for vehicle + boxes in entity list
+    entityList.reserve(466);
+    
+    // Add vehicle entity to the list first
+    entityList.push_back(mVehicleSystem->getEntity());
+    
     initBoxes();
 }
 
@@ -66,6 +71,10 @@ void PhysicsSystem::initPhysX()
     mDispatcher = PxDefaultCpuDispatcherCreate(numWorkers);
     sceneDesc.cpuDispatcher = mDispatcher;
     sceneDesc.filterShader = snippetvehicle::VehicleFilterShader;
+
+    // Create a new Callback
+    mContactReportCallback = new ContactReportCallback();
+    sceneDesc.simulationEventCallback = mContactReportCallback; // Assign it to our scene
 
     mScene = mPhysics->createScene(sceneDesc);
 
@@ -112,7 +121,7 @@ void PhysicsSystem::initGroundPlane()
         PxShape* shape = NULL;
         mGroundPlane->getShapes(&shape, 1, i);
         shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
-        shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+        shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
         shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
     }
     mScene->addActor(*mGroundPlane);
@@ -133,7 +142,14 @@ PxVec3 PhysicsSystem::getPos(int i)
 }
 
 void PhysicsSystem::updateTransforms() {
+    // Update vehicle transform first (at index 0)
+    if (mVehicleSystem) {
+        mVehicleSystem->updateTransform();
+        // Update the entity list reference
+        entityList[0] = mVehicleSystem->getEntity();
+    }
 
+    // Update box transforms (starting from index 1)
     for (int i = 0; i < transformList.size(); i++) {
 
         // store positions
@@ -158,10 +174,11 @@ void PhysicsSystem::update(float deltaTime)
 
     updateTransforms();
 
+    // Box at index 51 (50 + 1 for vehicle offset)
     PxVec3 objPos = getPos(50);
     if (objPos.y < lastBoxPos.y) {
-        logger::debug("x: {0} y: {1} z: {2}", objPos.x, objPos.y, objPos.z);
-        logger::debug("Entity y: {0}", entityList[50].transform->pos.y);
+        //logger::debug("x: {0} y: {1} z: {2}", objPos.x, objPos.y, objPos.z);
+        //logger::debug("Entity y: {0}", entityList[51].transform->pos.y);
     }
     lastBoxPos = objPos;
 }
@@ -171,6 +188,10 @@ void PhysicsSystem::initBoxes()
     // Define a box
     float halfLen = 0.5f;
     PxShape* shape = mPhysics->createShape(PxBoxGeometry(halfLen, halfLen, halfLen), *mMaterial);
+
+    PxFilterData boxFilter(COLLISION_FLAG_OBSTACLE, COLLISION_FLAG_OBSTACLE_AGAINST, 0, 0);
+    shape->setSimulationFilterData(boxFilter);
+
     PxU32 size = 30;
     PxTransform tran(PxVec3(0));
 

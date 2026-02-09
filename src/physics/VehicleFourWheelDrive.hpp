@@ -1,9 +1,10 @@
 #pragma once
 
 #include "PxPhysicsAPI.h"
+#include "objects/PhysicsObject.hpp"
 #include "vehiclecommon/SnippetVehicleHelpers.h"
 
-class VehicleFourWheelDrive {
+class VehicleFourWheelDrive : public PhysicsObject {
 public:
     struct ConstructData {
         //Give the vehicle a name so it can be identified in PVD.
@@ -18,6 +19,9 @@ public:
     ~VehicleFourWheelDrive();
 
     void stepPhysics(float deltaTime);
+
+    // Override from PhysicsObject
+    physx::PxRigidActor* getRigidActor() override;
 
 private:
     void initMaterialFrictionTable(ConstructData info);

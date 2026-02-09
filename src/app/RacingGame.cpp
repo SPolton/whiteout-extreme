@@ -20,13 +20,28 @@ void RacingGame::run()
     {
         gameTime.update();
 
-        // Physics System Loop
-        while (gameTime.accumulator >= gameTime.dt) {
+        // Physics System Loop, adaptive based on performance
+        int maxPhysicsSteps = gameTime.maxPhysicsSteps();
+        int physicsSteps = 0;
+        while (gameTime.accumulator >= gameTime.dt && physicsSteps < maxPhysicsSteps) {
+            if (gameTime.frameCount < 600) {
+                break; // Skip the first frames to avoid slow startup
+            }
             physicsSystem->update(gameTime.dtF());
             gameTime.physicsUpdate();
+            physicsSteps++;
+        }
+        
+        // Discard excess time when running slow to prevent spiral of death
+        if (physicsSteps >= maxPhysicsSteps) {
+            gameTime.discardExcessTime();
         }
 
         renderer->update(gameTime.fpsF());
+        
+        // Render physics entities
+        renderer->renderEntities(physicsSystem->entityList);
+        
         renderer->updateUI();
 
         // Must be called after renderer update, but before text rendering
