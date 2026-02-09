@@ -18,18 +18,32 @@
 #include <memory>
 #include <vector>
 
-class RenderingSystem {
+#include "ecs/Coordinator.hpp"
+#include "ecs/System.hpp"
+#include "components/Renderable.h"
+
+extern Coordinator gCoordinator;
+
+class RenderingSystem : public System {
 public:
     RenderingSystem();
-    ~RenderingSystem();
+    //~RenderingSystem();
+    void cleanup();
 
     void update(float deltaTime);
     void updateUI();
     void endFrame();
     bool shouldClose() const;
 
+    Entity createSphereEntity();
+    std::unique_ptr<Texture> texture2;
+    std::unique_ptr<Texture> vehicleTexture;
+
+    Renderable getCubeRenderable();
+    void updateCameraTarget(const glm::vec3& position);
+
     // For rendering physics entities
-    void renderEntities(const std::vector<Entity>& entityList);
+    void renderEntities(const std::vector<EntityPx>& entityList);
 
 private:
     // Core components following modular architecture
@@ -51,7 +65,6 @@ private:
     
     // Textures
     std::unique_ptr<Texture> texture;
-    std::unique_ptr<Texture> vehicleTexture;
     
     // ImGui management (separated concerns)
     std::unique_ptr<ImGuiWrapper> imguiWrapper;  // Handles lifecycle
@@ -78,7 +91,6 @@ private:
     void processControllerInput();
     void processCameraInput(float deltaTime);
 
-    void updateCameraTarget(const glm::vec3& position);
     void toggleCamera();
     void render();
     void onResize(int width, int height);

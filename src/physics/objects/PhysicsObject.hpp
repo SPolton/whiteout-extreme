@@ -16,11 +16,11 @@ public:
     virtual void updateTransform();
 
     // Access to entity and transform
-    Entity& getEntity() { return mEntity; }
-    const Entity& getEntity() const { return mEntity; }
+    EntityPx& getEntity() { return mEntity; }
+    const EntityPx& getEntity() const { return mEntity; }
     PhysxTransform* getTransform() { return mTransform; }
 
 protected:
     PhysxTransform* mTransform;
-    Entity mEntity;
+    EntityPx mEntity;
 };

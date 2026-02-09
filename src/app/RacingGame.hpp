@@ -16,8 +16,12 @@ public:
 
 private:
     GameTime gameTime;
-    std::unique_ptr<RenderingSystem> renderer;
-    std::unique_ptr<PhysicsSystem> physicsSystem;
+    std::shared_ptr<RenderingSystem> renderingSystem;
+    std::shared_ptr<PhysicsSystem> physicsSystem;
 
     std::unique_ptr<Text> textSystem;
+
+    Entity playerVehicleEntity;
+    Entity Earth;
+    Entity Mars;
 };
