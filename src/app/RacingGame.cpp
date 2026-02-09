@@ -1,11 +1,58 @@
 ﻿
 
 #include "RacingGame.hpp"
+#include "ecs/Coordinator.hpp"
+#include "components/CameraComponent.h"
+#include "components/Renderable.h"
+#include "components/Transform.h"
+
+//ECS global coordinator
+Coordinator gCoordinator;
+
 
 RacingGame::RacingGame()
 {
-    // Initialize smart pointers for game systems
-    renderer = std::make_unique<RenderingSystem>();
+    ///---- START OF ECS SETUP ----///
+    // 0.Global ECS Coordinator Initialization
+    gCoordinator.Init();
+
+    // 1.Register Components
+    gCoordinator.RegisterComponent<CameraComponent>();
+    gCoordinator.RegisterComponent<Renderable>();
+    gCoordinator.RegisterComponent<PhysxTransform>();
+
+    // 2.Create Systems and Set Signatures
+    // Rendering System signature is made of Renderable + Transform components
+    renderingSystem = gCoordinator.RegisterSystem<RenderingSystem>();
+    {
+        Signature signature;
+        signature.set(gCoordinator.GetComponentType<Renderable>());
+        signature.set(gCoordinator.GetComponentType<PhysxTransform>());
+        gCoordinator.SetSystemSignature<RenderingSystem>(signature);
+    }
+
+    // 3.Create Entities and add Components to them:
+    // Create a sphere entity for Earth
+    Entity sphere1 = renderingSystem->createSphereEntity();
+    // Create a second sphere entity for Mars
+    Entity sphere2 = renderingSystem->createSphereEntity();
+    // Note:
+    // The createSphereEntity() method calls:
+    //      - gCoordinator.AddComponent(sphere,PhysxTransform{...});
+    //      - gCoordinator.AddComponent(sphere,Renderable{...});
+    // Same components signature as RenderingSystem, so will be added to that system's entity list.
+
+    // 4.You can modify Component Data for entities
+    gCoordinator.GetComponent<PhysxTransform>(sphere2).pos = glm::vec3(-1.3f, 0.7f, -0.4f); // Move Mars slightly
+    gCoordinator.GetComponent<PhysxTransform>(sphere2).scale = glm::vec3(0.3f); // Scale down Mars
+    gCoordinator.GetComponent<PhysxTransform>(sphere2).rot = glm::angleAxis(glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f)); // Rotate Mars
+    gCoordinator.GetComponent<Renderable>(sphere2).texture = renderingSystem->texture2.get(); // Mars texture
+
+    ///---- END OF ECS SETUP ----///
+
+
+
+
     physicsSystem = std::make_unique<PhysicsSystem>();
     textSystem = std::make_unique<Text>();
 
@@ -16,7 +63,7 @@ RacingGame::RacingGame()
 /// Main game loop
 void RacingGame::run()
 {
-    while (!renderer->shouldClose())
+    while (!renderingSystem->shouldClose())
     {
         gameTime.update();
 
@@ -37,12 +84,12 @@ void RacingGame::run()
             gameTime.discardExcessTime();
         }
 
-        renderer->update(gameTime.fpsF());
+        renderingSystem->update(gameTime.fpsF());
         
         // Render physics entities
-        renderer->renderEntities(physicsSystem->entityList);
+        //renderingSystem->renderEntities(physicsSystem->entityList);
         
-        renderer->updateUI();
+        renderingSystem->updateUI();
 
         // Must be called after renderer update, but before text rendering
         textSystem->beginText();
@@ -65,6 +112,8 @@ void RacingGame::run()
         textSystem->endText();
 
         // Must be called last
-        renderer->endFrame();
+        renderingSystem->endFrame();
     }
+    logger::info("Shutting down systems...");
+    renderingSystem->cleanup();
 }

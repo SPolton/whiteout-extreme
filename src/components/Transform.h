@@ -8,4 +8,5 @@ class PhysxTransform {
 public:
     glm::vec3 pos;
     glm::quat rot;
+    glm::vec3 scale{ 1.f };
 };

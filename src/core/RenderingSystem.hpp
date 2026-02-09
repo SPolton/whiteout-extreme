@@ -18,18 +18,27 @@
 #include <memory>
 #include <vector>
 
-class RenderingSystem {
+#include "ecs/Coordinator.hpp"
+#include "ecs/System.hpp"
+
+extern Coordinator gCoordinator;
+
+class RenderingSystem : public System {
 public:
     RenderingSystem();
-    ~RenderingSystem();
+    //~RenderingSystem();
+    void cleanup();
 
     void update(float deltaTime);
     void updateUI();
     void endFrame();
     bool shouldClose() const;
 
+    Entity createSphereEntity();
+    std::unique_ptr<Texture> texture2;
+
     // For rendering physics entities
-    void renderEntities(const std::vector<Entity>& entityList);
+    void renderEntities(const std::vector<EntityPx>& entityList);
 
 private:
     // Core components following modular architecture
