@@ -132,7 +132,7 @@ bool RenderingSystem::init()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create window using our Window wrapper (RAII)
-    window = std::make_unique<Window>(800, 600, "Racing Game");
+    window = std::make_unique<Window>(1200, 800, "Racing Game");
     window->makeContextCurrent();
 
     // Initialize GLAD
