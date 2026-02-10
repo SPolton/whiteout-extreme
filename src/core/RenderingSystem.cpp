@@ -8,6 +8,7 @@
 #include "ecs/Coordinator.hpp"
 #include "components/Transform.h"
 #include "components/Renderable.h"
+#include "components/ModelRenderable.h"
 #include "components/VehicleComponent.h"
 
 RenderingSystem::RenderingSystem() {
@@ -238,6 +239,18 @@ bool RenderingSystem::init()
     
     logger::info("Cube geometry initialized");
 
+    // Load the woody.obj model
+    try
+    {
+        testModel = std::make_unique<ModelLoader>("assets/obj/woody.obj", false);
+        logger::info("Model loaded successfully: woody.obj with {} meshes", testModel->getMeshCount());
+    }
+    catch (const std::exception& e)
+    {
+        logger::error("Failed to load model: {}", e.what());
+        return false;
+    }
+
     // Create object tracking transform for camera (vehicle tracking)
     targetTransform = std::make_unique<SceneTransform>();
     targetTransform->setPosition(glm::vec3(0.f, 0.f, 0.f));
@@ -292,6 +305,41 @@ Entity RenderingSystem::createSphereEntity()
     logger::info("Sphere initialized");
 
     return sphere;
+}
+
+Entity RenderingSystem::createModelEntity(const std::string& modelPath)
+{
+    // Ensure the model is loaded
+    if (!testModel) {
+        logger::error("ModelLoader not initialized, cannot create model entity");
+        // Fall back to creating a sphere entity
+        return createSphereEntity();
+    }
+
+    // Create model entity
+    Entity model = gCoordinator.CreateEntity();
+
+    gCoordinator.AddComponent(
+        model,
+        PhysxTransform{
+            glm::vec3(0.f, 0.f, 0.f),
+            glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
+            glm::vec3(1.f)
+        }
+    );
+
+    // Add ModelRenderable component instead of Renderable
+    gCoordinator.AddComponent(
+        model,
+        ModelRenderable{
+            testModel.get(),  // Store pointer to the loaded model
+            shader.get()
+        }
+    );
+
+    logger::info("Model entity created: {}", modelPath);
+
+    return model;
 }
 
 void RenderingSystem::render()

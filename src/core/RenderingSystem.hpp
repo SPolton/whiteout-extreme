@@ -2,6 +2,7 @@
 
 #include "input/Window.hpp"
 #include "core/assets/Texture.hpp"
+#include "core/assets/ModelLoader.hpp"
 #include "core/buffer/Geometry.hpp"
 #include "core/render/ShaderProgram.hpp"
 #include "core/scene/TurnTableCamera.hpp"
@@ -36,6 +37,7 @@ public:
     bool shouldClose() const;
 
     Entity createSphereEntity();
+    Entity createModelEntity(const std::string& modelPath);
     std::unique_ptr<Texture> texture2;
     std::unique_ptr<Texture> vehicleTexture;
 
@@ -65,6 +67,9 @@ private:
     // Cube geometry for physics objects
     std::unique_ptr<GPU_Geometry> cubeGeometry;
     std::unique_ptr<CPU_Geometry> cubeCPUData;
+    
+    // Model loader for complex models
+    std::unique_ptr<ModelLoader> testModel;
     
     // Textures
     std::unique_ptr<Texture> texture;
