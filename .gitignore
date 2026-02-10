@@ -502,6 +502,9 @@ FodyWeavers.xsd
 /third*party/*
 
 # Allow exceptions
+!assets/
+!assets/*/
+!assets/*/*.obj
 !libraries/glad
 !libraries/stb
 /libraries/stb/*
