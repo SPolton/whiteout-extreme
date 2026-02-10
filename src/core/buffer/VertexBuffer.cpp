@@ -4,10 +4,12 @@
 
 VertexBuffer::VertexBuffer(GLuint index, GLint size, GLenum dataType)
 	: bufferID{}
+	, attributeIndex(index)
+	, attributeSize(size)
+	, attributeType(dataType)
 {
-	bind();
-	glVertexAttribPointer(index, size, dataType, GL_FALSE, 0, (void*)0);
-	glEnableVertexAttribArray(index);
+	// Just create the buffer, don't set up vertex attributes yet
+	// Attributes should be configured when a VAO is properly bound
 }
 
 void VertexBuffer::uploadData(GLsizeiptr size, const void* data, GLenum usage) {
@@ -15,12 +17,18 @@ void VertexBuffer::uploadData(GLsizeiptr size, const void* data, GLenum usage) {
 	glBufferData(GL_ARRAY_BUFFER, size, data, usage);
 }
 
+void VertexBuffer::setupAttribute() {
+	// Setup vertex attribute pointer - must be called with VAO bound
+	bind();
+	glVertexAttribPointer(attributeIndex, attributeSize, attributeType, GL_FALSE, 0, (void*)0);
+	glEnableVertexAttribArray(attributeIndex);
+}
+
 IndexBuffer::IndexBuffer(GLuint index, GLint size, GLenum dataType)
     : bufferID{}
 {
-    bind();
-    glVertexAttribPointer(index, size, dataType, GL_FALSE, 0, (void*)0);
-    glEnableVertexAttribArray(index);
+    // Just create the buffer
+    // Index buffers don't need vertex attribute setup
 }
 
 void IndexBuffer::uploadData(GLsizeiptr size, const void* data, GLenum usage) {

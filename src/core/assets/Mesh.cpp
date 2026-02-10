@@ -59,6 +59,10 @@ void Mesh::setupMesh()
     // Upload index data using buffer abstraction
     indexBuffer.uploadData(indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
 
+    // Bind the vertex buffer before setting vertex attributes
+    // This ensures glVertexAttribPointer associates the attributes with the correct VBO
+    vertexBuffer.bind();
+
     // set the vertex attribute pointers
     // vertex Positions
     glEnableVertexAttribArray(0);
