@@ -1,12 +1,14 @@
 ﻿#include "RacingGame.hpp"
 
-#include "input/Inputmanager.hpp"
 
 #include "ecs/Coordinator.hpp"
 //#include "components/CameraComponent.h"
 #include "components/Renderable.h"
+#include "components/ModelRenderable.h"
 #include "components/Transform.h"
 #include "components/VehicleComponent.h"
+
+#include "input/Inputmanager.hpp"
 
 //ECS global coordinator
 Coordinator gCoordinator;
@@ -21,16 +23,17 @@ RacingGame::RacingGame()
     // 1.Register Components
     //gCoordinator.RegisterComponent<CameraComponent>();
     gCoordinator.RegisterComponent<Renderable>();
+    gCoordinator.RegisterComponent<ModelRenderable>();
     gCoordinator.RegisterComponent<PhysxTransform>();
     gCoordinator.RegisterComponent<RigidBody>();
     gCoordinator.RegisterComponent<VehicleComponent>();
 
     // 2.Create Systems and Set Signatures
-    // Rendering System signature is made of Renderable + Transform components
+    // Rendering System signature: Only requires Transform component
+    // Entities can have either Renderable OR ModelRenderable (checked at render time)
     renderingSystem = gCoordinator.RegisterSystem<RenderingSystem>();
     {
         Signature signature;
-        signature.set(gCoordinator.GetComponentType<Renderable>());
         signature.set(gCoordinator.GetComponentType<PhysxTransform>());
         gCoordinator.SetSystemSignature<RenderingSystem>(signature);
     }
@@ -59,10 +62,19 @@ RacingGame::RacingGame()
     vehicleControlSystem->SetInputManager(renderingSystem->getInputManager());
 
     // 3.Create Entities and add Components to them:
-    // Create a sphere entity for Earth
+    
+    // Create Earth sphere entity
     Earth = renderingSystem->createSphereEntity();
-    // Create a second sphere entity for Mars
+    logger::info("Created Earth sphere entity");
+    
+    // Create Mars sphere entity
     Mars = renderingSystem->createSphereEntity();
+    logger::info("Created Mars sphere entity");
+    
+    // Create Woody model entity (separate from Earth and Mars)
+    WoodyModel = renderingSystem->createModelEntity("assets/obj/woody.obj");
+    logger::info("Created Woody model entity");
+
     // Note:
     // The createSphereEntity() method calls:
     //      - gCoordinator.AddComponent(sphere,PhysxTransform{...});
@@ -80,10 +92,24 @@ RacingGame::RacingGame()
         });
 
     // 4.You can modify Component Data for entities
-    gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(-1.3f, 0.7f, -0.4f); // Move Mars slightly
-    gCoordinator.GetComponent<PhysxTransform>(Mars).scale = glm::vec3(0.3f); // Scale down Mars
-    gCoordinator.GetComponent<PhysxTransform>(Mars).rot = glm::angleAxis(glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f)); // Rotate Mars
+    
+    // Position Earth at the origin
+    gCoordinator.GetComponent<PhysxTransform>(Earth).pos = glm::vec3(0.0f, 0.0f, 0.0f);
+    gCoordinator.GetComponent<PhysxTransform>(Earth).scale = glm::vec3(1.0f);
+    // Earth keeps the default earth texture
+    
+    // Position Mars to the side
+    gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(3.0f, 10.0f, 0.0f);
+    gCoordinator.GetComponent<PhysxTransform>(Mars).scale = glm::vec3(0.5f); // Smaller than Earth
+    gCoordinator.GetComponent<PhysxTransform>(Mars).rot = glm::angleAxis(glm::radians(23.5f), glm::vec3(0.f, 0.f, 1.f)); // Tilt Mars
     gCoordinator.GetComponent<Renderable>(Mars).texture = renderingSystem->texture2.get(); // Mars texture
+    
+    // Position Woody model on the other side
+    if (WoodyModel != 0) { // Check if model was successfully created
+        gCoordinator.GetComponent<PhysxTransform>(WoodyModel).pos = glm::vec3(-3.0f, 0.0f, -2.0f);
+        gCoordinator.GetComponent<PhysxTransform>(WoodyModel).scale = glm::vec3(0.01f); // Scale down - OBJ models are often large
+        // Model uses its own embedded textures
+    }
 
     ///---- END OF ECS SETUP ----///
 
@@ -123,7 +149,7 @@ void RacingGame::run()
         int maxPhysicsSteps = gameTime.maxPhysicsSteps();
         int physicsSteps = 0;
         while (gameTime.accumulator >= gameTime.dt && physicsSteps < maxPhysicsSteps) {
-            if (gameTime.frameCount < 600) {
+            if (gameTime.frameCount < 600 && gameTime.physicsFrameCount > maxPhysicsSteps) {
                 break; // Skip the first frames to avoid slow startup
             }
             vehicleControlSystem->update(gameTime.dtF());

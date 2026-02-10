@@ -6,8 +6,8 @@
 
 // Component for entities that render complex 3D models (loaded from OBJ and FBX)
 // Unlike the simple Renderable component which uses pre-generated geometry,
-// this component stores a reference to a loaded Model with multiple meshes and textures
+// this component owns a loaded Model with multiple meshes and textures
 struct ModelRenderable {
-    ModelLoader* modelLoader;  // Non-owning pointer to the model loader
-    ShaderProgram* shader;     // Non-owning pointer to shader
+    std::shared_ptr<ModelLoader> modelLoader;  // Shared ownership
+    ShaderProgram* shader;                      // Non-owning pointer to shader
 };

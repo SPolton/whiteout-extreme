@@ -26,4 +26,5 @@ private:
     Entity playerVehicleEntity;
     Entity Earth;
     Entity Mars;
+    Entity WoodyModel;
 };

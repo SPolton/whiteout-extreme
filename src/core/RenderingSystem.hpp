@@ -68,9 +68,6 @@ private:
     std::unique_ptr<GPU_Geometry> cubeGeometry;
     std::unique_ptr<CPU_Geometry> cubeCPUData;
     
-    // Model loader for complex models
-    std::unique_ptr<ModelLoader> testModel;
-    
     // Textures
     std::unique_ptr<Texture> texture;
     
