@@ -73,6 +73,9 @@ void RenderingSystem::processCameraInput(float deltaTime)
     }
     else if (activeCamera == turntableCamera.get())
     {
+        // poll controller state first
+        inputManager->pollControllerInputs();
+
         // TurnTableCamera uses right-click drag
         if (inputManager->IsMouseButtonDown(GLFW_MOUSE_BUTTON_RIGHT)) {
             if (cursorPositionIsSetOnce) {
@@ -82,6 +85,24 @@ void RenderingSystem::processCameraInput(float deltaTime)
                 turntableCamera->adjustPhi(-static_cast<float>(deltaPosition.y) * deltaTime * imguiPanel->camSpeed);
             }
         }
+        else if (inputManager->IsControllerConnected())
+        {
+            float rx = inputManager->GetControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_X);
+            float ry = inputManager->GetControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_Y);
+
+            const float deadzone = 0.20f;
+            if (std::abs(rx) < deadzone) rx = 0.0f;
+            if (std::abs(ry) < deadzone) ry = 0.0f;
+
+            if (rx != 0.0f || ry != 0.0f) {
+                float const aspectRatio = static_cast<float>(window->getWidth()) / static_cast<float>(window->getHeight());
+                float sensitivity = 2.0f;
+                turntableCamera->adjustTheta(-rx * deltaTime * imguiPanel->camSpeed * sensitivity * (1.0f / aspectRatio));
+                turntableCamera->adjustPhi(-ry * deltaTime * imguiPanel->camSpeed * sensitivity);
+            }
+        }
+        // TurnTableCamera uses right-click drag
+        
     }
 
     // Always update cursor position tracking
