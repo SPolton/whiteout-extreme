@@ -29,6 +29,7 @@ public:
     void endText();
     void setProjection(float width, float height);
     void renderText(const std::string& text, TextPosition pos, glm::vec3 color);
+    void loadFont(const std::string& fontName, int size);
 
 private:
     ShaderProgram textShader;
@@ -37,5 +38,5 @@ private:
     VertexArrayHandle textVAO;
     VertexBufferHandle textVBO;
     
-    charMap initFont(const char* font);
+    charMap initFont(const char* fontName, int size);
 };
