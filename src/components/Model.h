@@ -1,6 +1,10 @@
 // Model.h
 #pragma once
+
+#include "core/assets/ModelLoader.hpp"
+#include "core/render/ShaderProgram.hpp"
 #include <glm.hpp>
+#include <memory>
 #include <vector>
 
 struct Vertex {
@@ -9,9 +13,16 @@ struct Vertex {
 };
 
 // Simple model representation for basic geometry
-// For complex 3D models loaded from files, use core/assets/Model.hpp instead
 class SimpleModel {
 public:
     std::vector<Vertex> verts;
     glm::mat4 modelMatrix;
+};
+
+// Component for entities that render complex 3D models (loaded from OBJ and FBX)
+// Unlike the simple Renderable component which uses pre-generated geometry,
+// this component owns a loaded Model with multiple meshes and textures
+struct ModelRenderable {
+    std::shared_ptr<ModelLoader> modelLoader;  // Shared ownership
+    ShaderProgram* shader;                      // Non-owning pointer to shader
 };

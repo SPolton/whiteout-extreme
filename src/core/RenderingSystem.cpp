@@ -7,8 +7,6 @@
 
 #include "ecs/Coordinator.hpp"
 #include "components/Transform.h"
-#include "components/Renderable.h"
-#include "components/ModelRenderable.h"
 #include "components/VehicleComponent.h"
 
 RenderingSystem::RenderingSystem() {
