@@ -8,6 +8,7 @@
 #include "ecs/Coordinator.hpp"
 #include "components/Transform.h"
 #include "components/Renderable.h"
+#include "components/VehicleComponent.h"
 
 RenderingSystem::RenderingSystem() {
     if (!init()) {
@@ -311,6 +312,15 @@ void RenderingSystem::render()
         auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
         auto& renderable = gCoordinator.GetComponent<Renderable>(entity);
 
+        glm::vec3 visualPos = transform.pos;
+
+        // If entity has VehicleComponent, apply offset for red brick model rendering
+        if (gCoordinator.HasComponent<VehicleComponent>(entity)) {
+            glm::vec3 localOffset(0.0f, 0.75f, 2.0f);
+            glm::vec3 rotatedOffset = transform.rot * localOffset;
+            visualPos += rotatedOffset;
+        }
+
         renderable.shader->use();
 
         glActiveTexture(GL_TEXTURE0);
@@ -321,7 +331,7 @@ void RenderingSystem::render()
         );
 
         glm::mat4 model =
-            glm::translate(glm::mat4(1.f), transform.pos)
+            glm::translate(glm::mat4(1.f), visualPos)
             * glm::toMat4(transform.rot)
             * glm::scale(glm::mat4(1.f), transform.scale);
 

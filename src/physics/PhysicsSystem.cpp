@@ -48,9 +48,9 @@ Entity PhysicsSystem::createVehicleEntity() {
         // 2. Add necessary components to the vehicle entity
         // Transform
         gCoordinator.AddComponent(vehicleEntity, PhysxTransform{
-            glm::vec3(0.f, 0.f, 0.f),                // Spawn slightly above ground
+            glm::vec3(0.f, 0.f, 0.f),                // Position
             glm::quat(1.f, 0.f, 0.f, 0.f),           // Identity rotation
-            glm::vec3(1.8f, 2.9f, 7.f)                           // Scale
+            glm::vec3(1.65f, 1.4f, 3.75f)               // Scale
             });
     
         // RigidBody (using the chassis actor from the vehicle)
