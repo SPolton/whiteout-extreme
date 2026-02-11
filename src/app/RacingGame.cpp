@@ -92,7 +92,7 @@ RacingGame::RacingGame()
     textSystem->setProjection(1440.0f, 1440.0f);
 
     // get inputs
-    // inputManager = renderingSystem->getInputManager();
+    inputManager = renderingSystem->getInputManager();
 }
 
 

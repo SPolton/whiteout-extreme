@@ -38,5 +38,5 @@ private:
     void renderMainMenu();
 
     // inputs for menus
-    InputManager* inputManager;
+    std::shared_ptr<InputManager> inputManager;
 };
