@@ -2,6 +2,7 @@
 
 #include "Model.hpp"
 #include "core/render/ShaderProgram.hpp"
+#include "utils/logger.h"
 
 #include <memory>
 #include <string>
@@ -13,6 +14,7 @@ public:
         : model(std::make_unique<Model>(path, gammaCorrection))
     {
         if (model->meshes.empty()) {
+            logger::error("Failed to load model from: {}", path);
             throw std::runtime_error("Failed to load model from: " + path);
         }
     }

@@ -1,4 +1,5 @@
 #include "Model.hpp"
+#include "utils/logger.h"
 
 Model::Model(std::string const& path, bool gamma)
     : gammaCorrection(gamma)
@@ -20,7 +21,7 @@ void Model::loadModel(std::string const& path)
     // check for errors
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
-        std::cout << "ERROR::ASSIMP:: " << importer.GetErrorString() << std::endl;
+        logger::error("ASSIMP error: {}", importer.GetErrorString());
         return;
     }
     // retrieve the directory path of the filepath
@@ -161,7 +162,7 @@ std::vector<MeshTextureInfo> Model::loadMaterialTextures(aiMaterial* mat, aiText
                 textures_loaded.push_back(loadedTexture);
             }
             catch (const std::exception& e) {
-                std::cout << "Failed to load texture: " << texturePath << " - " << e.what() << std::endl;
+                logger::error("Failed to load texture: {} - {}", texturePath, e.what());
                 continue; // Skip this texture
             }
         }
