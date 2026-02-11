@@ -76,6 +76,9 @@ RacingGame::RacingGame()
     textSystem = std::make_unique<Text>();
 
     textSystem->setProjection(1440.0f, 1440.0f);
+
+    // get inputs
+    inputManager = renderingSystem->getInputManager();
 }
 
 
@@ -84,18 +87,16 @@ void RacingGame::run()
 {
     bool addedRigidBodyToMars = false;
 
-    // get inputs
-    InputManager* inputManager = renderingSystem->getInputManager();
-
     while (!renderingSystem->shouldClose())
     {
-        // check for inputs first
-        // triggers pause menu
-        if (inputManager->isKeyPressedOnce(GLFW_KEY_P)) {
+        // check for keyboard inputs first
+        // triggers pause menu (only allow keyboard input if game not yet paused, must use mouse to resume)
+        // also do no allow keyboard input to main menu from paused menu...need a state.cpp or something soon
+        if (inputManager->isKeyPressedOnce(GLFW_KEY_P) && !paused && !mainMenu) {
             togglePause();
         }
-        // triggers main menu
-        if (inputManager->isKeyPressedOnce(GLFW_KEY_M)) {
+        // triggers main menu (do not allow keyboard input to navigate to main menu from pause menu)
+        else if (inputManager->isKeyPressedOnce(GLFW_KEY_M) && !paused) {
             toggleMainMenu();
         }
 
@@ -201,6 +202,10 @@ void RacingGame::renderPauseMenu() {
     glClearColor(0.6f, 0.8f, 1.0f, 0.8f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    // when in a menu, check for cursor position to highlight "buttons"
+    // get cursor position
+    glm::dvec2 cursorPos = inputManager->CursorPosition();
+
     textSystem->beginText();
 
     textSystem->loadFont("LuckiestGuy-Regular.ttf", 120);
@@ -209,8 +214,46 @@ void RacingGame::renderPauseMenu() {
 
     textSystem->loadFont("SNPro-SemiBold.ttf", 85);
 
-    textSystem->renderText("Resume", { 590.f, 900.f, 0.75f }, { 0.f, 0.f, 0.6f });
-    textSystem->renderText("Quit (Exit to Main Menu)", { 370.f, 750.f, 0.75f }, { 0.f, 0.f, 0.6f });
+    // default color for the buttons
+    glm::vec3 defaultColor = { 0.f, 0.f, 0.6f };
+
+    // set the buttons to the default color (used when not hovered upon)
+    glm::vec3 resumeColor = defaultColor;
+    glm::vec3 quitColor = defaultColor;
+
+    // check if mouse is hovered over the "Resume" button
+    if (cursorPos.x > 325.f && cursorPos.x < 460.f) {
+        if (cursorPos.y > 200.f && cursorPos.y < 230.f) {
+            // if it is, highlight in red
+            resumeColor = { 0.8f, 0.f, 0.f };
+
+            // and check if the user clicks on the mouse while over the "Resume" button
+            if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
+                // if they do, toggle pause
+                togglePause();
+            }
+        }
+    }
+
+    // check if mouse is hovered over the "Quit" button
+    if (cursorPos.x > 205.f && cursorPos.x < 595.f) {
+        if (cursorPos.y > 260.f && cursorPos.y < 290.f) {
+            // if it is, highlight in red
+            quitColor = { 0.8f, 0.f, 0.f };
+
+            // and check if the user clicks on the mouse while over the "Quit" button
+            if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
+                // if they do, toggle to leave the pause menu
+                togglePause();
+                // and toggle to show the main menu
+                toggleMainMenu();
+            }
+        }
+    }
+
+    // render the text with the proper color assigned
+    textSystem->renderText("Resume", { 590.f, 900.f, 0.75f }, resumeColor);
+    textSystem->renderText("Quit (Exit to Main Menu)", { 370.f, 750.f, 0.75f }, quitColor);
 
     textSystem->endText();
 
@@ -239,13 +282,38 @@ void RacingGame::renderMainMenu() {
     glClearColor(0.6f, 0.8f, 1.0f, 0.8f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    // when in a menu, check for cursor position to highlight "buttons"
+    // get cursor position
+    glm::dvec2 cursorPos = inputManager->CursorPosition();
+
     textSystem->beginText();
 
     textSystem->loadFont("LuckiestGuy-Regular.ttf", 120);
 
     textSystem->renderText("Whiteout Extreme", { 300.f, 1100.f, 0.75f }, { 0.f, 0.f, 0.55f });
 
-    textSystem->renderText("Start", { 585.f, 400.f, 0.75f }, { 0.f, 0.f, 0.6f });
+    // default color for the "Start" button
+    glm::vec3 defaultColor = { 0.f, 0.f, 0.6f };
+
+    // set the "Start" button to the default color (used when not hovered upon)
+    glm::vec3 startColor = defaultColor;
+
+    // check if mouse is hovered over the "Start" button
+    if (cursorPos.x > 320.f && cursorPos.x < 460.f) {
+        if (cursorPos.y > 400.f && cursorPos.y < 435.f) {
+            // if it is, highlight in red
+            startColor = { 0.8f, 0.f, 0.f };
+
+            // and check if the user clicks on the mouse while over the "Start" button
+            if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
+                // if they do, toggle to NOT show the main menu
+                toggleMainMenu();
+            }
+        }
+    }
+
+    // render the text with the proper color assigned
+    textSystem->renderText("Start", { 585.f, 400.f, 0.75f }, startColor);
 
     textSystem->endText();
 

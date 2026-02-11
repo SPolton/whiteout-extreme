@@ -34,4 +34,7 @@ private:
     bool mainMenu = true; // start on main menu first
     void toggleMainMenu();
     void renderMainMenu();
+
+    // inputs for menus
+    InputManager* inputManager;
 };

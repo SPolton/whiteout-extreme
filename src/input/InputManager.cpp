@@ -42,7 +42,7 @@ void InputManager::windowSizeCallback(int const width, int const height)
 
 void InputManager::mouseButtonCallback(int const button, int const action, int /*mods*/)
 {
-    logger::info("MouseButtonCallback: button={}, action={}", button, action);
+    // logger::info("MouseButtonCallback: button={}, action={}", button, action);
     mMouseStatusMap[button] = action;
     if (action == GLFW_RELEASE)
     {
@@ -52,7 +52,7 @@ void InputManager::mouseButtonCallback(int const button, int const action, int /
 
 void InputManager::cursorPosCallback(double const xpos, double const ypos)
 {
-    logger::debug("CursorPosCallback: xpos={}, ypos={}", xpos, ypos);
+    // logger::debug("CursorPosCallback: xpos={}, ypos={}", xpos, ypos);
     mCursorPosition.x = xpos;
     mCursorPosition.y = ypos;
 }
