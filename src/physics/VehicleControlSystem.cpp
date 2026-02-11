@@ -31,7 +31,7 @@ void VehicleControlSystem::update(float deltaTime) {
                 );
             }
         }
-        vehicle.instance->stepPhysics(deltaTime);
+        //vehicle.instance->stepPhysics(deltaTime);
     }
 }
 

@@ -176,6 +176,16 @@ PxVec3 PhysicsSystem::getPos(int i)
 }
 
 void PhysicsSystem::update(float deltaTime) {
+    // PRE-SIMULATION PHASE: Update any vehicle physics and prepare the scene
+    for (auto const& entity : mEntities) {
+        if (gCoordinator.HasComponent<VehicleComponent>(entity)) {
+            auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(entity);
+            if (vehicle.instance) {
+                vehicle.instance->stepPhysics(deltaTime);
+            }
+        }
+    }
+
     // SIMULATION PHASE: Step the PhysX Scene
     mScene->simulate(deltaTime);
     mScene->fetchResults(true);
