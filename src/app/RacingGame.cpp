@@ -74,6 +74,10 @@ RacingGame::RacingGame()
     // Create Woody model entity (separate from Earth and Mars)
     WoodyModel = renderingSystem->createModelEntity("assets/obj/woody.obj");
     logger::info("Created Woody model entity");
+    
+    // Create Backpack model entity to test shading maps
+    BackpackModel = renderingSystem->createModelEntity("assets/obj/backpack/backpack.obj");
+    logger::info("Created Backpack model entity");
 
     // Note:
     // The createSphereEntity() method calls:
@@ -107,8 +111,14 @@ RacingGame::RacingGame()
     // Position Woody model on the other side
     if (WoodyModel != 0) { // Check if model was successfully created
         gCoordinator.GetComponent<PhysxTransform>(WoodyModel).pos = glm::vec3(-3.0f, 0.0f, -2.0f);
-        gCoordinator.GetComponent<PhysxTransform>(WoodyModel).scale = glm::vec3(0.01f); // Scale down - OBJ models are often large
+        gCoordinator.GetComponent<PhysxTransform>(WoodyModel).scale = glm::vec3(0.01f); // Scale down (This OBJ model is large)
         // Model uses its own embedded textures
+    }
+    
+    // Position Backpack model to test shading maps
+    if (BackpackModel != 0) { // Check if model was successfully created
+        gCoordinator.GetComponent<PhysxTransform>(BackpackModel).pos = glm::vec3(3.0f, 0.0f, -2.0f);
+        // Model will use its material/texture maps from the .mtl file
     }
 
     ///---- END OF ECS SETUP ----///

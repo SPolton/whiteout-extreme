@@ -27,4 +27,5 @@ private:
     Entity Earth;
     Entity Mars;
     Entity WoodyModel;
+    Entity BackpackModel;
 };
