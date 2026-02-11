@@ -24,4 +24,14 @@ private:
     Entity playerVehicleEntity;
     Entity Earth;
     Entity Mars;
+
+    // Pause Menu
+    bool paused = false;
+    void togglePause();
+    void renderPauseMenu();
+
+    // Main Menu
+    bool mainMenu = true; // start on main menu first
+    void toggleMainMenu();
+    void renderMainMenu();
 };

@@ -145,7 +145,7 @@ void RenderingSystem::processControllerInput() {
 
     // triggers menu/pause
     if (inputManager->isKeyPressedOnce(GLFW_GAMEPAD_BUTTON_START)) {
-        gamePaused();
+        //gamePaused();
     }
 }
     
@@ -189,7 +189,7 @@ void RenderingSystem::processKeyboardInput() {
 
     // triggers menu/pause
     if (inputManager->isKeyPressedOnce(GLFW_KEY_P)) {
-        gamePaused();
+        //gamePaused();
     }
 }
 
@@ -237,19 +237,37 @@ void RenderingSystem::throwSnowball()
     // Will need a CD for this...and how many snowballs can we stack again?
 }
 
+// Pause menu
 //==================================================================================================================//
 
-void RenderingSystem::gamePaused() {
-    // update game status
-    isGamePaused = !isGamePaused;
-
-    if (isGamePaused) {
-        logger::info("Game is paused...");
-    }
-    else {
-        logger::info("Game resumed...");
-    }
-}
+//void RenderingSystem::togglePause() {
+//    // update game status
+//    paused = !paused;
+//
+//    if (paused) {
+//        logger::info("Game is paused...");
+//        renderPauseMenu();
+//    }
+//    else {
+//        logger::info("Game resumed...");
+//    }
+//}
+//
+//void RenderingSystem::renderPauseMenu() {
+//    // Clear buffers
+//    glClearColor(0.6f, 0.8f, 1.0f, 0.8f);
+//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//
+//    textSystem->beginText();
+//
+//    textSystem->renderText("PAUSE MENU", { 600.f, 1100.f, 0.75f }, { 0.f, 0.f, 0.55f });
+//
+//    textSystem->endText();
+//
+//    // swap buffer
+//    endFrame();
+//}
+//==================================================================================================================//
 
 bool RenderingSystem::init()
 {
@@ -587,7 +605,7 @@ void RenderingSystem::updateUI()
     imguiWrapper->renderFPS();
     imguiPanel->cameraStats = activeCamera->getStats();
     imguiPanel->update();
-    
+
     // Finish ImGui frame
     imguiWrapper->endFrame();
 }

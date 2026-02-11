@@ -45,6 +45,9 @@ public:
     // For rendering physics entities
     void renderEntities(const std::vector<EntityPx>& entityList);
 
+    // forward input manager pointer to RacingGame
+    InputManager* getInputManager() const { return inputManager.get(); }
+
 private:
     // Core components following modular architecture
     std::unique_ptr<Window> window;
@@ -96,8 +99,4 @@ private:
     void onResize(int width, int height);
     void onMouseWheelChange(double xOffset, double yOffset);
     glm::mat4 getProjectionMatrix() const;
-
-    // Pause/Menu
-    bool isGamePaused = false;
-    void gamePaused();
 };
