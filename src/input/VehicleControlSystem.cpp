@@ -40,13 +40,11 @@ void VehicleControlSystem::processInputs() {
     // poll controller state first
     inputManager->pollControllerInputs();
 
-    // based on whether controller is connected, choose the correct input system
-    if (inputManager->IsControllerConnected()) {
+    // based on whether controller is connected
+    if (inputManager->IsControllerConnected())
         processControllerInput();
-    }
-    else {
-        processKeyboardInput();
-    }
+
+    processKeyboardInput();
 }
 
 
