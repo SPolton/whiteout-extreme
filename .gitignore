@@ -503,8 +503,8 @@ FodyWeavers.xsd
 
 # Allow exceptions
 !assets/
-!assets/*/
-!assets/*/*.obj
+!assets/obj/
+!assets/obj/**
 !libraries/glad
 !libraries/stb
 /libraries/stb/*
