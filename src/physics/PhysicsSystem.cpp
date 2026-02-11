@@ -48,9 +48,9 @@ Entity PhysicsSystem::createVehicleEntity() {
         // 2. Add necessary components to the vehicle entity
         // Transform
         gCoordinator.AddComponent(vehicleEntity, PhysxTransform{
-            glm::vec3(0.f, 2.f, 0.f),                // Spawn slightly above ground
+            glm::vec3(0.f, 0.f, 0.f),                // Position
             glm::quat(1.f, 0.f, 0.f, 0.f),           // Identity rotation
-            glm::vec3(1.8f, 2.9f, 7.f)                           // Scale
+            glm::vec3(1.65f, 1.4f, 3.75f)               // Scale
             });
     
         // RigidBody (using the chassis actor from the vehicle)
@@ -176,23 +176,21 @@ PxVec3 PhysicsSystem::getPos(int i)
 }
 
 void PhysicsSystem::update(float deltaTime) {
-    // 1. PRE-SIMULATION PHASE: Handle specialized logic (like Vehicles)
+    // PRE-SIMULATION PHASE: Update any vehicle physics and prepare the scene
     for (auto const& entity : mEntities) {
-        // If the entity is a vehicle, we need to process its specialized driving logic
         if (gCoordinator.HasComponent<VehicleComponent>(entity)) {
             auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(entity);
-
-            // Apply the control inputs 
-            // For now, it uses the values stored in the component
-            vehicle.instance->stepPhysics(deltaTime);
+            if (vehicle.instance) {
+                vehicle.instance->stepPhysics(deltaTime);
+            }
         }
     }
 
-    // 2. SIMULATION PHASE: Step the PhysX Scene
+    // SIMULATION PHASE: Step the PhysX Scene
     mScene->simulate(deltaTime);
     mScene->fetchResults(true);
 
-    // 3. POST-SIMULATION PHASE: Synchronize PhysX back to ECS
+    // POST-SIMULATION PHASE: Synchronize PhysX back to ECS
     for (auto const& entity : mEntities) {
         auto& rb = gCoordinator.GetComponent<RigidBody>(entity);
         auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
@@ -206,7 +204,7 @@ void PhysicsSystem::update(float deltaTime) {
 
             // Sync Position
             transform.pos = glm::vec3(pxPose.p.x, pxPose.p.y, pxPose.p.z);
-
+            
             // Sync Rotation (PhysX Quat to GLM Quat)
             transform.rot = glm::quat(pxPose.q.w, pxPose.q.x, pxPose.q.y, pxPose.q.z);
         }

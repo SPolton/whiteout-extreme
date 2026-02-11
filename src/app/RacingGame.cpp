@@ -1,6 +1,7 @@
-﻿
+﻿#include "RacingGame.hpp"
 
-#include "RacingGame.hpp"
+#include "input/Inputmanager.hpp"
+
 #include "ecs/Coordinator.hpp"
 //#include "components/CameraComponent.h"
 #include "components/Renderable.h"
@@ -33,17 +34,29 @@ RacingGame::RacingGame()
         signature.set(gCoordinator.GetComponentType<PhysxTransform>());
         gCoordinator.SetSystemSignature<RenderingSystem>(signature);
     }
+
+    // PHYSICS SYSTEM
     physicsSystem = gCoordinator.RegisterSystem<PhysicsSystem>();
     {
         Signature signature;
         signature.set(gCoordinator.GetComponentType<PhysxTransform>());
         signature.set(gCoordinator.GetComponentType<RigidBody>());
-
         gCoordinator.SetSystemSignature<PhysicsSystem>(signature);
     }
 
     physicsSystem->init();
     physicsSystem->spawnBoxPyramid(10, 0.5f, renderingSystem->getCubeRenderable());
+
+    // VEHICLE CONTROL SYSTEM
+    vehicleControlSystem = gCoordinator.RegisterSystem<VehicleControlSystem>();
+    {
+        Signature signature;
+        signature.set(gCoordinator.GetComponentType<VehicleComponent>());
+        gCoordinator.SetSystemSignature<VehicleControlSystem>(signature);
+    }
+    // We need to set the input manager for the vehicle control system so it can read player inputs
+    // Borrowed from the rendering system since it creates and owns the input manager
+    vehicleControlSystem->SetInputManager(renderingSystem->getInputManager());
 
     // 3.Create Entities and add Components to them:
     // Create a sphere entity for Earth
@@ -58,6 +71,7 @@ RacingGame::RacingGame()
 
     // Create the player vehicle entity with physics components
     playerVehicleEntity = physicsSystem->createVehicleEntity();
+    gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).playerID = 0;
     gCoordinator.AddComponent(playerVehicleEntity, Renderable{
         renderingSystem->getCubeRenderable().geometry,
         renderingSystem->getCubeRenderable().cpuData,
@@ -78,7 +92,7 @@ RacingGame::RacingGame()
     textSystem->setProjection(1440.0f, 1440.0f);
 
     // get inputs
-    inputManager = renderingSystem->getInputManager();
+    // inputManager = renderingSystem->getInputManager();
 }
 
 
@@ -109,30 +123,34 @@ void RacingGame::run()
                 gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(0.f, 20.f, 0.f);
                 gCoordinator.GetComponent<PhysxTransform>(Mars).scale = glm::vec3(1.f);
 
-                gCoordinator.AddComponent(
-                    Mars,
-                    physicsSystem->createRigidBodyFromSphere(Mars)
-                ); // This will add the Mars entity to the PhysicsSystem's entity list and it will start falling due to gravity
-                addedRigidBodyToMars = true;
-                logger::info("Added RigidBody component to Entity Mars at t = {} seconds", gameTime.tF());
-            }
+            gCoordinator.AddComponent(
+                Mars,
+                physicsSystem->createRigidBodyFromSphere(Mars)
+            ); // This will add the Mars entity to the PhysicsSystem's entity list and it will start falling due to gravity
+            addedRigidBodyToMars = true;
+            logger::info("Added RigidBody component to Entity Mars at t = {} seconds", gameTime.tF());
+        }
 
-            // Physics System Loop, adaptive based on performance
-            int maxPhysicsSteps = gameTime.maxPhysicsSteps();
-            int physicsSteps = 0;
-            while (gameTime.accumulator >= gameTime.dt && physicsSteps < maxPhysicsSteps) {
-                if (gameTime.frameCount < 600) {
-                    break; // Skip the first frames to avoid slow startup
-                }
-                physicsSystem->update(gameTime.dtF());
-                gameTime.physicsUpdate();
-                physicsSteps++;
-            }
+        // Vehicle control system Loop - process player inputs and update vehicle state before physics simulation
+        //vehicleControlSystem->update(gameTime.dtF());
 
-            // Discard excess time when running slow to prevent spiral of death
-            if (physicsSteps >= maxPhysicsSteps) {
-                gameTime.discardExcessTime();
+        // Physics System Loop, adaptive based on performance
+        int maxPhysicsSteps = gameTime.maxPhysicsSteps();
+        int physicsSteps = 0;
+        while (gameTime.accumulator >= gameTime.dt && physicsSteps < maxPhysicsSteps) {
+            if (gameTime.frameCount < 600) {
+                break; // Skip the first frames to avoid slow startup
             }
+            vehicleControlSystem->update(gameTime.dtF());
+            physicsSystem->update(gameTime.dtF());
+            gameTime.physicsUpdate();
+            physicsSteps++;
+        }
+        
+        // Discard excess time when running slow to prevent spiral of death
+        if (physicsSteps >= maxPhysicsSteps) {
+            gameTime.discardExcessTime();
+        }
 
             renderingSystem->update(gameTime.fpsF());
 

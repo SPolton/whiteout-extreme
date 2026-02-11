@@ -45,8 +45,8 @@ public:
     // For rendering physics entities
     void renderEntities(const std::vector<EntityPx>& entityList);
 
-    // forward input manager pointer to RacingGame
-    InputManager* getInputManager() const { return inputManager.get(); }
+    //inputManager getter
+    std::shared_ptr<InputManager> getInputManager() const { return inputManager; }
 
 private:
     // Core components following modular architecture
@@ -78,20 +78,8 @@ private:
     glm::dvec2 previousCursorPosition{};
     bool cursorPositionIsSetOnce = false;
 
-    // Basic Movement
-    void accelerate();
-    void brake();
-    void steerRight();
-    void steerLeft();
-
-    // Skills
-    void boost();
-    void throwSnowball();
-    
     bool init();
     void processInput(float deltaTime);
-    void processKeyboardInput();
-    void processControllerInput();
     void processCameraInput(float deltaTime);
 
     void toggleCamera();

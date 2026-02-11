@@ -137,7 +137,7 @@ void InputManager::pollControllerInputs() {
         // reteives name of the gamepad mapping
         const char* name = glfwGetGamepadName(GLFW_JOYSTICK_1);
 
-        printf("Controller %s connected.\n", name);
+        logger::debug("Controller {} connected.", name);
 
         // retreive gamepad state
         GLFWgamepadstate state;

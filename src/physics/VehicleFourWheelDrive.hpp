@@ -23,6 +23,12 @@ public:
     // Override from PhysicsObject
     physx::PxRigidActor* getRigidActor() override;
 
+    void setInputs(float throttle, float brake, float steer) {
+        mCurrentThrottle = throttle;
+        mCurrentBrake = brake;
+        mCurrentSteer = steer;
+    }
+
 private:
     void initMaterialFrictionTable(ConstructData info);
 
@@ -41,4 +47,8 @@ private:
     physx::vehicle2::PxVehiclePhysXMaterialFriction mPhysXMaterialFrictions[16];
     physx::PxU32 mNbPhysXMaterialFrictions = 0;
     physx::PxReal mPhysXDefaultMaterialFriction = 1.0f;
+
+    float mCurrentThrottle = 0.f;
+    float mCurrentBrake = 0.f;
+    float mCurrentSteer = 0.f;
 };
