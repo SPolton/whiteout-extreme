@@ -28,15 +28,22 @@ private:
     Entity Mars;
 
     // Pause Menu
-    bool paused = false;
     void togglePause();
     void renderPauseMenu();
 
     // Main Menu
-    bool mainMenu = true; // start on main menu first
     void toggleMainMenu();
     void renderMainMenu();
 
     // inputs for menus
     std::shared_ptr<InputManager> inputManager;
+
+    // game state (default start on main menu)
+    int gameState = 0;
+    /*
+    * 0 = main menu
+    * 1 = in game
+    * 2 = paused
+    * 3 = game over (not used yet)
+    */
 };

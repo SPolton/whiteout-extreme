@@ -104,17 +104,17 @@ void RacingGame::run()
     while (!renderingSystem->shouldClose())
     {
         // check for keyboard inputs first
-        // triggers pause menu (only allow keyboard input if game not yet paused, must use mouse to resume)
-        // also do no allow keyboard input to main menu from paused menu...need a state.cpp or something soon
-        if (inputManager->isKeyPressedOnce(GLFW_KEY_P) && !paused && !mainMenu) {
+        // triggers pause menu (only allow keyboard input if game is paused or we are in game)
+        if (inputManager->isKeyPressedOnce(GLFW_KEY_P) && (gameState == 2 || gameState == 1)) {
             togglePause();
         }
-        // triggers main menu (do not allow keyboard input to navigate to main menu from pause menu)
-        else if (inputManager->isKeyPressedOnce(GLFW_KEY_M) && !paused) {
+        // triggers main menu (do not allow keyboard input to navigate to main menu while in game)
+        else if (inputManager->isKeyPressedOnce(GLFW_KEY_M) && gameState != 1) {
             toggleMainMenu();
         }
 
-        if (!paused && !mainMenu) {
+        // if in game
+        if (gameState == 1) {
             gameTime.update();
 
             // 5. You can also add/remove components at runtime to change entity behavior
@@ -187,10 +187,10 @@ void RacingGame::run()
             // Must be called last
             renderingSystem->endFrame();
         }
-        else if (paused) {
+        else if (gameState == 2) {
             renderPauseMenu();
         }
-        else {
+        else if (gameState == 0) {
             renderMainMenu();
         }
     }
@@ -204,9 +204,14 @@ void RacingGame::run()
 
 void RacingGame::togglePause() {
     // update game status
-    paused = !paused;
+    if (gameState == 1) {
+        gameState = 2; // pause game
+    }
+    else if (gameState == 2) {
+        gameState = 1; // resume game
+    }
 
-    if (paused) {
+    if (gameState == 2) {
         logger::info("Game is paused...");
         renderPauseMenu();
     }
@@ -239,6 +244,14 @@ void RacingGame::renderPauseMenu() {
     glm::vec3 resumeColor = defaultColor;
     glm::vec3 quitColor = defaultColor;
 
+    // check keyboard input
+    if (inputManager->isKeyPressedOnce(GLFW_KEY_P)) {
+        gameState = 1; // resume game
+    }
+    else if (inputManager->isKeyPressedOnce(GLFW_KEY_M)) {
+        gameState = 0; // return to main menu
+    }
+
     // check if mouse is hovered over the "Resume" button
     if (cursorPos.x > 325.f && cursorPos.x < 460.f) {
         if (cursorPos.y > 200.f && cursorPos.y < 230.f) {
@@ -261,8 +274,6 @@ void RacingGame::renderPauseMenu() {
 
             // and check if the user clicks on the mouse while over the "Quit" button
             if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
-                // if they do, toggle to leave the pause menu
-                togglePause();
                 // and toggle to show the main menu
                 toggleMainMenu();
             }
@@ -284,9 +295,14 @@ void RacingGame::renderPauseMenu() {
 
 void RacingGame::toggleMainMenu() {
     // update game status
-    mainMenu = !mainMenu;
+    if (gameState == 0) {
+        gameState = 1; // start game
+    }
+    else if (gameState == 2) {
+        gameState = 0; // go to main menu form pause menu
+    }
 
-    if (mainMenu) {
+    if (gameState == 0) {
         logger::info("On home page...");
         renderMainMenu();
     }
