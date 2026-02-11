@@ -117,7 +117,7 @@ RacingGame::RacingGame()
     
     // Position Backpack model to test shading maps
     if (BackpackModel != 0) { // Check if model was successfully created
-        gCoordinator.GetComponent<PhysxTransform>(BackpackModel).pos = glm::vec3(3.0f, 0.0f, -2.0f);
+        gCoordinator.GetComponent<PhysxTransform>(BackpackModel).pos = glm::vec3(3.0f, 0.0f, -10.0f);
         // Model will use its material/texture maps from the .mtl file
     }
 
@@ -159,7 +159,7 @@ void RacingGame::run()
         int maxPhysicsSteps = gameTime.maxPhysicsSteps();
         int physicsSteps = 0;
         while (gameTime.accumulator >= gameTime.dt && physicsSteps < maxPhysicsSteps) {
-            if (gameTime.frameCount < 600 && gameTime.physicsFrameCount > maxPhysicsSteps) {
+            if (gameTime.frameCount < 300 && gameTime.physicsFrameCount > maxPhysicsSteps) {
                 break; // Skip the first frames to avoid slow startup
             }
             vehicleControlSystem->update(gameTime.dtF());

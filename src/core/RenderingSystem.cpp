@@ -179,6 +179,21 @@ bool RenderingSystem::init()
         return false;
     }
 
+    // Create model shader for loaded 3D models (different vertex layout)
+    try
+    {
+        modelShader = std::make_unique<ShaderProgram>(
+            "assets/shaders/model.vert",
+            "assets/shaders/model.frag"
+        );
+        logger::info("Model shaders loaded successfully");
+    }
+    catch (const std::exception& e)
+    {
+        logger::error("Failed to load model shaders: {0}", e.what());
+        return false;
+    }
+
     // Load texture
     try
     {
@@ -312,10 +327,10 @@ Entity RenderingSystem::createModelEntity(const std::string& modelPath)
         auto modelLoader = std::make_shared<ModelLoader>(modelPath, false);
         logger::info("Model loaded successfully: {} with {} meshes", modelPath, modelLoader->getMeshCount());
         
-        // Add ModelRenderable component with the new model loader
+        // Add ModelRenderable component with the model loader and model-specific shader
         gCoordinator.AddComponent(
             model,
-            ModelRenderable{modelLoader, shader.get()}
+            ModelRenderable{modelLoader, modelShader.get()}
         );
     }
     catch (const std::exception& e) {
@@ -438,6 +453,15 @@ void RenderingSystem::render()
                     glGetUniformLocation(*modelRenderable.shader, "model"),
                     1, GL_FALSE, &modelMatrix[0][0]
                 );
+
+                // Set lighting uniforms for the model shader
+                glm::vec3 lightPos(0.0f, 20.0f, 0.0f);
+                glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
+                glm::vec3 viewPos = activeCamera->getPosition();
+                
+                glUniform3fv(glGetUniformLocation(*modelRenderable.shader, "lightPos"), 1, &lightPos[0]);
+                glUniform3fv(glGetUniformLocation(*modelRenderable.shader, "lightColor"), 1, &lightColor[0]);
+                glUniform3fv(glGetUniformLocation(*modelRenderable.shader, "viewPos"), 1, &viewPos[0]);
 
                 // Draw the model (handles multiple meshes internally)
                 modelRenderable.modelLoader->draw(*modelRenderable.shader);

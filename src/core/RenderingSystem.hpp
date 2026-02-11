@@ -56,6 +56,7 @@ private:
     // Core components following modular architecture
     std::unique_ptr<Window> window;
     std::unique_ptr<ShaderProgram> shader;
+    std::unique_ptr<ShaderProgram> modelShader;
     std::unique_ptr<TurnTableCamera> turntableCamera;
     std::unique_ptr<FreeCamera> freeCamera;
     BaseCamera* activeCamera;  // Pointer to the currently active camera
