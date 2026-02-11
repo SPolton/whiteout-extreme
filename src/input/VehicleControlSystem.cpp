@@ -1,7 +1,8 @@
 #include "VehicleControlSystem.hpp"
 #include "ecs/Coordinator.hpp"
-#include <GLFW/glfw3.h>
 #include "utils/logger.h"
+
+#include <GLFW/glfw3.h>
 
 extern Coordinator gCoordinator;
 

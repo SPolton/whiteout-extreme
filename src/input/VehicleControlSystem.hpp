@@ -1,8 +1,8 @@
 #pragma once
 
+#include "components/VehicleComponent.h"
 #include "ecs/System.hpp"
 #include "input/InputManager.hpp"
-#include "components/VehicleComponent.h"
 #include <memory>
 
 class VehicleControlSystem : public System {
