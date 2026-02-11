@@ -19,9 +19,13 @@ public:
 	// Public interface
 	void bind() const { glBindBuffer(GL_ARRAY_BUFFER, bufferID); }
 	void uploadData(GLsizeiptr size, const void* data, GLenum usage);
+	void setupAttribute(); // Setup vertex attribute - must be called with VAO bound
 
 private:
 	VertexBufferHandle bufferID;
+	GLuint attributeIndex;
+	GLint attributeSize;
+	GLenum attributeType;
 };
 
 class IndexBuffer {
