@@ -111,35 +111,6 @@ void RenderingSystem::processCameraInput(float deltaTime)
     previousCursorPosition = cursorPosition;
 }
 
-//void RenderingSystem::togglePause() {
-//    // update game status
-//    paused = !paused;
-//
-//    if (paused) {
-//        logger::info("Game is paused...");
-//        renderPauseMenu();
-//    }
-//    else {
-//        logger::info("Game resumed...");
-//    }
-//}
-//
-//void RenderingSystem::renderPauseMenu() {
-//    // Clear buffers
-//    glClearColor(0.6f, 0.8f, 1.0f, 0.8f);
-//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//
-//    textSystem->beginText();
-//
-//    textSystem->renderText("PAUSE MENU", { 600.f, 1100.f, 0.75f }, { 0.f, 0.f, 0.55f });
-//
-//    textSystem->endText();
-//
-//    // swap buffer
-//    endFrame();
-//}
-//==================================================================================================================//
-
 bool RenderingSystem::init()
 {
     // Initialize GLFW (needs to be done before creating Window)
