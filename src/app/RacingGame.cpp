@@ -1,14 +1,15 @@
 ﻿#include "RacingGame.hpp"
 
 
-#include "ecs/Coordinator.hpp"
 //#include "components/CameraComponent.h"
 #include "components/Renderable.h"
 #include "components/ModelRenderable.h"
-#include "components/Transform.h"
-#include "components/VehicleComponent.h"
+#include "ecs/Coordinator.hpp"
 
 #include "input/Inputmanager.hpp"
+
+#include "components/Transform.h"
+#include "components/VehicleComponent.h"
 
 //ECS global coordinator
 Coordinator gCoordinator;

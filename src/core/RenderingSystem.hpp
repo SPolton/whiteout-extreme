@@ -1,6 +1,5 @@
 #pragma once
 
-#include "input/Window.hpp"
 #include "core/assets/Texture.hpp"
 #include "core/assets/ModelLoader.hpp"
 #include "core/buffer/Geometry.hpp"
@@ -8,20 +7,23 @@
 #include "core/scene/TurnTableCamera.hpp"
 #include "core/scene/FreeCamera.hpp"
 #include "core/scene/Transform.hpp"
-#include "input/panel/ImGuiWrapper.hpp"
-#include "input/panel/ImGuiPanel.hpp"
-#include "input/InputManager.hpp"
+
 #include "components/Entity.h"
+#include "components/Renderable.h"
+
+#include "ecs/Coordinator.hpp"
+#include "ecs/System.hpp"
+
+#include "input/InputManager.hpp"
+#include "input/Window.hpp"
+#include "input/panel/ImGuiPanel.hpp"
+#include "input/panel/ImGuiWrapper.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <memory>
 #include <vector>
-
-#include "ecs/Coordinator.hpp"
-#include "ecs/System.hpp"
-#include "components/Renderable.h"
 
 extern Coordinator gCoordinator;
 
