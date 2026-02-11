@@ -7,6 +7,8 @@
  * It holds the instance of the vehicle simulation and the current input states.
  */
 struct VehicleComponent {
+    int playerID = 0;  // Optional: Unique identifier for the vehicle
+
     // Unique pointer to manage the vehicle instance lifecycle
     VehicleFourWheelDrive* instance = nullptr;
 

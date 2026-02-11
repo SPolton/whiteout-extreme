@@ -245,16 +245,10 @@ void VehicleFourWheelDrive::cleanupVehicles()
 
 void VehicleFourWheelDrive::stepPhysics(float deltaTime)
 {
-	if (gNbCommands == gCommandProgress)
-		return;
-
-	//Apply the brake, throttle and steer to the command state of the vehicle.
-	const Command& command = gCommands[gCommandProgress];
-	gVehicle.mCommandState.brakes[0] = command.brake;
-	gVehicle.mCommandState.nbBrakes = 1;
-	gVehicle.mCommandState.throttle = command.throttle;
-	gVehicle.mCommandState.steer = command.steer;
-	gVehicle.mTransmissionCommandState.targetGear = command.gear;
+    gVehicle.mCommandState.brakes[0] = mCurrentBrake;
+    gVehicle.mCommandState.nbBrakes = 1;
+    gVehicle.mCommandState.throttle = mCurrentThrottle;
+    gVehicle.mCommandState.steer = mCurrentSteer;
 
 	//Forward integrate the vehicle by a single timestep.
 	//Apply substepping at low forward speed to improve simulation fidelity.
@@ -269,15 +263,6 @@ void VehicleFourWheelDrive::stepPhysics(float deltaTime)
 	//Forward integrate the phsyx scene by a single timestep.
 	// mScene->simulate(timestep);
 	// mScene->fetchResults(true);
-
-	//Increment the time spent on the current command.
-	//Move to the next command in the list if enough time has lapsed.
-	gCommandTime += deltaTime;
-	if (gCommandTime > gCommands[gCommandProgress].duration)
-	{
-		gCommandProgress++;
-		gCommandTime = 0.0f;
-	}
 }
 
 physx::PxRigidActor* VehicleFourWheelDrive::getRigidActor()
