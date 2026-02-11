@@ -178,7 +178,9 @@ void RacingGame::run()
         // If entity exists, update camera target to follow the player vehicle
         // We don't assume anymore that it's in the first position of the entity list, so we directly access it by its Entity ID
         if (gCoordinator.HasComponent<PhysxTransform>(playerVehicleEntity)) {
-            renderingSystem->updateCameraTarget(gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos);
+            glm::vec3 targetPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
+            targetPos.y += 2.f;
+            renderingSystem->updateCameraTarget(targetPos);
         }
 
         renderingSystem->updateUI();

@@ -258,6 +258,7 @@ bool RenderingSystem::init()
 
     // Create cameras
     turntableCamera = std::make_unique<TurnTableCamera>(*targetTransform);
+    turntableCamera->adjustTheta(glm::radians(180.f));
     freeCamera = std::make_unique<FreeCamera>();
     activeCamera = turntableCamera.get();  // Non-owning raw pointer to turntable camera
     
@@ -472,10 +473,6 @@ void RenderingSystem::render()
 
 void RenderingSystem::renderEntities(const std::vector<EntityPx>& entityList)
 {
-    // Update camera target to first entity (assuming player vehicle)
-    if (!entityList.empty())
-        updateCameraTarget(entityList[0].transform->pos);
-
     // Use shader
     shader->use();
     
