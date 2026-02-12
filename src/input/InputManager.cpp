@@ -152,6 +152,9 @@ void InputManager::pollControllerInputs() {
             // go through each button index and store its state in our array
             for (int i = 0; i < GLFW_GAMEPAD_BUTTON_LAST + 1; i++) {
                 controllerButtons[i] = state.buttons[i];
+                if (state.buttons[i] == GLFW_RELEASE) {
+                    controllerButtonConsumed[i] = false;
+                }
             }
 
             // GLFW_GAMEPAD_AXIS_LAST is a constant equal to the largest available index in the axis array
@@ -165,6 +168,7 @@ void InputManager::pollControllerInputs() {
         // controller has disconnected, clear all controller state info
         controllerConnected = false;
         controllerButtons.clear();
+        controllerButtonConsumed.clear();
         controllerAxes.clear();
     }
 }
@@ -193,13 +197,16 @@ bool InputManager::IsControllerConnected() {
 
 bool InputManager::isControllerButtonPressedOnce(int const controllerButton)
 {
-    // initialize to false
-    bool isButtonPressed = false;
-
-    // only if it is pressed, return true
-    if (controllerButtonConsumed.at(controllerButton) == GLFW_PRESS) {
-        return true;
-    };
-
-    return isButtonPressed;
+    auto const findResult = controllerButtons.find(controllerButton);
+    if (findResult != controllerButtons.end() && findResult->second == GLFW_PRESS)
+    {
+        auto const consumedResult = controllerButtonConsumed.find(controllerButton);
+        if (consumedResult == controllerButtonConsumed.end() || !consumedResult->second)
+        {
+            controllerButtonConsumed[controllerButton] = true;
+            //logger::debug("Controller button {} pressed once.", controllerButton);
+            return true;
+        }
+    }
+    return false;
 }
