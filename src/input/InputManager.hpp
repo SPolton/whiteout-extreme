@@ -78,5 +78,5 @@ private:
     std::unordered_map<int, bool> controllerButtons;
     std::unordered_map<int, bool> controllerButtonConsumed{};
     std::unordered_map<int, float> controllerAxes;
-    bool controllerConnected;
+    bool controllerConnected = false;
 };
