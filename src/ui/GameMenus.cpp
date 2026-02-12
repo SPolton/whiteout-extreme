@@ -21,38 +21,38 @@ void GameMenus::checkInputSystem() {
 }
 
 MenuAction GameMenus::pollInputs() {
-// check for controller inputs
-if (inputSystem == 1) {
-    // triggers pause menu
-    if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_START)) {
-        // if in game, render pause menu
-        if (gameState == GameState::InGame) {
-            gameState = GameState::Pause; // update game state
-            return MenuAction::None;
+    // check for controller inputs
+    if (inputSystem == 1) {
+        // triggers pause menu
+        if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_START)) {
+            // if in game, render pause menu
+            if (gameState == GameState::InGame) {
+                gameState = GameState::Pause; // update game state
+                return MenuAction::None;
+            }
+        }
+        // triggers main menu (do not allow keyboard input to navigate to main menu while in game)
+        if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_A) && gameState != GameState::InGame) {
+            // if on main menu, then start game
+            if (gameState == GameState::MainMenu) {
+                gameState = GameState::InGame; // update game state
+                return MenuAction::StartGame;
+            }
+            // if paused, resume game
+            else if (gameState == GameState::Pause) {
+                gameState = GameState::InGame; // update game state
+                return MenuAction::ResumeGame;
+            }
+        }
+        // B button to go back from pause to main menu
+        if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_B)) {
+            // if in pause menu, render main menu
+            if (gameState == GameState::Pause) {
+                gameState = GameState::MainMenu; // update game state
+                return MenuAction::GoToMainMenu;
+            }
         }
     }
-    // triggers main menu (do not allow keyboard input to navigate to main menu while in game)
-    if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_A) && gameState != GameState::InGame) {
-        // if on main menu, then start game
-        if (gameState == GameState::MainMenu) {
-            gameState = GameState::InGame; // update game state
-            return MenuAction::StartGame;
-        }
-        // if paused, resume game
-        else if (gameState == GameState::Pause) {
-            gameState = GameState::InGame; // update game state
-            return MenuAction::ResumeGame;
-        }
-    }
-    // B button to go back from pause to main menu
-    if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_B)) {
-        // if in pause menu, render main menu
-        if (gameState == GameState::Pause) {
-            gameState = GameState::MainMenu; // update game state
-            return MenuAction::GoToMainMenu;
-        }
-    }
-}
 
     // otherwise keyboard input works too
     // triggers pause menu
