@@ -77,21 +77,41 @@ RacingGame::RacingGame()
     BackpackModel = renderingSystem->createModelEntity("assets/obj/backpack/backpack.obj");
     logger::info("Created Backpack model entity");
 
+    // Create Map model entity
+    MapModel = renderingSystem->createModelEntity("assets/obj/map/map.obj");
+
+    // Adjust scale and position to match (fix later, for now pos it manually)
+    auto& mapTransform = gCoordinator.GetComponent<PhysxTransform>(MapModel);
+    mapTransform.scale = glm::vec3(0.2f);  // Scale down
+    mapTransform.pos = glm::vec3(0.f, -10.f, 0.f);  // Move down
+
+    logger::info("Created Map model entity");
+
+    // Create physics collision for the map (MUST match scale and position above!)
+    physicsSystem->createMapCollision("assets/obj/map/map.obj", 0.2f, glm::vec3(0.f, -10.f, 0.f));
+
     // Note:
     // The createSphereEntity() method calls:
     //      - gCoordinator.AddComponent(sphere,PhysxTransform{...});
     //      - gCoordinator.AddComponent(sphere,Renderable{...});
     // Same components signature as RenderingSystem, so will be added to that system's entity list.
 
-    // Create the player vehicle entity with physics components
+// Create the player vehicle entity with physics components
     playerVehicleEntity = physicsSystem->createVehicleEntity();
     gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).playerID = 0;
-    gCoordinator.AddComponent(playerVehicleEntity, Renderable{
-        renderingSystem->getCubeRenderable().geometry,
-        renderingSystem->getCubeRenderable().cpuData,
-        renderingSystem->getCubeRenderable().shader,
-        renderingSystem->vehicleTexture.get() // Use the same texture as the spheres for simplicity
-        });
+
+    // Load snowmobile model for the player vehicle
+    Entity snowmobileVisual = renderingSystem->createModelEntity("assets/obj/snowmobile/snowmobile.obj");
+    auto& snowmobileRenderable = gCoordinator.GetComponent<ModelRenderable>(snowmobileVisual);
+    gCoordinator.AddComponent(playerVehicleEntity, snowmobileRenderable);
+    gCoordinator.DestroyEntity(snowmobileVisual);
+
+    // Fix rotation and scale
+    auto& vehicleTransform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
+    vehicleTransform.rot = glm::angleAxis(glm::radians(0.0f), glm::vec3(0.f, 1.f, 0.f));
+    vehicleTransform.scale = glm::vec3(1.0f);  // Uniform scale instead of stretched box scale
+
+    logger::info("Loaded snowmobile model for player vehicle");
 
     // 4.You can modify Component Data for entities
     

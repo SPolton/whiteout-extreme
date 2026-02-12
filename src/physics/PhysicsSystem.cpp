@@ -2,6 +2,9 @@
 #include "common/Flags.hpp"
 #include "common/PVD.h"
 #include "utils/logger.h"
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 // OK in cpp files, not in headers
 using namespace physx;
@@ -16,15 +19,15 @@ void PhysicsSystem::init() {
 
     // Create the Ground Plane Entity
     // We treat the ground as an entity so other systems (like Rendering) can interact with it
-    Entity ground = gCoordinator.CreateEntity();
+    //Entity ground = gCoordinator.CreateEntity();
 
     // Create the static actor
-    mGroundPlane = PxCreatePlane(*mPhysics, PxPlane(0, 1, 0, 0), *mMaterial);
-    mScene->addActor(*mGroundPlane);
+    //mGroundPlane = PxCreatePlane(*mPhysics, PxPlane(0, 1, 0, 0), *mMaterial);
+    //mScene->addActor(*mGroundPlane);
 
     // Add the RigidBody component (Static actors don't necessarily need a Transform component 
     // unless they move, but they MUST have a RigidBody for the PhysicsSystem signature)
-    gCoordinator.AddComponent(ground, RigidBody{ mGroundPlane });
+    //gCoordinator.AddComponent(ground, RigidBody{ mGroundPlane });
 
 
     // Create the Player Vehicle Entity
@@ -48,13 +51,17 @@ Entity PhysicsSystem::createVehicleEntity() {
         // 2. Add necessary components to the vehicle entity
         // Transform
         gCoordinator.AddComponent(vehicleEntity, PhysxTransform{
-            glm::vec3(0.f, 0.f, 0.f),                // Position
+            glm::vec3(50.0f, 6.5f, 14.1f),                // Position
             glm::quat(1.f, 0.f, 0.f, 0.f),           // Identity rotation
             glm::vec3(1.65f, 1.4f, 3.75f)               // Scale
             });
     
         // RigidBody (using the chassis actor from the vehicle)
         gCoordinator.AddComponent(vehicleEntity, RigidBody{ mVehicleSystem->getRigidActor()});
+
+        // Set the actual PhysX actor position to match
+        PxTransform pxTransform(PxVec3(50.0f, 6.5f, 14.1f));
+        mVehicleSystem->getRigidActor()->setGlobalPose(pxTransform);
     
         // VehicleComponent (store the vehicle instance for later updates and access)
         gCoordinator.AddComponent(vehicleEntity, VehicleComponent{.instance = mVehicleSystem});
@@ -70,7 +77,7 @@ PhysicsSystem::~PhysicsSystem() {
         delete mVehicleSystem;
         mVehicleSystem = nullptr;
     }
-    cleanupGroundPlane();
+    //cleanupGroundPlane();
     cleanupPhysX();
 }
 
@@ -220,9 +227,9 @@ void PhysicsSystem::spawnBoxPyramid(physx::PxU32 size, float halfLen, Renderable
         for (physx::PxU32 j = 0; j < size - i; j++) {
             // 1. Calculate Position
             physx::PxVec3 pos(
-                physx::PxReal(j * 2) - physx::PxReal(size - i),
-                physx::PxReal(i * 2 + 5), // Added +5 to drop them from the air
-                0.0f
+                -30.75f,                                                    // X 
+                physx::PxReal(i * 2) - 4.995f,                              // Y 
+                physx::PxReal(j * 2) - physx::PxReal(size - i) + 2.13f    // Z 
             );
             pos *= halfLen;
 
@@ -279,4 +286,88 @@ RigidBody PhysicsSystem::createRigidBodyFromSphere(Entity entity) {
 
     // 5. Return the RigidBody component
     return RigidBody{ body };
+}
+
+void PhysicsSystem::createMapCollision(const std::string& objPath, float scale, const glm::vec3& offset) {
+    // Load the OBJ file using Assimp
+    Assimp::Importer importer;
+    const aiScene* scene = importer.ReadFile(objPath,
+        aiProcess_Triangulate | aiProcess_GenNormals);
+
+    if (!scene || !scene->mRootNode || scene->mNumMeshes == 0) {
+        logger::error("Failed to load map for collision: {}", objPath);
+        return;
+    }
+
+    logger::info("Loading collision mesh from: {} ({} meshes)", objPath, scene->mNumMeshes);
+
+    // Collect all vertices and indices from all meshes
+    std::vector<PxVec3> vertices;
+    std::vector<PxU32> indices;
+
+    for (unsigned int meshIndex = 0; meshIndex < scene->mNumMeshes; meshIndex++) {
+        aiMesh* mesh = scene->mMeshes[meshIndex];
+        unsigned int indexOffset = vertices.size();
+
+        // Add vertices with scale and offset
+        for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
+            vertices.push_back(PxVec3(
+                mesh->mVertices[i].x * scale + offset.x,
+                mesh->mVertices[i].y * scale + offset.y,
+                mesh->mVertices[i].z * scale + offset.z
+            ));
+        }
+
+        // Add indices
+        for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
+            aiFace face = mesh->mFaces[i];
+            if (face.mNumIndices == 3) {
+                indices.push_back(indexOffset + face.mIndices[0]);
+                indices.push_back(indexOffset + face.mIndices[1]);
+                indices.push_back(indexOffset + face.mIndices[2]);
+            }
+        }
+    }
+
+    logger::info("Collision mesh: {} vertices, {} triangles", vertices.size(), indices.size() / 3);
+
+    // Create PhysX triangle mesh
+    PxTriangleMeshDesc meshDesc;
+    meshDesc.points.count = vertices.size();
+    meshDesc.points.stride = sizeof(PxVec3);
+    meshDesc.points.data = vertices.data();
+
+    meshDesc.triangles.count = indices.size() / 3;
+    meshDesc.triangles.stride = 3 * sizeof(PxU32);
+    meshDesc.triangles.data = indices.data();
+
+    PxDefaultMemoryOutputStream writeBuffer;
+    PxTriangleMeshCookingResult::Enum result;
+    PxCookingParams params(mPhysics->getTolerancesScale());
+    bool status = PxCookTriangleMesh(params, meshDesc, writeBuffer, &result);
+
+    if (!status) {
+        logger::error("Failed to cook triangle mesh");
+        return;
+    }
+
+    PxDefaultMemoryInputData readBuffer(writeBuffer.getData(), writeBuffer.getSize());
+    PxTriangleMesh* triangleMesh = mPhysics->createTriangleMesh(readBuffer);
+
+    // Create static actor
+    PxTriangleMeshGeometry geom(triangleMesh);
+    geom.meshFlags = PxMeshGeometryFlag::eDOUBLE_SIDED;
+    PxRigidStatic* mapActor = PxCreateStatic(*mPhysics, PxTransform(PxIdentity), geom, *mMaterial);
+
+    // Set collision flags
+    PxShape* shape = nullptr;
+    mapActor->getShapes(&shape, 1);
+    if (shape) {
+        shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
+        shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
+    }
+
+    mScene->addActor(*mapActor);
+
+    logger::info("Map collision mesh created successfully");
 }
