@@ -38,8 +38,16 @@ MenuAction GameMenus::pollInputs() {
         }
         // triggers main menu (do not allow keyboard input to navigate to main menu while in game)
         else if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_A) && gameState != GameState::InGame) {
-            gameState = GameState::MainMenu; // update game state
-            return MenuAction::GoToMainMenu;
+            // if one main menu, then start game
+            if (gameState == GameState::MainMenu) {
+                gameState = GameState::InGame; // update game state
+                return MenuAction::StartGame;
+            }
+            // if in pause menu, render main menu
+            else if (gameState == GameState::Pause) {
+                gameState = GameState::MainMenu; // update game state
+                return MenuAction::GoToMainMenu;
+            }
         }
     }
 
@@ -59,7 +67,7 @@ MenuAction GameMenus::pollInputs() {
     }
     // triggers main menu (do not allow keyboard input to navigate to main menu while in game)
     else if (inputManager->isKeyPressedOnce(GLFW_KEY_M) && gameState != GameState::InGame) {
-        // if one main menu, then styart game
+        // if one main menu, then start game
         if (gameState == GameState::MainMenu) {
             gameState = GameState::InGame; // update game state
             return MenuAction::StartGame;
