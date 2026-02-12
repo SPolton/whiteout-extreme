@@ -43,8 +43,10 @@ MenuAction GameMenus::pollInputs() {
                 gameState = GameState::InGame; // update game state
                 return MenuAction::StartGame;
             }
+        }
+        else if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_START)) {
             // if in pause menu, render main menu
-            else if (gameState == GameState::Pause) {
+            if (gameState == GameState::Pause) {
                 gameState = GameState::MainMenu; // update game state
                 return MenuAction::GoToMainMenu;
             }
