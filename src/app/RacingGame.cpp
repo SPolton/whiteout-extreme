@@ -248,6 +248,18 @@ void RacingGame::run()
             // swap buffer
             renderingSystem->endFrame();
         }
+        else if (gameState == GameState::GameOver) {
+            // render UI for race finished, take note of the action taken
+            MenuAction action = menus->renderGameOver();
+
+            // if "Return to main menu" is pressed, return to the main menu
+            if (action == MenuAction::GoToMainMenu) {
+                gameState = GameState::MainMenu;
+            }
+
+            // swap buffer
+            renderingSystem->endFrame();
+        }
     }
     logger::info("Shutting down systems...");
     renderingSystem->cleanup();

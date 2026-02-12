@@ -145,3 +145,49 @@ MenuAction GameMenus::renderPauseMenu() {
     // default return
     return MenuAction::None;
 }
+
+
+MenuAction GameMenus::renderGameOver()
+{
+    // Clear buffers
+    glClearColor(0.6f, 0.8f, 1.0f, 0.8f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // when in a menu, check for cursor position to highlight "buttons"
+    // get cursor position
+    glm::dvec2 cursorPos = inputManager->CursorPosition();
+
+    textSystem->beginText();
+
+    textSystem->loadFont("LuckiestGuy-Regular.ttf", 120);
+
+    textSystem->renderText("Game Over!", { 470.f, 1100.f, 0.75f }, { 0.f, 0.f, 0.55f });
+
+    // default color for the "Return to menu" button
+    glm::vec3 defaultColor = { 0.f, 0.f, 0.6f };
+
+    // set the "Return to menu" button to the default color (used when not hovered upon)
+    glm::vec3 startColor = defaultColor;
+
+    // check if mouse is hovered over the "Return to menu" button
+    if (cursorPos.x > 225.f && cursorPos.x < 1000.f) {
+        if (cursorPos.y > 540.f && cursorPos.y < 575.f) {
+            // if it is, highlight in red
+            startColor = { 0.8f, 0.f, 0.f };
+
+            // and check if the user clicks on the mouse while over the "Return to menu" button
+            if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
+                // if they do, toggle to show the main menu
+                return MenuAction::GoToMainMenu;
+            }
+        }
+    }
+
+    // render the text with the proper color assigned
+    textSystem->renderText("Return to Main Menu", { 270.f, 400.f, 0.75f }, startColor);
+
+    textSystem->endText();
+
+    // default return
+    return MenuAction::None;
+}
