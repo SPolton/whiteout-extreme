@@ -83,6 +83,7 @@ bool InputManager::isKeyPressedOnce(int const keyboardButton)
         if (consumedResult == mKeyConsumedMap.end() || !consumedResult->second)
         {
             mKeyConsumedMap[keyboardButton] = true;
+            logger::info("Key {} pressed once.", keyboardButton);
             return true;
         }
     }
@@ -109,6 +110,7 @@ bool InputManager::isMousePressedOnce(int const mouseButton)
         if (consumedResult == mMouseConsumedMap.end() || !consumedResult->second)
         {
             mMouseConsumedMap[mouseButton] = true;
+            logger::info("Mouse button {} pressed once.", mouseButton);
             return true;
         }
     }
@@ -188,7 +190,12 @@ bool InputManager::IsControllerButtonDown(int const controllerButton) const
 
 float InputManager::GetControllerAxis(int const controllerAxis) const
 {
-    return controllerAxes.at(controllerAxis);
+    auto const findResult = controllerAxes.find(controllerAxis);
+    if (findResult != controllerAxes.end())
+    {
+        return findResult->second;
+    }
+    return 0.0f;
 }
 
 bool InputManager::IsControllerConnected() {
@@ -204,7 +211,7 @@ bool InputManager::isControllerButtonPressedOnce(int const controllerButton)
         if (consumedResult == controllerButtonConsumed.end() || !consumedResult->second)
         {
             controllerButtonConsumed[controllerButton] = true;
-            //logger::debug("Controller button {} pressed once.", controllerButton);
+            logger::info("Controller button {} pressed once.", controllerButton);
             return true;
         }
     }
