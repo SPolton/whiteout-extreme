@@ -5,6 +5,8 @@
 #include "core/Text.h"
 #include "input/VehicleControlSystem.hpp"
 #include "physics/PhysicsSystem.hpp"
+#include "ui/GameMenus.hpp"
+#include "GameState.hpp"
 
 #include <iostream>
 #include <memory>
@@ -29,23 +31,9 @@ private:
     Entity WoodyModel;
     Entity BackpackModel;
 
-    // Pause Menu
-    void togglePause();
-    void renderPauseMenu();
+    // access UI menus
+    std::unique_ptr<GameMenus> menus;
 
-    // Main Menu
-    void toggleMainMenu();
-    void renderMainMenu();
-
-    // inputs for menus
-    std::shared_ptr<InputManager> inputManager;
-
-    // game state (default start on main menu)
-    int gameState = 0;
-    /*
-    * 0 = main menu
-    * 1 = in game
-    * 2 = paused
-    * 3 = game over (not used yet)
-    */
+    // set default game state on main menu
+    GameState gameState = GameState::MainMenu;
 };

@@ -127,8 +127,7 @@ RacingGame::RacingGame()
 
     textSystem->setProjection(1440.0f, 1440.0f);
 
-    // get inputs
-    inputManager = renderingSystem->getInputManager();
+    menus = std::make_unique<GameMenus>(textSystem.get(), renderingSystem->getInputManager().get(), gameState);
 }
 
 
@@ -139,18 +138,14 @@ void RacingGame::run()
 
     while (!renderingSystem->shouldClose())
     {
-        // check for keyboard inputs first
-        // triggers pause menu (only allow keyboard input if game is paused or we are in game)
-        if (inputManager->isKeyPressedOnce(GLFW_KEY_P) && (gameState == 2 || gameState == 1)) {
-            togglePause();
-        }
-        // triggers main menu (do not allow keyboard input to navigate to main menu while in game)
-        else if (inputManager->isKeyPressedOnce(GLFW_KEY_M) && gameState != 1) {
-            toggleMainMenu();
+        MenuAction actionTaken = menus->pollInputs();
+
+        if (actionTaken == MenuAction::StartGame) {
+            gameState = GameState::InGame;
         }
 
         // if in game
-        if (gameState == 1) {
+        if (gameState == GameState::InGame) {
             gameTime.update();
 
             // 5. You can also add/remove components at runtime to change entity behavior
@@ -225,170 +220,35 @@ void RacingGame::run()
             // Must be called last
             renderingSystem->endFrame();
         }
-        else if (gameState == 2) {
-            renderPauseMenu();
+        else if (gameState == GameState::MainMenu) {
+            // render UI for main menu, take note of the action taken
+            MenuAction action = menus->renderMainMenu();
+
+            // if "Start" is pressed, go in the game
+            if (action == MenuAction::StartGame) {
+                gameState = GameState::InGame;
+            }
+
+            // swap buffer
+            renderingSystem->endFrame();
         }
-        else if (gameState == 0) {
-            renderMainMenu();
+        else if (gameState == GameState::Pause) {
+            // render UI for pause menu, take note of the action taken
+            MenuAction action = menus->renderPauseMenu();
+
+            // if "Resume" is pressed, return to the game
+            if (action == MenuAction::ResumeGame) {
+                gameState = GameState::InGame;
+            }
+            // if "Quit" is pressed, return to the main menu
+            else if (action == MenuAction::GoToMainMenu) {
+                gameState = GameState::MainMenu;
+            }
+
+            // swap buffer
+            renderingSystem->endFrame();
         }
     }
     logger::info("Shutting down systems...");
     renderingSystem->cleanup();
-}
-
-
-// Pause Menu
-//==================================================================================================================//
-
-void RacingGame::togglePause() {
-    // update game status
-    if (gameState == 1) {
-        gameState = 2; // pause game
-    }
-    else if (gameState == 2) {
-        gameState = 1; // resume game
-    }
-
-    if (gameState == 2) {
-        logger::info("Game is paused...");
-        renderPauseMenu();
-    }
-    else {
-        logger::info("Game resumed...");
-    }
-}
-
-void RacingGame::renderPauseMenu() {
-    // Clear buffers
-    glClearColor(0.6f, 0.8f, 1.0f, 0.8f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    // when in a menu, check for cursor position to highlight "buttons"
-    // get cursor position
-    glm::dvec2 cursorPos = inputManager->CursorPosition();
-
-    textSystem->beginText();
-
-    textSystem->loadFont("LuckiestGuy-Regular.ttf", 120);
-
-    textSystem->renderText("PAUSE MENU", { 460.f, 1100.f, 0.75f }, { 0.f, 0.f, 0.55f });
-
-    textSystem->loadFont("SNPro-SemiBold.ttf", 85);
-
-    // default color for the buttons
-    glm::vec3 defaultColor = { 0.f, 0.f, 0.6f };
-
-    // set the buttons to the default color (used when not hovered upon)
-    glm::vec3 resumeColor = defaultColor;
-    glm::vec3 quitColor = defaultColor;
-
-    // check keyboard input
-    if (inputManager->isKeyPressedOnce(GLFW_KEY_P)) {
-        gameState = 1; // resume game
-    }
-    else if (inputManager->isKeyPressedOnce(GLFW_KEY_M)) {
-        gameState = 0; // return to main menu
-    }
-
-    // check if mouse is hovered over the "Resume" button
-    if (cursorPos.x > 325.f && cursorPos.x < 460.f) {
-        if (cursorPos.y > 200.f && cursorPos.y < 230.f) {
-            // if it is, highlight in red
-            resumeColor = { 0.8f, 0.f, 0.f };
-
-            // and check if the user clicks on the mouse while over the "Resume" button
-            if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
-                // if they do, toggle pause
-                togglePause();
-            }
-        }
-    }
-
-    // check if mouse is hovered over the "Quit" button
-    if (cursorPos.x > 205.f && cursorPos.x < 595.f) {
-        if (cursorPos.y > 260.f && cursorPos.y < 290.f) {
-            // if it is, highlight in red
-            quitColor = { 0.8f, 0.f, 0.f };
-
-            // and check if the user clicks on the mouse while over the "Quit" button
-            if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
-                // and toggle to show the main menu
-                toggleMainMenu();
-            }
-        }
-    }
-
-    // render the text with the proper color assigned
-    textSystem->renderText("Resume", { 590.f, 900.f, 0.75f }, resumeColor);
-    textSystem->renderText("Quit (Exit to Main Menu)", { 370.f, 750.f, 0.75f }, quitColor);
-
-    textSystem->endText();
-
-    // swap buffer
-    renderingSystem->endFrame();
-}
-
-// Main Menu
-//==================================================================================================================//
-
-void RacingGame::toggleMainMenu() {
-    // update game status
-    if (gameState == 0) {
-        gameState = 1; // start game
-    }
-    else if (gameState == 2) {
-        gameState = 0; // go to main menu form pause menu
-    }
-
-    if (gameState == 0) {
-        logger::info("On home page...");
-        renderMainMenu();
-    }
-    else {
-        logger::info("In game...");
-    }
-}
-
-void RacingGame::renderMainMenu() {
-    // Clear buffers
-    glClearColor(0.6f, 0.8f, 1.0f, 0.8f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    // when in a menu, check for cursor position to highlight "buttons"
-    // get cursor position
-    glm::dvec2 cursorPos = inputManager->CursorPosition();
-
-    textSystem->beginText();
-
-    textSystem->loadFont("LuckiestGuy-Regular.ttf", 120);
-
-    textSystem->renderText("Whiteout Extreme", { 300.f, 1100.f, 0.75f }, { 0.f, 0.f, 0.55f });
-
-    // default color for the "Start" button
-    glm::vec3 defaultColor = { 0.f, 0.f, 0.6f };
-
-    // set the "Start" button to the default color (used when not hovered upon)
-    glm::vec3 startColor = defaultColor;
-
-    // check if mouse is hovered over the "Start" button
-    if (cursorPos.x > 320.f && cursorPos.x < 460.f) {
-        if (cursorPos.y > 400.f && cursorPos.y < 435.f) {
-            // if it is, highlight in red
-            startColor = { 0.8f, 0.f, 0.f };
-
-            // and check if the user clicks on the mouse while over the "Start" button
-            if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
-                // if they do, toggle to NOT show the main menu
-                toggleMainMenu();
-            }
-        }
-    }
-
-    // render the text with the proper color assigned
-    textSystem->renderText("Start", { 585.f, 400.f, 0.75f }, startColor);
-
-    textSystem->endText();
-
-    // swap buffer
-    renderingSystem->endFrame();
 }
