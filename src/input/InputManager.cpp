@@ -117,7 +117,7 @@ bool InputManager::isMousePressedOnce(int const mouseButton)
     return false;
 }
 
-glm::dvec2 const &InputManager::CursorPosition() const
+glm::dvec2 const &InputManager::cursorPosition() const
 {
     return mCursorPosition;
 }

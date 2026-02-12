@@ -33,7 +33,7 @@ public:
     bool isMousePressedOnce(int mouseButton);
 
     [[nodiscard]]
-    glm::dvec2 const & CursorPosition() const;
+    glm::dvec2 const & cursorPosition() const;
 
     // controller queries
     void pollControllerInputs();

@@ -41,7 +41,7 @@ void RenderingSystem::processInput(float deltaTime)
 // Camera Input Processing
 void RenderingSystem::processCameraInput(float deltaTime)
 {
-    auto const cursorPosition = inputManager->CursorPosition();
+    auto const cursorPosition = inputManager->cursorPosition();
 
     // Check if we're using FreeCamera
     if (activeCamera == freeCamera.get())
