@@ -21,6 +21,7 @@ int main()
         logger::fatal("Runtime error: {}", e.what());
         return -1;
     }
+#ifdef NDEBUG
     catch (const std::exception& e)
     {
         logger::fatal("Exception caught: {}", e.what());
@@ -31,6 +32,7 @@ int main()
         logger::fatal("Unknown exception caught");
         return -1;
     }
+#endif
 
     return 0;
 }
