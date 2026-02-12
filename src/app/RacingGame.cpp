@@ -138,8 +138,13 @@ void RacingGame::run()
 
     while (!renderingSystem->shouldClose())
     {
+        // keep checking which input system we are using
+        menus->checkInputSystem();
+
+        // keep taking inputs in case pause menu is called
         MenuAction actionTaken = menus->pollInputs();
 
+        // check for entering game
         if (actionTaken == MenuAction::StartGame) {
             gameState = GameState::InGame;
         }

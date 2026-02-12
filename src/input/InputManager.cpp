@@ -190,3 +190,16 @@ float InputManager::GetControllerAxis(int const controllerAxis) const
 bool InputManager::IsControllerConnected() {
     return controllerConnected;
 }
+
+bool InputManager::isControllerButtonPressedOnce(int const controllerButton)
+{
+    // initialize to false
+    bool isButtonPressed = false;
+
+    // only if it is pressed, return true
+    if (controllerButtonConsumed.at(controllerButton) == GLFW_PRESS) {
+        return true;
+    };
+
+    return isButtonPressed;
+}

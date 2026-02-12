@@ -21,7 +21,9 @@ public:
     MenuAction renderPauseMenu();
     MenuAction renderGameOver();
 
+    // input related functions
     MenuAction pollInputs();
+    void checkInputSystem();
 
 private:
     // pointers to read input
@@ -30,4 +32,11 @@ private:
 
     // get game state
     GameState& gameState;
+
+    /*
+    * keep track of which input system to use
+    * by default 0 = keyboard/mouse
+    * 1 = controller
+    */
+    int inputSystem = 0;
 };
