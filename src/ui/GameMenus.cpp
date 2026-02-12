@@ -62,6 +62,8 @@ MenuAction GameMenus::pollInputs() {
         gameState = GameState::MainMenu; // update game state
         return MenuAction::GoToMainMenu;
     }
+
+    return MenuAction::None;
 }
 
 MenuAction GameMenus::renderMainMenu()
