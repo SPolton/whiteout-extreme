@@ -7,7 +7,6 @@
 
 #include "ecs/Coordinator.hpp"
 #include "components/Transform.h"
-#include "components/Renderable.h"
 #include "components/VehicleComponent.h"
 
 RenderingSystem::RenderingSystem() {
@@ -126,7 +125,7 @@ bool RenderingSystem::init()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create window using our Window wrapper (RAII)
-    window = std::make_unique<Window>(800, 600, "Racing Game");
+    window = std::make_unique<Window>(1200, 800, "Racing Game");
     window->makeContextCurrent();
 
     // Initialize GLAD
@@ -172,6 +171,21 @@ bool RenderingSystem::init()
     catch (const std::exception& e)
     {
         logger::error("Failed to load shaders: {0}", e.what());
+        return false;
+    }
+
+    // Create model shader for loaded 3D models (different vertex layout)
+    try
+    {
+        modelShader = std::make_unique<ShaderProgram>(
+            "assets/shaders/model.vert",
+            "assets/shaders/model.frag"
+        );
+        logger::info("Model shaders loaded successfully");
+    }
+    catch (const std::exception& e)
+    {
+        logger::error("Failed to load model shaders: {0}", e.what());
         return false;
     }
 
@@ -239,6 +253,7 @@ bool RenderingSystem::init()
 
     // Create cameras
     turntableCamera = std::make_unique<TurnTableCamera>(*targetTransform);
+    turntableCamera->adjustTheta(glm::radians(180.f));
     freeCamera = std::make_unique<FreeCamera>();
     activeCamera = turntableCamera.get();  // Non-owning raw pointer to turntable camera
     
@@ -289,6 +304,43 @@ Entity RenderingSystem::createSphereEntity()
     return sphere;
 }
 
+Entity RenderingSystem::createModelEntity(const std::string& modelPath)
+{
+    // Create model entity
+    Entity model = gCoordinator.CreateEntity();
+
+    gCoordinator.AddComponent(
+        model,
+        PhysxTransform{
+            glm::vec3(0.f, 0.f, 0.f),
+            glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
+            glm::vec3(1.f)
+        }
+    );
+
+    // Create a new ModelLoader for this entity
+    try {
+        auto modelLoader = std::make_shared<ModelLoader>(modelPath, false);
+        logger::info("Model loaded successfully: {} with {} meshes", modelPath, modelLoader->getMeshCount());
+        
+        // Add ModelRenderable component with the model loader and model-specific shader
+        gCoordinator.AddComponent(
+            model,
+            ModelRenderable{modelLoader, modelShader.get()}
+        );
+    }
+    catch (const std::exception& e) {
+        logger::error("Failed to load model {}: {}", modelPath, e.what());
+        // Clean up the entity if model loading failed
+        gCoordinator.DestroyEntity(model);
+        throw;
+    }
+
+    logger::info("Model entity created: {}", modelPath);
+
+    return model;
+}
+
 void RenderingSystem::render()
 {
     // Clear buffers
@@ -300,77 +352,122 @@ void RenderingSystem::render()
     glm::mat4 view = activeCamera->getViewMatrix();
     glm::mat4 projection = getProjectionMatrix();
 
-
-    for (auto const& entity : mEntities) // entities = signature Transform + Renderable
+    // Iterate through all entities that the RenderingSystem tracks
+    // (entities with Transform component)
+    for (auto const& entity : mEntities)
     {
-        //logger::debug("Rendering entity{0}", entity);
         auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
-        auto& renderable = gCoordinator.GetComponent<Renderable>(entity);
-
-        glm::vec3 visualPos = transform.pos;
-
-        // If entity has VehicleComponent, apply offset for red brick model rendering
-        if (gCoordinator.HasComponent<VehicleComponent>(entity)) {
-            glm::vec3 localOffset(0.0f, 0.75f, 2.0f);
-            glm::vec3 rotatedOffset = transform.rot * localOffset;
-            visualPos += rotatedOffset;
-        }
-
-        renderable.shader->use();
-
-        glActiveTexture(GL_TEXTURE0);
-        renderable.texture->bind();
-        glUniform1i(
-            glGetUniformLocation(*renderable.shader, "baseColorTexture"),
-            0
-        );
-
-        glm::mat4 model =
-            glm::translate(glm::mat4(1.f), visualPos)
+        
+        // Calculate model matrix from transform
+        glm::mat4 modelMatrix =
+            glm::translate(glm::mat4(1.f), transform.pos)
             * glm::toMat4(transform.rot)
             * glm::scale(glm::mat4(1.f), transform.scale);
 
-        glUniformMatrix4fv(
-            glGetUniformLocation(*renderable.shader, "model"),
-            1, GL_FALSE, &model[0][0]
-        );
+        // Check if entity has a simple Renderable component (sphere, cube, etc.)
+        if (gCoordinator.HasComponent<Renderable>(entity))
+        {
+            auto& renderable = gCoordinator.GetComponent<Renderable>(entity);
 
-        glUniformMatrix4fv(
-            glGetUniformLocation(*renderable.shader, "view"),
-            1, GL_FALSE, &view[0][0]
-        );
+            glm::vec3 visualPos = transform.pos;
 
-        glUniformMatrix4fv(
-            glGetUniformLocation(*renderable.shader, "projection"),
-            1, GL_FALSE, &projection[0][0]
-        );
+            // If entity has VehicleComponent, apply offset for red brick model rendering
+            if (gCoordinator.HasComponent<VehicleComponent>(entity)) {
+                glm::vec3 localOffset(0.0f, 0.75f, 2.0f);
+                glm::vec3 rotatedOffset = transform.rot * localOffset;
+                visualPos += rotatedOffset;
+            }
 
-        renderable.geometry->bind();
+            renderable.shader->use();
 
-        if (!renderable.cpuData->indices.empty()) {
-            glDrawElements(
-                GL_TRIANGLES,
-                renderable.cpuData->indices.size(),
-                GL_UNSIGNED_INT,
-                nullptr
+            glActiveTexture(GL_TEXTURE0);
+            renderable.texture->bind();
+            glUniform1i(
+                glGetUniformLocation(*renderable.shader, "baseColorTexture"),
+                0
             );
+
+            glm::mat4 model =
+                glm::translate(glm::mat4(1.f), visualPos)
+                * glm::toMat4(transform.rot)
+                * glm::scale(glm::mat4(1.f), transform.scale);
+
+            glUniformMatrix4fv(
+                glGetUniformLocation(*renderable.shader, "model"),
+                1, GL_FALSE, &model[0][0]
+            );
+
+            glUniformMatrix4fv(
+                glGetUniformLocation(*renderable.shader, "view"),
+                1, GL_FALSE, &view[0][0]
+            );
+
+            glUniformMatrix4fv(
+                glGetUniformLocation(*renderable.shader, "projection"),
+                1, GL_FALSE, &projection[0][0]
+            );
+
+            renderable.geometry->bind();
+
+            if (!renderable.cpuData->indices.empty()) {
+                glDrawElements(
+                    GL_TRIANGLES,
+                    renderable.cpuData->indices.size(),
+                    GL_UNSIGNED_INT,
+                    nullptr
+                );
+            }
+            else {
+                glDrawArrays(
+                    GL_TRIANGLES,
+                    0,
+                    renderable.cpuData->positions.size()
+                );
+            }
         }
-        else {
-            glDrawArrays(
-                GL_TRIANGLES,
-                0,
-                renderable.cpuData->positions.size()
-            );
+        // Check if entity has a ModelRenderable component (complex 3D models)
+        else if (gCoordinator.HasComponent<ModelRenderable>(entity))
+        {
+            auto& modelRenderable = gCoordinator.GetComponent<ModelRenderable>(entity);
+
+            if (modelRenderable.modelLoader && modelRenderable.shader) {
+                modelRenderable.shader->use();
+
+                // Set up view and projection matrices
+                glUniformMatrix4fv(
+                    glGetUniformLocation(*modelRenderable.shader, "view"),
+                    1, GL_FALSE, &view[0][0]
+                );
+
+                glUniformMatrix4fv(
+                    glGetUniformLocation(*modelRenderable.shader, "projection"),
+                    1, GL_FALSE, &projection[0][0]
+                );
+
+                // Set model matrix using the entity's transform
+                glUniformMatrix4fv(
+                    glGetUniformLocation(*modelRenderable.shader, "model"),
+                    1, GL_FALSE, &modelMatrix[0][0]
+                );
+
+                // Set lighting uniforms for the model shader
+                glm::vec3 lightPos(0.0f, 20.0f, 0.0f);
+                glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
+                glm::vec3 viewPos = activeCamera->getPosition();
+                
+                glUniform3fv(glGetUniformLocation(*modelRenderable.shader, "lightPos"), 1, &lightPos[0]);
+                glUniform3fv(glGetUniformLocation(*modelRenderable.shader, "lightColor"), 1, &lightColor[0]);
+                glUniform3fv(glGetUniformLocation(*modelRenderable.shader, "viewPos"), 1, &viewPos[0]);
+
+                // Draw the model (handles multiple meshes internally)
+                modelRenderable.modelLoader->draw(*modelRenderable.shader);
+            }
         }
     }
 }
 
 void RenderingSystem::renderEntities(const std::vector<EntityPx>& entityList)
 {
-    // Update camera target to first entity (assuming player vehicle)
-    if (!entityList.empty())
-        updateCameraTarget(entityList[0].transform->pos);
-
     // Use shader
     shader->use();
     

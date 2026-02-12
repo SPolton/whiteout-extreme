@@ -26,6 +26,8 @@ private:
     Entity playerVehicleEntity;
     Entity Earth;
     Entity Mars;
+    Entity WoodyModel;
+    Entity BackpackModel;
 
     // Pause Menu
     void togglePause();

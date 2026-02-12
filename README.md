@@ -68,3 +68,11 @@ Most dependencies are automatically fetched by CMake:
 ### Contributing
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+
+# Sources
+
+## Assets
+
+- [common-3d-test-models](https://github.com/alecjacobson/common-3d-test-models) from Alec Jacobson
+- [Survival Guitar Backpack](https://sketchfab.com/3d-models/survival-guitar-backpack-799f8c4511f84fab8c3f12887f7e6b36) by Berk Gedik
+- Survival Guitar Backpack [Modified](https://learnopengl.com/data/models/backpack.zip) by LearnOpenGL

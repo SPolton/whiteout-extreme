@@ -28,7 +28,7 @@ public:
     DrawType drawType = DrawType::Mesh;
     PhysxTransform* transform;
     std::vector<PhysxTransform*> localTransforms;
-    Model* model;
+    SimpleModel* model;  // Using SimpleModel instead of the asset Model class
     //PlayerProperties* playerProperties;
     int nbChildEntities;
 };

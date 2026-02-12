@@ -8,6 +8,14 @@ GPU_Geometry::GPU_Geometry()
     , uvsBuffer(3, sizeof(UV) / sizeof(float), GL_FLOAT)
     , indexBuffer(4, sizeof(Index) / sizeof(float), GL_FLOAT)
 {
+    // Bind VAO first, then setup all vertex attributes
+    vao.bind();
+    positionsBuffer.setupAttribute();
+    colorsBuffer.setupAttribute();
+    normalsBuffer.setupAttribute();
+    uvsBuffer.setupAttribute();
+    // Index buffer doesn't need attribute setup
+    glBindVertexArray(0); // Unbind VAO
 }
 
 
@@ -33,7 +41,11 @@ void GPU_Geometry::UpdateUVs(size_t const count, UV const * uvs)
 
 void GPU_Geometry::UpdateIndices(size_t const count, Index const *indices)
 {
+    // Must bind VAO before uploading index data
+    // Element array buffer binding is part of VAO state
+    vao.bind();
     indexBuffer.uploadData(sizeof(Index) * count, indices, GL_STATIC_DRAW);
+    glBindVertexArray(0);
 }
 
 

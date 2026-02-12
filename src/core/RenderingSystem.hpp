@@ -1,26 +1,29 @@
 #pragma once
 
-#include "input/Window.hpp"
 #include "core/assets/Texture.hpp"
+#include "core/assets/ModelLoader.hpp"
 #include "core/buffer/Geometry.hpp"
 #include "core/render/ShaderProgram.hpp"
 #include "core/scene/TurnTableCamera.hpp"
 #include "core/scene/FreeCamera.hpp"
 #include "core/scene/Transform.hpp"
-#include "input/panel/ImGuiWrapper.hpp"
-#include "input/panel/ImGuiPanel.hpp"
-#include "input/InputManager.hpp"
+
 #include "components/Entity.h"
+#include "components/Renderable.h"
+
+#include "ecs/Coordinator.hpp"
+#include "ecs/System.hpp"
+
+#include "input/InputManager.hpp"
+#include "input/Window.hpp"
+#include "input/panel/ImGuiPanel.hpp"
+#include "input/panel/ImGuiWrapper.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <memory>
 #include <vector>
-
-#include "ecs/Coordinator.hpp"
-#include "ecs/System.hpp"
-#include "components/Renderable.h"
 
 extern Coordinator gCoordinator;
 
@@ -36,6 +39,7 @@ public:
     bool shouldClose() const;
 
     Entity createSphereEntity();
+    Entity createModelEntity(const std::string& modelPath);
     std::unique_ptr<Texture> texture2;
     std::unique_ptr<Texture> vehicleTexture;
 
@@ -52,6 +56,7 @@ private:
     // Core components following modular architecture
     std::unique_ptr<Window> window;
     std::unique_ptr<ShaderProgram> shader;
+    std::unique_ptr<ShaderProgram> modelShader;
     std::unique_ptr<TurnTableCamera> turntableCamera;
     std::unique_ptr<FreeCamera> freeCamera;
     BaseCamera* activeCamera;  // Pointer to the currently active camera
