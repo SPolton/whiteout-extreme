@@ -92,8 +92,4 @@ private:
     void onResize(int width, int height);
     void onMouseWheelChange(double xOffset, double yOffset);
     glm::mat4 getProjectionMatrix() const;
-
-    // Pause/Menu
-    bool isGamePaused = false;
-    void gamePaused();
 };

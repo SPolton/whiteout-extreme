@@ -5,6 +5,8 @@
 #include "core/Text.h"
 #include "input/VehicleControlSystem.hpp"
 #include "physics/PhysicsSystem.hpp"
+#include "ui/GameMenus.hpp"
+#include "GameState.hpp"
 
 #include <iostream>
 #include <memory>
@@ -28,4 +30,10 @@ private:
     Entity Mars;
     Entity WoodyModel;
     Entity BackpackModel;
+
+    // access UI menus
+    std::unique_ptr<GameMenus> menus;
+
+    // set default game state on main menu
+    GameState gameState = GameState::MainMenu;
 };

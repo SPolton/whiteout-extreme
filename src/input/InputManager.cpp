@@ -19,7 +19,7 @@ void InputManager::keyCallback(
     int const /*mods*/
 )
 {
-    logger::info("KeyCallback: key={}, action={}", key, action);
+    // logger::info("KeyCallback: key={}, action={}", key, action);
     if (action == GLFW_PRESS)
     {
         mKeyStatusMap[key] = true;
@@ -42,7 +42,7 @@ void InputManager::windowSizeCallback(int const width, int const height)
 
 void InputManager::mouseButtonCallback(int const button, int const action, int /*mods*/)
 {
-    logger::info("MouseButtonCallback: button={}, action={}", button, action);
+    // logger::info("MouseButtonCallback: button={}, action={}", button, action);
     mMouseStatusMap[button] = action;
     if (action == GLFW_RELEASE)
     {
@@ -52,7 +52,7 @@ void InputManager::mouseButtonCallback(int const button, int const action, int /
 
 void InputManager::cursorPosCallback(double const xpos, double const ypos)
 {
-    logger::debug("CursorPosCallback: xpos={}, ypos={}", xpos, ypos);
+    // logger::debug("CursorPosCallback: xpos={}, ypos={}", xpos, ypos);
     mCursorPosition.x = xpos;
     mCursorPosition.y = ypos;
 }
@@ -83,6 +83,7 @@ bool InputManager::isKeyPressedOnce(int const keyboardButton)
         if (consumedResult == mKeyConsumedMap.end() || !consumedResult->second)
         {
             mKeyConsumedMap[keyboardButton] = true;
+            logger::info("Key {} pressed once.", keyboardButton);
             return true;
         }
     }
@@ -109,6 +110,7 @@ bool InputManager::isMousePressedOnce(int const mouseButton)
         if (consumedResult == mMouseConsumedMap.end() || !consumedResult->second)
         {
             mMouseConsumedMap[mouseButton] = true;
+            logger::info("Mouse button {} pressed once.", mouseButton);
             return true;
         }
     }
@@ -132,12 +134,13 @@ void InputManager::pollControllerInputs() {
     if (glfwJoystickIsGamepad(GLFW_JOYSTICK_1))
     {
         // if successful, means we are connected. Update connection state
-        controllerConnected = true;
+        if (!controllerConnected) {
+            controllerConnected = true;
         
-        // reteives name of the gamepad mapping
-        const char* name = glfwGetGamepadName(GLFW_JOYSTICK_1);
-
-        logger::debug("Controller {} connected.", name);
+            // reteives name of the gamepad mapping
+            const char* name = glfwGetGamepadName(GLFW_JOYSTICK_1);
+            logger::info("Controller {} connected.", name);
+        }
 
         // retreive gamepad state
         GLFWgamepadstate state;
@@ -152,6 +155,9 @@ void InputManager::pollControllerInputs() {
             // go through each button index and store its state in our array
             for (int i = 0; i < GLFW_GAMEPAD_BUTTON_LAST + 1; i++) {
                 controllerButtons[i] = state.buttons[i];
+                if (state.buttons[i] == GLFW_RELEASE) {
+                    controllerButtonConsumed[i] = false;
+                }
             }
 
             // GLFW_GAMEPAD_AXIS_LAST is a constant equal to the largest available index in the axis array
@@ -163,9 +169,13 @@ void InputManager::pollControllerInputs() {
     }
     else {
         // controller has disconnected, clear all controller state info
-        controllerConnected = false;
-        controllerButtons.clear();
-        controllerAxes.clear();
+        if (controllerConnected) {
+            logger::info("Controller disconnected.");
+            controllerConnected = false;
+            controllerButtons.clear();
+            controllerButtonConsumed.clear();
+            controllerAxes.clear();
+        }
     }
 }
 
@@ -184,9 +194,30 @@ bool InputManager::IsControllerButtonDown(int const controllerButton) const
 
 float InputManager::GetControllerAxis(int const controllerAxis) const
 {
-    return controllerAxes.at(controllerAxis);
+    auto const findResult = controllerAxes.find(controllerAxis);
+    if (findResult != controllerAxes.end())
+    {
+        return findResult->second;
+    }
+    return 0.0f;
 }
 
 bool InputManager::IsControllerConnected() {
     return controllerConnected;
+}
+
+bool InputManager::isControllerButtonPressedOnce(int const controllerButton)
+{
+    auto const findResult = controllerButtons.find(controllerButton);
+    if (findResult != controllerButtons.end() && findResult->second == GLFW_PRESS)
+    {
+        auto const consumedResult = controllerButtonConsumed.find(controllerButton);
+        if (consumedResult == controllerButtonConsumed.end() || !consumedResult->second)
+        {
+            controllerButtonConsumed[controllerButton] = true;
+            logger::info("Controller button {} pressed once.", controllerButton);
+            return true;
+        }
+    }
+    return false;
 }

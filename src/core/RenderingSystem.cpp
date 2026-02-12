@@ -110,11 +110,6 @@ void RenderingSystem::processCameraInput(float deltaTime)
     previousCursorPosition = cursorPosition;
 }
 
-void RenderingSystem::gamePaused() {
-    isGamePaused = !isGamePaused;
-    logger::info("Game is paused...");
-}
-
 bool RenderingSystem::init()
 {
     // Initialize GLFW (needs to be done before creating Window)
@@ -558,7 +553,7 @@ void RenderingSystem::updateUI()
     imguiWrapper->renderFPS();
     imguiPanel->cameraStats = activeCamera->getStats();
     imguiPanel->update();
-    
+
     // Finish ImGui frame
     imguiWrapper->endFrame();
 }

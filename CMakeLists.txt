@@ -30,7 +30,7 @@ file(GLOB_RECURSE GAME_SRC CONFIGURE_DEPENDS
     src/*.hpp
     src/*.h
 )
-add_executable(${APP_NAME} ${GAME_SRC})
+add_executable(${APP_NAME} ${GAME_SRC} "src/ui/GameMenus.cpp")
 target_include_directories(${APP_NAME} PRIVATE src)
 
 # Force static runtime library for the target (match PhysX)

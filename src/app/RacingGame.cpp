@@ -126,6 +126,8 @@ RacingGame::RacingGame()
     textSystem = std::make_unique<Text>();
 
     textSystem->setProjection(1440.0f, 1440.0f);
+
+    menus = std::make_unique<GameMenus>(textSystem.get(), renderingSystem->getInputManager().get(), gameState);
 }
 
 
@@ -136,13 +138,26 @@ void RacingGame::run()
 
     while (!renderingSystem->shouldClose())
     {
-        gameTime.update();
+        // keep checking which input system we are using
+        menus->checkInputSystem();
 
-        // 5. You can also add/remove components at runtime to change entity behavior
-        // After 20 seconds, add a RigidBody component to sphere2 (Mars) to make it fall
-        if (gameTime.currentTime >= 20.0 && !addedRigidBodyToMars) {
-            gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(0.f, 20.f, 0.f);
-            gCoordinator.GetComponent<PhysxTransform>(Mars).scale = glm::vec3(1.f);
+        // keep taking inputs in case pause menu is called
+        MenuAction actionButtons = menus->pollInputs();
+
+        // check for entering game
+        if (actionButtons == MenuAction::StartGame || actionButtons == MenuAction::ResumeGame) {
+            gameState = GameState::InGame;
+        }
+
+        // if in game
+        if (gameState == GameState::InGame) {
+            gameTime.update();
+
+            // 5. You can also add/remove components at runtime to change entity behavior
+            // After 20 seconds, add a RigidBody component to sphere2 (Mars) to make it fall
+            if (gameTime.currentTime >= 20.0 && !addedRigidBodyToMars) {
+                gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(0.f, 20.f, 0.f);
+                gCoordinator.GetComponent<PhysxTransform>(Mars).scale = glm::vec3(1.f);
 
             gCoordinator.AddComponent(
                 Mars,
@@ -173,7 +188,7 @@ void RacingGame::run()
             gameTime.discardExcessTime();
         }
 
-        renderingSystem->update(gameTime.fpsF());
+            renderingSystem->update(gameTime.fpsF());
 
         // If entity exists, update camera target to follow the player vehicle
         // We don't assume anymore that it's in the first position of the entity list, so we directly access it by its Entity ID
@@ -183,30 +198,73 @@ void RacingGame::run()
             renderingSystem->updateCameraTarget(targetPos);
         }
 
-        renderingSystem->updateUI();
+            renderingSystem->updateUI();
 
-        // Must be called after renderer update, but before text rendering
-        textSystem->beginText();
+            // Must be called after renderer update, but before text rendering
+            textSystem->beginText();
 
-        textSystem->renderText("Hello!",
-            { 100.f, 1200.f, 1.f }, { 0.5f, 0.8f, 0.2f });
+            textSystem->loadFont("arial.ttf", 48);
 
-        textSystem->renderText(
-            "Rendered Frames: " + std::to_string(gameTime.frameCount),
-            { 100.f, 1150.f, 0.75f }, { 0.2f, 0.5f, 0.8f });
+            textSystem->renderText("Hello!",
+                { 100.f, 1200.f, 1.f }, { 0.5f, 0.8f, 0.2f });
 
-        textSystem->renderText(
-            "Physics Frames: " + std::to_string(gameTime.physicsFrameCount),
-            { 100.f, 1100.f, 0.75f }, { 0.5f, 0.2f, 0.8f });
+            textSystem->renderText(
+                "Rendered Frames: " + std::to_string(gameTime.frameCount),
+                { 100.f, 1150.f, 0.75f }, { 0.2f, 0.5f, 0.8f });
 
-        textSystem->renderText(
-            "Game FPS: " + std::to_string(1.0f / gameTime.fpsF()),
-            { 100.f, 1050.f, 0.75f }, { 0.8f, 0.8f, 0.2f });
+            textSystem->renderText(
+                "Physics Frames: " + std::to_string(gameTime.physicsFrameCount),
+                { 100.f, 1100.f, 0.75f }, { 0.5f, 0.2f, 0.8f });
 
-        textSystem->endText();
+            textSystem->renderText(
+                "Game FPS: " + std::to_string(1.0f / gameTime.fpsF()),
+                { 100.f, 1050.f, 0.75f }, { 0.8f, 0.8f, 0.2f });
 
-        // Must be called last
-        renderingSystem->endFrame();
+            textSystem->endText();
+
+            // Must be called last
+            renderingSystem->endFrame();
+        }
+        else if (gameState == GameState::MainMenu) {
+            // render UI for main menu, take note of the action taken
+            MenuAction actionCursor = menus->renderMainMenu();
+
+            // if "Start" is pressed, go in the game
+            if (actionButtons == MenuAction::StartGame || actionCursor == MenuAction::StartGame) {
+                gameState = GameState::InGame;
+            }
+
+            // swap buffer
+            renderingSystem->endFrame();
+        }
+        else if (gameState == GameState::Pause) {
+            // render UI for pause menu, take note of the action taken
+            MenuAction actionCursor = menus->renderPauseMenu();
+
+            // if "Resume" is pressed, return to the game
+            if (actionButtons == MenuAction::ResumeGame || actionCursor == MenuAction::ResumeGame) {
+                gameState = GameState::InGame;
+            }
+            // if "Quit" is pressed, return to the main menu
+            else if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
+                gameState = GameState::MainMenu;
+            }
+
+            // swap buffer
+            renderingSystem->endFrame();
+        }
+        else if (gameState == GameState::GameOver) {
+            // render UI for race finished, take note of the action taken
+            MenuAction actionCursor = menus->renderGameOver();
+
+            // if "Return to main menu" is pressed, return to the main menu
+            if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
+                gameState = GameState::MainMenu;
+            }
+
+            // swap buffer
+            renderingSystem->endFrame();
+        }
     }
     logger::info("Shutting down systems...");
     renderingSystem->cleanup();

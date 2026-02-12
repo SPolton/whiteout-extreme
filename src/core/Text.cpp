@@ -13,7 +13,8 @@ Text::Text()
 Text::Text(const std::string& vertexPath, const std::string& fragmentPath)
     : textShader(vertexPath, fragmentPath)
 {
-    characters = initFont("assets/fonts/Arial.ttf");
+    // default use arial
+    characters = initFont("assets/fonts/Arial.ttf", 48);
     
     glBindVertexArray(textVAO);
     glBindBuffer(GL_ARRAY_BUFFER, textVBO);
@@ -28,7 +29,7 @@ Text::Text(const std::string& vertexPath, const std::string& fragmentPath)
     logger::info("Text renderer initialized with {} characters", characters.size());
 }
 
-charMap Text::initFont(const char* font) {
+charMap Text::initFont(const char* fontName, int size) {
     charMap Characters;
     FT_Library ft;
     if (FT_Init_FreeType(&ft))
@@ -38,14 +39,14 @@ charMap Text::initFont(const char* font) {
     }
 
     FT_Face face;
-    if (FT_New_Face(ft, font, 0, &face))
+    if (FT_New_Face(ft, fontName, 0, &face))
     {
-        logger::error("FREETYPE: Failed to load font: {}", font);
+        logger::error("FREETYPE: Failed to load font: {}", fontName);
         FT_Done_FreeType(ft);
         return Characters;
     }
     
-    FT_Set_Pixel_Sizes(face, 0, 48);
+    FT_Set_Pixel_Sizes(face, 0, size);
     
     GLint previousUnpackAlignment;
     glGetIntegerv(GL_UNPACK_ALIGNMENT, &previousUnpackAlignment);
@@ -163,4 +164,10 @@ void Text::endText() {
     glDisable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
     glUseProgram(0);
+}
+
+void Text::loadFont(const std::string& fontName, int size)
+{
+    std::string fontPath = "assets/fonts/" + fontName;
+    characters = initFont(fontPath.c_str(), size);
 }
