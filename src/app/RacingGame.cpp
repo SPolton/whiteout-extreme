@@ -142,10 +142,10 @@ void RacingGame::run()
         menus->checkInputSystem();
 
         // keep taking inputs in case pause menu is called
-        MenuAction actionTaken = menus->pollInputs();
+        MenuAction actionButtons = menus->pollInputs();
 
         // check for entering game
-        if (actionTaken == MenuAction::StartGame) {
+        if (actionButtons == MenuAction::StartGame || actionButtons == MenuAction::ResumeGame) {
             gameState = GameState::InGame;
         }
 
@@ -227,10 +227,10 @@ void RacingGame::run()
         }
         else if (gameState == GameState::MainMenu) {
             // render UI for main menu, take note of the action taken
-            MenuAction action = menus->renderMainMenu();
+            MenuAction actionCursor = menus->renderMainMenu();
 
             // if "Start" is pressed, go in the game
-            if (action == MenuAction::StartGame) {
+            if (actionButtons == MenuAction::StartGame || actionCursor == MenuAction::StartGame) {
                 gameState = GameState::InGame;
             }
 
@@ -239,14 +239,14 @@ void RacingGame::run()
         }
         else if (gameState == GameState::Pause) {
             // render UI for pause menu, take note of the action taken
-            MenuAction action = menus->renderPauseMenu();
+            MenuAction actionCursor = menus->renderPauseMenu();
 
             // if "Resume" is pressed, return to the game
-            if (action == MenuAction::ResumeGame) {
+            if (actionButtons == MenuAction::ResumeGame || actionCursor == MenuAction::ResumeGame) {
                 gameState = GameState::InGame;
             }
             // if "Quit" is pressed, return to the main menu
-            else if (action == MenuAction::GoToMainMenu) {
+            else if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
                 gameState = GameState::MainMenu;
             }
 
@@ -255,10 +255,10 @@ void RacingGame::run()
         }
         else if (gameState == GameState::GameOver) {
             // render UI for race finished, take note of the action taken
-            MenuAction action = menus->renderGameOver();
+            MenuAction actionCursor = menus->renderGameOver();
 
             // if "Return to main menu" is pressed, return to the main menu
-            if (action == MenuAction::GoToMainMenu) {
+            if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
                 gameState = GameState::MainMenu;
             }
 

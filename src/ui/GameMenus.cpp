@@ -27,25 +27,25 @@ MenuAction GameMenus::pollInputs() {
         if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_START)) {
             // if in game, render pause menu
             if (gameState == GameState::InGame) {
-                gameState = GameState::Pause; // update game state
+                gameState = GameState::Pause;
                 return MenuAction::None;
+            }
+            else if (gameState == GameState::Pause) {
+                return MenuAction::ResumeGame;
             }
         }
         // triggers main menu (do not allow keyboard input to navigate to main menu while in game)
-        if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_A) && gameState != GameState::InGame) {
-            // if on main menu, then start game
+        else if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_A) && gameState != GameState::InGame) {
+            // if one main menu, then start game
             if (gameState == GameState::MainMenu) {
-                gameState = GameState::InGame; // update game state
                 return MenuAction::StartGame;
             }
-            // if paused, resume game
             else if (gameState == GameState::Pause) {
-                gameState = GameState::InGame; // update game state
                 return MenuAction::ResumeGame;
             }
         }
         // B button to go back from pause to main menu
-        if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_B)) {
+        else if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_B)) {
             // if in pause menu, render main menu
             if (gameState == GameState::Pause) {
                 gameState = GameState::MainMenu; // update game state
@@ -56,15 +56,15 @@ MenuAction GameMenus::pollInputs() {
 
     // otherwise keyboard input works too
     // triggers pause menu
+            // triggers pause menu
     if (inputManager->isKeyPressedOnce(GLFW_KEY_P)) {
         // if paused, then resume game
         if (gameState == GameState::Pause) {
-            gameState = GameState::InGame; // update game state
-            return MenuAction::ResumeGame;
+            return MenuAction::GoToMainMenu;
         }
         // if in game, render pause menu
         else if (gameState == GameState::InGame) {
-            gameState = GameState::Pause; // update game state
+            gameState = GameState::Pause;
             return MenuAction::None;
         }
     }
@@ -72,13 +72,10 @@ MenuAction GameMenus::pollInputs() {
     else if (inputManager->isKeyPressedOnce(GLFW_KEY_M) && gameState != GameState::InGame) {
         // if one main menu, then start game
         if (gameState == GameState::MainMenu) {
-            gameState = GameState::InGame; // update game state
             return MenuAction::StartGame;
         }
-        // if in pause menu, render main menu
         else if (gameState == GameState::Pause) {
-            gameState = GameState::MainMenu; // update game state
-            return MenuAction::GoToMainMenu;
+            return MenuAction::ResumeGame;
         }
     }
 
@@ -106,21 +103,6 @@ MenuAction GameMenus::renderMainMenu()
 
     // set the "Start" button to the default color (used when not hovered upon)
     glm::vec3 startColor = defaultColor;
-
-    // check for controller inputs
-    if (inputSystem == 1) {
-        // confirm to go into game
-        if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_A)) {
-            // if "A" is pressed (bottom button?), confirm to start game
-            gameState = GameState::InGame; // update game state
-            return MenuAction::StartGame;
-        }
-    }
-    // otherwise it must be keyboard/mouse input
-    if (inputManager->isKeyPressedOnce(GLFW_KEY_M)) {
-        gameState = GameState::InGame; // update game state
-        return MenuAction::StartGame; // start the game
-    }
 
     // check if mouse is hovered over the "Start" button
     if (cursorPos.x > 485.f && cursorPos.x < 700.f) {
@@ -168,28 +150,6 @@ MenuAction GameMenus::renderPauseMenu() {
     // set the buttons to the default color (used when not hovered upon)
     glm::vec3 resumeColor = defaultColor;
     glm::vec3 quitColor = defaultColor;
-
-    // check for controller inputs
-    if (inputSystem == 1) {
-        if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_A)) {
-            gameState = GameState::InGame; // update game state
-            return MenuAction::ResumeGame; // resume game
-        }
-        else if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_B)) {
-            gameState = GameState::MainMenu; // update game state
-            return MenuAction::GoToMainMenu; // return to main menu
-        }
-    }
-    // otherwise it must be keyboard/mouse input
-    // check keyboard input
-    if (inputManager->isKeyPressedOnce(GLFW_KEY_P)) {
-        gameState = GameState::InGame; // update game state
-        return MenuAction::ResumeGame; // resume game
-    }
-    else if (inputManager->isKeyPressedOnce(GLFW_KEY_M)) {
-        gameState = GameState::MainMenu; // update game state
-        return MenuAction::GoToMainMenu; // return to main menu
-    }
 
     // check if mouse is hovered over the "Resume" button
     if (cursorPos.x > 495.f && cursorPos.x < 685.f) {
@@ -256,7 +216,6 @@ MenuAction GameMenus::renderGameOver()
     if (inputSystem == 1) {
         // acknowledge game is over by clicking confirm (A)
         if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_A)) {
-            gameState = GameState::MainMenu; // update game state
             // if "A" is pressed (bottom button?), go to main menu
             return MenuAction::GoToMainMenu;
         }
