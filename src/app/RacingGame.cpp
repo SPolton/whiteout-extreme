@@ -8,8 +8,6 @@
 #include "components/VehicleComponent.h"
 #include "ecs/Coordinator.hpp"
 
-#include "input/Inputmanager.hpp"
-
 //ECS global coordinator
 Coordinator gCoordinator;
 

@@ -14,7 +14,7 @@
 #include "ecs/Coordinator.hpp"
 #include "ecs/System.hpp"
 
-#include "input/InputManager.hpp"
+#include "input/glfw/InputManager.hpp"
 #include "input/glfw/Window.hpp"
 #include "input/panel/ImGuiPanel.hpp"
 #include "input/panel/ImGuiWrapper.hpp"
