@@ -21,28 +21,28 @@ public:
     virtual ~InputManager() = default;
 
     [[nodiscard]]
-    bool IsKeyboardButtonDown(int keyboardButton) const;
+    bool isKeyPressed(int keyboardButton) const;
 
     [[nodiscard]]
     bool isKeyPressedOnce(int keyboardButton);
 
     [[nodiscard]]
-    bool IsMouseButtonDown(int mouseButton) const;
+    bool isMousePressed(int mouseButton) const;
 
     [[nodiscard]]
     bool isMousePressedOnce(int mouseButton);
 
     [[nodiscard]]
-    glm::dvec2 const & CursorPosition() const;
+    glm::dvec2 const & cursorPosition() const;
 
     // controller queries
     void pollControllerInputs();
 
-    bool IsControllerButtonDown(int controllerButton) const;
+    bool isControllerButtonPressed(int controllerButton) const;
 
-    float GetControllerAxis(int controllerAxis) const;
+    float getControllerAxis(int controllerAxis) const;
 
-    bool IsControllerConnected();
+    bool isControllerConnected();
 
     bool isControllerButtonPressedOnce(int const controllerButton);
 

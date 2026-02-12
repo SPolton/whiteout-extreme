@@ -41,13 +41,13 @@ void RenderingSystem::processInput(float deltaTime)
 // Camera Input Processing
 void RenderingSystem::processCameraInput(float deltaTime)
 {
-    auto const cursorPosition = inputManager->CursorPosition();
+    auto const cursorPosition = inputManager->cursorPosition();
 
     // Check if we're using FreeCamera
     if (activeCamera == freeCamera.get())
     {
         // FreeCamera uses mouse movement when right mouse button is held
-        if (inputManager->IsMouseButtonDown(GLFW_MOUSE_BUTTON_RIGHT)) {
+        if (inputManager->isMousePressed(GLFW_MOUSE_BUTTON_RIGHT)) {
             if (cursorPositionIsSetOnce) {
                 auto const deltaPosition = cursorPosition - previousCursorPosition;
                 freeCamera->processMouseMovement(
@@ -58,17 +58,17 @@ void RenderingSystem::processCameraInput(float deltaTime)
         }
 
         // IJKL/UO controls for FreeCamera movement (don't interfere with WASD game controls)
-        if (inputManager->IsKeyboardButtonDown(GLFW_KEY_I))
+        if (inputManager->isKeyPressed(GLFW_KEY_I))
             freeCamera->processKeyboard(FreeCamera::Movement::FORWARD, deltaTime);
-        if (inputManager->IsKeyboardButtonDown(GLFW_KEY_K))
+        if (inputManager->isKeyPressed(GLFW_KEY_K))
             freeCamera->processKeyboard(FreeCamera::Movement::BACKWARD, deltaTime);
-        if (inputManager->IsKeyboardButtonDown(GLFW_KEY_J))
+        if (inputManager->isKeyPressed(GLFW_KEY_J))
             freeCamera->processKeyboard(FreeCamera::Movement::LEFT, deltaTime);
-        if (inputManager->IsKeyboardButtonDown(GLFW_KEY_L))
+        if (inputManager->isKeyPressed(GLFW_KEY_L))
             freeCamera->processKeyboard(FreeCamera::Movement::RIGHT, deltaTime);
-        if (inputManager->IsKeyboardButtonDown(GLFW_KEY_U))
+        if (inputManager->isKeyPressed(GLFW_KEY_U))
             freeCamera->processKeyboard(FreeCamera::Movement::UP, deltaTime);
-        if (inputManager->IsKeyboardButtonDown(GLFW_KEY_O))
+        if (inputManager->isKeyPressed(GLFW_KEY_O))
             freeCamera->processKeyboard(FreeCamera::Movement::DOWN, deltaTime);
     }
     else if (activeCamera == turntableCamera.get())
@@ -77,7 +77,7 @@ void RenderingSystem::processCameraInput(float deltaTime)
         inputManager->pollControllerInputs();
 
         // TurnTableCamera uses right-click drag
-        if (inputManager->IsMouseButtonDown(GLFW_MOUSE_BUTTON_RIGHT)) {
+        if (inputManager->isMousePressed(GLFW_MOUSE_BUTTON_RIGHT)) {
             if (cursorPositionIsSetOnce) {
                 float const aspectRatio = static_cast<float>(window->getWidth()) / static_cast<float>(window->getHeight());
                 auto const deltaPosition = cursorPosition - previousCursorPosition;
@@ -85,10 +85,10 @@ void RenderingSystem::processCameraInput(float deltaTime)
                 turntableCamera->adjustPhi(-static_cast<float>(deltaPosition.y) * deltaTime * imguiPanel->camSpeed);
             }
         }
-        else if (inputManager->IsControllerConnected())
+        else if (inputManager->isControllerConnected())
         {
-            float rx = inputManager->GetControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_X);
-            float ry = inputManager->GetControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_Y);
+            float rx = inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_X);
+            float ry = inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_Y);
 
             const float deadzone = 0.20f;
             if (std::abs(rx) < deadzone) rx = 0.0f;

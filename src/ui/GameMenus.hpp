@@ -1,8 +1,8 @@
 #pragma once
 
-#include "core/Text.h"
-#include "input/InputManager.hpp"
 #include "app/GameState.hpp"
+#include "core/Text.h"
+#include "input/glfw/InputManager.hpp"
 
 // types of actions to take
 enum class MenuAction {

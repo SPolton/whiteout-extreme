@@ -63,7 +63,7 @@ void InputManager::scrollCallback(double const xoffset, double const yoffset)
 }
 
 [[nodiscard]]
-bool InputManager::IsKeyboardButtonDown(int const keyboardButton) const
+bool InputManager::isKeyPressed(int const keyboardButton) const
 {
     bool isButtonDown = false;
     auto const findResult = mKeyStatusMap.find(keyboardButton);
@@ -90,7 +90,7 @@ bool InputManager::isKeyPressedOnce(int const keyboardButton)
     return false;
 }
 
-bool InputManager::IsMouseButtonDown(int const mouseButton) const
+bool InputManager::isMousePressed(int const mouseButton) const
 {
     bool isButtonDown = false;
     auto const findResult = mMouseStatusMap.find(mouseButton);
@@ -117,7 +117,7 @@ bool InputManager::isMousePressedOnce(int const mouseButton)
     return false;
 }
 
-glm::dvec2 const &InputManager::CursorPosition() const
+glm::dvec2 const &InputManager::cursorPosition() const
 {
     return mCursorPosition;
 }
@@ -179,7 +179,7 @@ void InputManager::pollControllerInputs() {
     }
 }
 
-bool InputManager::IsControllerButtonDown(int const controllerButton) const
+bool InputManager::isControllerButtonPressed(int const controllerButton) const
 {
     // initialize to false
     bool isButtonDown = false;
@@ -192,7 +192,7 @@ bool InputManager::IsControllerButtonDown(int const controllerButton) const
     return isButtonDown;
 }
 
-float InputManager::GetControllerAxis(int const controllerAxis) const
+float InputManager::getControllerAxis(int const controllerAxis) const
 {
     auto const findResult = controllerAxes.find(controllerAxis);
     if (findResult != controllerAxes.end())
@@ -202,7 +202,7 @@ float InputManager::GetControllerAxis(int const controllerAxis) const
     return 0.0f;
 }
 
-bool InputManager::IsControllerConnected() {
+bool InputManager::isControllerConnected() {
     return controllerConnected;
 }
 

@@ -11,7 +11,7 @@ void GameMenus::checkInputSystem() {
     inputManager->pollControllerInputs();
 
     // based on whether controller is connected
-    if (inputManager->IsControllerConnected()) {
+    if (inputManager->isControllerConnected()) {
         inputSystem = 1; // set input system to controller
     }
     else {
@@ -90,7 +90,7 @@ MenuAction GameMenus::renderMainMenu()
 
     // when in a menu, check for cursor position to highlight "buttons"
     // get cursor position
-    glm::dvec2 cursorPos = inputManager->CursorPosition();
+    glm::dvec2 cursorPos = inputManager->cursorPosition();
 
     textSystem->beginText();
 
@@ -134,7 +134,7 @@ MenuAction GameMenus::renderPauseMenu() {
 
     // when in a menu, check for cursor position to highlight "buttons"
     // get cursor position
-    glm::dvec2 cursorPos = inputManager->CursorPosition();
+    glm::dvec2 cursorPos = inputManager->cursorPosition();
 
     textSystem->beginText();
 
@@ -198,7 +198,7 @@ MenuAction GameMenus::renderGameOver()
 
     // when in a menu, check for cursor position to highlight "buttons"
     // get cursor position
-    glm::dvec2 cursorPos = inputManager->CursorPosition();
+    glm::dvec2 cursorPos = inputManager->cursorPosition();
 
     textSystem->beginText();
 

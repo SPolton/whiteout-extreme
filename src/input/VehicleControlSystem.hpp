@@ -2,7 +2,7 @@
 
 #include "components/VehicleComponent.h"
 #include "ecs/System.hpp"
-#include "input/InputManager.hpp"
+#include "input/glfw/InputManager.hpp"
 #include <memory>
 
 class VehicleControlSystem : public System {
