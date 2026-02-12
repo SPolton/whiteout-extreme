@@ -27,6 +27,7 @@ MenuAction GameMenus::pollInputs() {
         if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_START)) {
             // if paused, then resume game
             if (gameState == GameState::Pause) {
+                gameState = GameState::InGame; // update game state
                 return MenuAction::ResumeGame;
             }
             // if in game, render pause menu
@@ -37,6 +38,7 @@ MenuAction GameMenus::pollInputs() {
         }
         // triggers main menu (do not allow keyboard input to navigate to main menu while in game)
         else if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_A) && gameState != GameState::InGame) {
+            gameState = GameState::MainMenu; // update game state
             return MenuAction::GoToMainMenu;
         }
     }
@@ -46,6 +48,7 @@ MenuAction GameMenus::pollInputs() {
     if (inputManager->isKeyPressedOnce(GLFW_KEY_P)) {
         // if paused, then resume game
         if (gameState == GameState::Pause) {
+            gameState = GameState::InGame; // update game state
             return MenuAction::ResumeGame;
         }
         // if in game, render pause menu
@@ -56,6 +59,7 @@ MenuAction GameMenus::pollInputs() {
     }
     // triggers main menu (do not allow keyboard input to navigate to main menu while in game)
     else if (inputManager->isKeyPressedOnce(GLFW_KEY_M) && gameState != GameState::InGame) {
+        gameState = GameState::MainMenu; // update game state
         return MenuAction::GoToMainMenu;
     }
 }
@@ -87,11 +91,13 @@ MenuAction GameMenus::renderMainMenu()
         // confirm to go into game
         if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_A)) {
             // if "A" is pressed (bottom button?), confirm to start game
+            gameState = GameState::InGame; // update game state
             return MenuAction::StartGame;
         }
     }
     // otherwise it must be keyboard/mouse input
     if (inputManager->isKeyPressedOnce(GLFW_KEY_M)) {
+        gameState = GameState::InGame; // update game state
         return MenuAction::StartGame; // start the game
     }
 
@@ -145,18 +151,22 @@ MenuAction GameMenus::renderPauseMenu() {
     // check for controller inputs
     if (inputSystem == 1) {
         if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_A)) {
+            gameState = GameState::InGame; // update game state
             return MenuAction::ResumeGame; // resume game
         }
         else if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_START)) {
+            gameState = GameState::MainMenu; // update game state
             return MenuAction::GoToMainMenu; // return to main menu
         }
     }
     // otherwise it must be keyboard/mouse input
     // check keyboard input
     if (inputManager->isKeyPressedOnce(GLFW_KEY_P)) {
+        gameState = GameState::InGame; // update game state
         return MenuAction::ResumeGame; // resume game
     }
     else if (inputManager->isKeyPressedOnce(GLFW_KEY_M)) {
+        gameState = GameState::MainMenu; // update game state
         return MenuAction::GoToMainMenu; // return to main menu
     }
 
@@ -225,6 +235,7 @@ MenuAction GameMenus::renderGameOver()
     if (inputSystem == 1) {
         // acknowledge game is over by clicking confirm (A)
         if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_A)) {
+            gameState = GameState::MainMenu; // update game state
             // if "A" is pressed (bottom button?), go to main menu
             return MenuAction::GoToMainMenu;
         }
