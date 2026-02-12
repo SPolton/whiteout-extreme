@@ -21,13 +21,13 @@ public:
     virtual ~InputManager() = default;
 
     [[nodiscard]]
-    bool IsKeyboardButtonDown(int keyboardButton) const;
+    bool isKeyPressed(int keyboardButton) const;
 
     [[nodiscard]]
     bool isKeyPressedOnce(int keyboardButton);
 
     [[nodiscard]]
-    bool IsMouseButtonDown(int mouseButton) const;
+    bool isMousePressed(int mouseButton) const;
 
     [[nodiscard]]
     bool isMousePressedOnce(int mouseButton);

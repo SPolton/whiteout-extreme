@@ -63,7 +63,7 @@ void InputManager::scrollCallback(double const xoffset, double const yoffset)
 }
 
 [[nodiscard]]
-bool InputManager::IsKeyboardButtonDown(int const keyboardButton) const
+bool InputManager::isKeyPressed(int const keyboardButton) const
 {
     bool isButtonDown = false;
     auto const findResult = mKeyStatusMap.find(keyboardButton);
@@ -90,7 +90,7 @@ bool InputManager::isKeyPressedOnce(int const keyboardButton)
     return false;
 }
 
-bool InputManager::IsMouseButtonDown(int const mouseButton) const
+bool InputManager::isMousePressed(int const mouseButton) const
 {
     bool isButtonDown = false;
     auto const findResult = mMouseStatusMap.find(mouseButton);

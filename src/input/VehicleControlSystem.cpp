@@ -103,18 +103,18 @@ void VehicleControlSystem::processKeyboardInput() {
     * D (right arrow) = steer right
     */
 
-    if (inputManager->IsKeyboardButtonDown(GLFW_KEY_W) || inputManager->IsKeyboardButtonDown(GLFW_KEY_UP)) {
+    if (inputManager->isKeyPressed(GLFW_KEY_W) || inputManager->isKeyPressed(GLFW_KEY_UP)) {
         accelerate();
     }
-    else if (inputManager->IsKeyboardButtonDown(GLFW_KEY_S) || inputManager->IsKeyboardButtonDown(GLFW_KEY_DOWN)) {
+    else if (inputManager->isKeyPressed(GLFW_KEY_S) || inputManager->isKeyPressed(GLFW_KEY_DOWN)) {
         brake();
     }
 
     // Should be able to steer left or right while accelerating
-    if (inputManager->IsKeyboardButtonDown(GLFW_KEY_D) || inputManager->IsKeyboardButtonDown(GLFW_KEY_RIGHT)) {
+    if (inputManager->isKeyPressed(GLFW_KEY_D) || inputManager->isKeyPressed(GLFW_KEY_RIGHT)) {
         steerRight();
     }
-    else if (inputManager->IsKeyboardButtonDown(GLFW_KEY_A) || inputManager->IsKeyboardButtonDown(GLFW_KEY_LEFT)) {
+    else if (inputManager->isKeyPressed(GLFW_KEY_A) || inputManager->isKeyPressed(GLFW_KEY_LEFT)) {
         steerLeft();
     }
 
@@ -125,15 +125,15 @@ void VehicleControlSystem::processKeyboardInput() {
     */
 
     // let us just assume we use one skill at a time
-    if (inputManager->IsKeyboardButtonDown(GLFW_KEY_LEFT_SHIFT)) {
+    if (inputManager->isKeyPressed(GLFW_KEY_LEFT_SHIFT)) {
         boost();
     }
-    else if (inputManager->IsKeyboardButtonDown(GLFW_KEY_SPACE)) {
+    else if (inputManager->isKeyPressed(GLFW_KEY_SPACE)) {
         //throwSnowball();
     }
 
     // triggers menu/pause
-    if (inputManager->IsKeyboardButtonDown(GLFW_KEY_P)) {
+    if (inputManager->isKeyPressed(GLFW_KEY_P)) {
         //gamePaused();
     }
 }
