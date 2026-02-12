@@ -134,12 +134,13 @@ void InputManager::pollControllerInputs() {
     if (glfwJoystickIsGamepad(GLFW_JOYSTICK_1))
     {
         // if successful, means we are connected. Update connection state
-        controllerConnected = true;
+        if (!controllerConnected) {
+            controllerConnected = true;
         
-        // reteives name of the gamepad mapping
-        const char* name = glfwGetGamepadName(GLFW_JOYSTICK_1);
-
-        logger::debug("Controller {} connected.", name);
+            // reteives name of the gamepad mapping
+            const char* name = glfwGetGamepadName(GLFW_JOYSTICK_1);
+            logger::info("Controller {} connected.", name);
+        }
 
         // retreive gamepad state
         GLFWgamepadstate state;
@@ -168,10 +169,13 @@ void InputManager::pollControllerInputs() {
     }
     else {
         // controller has disconnected, clear all controller state info
-        controllerConnected = false;
-        controllerButtons.clear();
-        controllerButtonConsumed.clear();
-        controllerAxes.clear();
+        if (controllerConnected) {
+            logger::info("Controller disconnected.");
+            controllerConnected = false;
+            controllerButtons.clear();
+            controllerButtonConsumed.clear();
+            controllerAxes.clear();
+        }
     }
 }
 
