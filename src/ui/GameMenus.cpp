@@ -40,24 +40,23 @@ MenuAction GameMenus::pollInputs() {
             return MenuAction::GoToMainMenu;
         }
     }
-    // otherwise it must be keyboard input
-    else {
-        // triggers pause menu
-        if (inputManager->isKeyPressedOnce(GLFW_KEY_P)) {
-            // if paused, then resume game
-            if (gameState == GameState::Pause) {
-                return MenuAction::ResumeGame;
-            }
-            // if in game, render pause menu
-            else if (gameState == GameState::InGame) {
-                gameState = GameState::Pause; // update game state
-                return MenuAction::None;
-            }
+
+    // otherwise keyboard input works too
+    // triggers pause menu
+    if (inputManager->isKeyPressedOnce(GLFW_KEY_P)) {
+        // if paused, then resume game
+        if (gameState == GameState::Pause) {
+            return MenuAction::ResumeGame;
         }
-        // triggers main menu (do not allow keyboard input to navigate to main menu while in game)
-        else if (inputManager->isKeyPressedOnce(GLFW_KEY_M) && gameState != GameState::InGame) {
-            return MenuAction::GoToMainMenu;
+        // if in game, render pause menu
+        else if (gameState == GameState::InGame) {
+            gameState = GameState::Pause; // update game state
+            return MenuAction::None;
         }
+    }
+    // triggers main menu (do not allow keyboard input to navigate to main menu while in game)
+    else if (inputManager->isKeyPressedOnce(GLFW_KEY_M) && gameState != GameState::InGame) {
+        return MenuAction::GoToMainMenu;
     }
 }
 
@@ -92,22 +91,20 @@ MenuAction GameMenus::renderMainMenu()
         }
     }
     // otherwise it must be keyboard/mouse input
-    else {
-        if (inputManager->isKeyPressedOnce(GLFW_KEY_M)) {
-            return MenuAction::StartGame; // start the game
-        }
+    if (inputManager->isKeyPressedOnce(GLFW_KEY_M)) {
+        return MenuAction::StartGame; // start the game
+    }
 
-        // check if mouse is hovered over the "Start" button
-        if (cursorPos.x > 485.f && cursorPos.x < 700.f) {
-            if (cursorPos.y > 540.f && cursorPos.y < 580.f) {
-                // if it is, highlight in red
-                startColor = { 0.8f, 0.f, 0.f };
+    // check if mouse is hovered over the "Start" button
+    if (cursorPos.x > 485.f && cursorPos.x < 700.f) {
+        if (cursorPos.y > 540.f && cursorPos.y < 580.f) {
+            // if it is, highlight in red
+            startColor = { 0.8f, 0.f, 0.f };
 
-                // and check if the user clicks on the mouse while over the "Start" button
-                if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
-                    // if they do, toggle to NOT show the main menu
-                    return MenuAction::StartGame;
-                }
+            // and check if the user clicks on the mouse while over the "Start" button
+            if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
+                // if they do, toggle to NOT show the main menu
+                return MenuAction::StartGame;
             }
         }
     }
@@ -155,40 +152,38 @@ MenuAction GameMenus::renderPauseMenu() {
         }
     }
     // otherwise it must be keyboard/mouse input
-    else {
-        // check keyboard input
-        if (inputManager->isKeyPressedOnce(GLFW_KEY_P)) {
-            return MenuAction::ResumeGame; // resume game
-        }
-        else if (inputManager->isKeyPressedOnce(GLFW_KEY_M)) {
-            return MenuAction::GoToMainMenu; // return to main menu
-        }
+    // check keyboard input
+    if (inputManager->isKeyPressedOnce(GLFW_KEY_P)) {
+        return MenuAction::ResumeGame; // resume game
+    }
+    else if (inputManager->isKeyPressedOnce(GLFW_KEY_M)) {
+        return MenuAction::GoToMainMenu; // return to main menu
+    }
 
-        // check if mouse is hovered over the "Resume" button
-        if (cursorPos.x > 495.f && cursorPos.x < 685.f) {
-            if (cursorPos.y > 270.f && cursorPos.y < 300.f) {
-                // if it is, highlight in red
-                resumeColor = { 0.8f, 0.f, 0.f };
+    // check if mouse is hovered over the "Resume" button
+    if (cursorPos.x > 495.f && cursorPos.x < 685.f) {
+        if (cursorPos.y > 270.f && cursorPos.y < 300.f) {
+            // if it is, highlight in red
+            resumeColor = { 0.8f, 0.f, 0.f };
 
-                // and check if the user clicks on the mouse while over the "Resume" button
-                if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
-                    // if they do, resume the game
-                    return MenuAction::ResumeGame;
-                }
+            // and check if the user clicks on the mouse while over the "Resume" button
+            if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
+                // if they do, resume the game
+                return MenuAction::ResumeGame;
             }
         }
+    }
 
-        // check if mouse is hovered over the "Quit" button
-        if (cursorPos.x > 310.f && cursorPos.x < 895.f) {
-            if (cursorPos.y > 355.f && cursorPos.y < 385.f) {
-                // if it is, highlight in red
-                quitColor = { 0.8f, 0.f, 0.f };
+    // check if mouse is hovered over the "Quit" button
+    if (cursorPos.x > 310.f && cursorPos.x < 895.f) {
+        if (cursorPos.y > 355.f && cursorPos.y < 385.f) {
+            // if it is, highlight in red
+            quitColor = { 0.8f, 0.f, 0.f };
 
-                // and check if the user clicks on the mouse while over the "Quit" button
-                if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
-                    // and toggle to show the main menu
-                    return MenuAction::GoToMainMenu;
-                }
+            // and check if the user clicks on the mouse while over the "Quit" button
+            if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
+                // and toggle to show the main menu
+                return MenuAction::GoToMainMenu;
             }
         }
     }
@@ -235,18 +230,16 @@ MenuAction GameMenus::renderGameOver()
         }
     }
     // otherwise it must be keyboard/mouse input
-    else {
-        // check if mouse is hovered over the "Return to menu" button
-        if (cursorPos.x > 225.f && cursorPos.x < 1000.f) {
-            if (cursorPos.y > 540.f && cursorPos.y < 575.f) {
-                // if it is, highlight in red
-                startColor = { 0.8f, 0.f, 0.f };
+    // check if mouse is hovered over the "Return to menu" button
+    if (cursorPos.x > 225.f && cursorPos.x < 1000.f) {
+        if (cursorPos.y > 540.f && cursorPos.y < 575.f) {
+            // if it is, highlight in red
+            startColor = { 0.8f, 0.f, 0.f };
 
-                // and check if the user clicks on the mouse while over the "Return to menu" button
-                if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
-                    // if they do, toggle to show the main menu
-                    return MenuAction::GoToMainMenu;
-                }
+            // and check if the user clicks on the mouse while over the "Return to menu" button
+            if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
+                // if they do, toggle to show the main menu
+                return MenuAction::GoToMainMenu;
             }
         }
     }
