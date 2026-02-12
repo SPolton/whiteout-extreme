@@ -11,7 +11,7 @@ void GameMenus::checkInputSystem() {
     inputManager->pollControllerInputs();
 
     // based on whether controller is connected
-    if (inputManager->IsControllerConnected()) {
+    if (inputManager->isControllerConnected()) {
         inputSystem = 1; // set input system to controller
     }
     else {

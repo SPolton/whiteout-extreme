@@ -179,7 +179,7 @@ void InputManager::pollControllerInputs() {
     }
 }
 
-bool InputManager::IsControllerButtonDown(int const controllerButton) const
+bool InputManager::isControllerButtonPressed(int const controllerButton) const
 {
     // initialize to false
     bool isButtonDown = false;
@@ -192,7 +192,7 @@ bool InputManager::IsControllerButtonDown(int const controllerButton) const
     return isButtonDown;
 }
 
-float InputManager::GetControllerAxis(int const controllerAxis) const
+float InputManager::getControllerAxis(int const controllerAxis) const
 {
     auto const findResult = controllerAxes.find(controllerAxis);
     if (findResult != controllerAxes.end())
@@ -202,7 +202,7 @@ float InputManager::GetControllerAxis(int const controllerAxis) const
     return 0.0f;
 }
 
-bool InputManager::IsControllerConnected() {
+bool InputManager::isControllerConnected() {
     return controllerConnected;
 }
 

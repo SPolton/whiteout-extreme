@@ -38,11 +38,11 @@ public:
     // controller queries
     void pollControllerInputs();
 
-    bool IsControllerButtonDown(int controllerButton) const;
+    bool isControllerButtonPressed(int controllerButton) const;
 
-    float GetControllerAxis(int controllerAxis) const;
+    float getControllerAxis(int controllerAxis) const;
 
-    bool IsControllerConnected();
+    bool isControllerConnected();
 
     bool isControllerButtonPressedOnce(int const controllerButton);
 

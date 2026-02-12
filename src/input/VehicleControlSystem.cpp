@@ -41,7 +41,7 @@ void VehicleControlSystem::processInputs() {
     inputManager->pollControllerInputs();
 
     // based on whether controller is connected
-    if (inputManager->IsControllerConnected())
+    if (inputManager->isControllerConnected())
         processControllerInput();
 
     processKeyboardInput();
@@ -59,10 +59,10 @@ void VehicleControlSystem::processControllerInput() {
 
     // check for throttle/braking
     // anything greater than 0 means it is pressed
-    if (inputManager->GetControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER) > 0.0f) {
+    if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER) > 0.0f) {
         accelerate();
     }
-    else if (inputManager->GetControllerAxis(GLFW_GAMEPAD_AXIS_LEFT_TRIGGER) > 0.0f) {
+    else if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_LEFT_TRIGGER) > 0.0f) {
         brake();
     }
 
@@ -72,24 +72,24 @@ void VehicleControlSystem::processControllerInput() {
     // check for steering on left joystick
     // if positive, it is steering right
     // if negative, it is steering left
-    if (inputManager->GetControllerAxis(GLFW_GAMEPAD_AXIS_LEFT_X) > deadZone) {
+    if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_LEFT_X) > deadZone) {
         steerRight();
     }
-    else if (inputManager->GetControllerAxis(GLFW_GAMEPAD_AXIS_LEFT_X) < -deadZone) {
+    else if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_LEFT_X) < -deadZone) {
         steerLeft();
     }
 
     // if top button pressed, activate boost
     // if left button pressed, throw projectile
-    if (inputManager->IsControllerButtonDown(GLFW_GAMEPAD_BUTTON_Y)) {
+    if (inputManager->isControllerButtonPressed(GLFW_GAMEPAD_BUTTON_Y)) {
         boost();
     }
-    else if (inputManager->IsControllerButtonDown(GLFW_GAMEPAD_BUTTON_X)) {
+    else if (inputManager->isControllerButtonPressed(GLFW_GAMEPAD_BUTTON_X)) {
         //throwSnowball();
     }
 
     // triggers menu/pause
-    if (inputManager->IsControllerButtonDown(GLFW_GAMEPAD_BUTTON_START)) {
+    if (inputManager->isControllerButtonPressed(GLFW_GAMEPAD_BUTTON_START)) {
         //gamePaused();
     }
 }

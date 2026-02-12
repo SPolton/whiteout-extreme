@@ -85,10 +85,10 @@ void RenderingSystem::processCameraInput(float deltaTime)
                 turntableCamera->adjustPhi(-static_cast<float>(deltaPosition.y) * deltaTime * imguiPanel->camSpeed);
             }
         }
-        else if (inputManager->IsControllerConnected())
+        else if (inputManager->isControllerConnected())
         {
-            float rx = inputManager->GetControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_X);
-            float ry = inputManager->GetControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_Y);
+            float rx = inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_X);
+            float ry = inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_Y);
 
             const float deadzone = 0.20f;
             if (std::abs(rx) < deadzone) rx = 0.0f;
