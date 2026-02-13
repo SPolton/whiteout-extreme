@@ -37,4 +37,5 @@ private:
 
     // Skills
     void boost();
+    void throwSnowball();
 };

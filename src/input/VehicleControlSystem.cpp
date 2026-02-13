@@ -25,6 +25,8 @@ void VehicleControlSystem::update(float deltaTime) {
     for (auto const& entity : mEntities) {
         auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(entity);
 
+        if (vehicle.snowBallCooldown > 0.f) vehicle.snowBallCooldown -= deltaTime;
+
         if(vehicle.playerID == 0) {
             vehicle.throttle = currentThrottle;
             vehicle.brake = currentBrake;
@@ -91,7 +93,7 @@ void VehicleControlSystem::processControllerInput() {
         boost();
     }
     else if (inputManager->isControllerButtonPressed(GLFW_GAMEPAD_BUTTON_X)) {
-        //throwSnowball();
+        throwSnowball();
     }
 
     // triggers menu/pause
@@ -135,7 +137,7 @@ void VehicleControlSystem::processKeyboardInput() {
         boost();
     }
     else if (inputManager->isKeyPressed(GLFW_KEY_SPACE)) {
-        //throwSnowball();
+        throwSnowball();
     }
 
     // triggers menu/pause
@@ -184,4 +186,60 @@ void VehicleControlSystem::boost()
     // apply transformation here accelerate car even faster due to boost.
     // probably need a CD for this?
     currentThrottle = 1.f; // full throttle
+}
+
+void VehicleControlSystem::throwSnowball()
+{
+    // 1. Safety Check: Ensure the player entity is valid
+    if (!gCoordinator.HasComponent<VehicleComponent>(playerVehicleEntity)) return;
+
+    //  ...and that the snow ball cool down is finished
+    auto& vehicleComponent = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity);
+    if (vehicleComponent.snowBallCooldown > 0.f) return;
+
+    // ...and that the current camera is the TurnTable one
+    if (!renderingSystem->isTurnTableCamera()) return;
+
+    logger::info("Throwing snowball...");
+
+    // 2. Retrieve Player Transform
+    auto& vehicleTransform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
+
+    // Calculate the Forward direction based on the vehicle's current rotation
+    // In many coordinate systems, (0, 0, 1) is the local forward axis
+    glm::vec3 forward = renderingSystem->getCameraForward();
+
+    // Calculate Spawn Position: 
+    // Offset the snowball so it doesn't spawn inside the car's collision box
+    glm::vec3 spawnPos = vehicleTransform.pos + (forward * 3.0f) + glm::vec3(0, 2.0f, 0);
+
+    // 3. Create Visual Entity
+    Entity snowball = renderingSystem->createSphereEntity();
+
+    auto& ballTrans = gCoordinator.GetComponent<PhysxTransform>(snowball);
+    ballTrans.pos = spawnPos;
+    ballTrans.rot = vehicleTransform.rot; // Align snowball orientation with the car
+
+    // Apply Texture
+    gCoordinator.GetComponent<Renderable>(snowball).texture = renderingSystem->texture_snowball.get();
+
+    // 4. Setup Physics
+    float snowballRadius = 0.2f;
+    ballTrans.scale = glm::vec3(snowballRadius);
+
+    // Create the RigidBody and add it to the ECS
+    gCoordinator.AddComponent(snowball, physicsSystem->createRigidBodyFromSphere(snowball, snowballRadius));
+
+    
+
+    // 5. Apply Initial Velocity
+    physx::PxRigidDynamic* dynamicActor = gCoordinator.GetComponent<RigidBody>(snowball).actor->is<physx::PxRigidDynamic>();
+    if (dynamicActor) {
+        float launchSpeed = 40.f; // Meters per second
+        glm::vec3 velocity = forward * launchSpeed;
+
+        // Pass the velocity vector to PhysX
+        dynamicActor->setLinearVelocity(physx::PxVec3(velocity.x, velocity.y, velocity.z));
+    }
+    vehicleComponent.snowBallCooldown = 0.5f;
 }

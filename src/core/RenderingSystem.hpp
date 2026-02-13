@@ -47,6 +47,7 @@ public:
     Renderable getCubeRenderable();
     void updateCameraTarget(const glm::vec3& position);
     glm::vec3 getCameraForward() const;
+    bool isTurnTableCamera() { return activeCamera == turntableCamera.get();};
 
     // For rendering physics entities
     void renderEntities(const std::vector<EntityPx>& entityList);
