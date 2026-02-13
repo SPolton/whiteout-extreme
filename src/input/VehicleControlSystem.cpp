@@ -238,12 +238,12 @@ void VehicleControlSystem::throwSnowball()
     // 5. Apply Initial Velocity
     physx::PxRigidDynamic* dynamicActor = gCoordinator.GetComponent<RigidBody>(snowball).actor->is<physx::PxRigidDynamic>();
     if (dynamicActor) {
-        float launchSpeed = 40.f; // Meters per second
+        float launchSpeed = 30.f; // Meters per second
         glm::vec3 velocity = forward * launchSpeed;
 
         // Pass the velocity vector to PhysX
         dynamicActor->setLinearVelocity(physx::PxVec3(velocity.x, velocity.y, velocity.z));
-        dynamicActor->setMass(dynamicActor->getMass() * 3);
+        dynamicActor->setMass(dynamicActor->getMass() * 15);
     }
     vehicleComponent.snowBallCooldown = 0.5f;
 }

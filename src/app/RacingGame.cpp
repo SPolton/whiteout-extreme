@@ -156,7 +156,7 @@ void RacingGame::run()
             // 5. You can also add/remove components at runtime to change entity behavior
             // After 20 seconds, add a RigidBody component to sphere2 (Mars) to make it fall
             if (gameTime.currentTime >= 15.0 && !addedRigidBodyToMars) {
-                gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(0.f, 20.f, 0.f);
+                gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(5.f, 10.f, 1.f);
                 gCoordinator.GetComponent<PhysxTransform>(Mars).scale = glm::vec3(1.f);
 
             gCoordinator.AddComponent(
