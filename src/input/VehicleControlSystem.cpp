@@ -12,11 +12,13 @@ extern std::shared_ptr<RenderingSystem> renderingSystem;
 extern std::shared_ptr<PhysicsSystem> physicsSystem;
 extern Entity playerVehicleEntity;
 
-void VehicleControlSystem::SetInputManager(std::shared_ptr<InputManager> EinputManager) {
+void VehicleControlSystem::SetInputManager(std::shared_ptr<InputManager> EinputManager)
+{
     inputManager = EinputManager;
 }
 
-void VehicleControlSystem::update(float deltaTime) {
+void VehicleControlSystem::update(float deltaTime)
+{
     if (!inputManager) return;
 
     resetInputs();
@@ -44,7 +46,8 @@ void VehicleControlSystem::update(float deltaTime) {
     }
 }
 
-void VehicleControlSystem::processInputs() {
+void VehicleControlSystem::processInputs()
+{
     // poll controller state first
     inputManager->pollControllerInputs();
 
@@ -56,7 +59,8 @@ void VehicleControlSystem::processInputs() {
 }
 
 
-void VehicleControlSystem::processControllerInput() {
+void VehicleControlSystem::processControllerInput()
+{
     /*
     * Right Trigger = accelerate
     * Left Trigger = brake
@@ -102,7 +106,8 @@ void VehicleControlSystem::processControllerInput() {
     }
 }
 
-void VehicleControlSystem::processKeyboardInput() {
+void VehicleControlSystem::processKeyboardInput()
+{
     /*
     * WASD (or arrow keys) to move/steer
     * W (up arrow) = accelerate
@@ -229,8 +234,6 @@ void VehicleControlSystem::throwSnowball()
 
     // Create the RigidBody and add it to the ECS
     gCoordinator.AddComponent(snowball, physicsSystem->createRigidBodyFromSphere(snowball, snowballRadius));
-
-    
 
     // 5. Apply Initial Velocity
     physx::PxRigidDynamic* dynamicActor = gCoordinator.GetComponent<RigidBody>(snowball).actor->is<physx::PxRigidDynamic>();
