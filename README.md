@@ -6,6 +6,7 @@ Survival Racing Game
 
 ### Requirements
 
+- Git LFS: `git lfs install`
 - **Windows 10/11**
 - **CMake 3.20+**
 - **Visual Studio 2022** (recommended) or compatible C++20 compiler
@@ -74,5 +75,8 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 ## Assets
 
 - [common-3d-test-models](https://github.com/alecjacobson/common-3d-test-models) from Alec Jacobson
+- [Dark black carbon fiber metal lines background](https://www.freepik.com/free-vector/dark-black-carbon-fiber-metal-lines-background_24243620.htm) by Starline
+- [Snow Landscape](https://www.blenderkit.com/get-blenderkit/8c0aa8aa-6ac8-4047-b3b2-80474a146656/) by Antoine F.
+- [Solar Textures](https://www.solarsystemscope.com/textures/) from Solar System Scope
 - [Survival Guitar Backpack](https://sketchfab.com/3d-models/survival-guitar-backpack-799f8c4511f84fab8c3f12887f7e6b36) by Berk Gedik
-- Survival Guitar Backpack [Modified](https://learnopengl.com/data/models/backpack.zip) by LearnOpenGL
+- Survival Guitar Backpack [Modified](https://learnopengl.com/data/models/backpack.zip) from LearnOpenGL
