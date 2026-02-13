@@ -55,6 +55,9 @@ public:
     //inputManager getter
     std::shared_ptr<InputManager> getInputManager() const { return inputManager; }
 
+    int getWindowWidth() const { return window->getWidth(); }
+    int getWindowHeight() const { return window->getHeight(); }
+
 private:
     // Core components following modular architecture
     std::unique_ptr<Window> window;

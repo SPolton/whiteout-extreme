@@ -200,6 +200,10 @@ void RacingGame::run()
             renderingSystem->updateUI();
 
             // Must be called after renderer update, but before text rendering
+            auto width = renderingSystem->getWindowWidth();
+            auto height = renderingSystem->getWindowHeight();
+            textSystem->setProjection(width, height);
+
             textSystem->beginText();
 
             textSystem->loadFont("arial.ttf", 48);
@@ -218,6 +222,10 @@ void RacingGame::run()
             textSystem->renderText(
                 "Game FPS: " + std::to_string(1.0f / gameTime.fpsF()),
                 { 100.f, 1050.f, 0.75f }, { 0.8f, 0.8f, 0.2f });
+
+            float centerX = static_cast<float>(width) / 2.0f;
+            float centerY = static_cast<float>(height) / 2.0f;
+            textSystem->renderText("+", { centerX - 5.f, centerY - 5.f, 0.75f }, { 1.f, 1.f, 1.f });
 
             textSystem->endText();
 
