@@ -37,7 +37,7 @@ public:
     Entity createVehicleEntity();
     void spawnBoxPyramid(physx::PxU32 size, float halfLen, Renderable cubeRenderable);
 
-    RigidBody createRigidBodyFromSphere(Entity entity);
+    RigidBody createRigidBodyFromSphere(Entity entity, float radius = 1.f);
 
 private:
     // Initialization and cleanup functions

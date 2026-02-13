@@ -200,6 +200,10 @@ bool RenderingSystem::init()
             "assets/textures/2k_mars.jpg",
             GL_LINEAR
         );
+        texture_snowball = std::make_unique<Texture>(
+            "assets/textures/snowball.png",
+            GL_LINEAR
+        );
         logger::info("Texture loaded successfully");
     }
     catch (const std::exception& e)
@@ -275,6 +279,7 @@ Renderable RenderingSystem::getCubeRenderable()
     };
 }
 
+//Create Entity and add PhysxTransform and Renderable Components
 Entity RenderingSystem::createSphereEntity()
 {
     // Create sphere entity with earth texture as a basis
@@ -601,6 +606,12 @@ void RenderingSystem::updateCameraTarget(const glm::vec3& position)
     if (targetTransform) {
         targetTransform->setPosition(position);
     }
+}
+
+glm::vec3 RenderingSystem::getCameraForward() const
+{
+    auto view = activeCamera->getViewMatrix();
+    return -glm::vec3(view[0][2], view[1][2], view[2][2]);
 }
 
 void RenderingSystem::cleanup() {
