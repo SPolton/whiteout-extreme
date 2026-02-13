@@ -41,6 +41,7 @@ public:
     Entity createSphereEntity();
     Entity createModelEntity(const std::string& modelPath);
     std::unique_ptr<Texture> texture2;
+    std::unique_ptr<Texture> texture_snowball;
     std::unique_ptr<Texture> vehicleTexture;
 
     Renderable getCubeRenderable();

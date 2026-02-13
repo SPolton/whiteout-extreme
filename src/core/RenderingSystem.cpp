@@ -200,6 +200,10 @@ bool RenderingSystem::init()
             "assets/textures/2k_mars.jpg",
             GL_LINEAR
         );
+        texture_snowball = std::make_unique<Texture>(
+            "assets/textures/snowball.png",
+            GL_LINEAR
+        );
         logger::info("Texture loaded successfully");
     }
     catch (const std::exception& e)
