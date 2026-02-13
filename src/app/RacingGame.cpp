@@ -10,7 +10,9 @@
 
 //ECS global coordinator
 Coordinator gCoordinator;
-
+std::shared_ptr<RenderingSystem> renderingSystem;
+std::shared_ptr<PhysicsSystem> physicsSystem;
+Entity playerVehicleEntity;
 
 RacingGame::RacingGame()
 {
@@ -60,7 +62,16 @@ RacingGame::RacingGame()
     vehicleControlSystem->SetInputManager(renderingSystem->getInputManager());
 
     // 3.Create Entities and add Components to them:
-    
+    // Create the player vehicle entity with physics components
+    playerVehicleEntity = physicsSystem->createVehicleEntity();
+    gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).playerID = 0;
+    gCoordinator.AddComponent(playerVehicleEntity, Renderable{
+        renderingSystem->getCubeRenderable().geometry,
+        renderingSystem->getCubeRenderable().cpuData,
+        renderingSystem->getCubeRenderable().shader,
+        renderingSystem->vehicleTexture.get() // Use the same texture as the spheres for simplicity
+        });
+
     // Create Earth sphere entity
     Earth = renderingSystem->createSphereEntity();
     logger::info("Created Earth sphere entity");
@@ -82,16 +93,6 @@ RacingGame::RacingGame()
     //      - gCoordinator.AddComponent(sphere,PhysxTransform{...});
     //      - gCoordinator.AddComponent(sphere,Renderable{...});
     // Same components signature as RenderingSystem, so will be added to that system's entity list.
-
-    // Create the player vehicle entity with physics components
-    playerVehicleEntity = physicsSystem->createVehicleEntity();
-    gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).playerID = 0;
-    gCoordinator.AddComponent(playerVehicleEntity, Renderable{
-        renderingSystem->getCubeRenderable().geometry,
-        renderingSystem->getCubeRenderable().cpuData,
-        renderingSystem->getCubeRenderable().shader,
-        renderingSystem->vehicleTexture.get() // Use the same texture as the spheres for simplicity
-        });
 
     // 4.You can modify Component Data for entities
     
