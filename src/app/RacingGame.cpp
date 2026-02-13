@@ -216,48 +216,48 @@ void RacingGame::run()
             renderingSystem->updateUI();
 
             // Must be called after renderer update, but before text rendering
-            auto width = renderingSystem->getWindowWidth();
-            auto height = renderingSystem->getWindowHeight();
-            textSystem->setProjection(width, height);
+            // auto width = renderingSystem->getWindowWidth();
+            // auto height = renderingSystem->getWindowHeight();
+            // textSystem->setProjection(width, height);
 
             textSystem->beginText();
 
             textSystem->loadFont("arial.ttf", 48);
 
             float marginX = 30.f;
-            float topY = static_cast<float>(height) - 50.f;
+            float topY = static_cast<float>(1440) - 50.f;
 
             textSystem->renderText("Hello!",
                 { marginX, topY, 1.f }, { 0.5f, 0.8f, 0.2f });
 
             textSystem->renderText(
                 "Rendered Frames: " + std::to_string(gameTime.frameCount),
-                { marginX, topY - 40.f, 0.75f }, { 0.2f, 0.5f, 0.8f });
+                { marginX, topY - 50.f, 0.75f }, { 0.2f, 0.5f, 0.8f });
 
             textSystem->renderText(
                 "Physics Frames: " + std::to_string(gameTime.physicsFrameCount),
-                { marginX, topY - 70.f, 0.75f }, { 0.5f, 0.2f, 0.8f });
+                { marginX, topY - 100.f, 0.75f }, { 0.5f, 0.2f, 0.8f });
 
             textSystem->renderText(
                 "Game FPS: " + std::to_string(static_cast<int>(1.0f / gameTime.fpsF())),
-                { marginX, topY - 100.f, 00.75f }, { 0.8f, 0.8f, 0.2f });
+                { marginX, topY - 150.f, 00.75f }, { 0.8f, 0.8f, 0.2f });
 
-            float centerX = static_cast<float>(width) / 2.0f;
-            float centerY = static_cast<float>(height) / 2.0f;
+            float centerX = static_cast<float>(1440) / 2.0f;
+            float centerY = static_cast<float>(1440) / 2.0f;
             textSystem->renderText("+", { centerX - 5.f, centerY - 5.f, 0.75f }, { 1.f, 1.f, 1.f });
 
             textSystem->renderText(
                 "Move: Left Joystick / WASD",
-                { centerX * 1.2f, topY - 50.f, 0.7f }, { 0.0f, 0.55f, 1.0f });
+                { centerX * 1.2f, topY - 50.f, 0.7f }, { 0.0f, 0.90f, 0.95f });
             textSystem->renderText(
                 "Boost: Y button / SHIFT",
-                { centerX * 1.2f, topY - 80.f, 0.7f }, { 0.0f, 0.55f, 1.0f });
+                { centerX * 1.2f, topY - 100.f, 0.7f }, { 0.0f, 0.90f, 0.95f });
             textSystem->renderText(
                 "Snowball: X button / SPACE",
-                { centerX * 1.2f, topY - 110.f, 0.7f }, { 0.0f, 0.55f, 1.0f });
+                { centerX * 1.2f, topY - 150.f, 0.7f }, { 0.0f, 0.90f, 0.95f });
             textSystem->renderText(
                 "Pause: Start button / P",
-                { centerX * 1.2f, topY - 140.f, 0.7f }, { 0.0f, 0.55f, 1.0f });
+                { centerX * 1.2f, topY - 200.f, 0.7f }, { 0.0f, 0.90f, 0.95f });
 
             if(MarsIsBack) {
             textSystem->renderText(
