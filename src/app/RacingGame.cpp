@@ -102,8 +102,8 @@ RacingGame::RacingGame()
     // Earth keeps the default earth texture
     
     // Position Mars to the side
-    gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(3.0f, 10.0f, 0.0f);
-    gCoordinator.GetComponent<PhysxTransform>(Mars).scale = glm::vec3(0.5f); // Smaller than Earth
+    gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(1.3f, 0.7f, -0.7f); // Move Mars slightly
+    gCoordinator.GetComponent<PhysxTransform>(Mars).scale = glm::vec3(0.4f); // Scale down Mars
     gCoordinator.GetComponent<PhysxTransform>(Mars).rot = glm::angleAxis(glm::radians(23.5f), glm::vec3(0.f, 0.f, 1.f)); // Tilt Mars
     gCoordinator.GetComponent<Renderable>(Mars).texture = renderingSystem->texture2.get(); // Mars texture
     
@@ -134,6 +134,7 @@ RacingGame::RacingGame()
 void RacingGame::run()
 {
     bool addedRigidBodyToMars = false;
+    bool MarsIsBack = false;
 
     while (!renderingSystem->shouldClose())
     {
@@ -154,7 +155,7 @@ void RacingGame::run()
 
             // 5. You can also add/remove components at runtime to change entity behavior
             // After 20 seconds, add a RigidBody component to sphere2 (Mars) to make it fall
-            if (gameTime.currentTime >= 20.0 && !addedRigidBodyToMars) {
+            if (gameTime.currentTime >= 15.0 && !addedRigidBodyToMars) {
                 gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(0.f, 20.f, 0.f);
                 gCoordinator.GetComponent<PhysxTransform>(Mars).scale = glm::vec3(1.f);
 
@@ -164,6 +165,21 @@ void RacingGame::run()
             ); // This will add the Mars entity to the PhysicsSystem's entity list and it will start falling due to gravity
             addedRigidBodyToMars = true;
             logger::info("Added RigidBody component to Entity Mars at t = {} seconds", gameTime.tF());
+        }
+
+        if(addedRigidBodyToMars && !MarsIsBack) {
+            // Check if Mars position is close enough to Earth
+            glm::vec3 earthPos = gCoordinator.GetComponent<PhysxTransform>(Earth).pos;
+            glm::vec3 marsPos = gCoordinator.GetComponent<PhysxTransform>(Mars).pos;
+            float distance = glm::length(earthPos - marsPos);
+            if (distance < 2.5f) { // If Mars is close enough to Earth
+                MarsIsBack = true;
+                gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(1.3f, 0.7f, -0.7f); // Move Mars slightly
+                gCoordinator.GetComponent<PhysxTransform>(Mars).scale = glm::vec3(0.4f); // Scale down Mars
+                gCoordinator.GetComponent<PhysxTransform>(Mars).rot = glm::angleAxis(glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f)); // Rotate Mars
+                gCoordinator.GetComponent<Renderable>(Mars).texture = renderingSystem->texture2.get(); // Mars texture
+                gCoordinator.RemoveComponent<RigidBody>(Mars); // Remove physics from Mars
+            }
         }
 
         // Vehicle control system Loop - process player inputs and update vehicle state before physics simulation
@@ -208,25 +224,57 @@ void RacingGame::run()
 
             textSystem->loadFont("arial.ttf", 48);
 
+            float marginX = 30.f;
+            float topY = static_cast<float>(height) - 50.f;
+
             textSystem->renderText("Hello!",
-                { 100.f, 1200.f, 1.f }, { 0.5f, 0.8f, 0.2f });
+                { marginX, topY, 1.f }, { 0.5f, 0.8f, 0.2f });
 
             textSystem->renderText(
                 "Rendered Frames: " + std::to_string(gameTime.frameCount),
-                { 100.f, 1150.f, 0.75f }, { 0.2f, 0.5f, 0.8f });
+                { marginX, topY - 40.f, 0.75f }, { 0.2f, 0.5f, 0.8f });
 
             textSystem->renderText(
                 "Physics Frames: " + std::to_string(gameTime.physicsFrameCount),
-                { 100.f, 1100.f, 0.75f }, { 0.5f, 0.2f, 0.8f });
+                { marginX, topY - 70.f, 0.75f }, { 0.5f, 0.2f, 0.8f });
 
             textSystem->renderText(
-                "Game FPS: " + std::to_string(1.0f / gameTime.fpsF()),
-                { 100.f, 1050.f, 0.75f }, { 0.8f, 0.8f, 0.2f });
+                "Game FPS: " + std::to_string(static_cast<int>(1.0f / gameTime.fpsF())),
+                { marginX, topY - 100.f, 00.75f }, { 0.8f, 0.8f, 0.2f });
 
             float centerX = static_cast<float>(width) / 2.0f;
             float centerY = static_cast<float>(height) / 2.0f;
             textSystem->renderText("+", { centerX - 5.f, centerY - 5.f, 0.75f }, { 1.f, 1.f, 1.f });
 
+            textSystem->renderText(
+                "Move: Left Joystick / WASD",
+                { centerX * 1.2f, topY - 50.f, 0.7f }, { 0.0f, 0.55f, 1.0f });
+            textSystem->renderText(
+                "Boost: Y button / SHIFT",
+                { centerX * 1.2f, topY - 80.f, 0.7f }, { 0.0f, 0.55f, 1.0f });
+            textSystem->renderText(
+                "Snowball: X button / SPACE",
+                { centerX * 1.2f, topY - 110.f, 0.7f }, { 0.0f, 0.55f, 1.0f });
+            textSystem->renderText(
+                "Pause: Start button / P",
+                { centerX * 1.2f, topY - 140.f, 0.7f }, { 0.0f, 0.55f, 1.0f });
+
+            if(MarsIsBack) {
+            textSystem->renderText(
+                "BRAVO ! Mars has reached Earth",
+                { centerX * 0.15f, centerY * 0.4f - 50.f, 0.6f }, { 1.f, 0.35f, 0.15f });
+            } else if (addedRigidBodyToMars){
+            textSystem->renderText(
+                "Mars is gone. Don't Panic !",
+                { centerX * 0.15f, centerY * 0.4f, 0.6f }, { 1.f, 0.35f, 0.15f });
+            textSystem->renderText(
+                "MISSION: Bring Mars back to Earth",
+                { centerX * 0.15f, centerY * 0.4f - 50.f, 0.6f }, { 1.f, 0.35f, 0.15f });
+            textSystem->renderText(
+                "TIP: Nudge Mars back to Earth using snowballs",
+                { centerX * 0.15f, centerY * 0.4f - 100.f, 0.6f }, { 1.f, 0.8f, 0.2f });
+            }
+            
             textSystem->endText();
 
             // Must be called last

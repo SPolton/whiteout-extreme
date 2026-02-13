@@ -240,6 +240,7 @@ void VehicleControlSystem::throwSnowball()
 
         // Pass the velocity vector to PhysX
         dynamicActor->setLinearVelocity(physx::PxVec3(velocity.x, velocity.y, velocity.z));
+        dynamicActor->setMass(dynamicActor->getMass() * 3);
     }
     vehicleComponent.snowBallCooldown = 0.5f;
 }
