@@ -40,6 +40,7 @@ public:
 
     Entity createSphereEntity();
     Entity createModelEntity(const std::string& modelPath);
+    Entity createSkyboxEntity();
     std::unique_ptr<Texture> texture2;
     std::unique_ptr<Texture> texture_snowball;
     std::unique_ptr<Texture> vehicleTexture;
@@ -77,8 +78,13 @@ private:
     std::unique_ptr<GPU_Geometry> cubeGeometry;
     std::unique_ptr<CPU_Geometry> cubeCPUData;
     
+    // Skybox geometry (large inverted sphere)
+    std::unique_ptr<GPU_Geometry> skyboxGeometry;
+    std::unique_ptr<CPU_Geometry> skyboxCPUData;
+    
     // Textures
     std::unique_ptr<Texture> texture;
+    std::unique_ptr<Texture> skyboxTexture;
     
     // ImGui management (separated concerns)
     std::unique_ptr<ImGuiWrapper> imguiWrapper;  // Handles lifecycle
