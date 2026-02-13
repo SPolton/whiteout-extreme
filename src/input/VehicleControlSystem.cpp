@@ -141,7 +141,7 @@ void VehicleControlSystem::processKeyboardInput()
     if (inputManager->isKeyPressed(GLFW_KEY_LEFT_SHIFT)) {
         boost();
     }
-    else if (inputManager->isKeyPressed(GLFW_KEY_SPACE)) {
+    else if (inputManager->isKeyPressed(GLFW_KEY_SPACE) || inputManager->isKeyPressed(GLFW_KEY_E)) {
         throwSnowball();
     }
 
@@ -240,6 +240,9 @@ void VehicleControlSystem::throwSnowball()
     if (dynamicActor) {
         float launchSpeed = 30.f; // Meters per second
         glm::vec3 velocity = forward * launchSpeed;
+
+        // Enable CCD (Continuous Collision Detection)
+        dynamicActor->setRigidBodyFlag(physx::PxRigidBodyFlag::eENABLE_CCD, true);
 
         // Pass the velocity vector to PhysX
         dynamicActor->setLinearVelocity(physx::PxVec3(velocity.x, velocity.y, velocity.z));
