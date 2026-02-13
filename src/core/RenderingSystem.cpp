@@ -231,7 +231,7 @@ bool RenderingSystem::init()
     try
     {
         skyboxTexture = std::make_unique<Texture>(
-            "assets/textures/2k_earth_daymap.jpg",
+            "assets/textures/sky/snow_landscape.hdr",
             GL_LINEAR
         );
         logger::info("Skybox texture loaded successfully");
