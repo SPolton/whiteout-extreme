@@ -9,14 +9,14 @@
 // OK in cpp files, not in headers
 using namespace physx;
 
-PhysicsSystem::PhysicsSystem() {
+PhysicsSystem::PhysicsSystem()
+{
     // Core PhysX Initialization only (Foundation, PVD, Physics, Scene)
     initPhysX();
 }
 
-void PhysicsSystem::init() {
-    
-
+void PhysicsSystem::init()
+{
     // Create the Ground Plane Entity
     // We treat the ground as an entity so other systems (like Rendering) can interact with it
     //Entity ground = gCoordinator.CreateEntity();
@@ -28,7 +28,6 @@ void PhysicsSystem::init() {
     // Add the RigidBody component (Static actors don't necessarily need a Transform component 
     // unless they move, but they MUST have a RigidBody for the PhysicsSystem signature)
     //gCoordinator.AddComponent(ground, RigidBody{ mGroundPlane });
-
 
     // Create the Player Vehicle Entity
     VehicleFourWheelDrive::ConstructData vehicleData{
@@ -44,7 +43,8 @@ void PhysicsSystem::init() {
     mVehicleSystem = new VehicleFourWheelDrive(vehicleData);
 }
 
-Entity PhysicsSystem::createVehicleEntity() {
+Entity PhysicsSystem::createVehicleEntity()
+{
         // 1. Create a new entity for the vehicle
         Entity vehicleEntity = gCoordinator.CreateEntity();
     
@@ -71,7 +71,8 @@ Entity PhysicsSystem::createVehicleEntity() {
         return vehicleEntity;
 }
 
-PhysicsSystem::~PhysicsSystem() {
+PhysicsSystem::~PhysicsSystem()
+{
     // Clean up vehicle system first
     if (mVehicleSystem) {
         delete mVehicleSystem;
@@ -182,7 +183,8 @@ PxVec3 PhysicsSystem::getPos(int i)
     return position;
 }
 
-void PhysicsSystem::update(float deltaTime) {
+void PhysicsSystem::update(float deltaTime)
+{
     // PRE-SIMULATION PHASE: Update any vehicle physics and prepare the scene
     for (auto const& entity : mEntities) {
         if (gCoordinator.HasComponent<VehicleComponent>(entity)) {
@@ -218,7 +220,8 @@ void PhysicsSystem::update(float deltaTime) {
     }
 }
 
-void PhysicsSystem::spawnBoxPyramid(physx::PxU32 size, float halfLen, Renderable cubeRenderable) {
+void PhysicsSystem::spawnBoxPyramid(physx::PxU32 size, float halfLen, Renderable cubeRenderable)
+{
     physx::PxShape* shape = mPhysics->createShape(physx::PxBoxGeometry(halfLen, halfLen, halfLen), *mMaterial);
     physx::PxFilterData boxFilter(COLLISION_FLAG_OBSTACLE, COLLISION_FLAG_OBSTACLE_AGAINST, 0, 0);
     shape->setSimulationFilterData(boxFilter);
@@ -256,7 +259,8 @@ void PhysicsSystem::spawnBoxPyramid(physx::PxU32 size, float halfLen, Renderable
     shape->release();
 }
 
-RigidBody PhysicsSystem::createRigidBodyFromSphere(Entity entity, float radius) {
+RigidBody PhysicsSystem::createRigidBodyFromSphere(Entity entity, float radius)
+{
     // 1. Retrieve the transform component from the entity
     auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
 
@@ -288,7 +292,8 @@ RigidBody PhysicsSystem::createRigidBodyFromSphere(Entity entity, float radius) 
     return RigidBody{ body };
 }
 
-void PhysicsSystem::createMapCollision(const std::string& objPath, float scale, const glm::vec3& offset) {
+void PhysicsSystem::createMapCollision(const std::string& objPath, float scale, const glm::vec3& offset)
+{
     // Load the OBJ file using Assimp
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(objPath,
