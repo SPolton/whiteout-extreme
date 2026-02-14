@@ -195,9 +195,9 @@ Entity PhysicsSystem::createVehicleEntity()
     // 2. Add necessary components to the vehicle entity
     // Transform
     gCoordinator.AddComponent(vehicleEntity, PhysxTransform{
-        glm::vec3(50.0f, 6.5f, 14.1f),                // Position
+        glm::vec3(0.f, 0.f, 0.f),                // Position
         glm::quat(1.f, 0.f, 0.f, 0.f),           // Identity rotation
-        glm::vec3(1.65f, 1.4f, 3.75f)               // Scale
+        glm::vec3(1.65f, 1.4f, 3.75f)            // Scale
         });
 
     // RigidBody (using the chassis actor from the vehicle)
@@ -363,10 +363,14 @@ RigidBody PhysicsSystem::createRigidBodyFromMesh(Entity entity)
     PxDefaultMemoryInputData readBuffer(writeBuffer.getData(), writeBuffer.getSize());
     PxTriangleMesh* triangleMesh = mPhysics->createTriangleMesh(readBuffer);
 
-    // Create static actor
+    // Create static actor with rotation from transform
+    PxTransform pxTransform(
+        PxVec3(0.0f, 0.0f, 0.0f),  // Position is already baked into vertices
+        PxQuat(transform.rot.x, transform.rot.y, transform.rot.z, transform.rot.w)
+    );
     PxTriangleMeshGeometry geom(triangleMesh);
     geom.meshFlags = PxMeshGeometryFlag::eDOUBLE_SIDED;
-    PxRigidStatic* mapActor = PxCreateStatic(*mPhysics, PxTransform(PxIdentity), geom, *mMaterial);
+    PxRigidStatic* mapActor = PxCreateStatic(*mPhysics, pxTransform, geom, *mMaterial);
 
     // Set collision flags
     PxShape* shape = nullptr;
