@@ -39,7 +39,7 @@ public:
 
     RigidBody createRigidBodyFromSphere(Entity entity, float radius = 1.f);
 
-    void createMapCollision(const std::string& objPath, float scale, const glm::vec3& offset);
+    RigidBody createRigidBodyFromMesh(const std::string& objPath, float scale, const glm::vec3& offset);
 
 private:
     // Initialization and cleanup functions

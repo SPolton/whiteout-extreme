@@ -86,15 +86,18 @@ RacingGame::RacingGame()
     // Create Map model entity
     MapModel = renderingSystem->createModelEntity("assets/obj/map/map.obj");
 
-    // Adjust scale and position to match (fix later, for now pos it manually)
+    // Adjust scale and position
     auto& mapTransform = gCoordinator.GetComponent<PhysxTransform>(MapModel);
-    mapTransform.scale = glm::vec3(0.2f);  // Scale down
-    mapTransform.pos = glm::vec3(0.f, -10.f, 0.f);  // Move down
+    mapTransform.scale = glm::vec3(0.2f);
+    mapTransform.pos = glm::vec3(0.f, -10.f, 0.f);
 
-    logger::info("Created Map model entity");
+    // Add physics collision to the map entity
+    gCoordinator.AddComponent(
+        MapModel,
+        physicsSystem->createRigidBodyFromMesh("assets/obj/map/map.obj", mapTransform.scale.x, mapTransform.pos)
+    );
 
-    // Create physics collision for the map (MUST match scale and position above!)
-    physicsSystem->createMapCollision("assets/obj/map/map.obj", 0.2f, glm::vec3(0.f, -10.f, 0.f));
+    logger::info("Created Map model entity with collision");
 
     // Note:
     // The createSphereEntity() method calls:
@@ -127,7 +130,7 @@ RacingGame::RacingGame()
     // Earth keeps the default earth texture
     
     // Position Mars to the side
-    gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(1.3f, 0.7f, -0.7f); // Move Mars slightly
+    gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(1.3f, 0.7f, 0.7f); // Move Mars slightly
     gCoordinator.GetComponent<PhysxTransform>(Mars).scale = glm::vec3(0.4f); // Scale down Mars
     gCoordinator.GetComponent<PhysxTransform>(Mars).rot = glm::angleAxis(glm::radians(23.5f), glm::vec3(0.f, 0.f, 1.f)); // Tilt Mars
     gCoordinator.GetComponent<Renderable>(Mars).texture = renderingSystem->texture2.get(); // Mars texture

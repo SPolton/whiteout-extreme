@@ -292,7 +292,7 @@ RigidBody PhysicsSystem::createRigidBodyFromSphere(Entity entity, float radius)
     return RigidBody{ body };
 }
 
-void PhysicsSystem::createMapCollision(const std::string& objPath, float scale, const glm::vec3& offset)
+RigidBody PhysicsSystem::createRigidBodyFromMesh(const std::string& objPath, float scale, const glm::vec3& offset)
 {
     // Load the OBJ file using Assimp
     Assimp::Importer importer;
@@ -300,8 +300,8 @@ void PhysicsSystem::createMapCollision(const std::string& objPath, float scale, 
         aiProcess_Triangulate | aiProcess_GenNormals);
 
     if (!scene || !scene->mRootNode || scene->mNumMeshes == 0) {
-        logger::error("Failed to load map for collision: {}", objPath);
-        return;
+        logger::error("Failed to load mesh for collision: {}", objPath);
+        throw std::runtime_error("Failed to load mesh for collision");
     }
 
     logger::info("Loading collision mesh from: {} ({} meshes)", objPath, scene->mNumMeshes);
@@ -353,7 +353,7 @@ void PhysicsSystem::createMapCollision(const std::string& objPath, float scale, 
 
     if (!status) {
         logger::error("Failed to cook triangle mesh");
-        return;
+        throw std::runtime_error("Failed to cook triangle mesh");
     }
 
     PxDefaultMemoryInputData readBuffer(writeBuffer.getData(), writeBuffer.getSize());
@@ -372,7 +372,11 @@ void PhysicsSystem::createMapCollision(const std::string& objPath, float scale, 
         shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
     }
 
+    // Add the actor to the scene
     mScene->addActor(*mapActor);
 
-    logger::info("Map collision mesh created successfully");
+    logger::info("Mesh collision rigid body created successfully");
+
+    // Return the RigidBody component
+    return RigidBody{ mapActor };
 }
