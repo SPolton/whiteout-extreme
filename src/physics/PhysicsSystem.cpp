@@ -13,22 +13,11 @@ PhysicsSystem::PhysicsSystem()
 {
     // Core PhysX Initialization only (Foundation, PVD, Physics, Scene)
     initPhysX();
+    initGroundPlane();
 }
 
 void PhysicsSystem::init()
 {
-    // Create the Ground Plane Entity
-    // We treat the ground as an entity so other systems (like Rendering) can interact with it
-    //Entity ground = gCoordinator.CreateEntity();
-
-    // Create the static actor
-    //mGroundPlane = PxCreatePlane(*mPhysics, PxPlane(0, 1, 0, 0), *mMaterial);
-    //mScene->addActor(*mGroundPlane);
-
-    // Add the RigidBody component (Static actors don't necessarily need a Transform component 
-    // unless they move, but they MUST have a RigidBody for the PhysicsSystem signature)
-    //gCoordinator.AddComponent(ground, RigidBody{ mGroundPlane });
-
     // Create the Player Vehicle Entity
     VehicleFourWheelDrive::ConstructData vehicleData{
         .vehicleName = "VehiclePlayer1",
@@ -157,6 +146,10 @@ void PhysicsSystem::cleanupPhysX()
 
 void PhysicsSystem::initGroundPlane()
 {
+    // Create the Ground Plane Entity
+    // We treat the ground as an entity so other systems (like Rendering) can interact with it
+    Entity ground = gCoordinator.CreateEntity();
+
     mGroundPlane = PxCreatePlane(*mPhysics, PxPlane(0, 1, 0, 0), *mMaterial);
     for (PxU32 i = 0; i < mGroundPlane->getNbShapes(); i++)
     {
@@ -168,6 +161,10 @@ void PhysicsSystem::initGroundPlane()
     }
     mScene->addActor(*mGroundPlane);
     logger::info("Ground plane created successfully.");
+
+    // Add the RigidBody component (Static actors don't necessarily need a Transform component 
+    // unless they move, but they MUST have a RigidBody for the PhysicsSystem signature)
+    gCoordinator.AddComponent(ground, RigidBody{ mGroundPlane });
 }
 
 void PhysicsSystem::cleanupGroundPlane()
@@ -230,9 +227,9 @@ void PhysicsSystem::spawnBoxPyramid(physx::PxU32 size, float halfLen, Renderable
         for (physx::PxU32 j = 0; j < size - i; j++) {
             // 1. Calculate Position
             physx::PxVec3 pos(
-                -30.75f,                                                    // X 
-                physx::PxReal(i * 2) - 4.995f,                              // Y 
-                physx::PxReal(j * 2) - physx::PxReal(size - i) + 2.13f    // Z 
+                physx::PxReal(j * 2) - physx::PxReal(size - i),
+                physx::PxReal(i * 2 + 5), // Added +5 to drop them from the air
+                0.0f
             );
             pos *= halfLen;
 
