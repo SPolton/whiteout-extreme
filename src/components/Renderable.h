@@ -9,4 +9,5 @@ struct Renderable {
     CPU_Geometry* cpuData;
     ShaderProgram* shader;
     Texture* texture;
+    bool isSkybox = false;
 };

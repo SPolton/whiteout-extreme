@@ -200,6 +200,10 @@ bool RenderingSystem::init()
             "assets/textures/2k_mars.jpg",
             GL_LINEAR
         );
+        texture_snowball = std::make_unique<Texture>(
+            "assets/textures/snowball.png",
+            GL_LINEAR
+        );
         logger::info("Texture loaded successfully");
     }
     catch (const std::exception& e)
@@ -220,6 +224,21 @@ bool RenderingSystem::init()
     catch (const std::exception& e)
     {
         logger::error("Failed to load vehicle texture: {0}", e.what());
+        return false;
+    }
+
+    // Load skybox texture
+    try
+    {
+        skyboxTexture = std::make_unique<Texture>(
+            "assets/textures/sky/snow_landscape.hdr",
+            GL_LINEAR
+        );
+        logger::info("Skybox texture loaded successfully");
+    }
+    catch (const std::exception& e)
+    {
+        logger::warn("Failed to load skybox texture: {0}", e.what());
         return false;
     }
 
@@ -246,6 +265,13 @@ bool RenderingSystem::init()
     cubeGeometry->Update(*cubeCPUData);
     
     logger::info("Cube geometry initialized");
+
+    // Create skybox geometry (large sphere with more detail)
+    skyboxGeometry = std::make_unique<GPU_Geometry>();
+    skyboxCPUData = std::make_unique<CPU_Geometry>();
+    *skyboxCPUData = ShapeGenerator::sphere(100.0f, 32, 32);
+    skyboxGeometry->Update(*skyboxCPUData);
+    logger::info("Skybox geometry initialized");
 
     // Create object tracking transform for camera (vehicle tracking)
     targetTransform = std::make_unique<SceneTransform>();
@@ -275,6 +301,38 @@ Renderable RenderingSystem::getCubeRenderable()
     };
 }
 
+// TODO: refactor to avoid code duplication with createSphereEntity
+Entity RenderingSystem::createSkyboxEntity()
+{
+    // Create skybox entity
+    Entity skybox = gCoordinator.CreateEntity();
+
+    gCoordinator.AddComponent(
+        skybox,
+        PhysxTransform{
+            glm::vec3(0.f, 0.f, 0.f),
+            glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
+            glm::vec3(1.f)
+        }
+    );
+
+    gCoordinator.AddComponent(
+        skybox,
+        Renderable{
+            .geometry = skyboxGeometry.get(),
+            .cpuData = skyboxCPUData.get(),
+            .shader = shader.get(),
+            .texture = skyboxTexture.get(),
+            .isSkybox = true
+        }
+    );
+
+    logger::info("Skybox entity created");
+
+    return skybox;
+}
+
+//Create Entity and add PhysxTransform and Renderable Components
 Entity RenderingSystem::createSphereEntity()
 {
     // Create sphere entity with earth texture as a basis
@@ -369,6 +427,12 @@ void RenderingSystem::render()
         {
             auto& renderable = gCoordinator.GetComponent<Renderable>(entity);
 
+            // Apply special rendering settings for skybox
+            if (renderable.isSkybox) {
+                glDepthMask(GL_FALSE);  // Don't write to depth buffer
+                glFrontFace(GL_CW);     // Reverse winding order to see inside
+            }
+
             glm::vec3 visualPos = transform.pos;
 
             // If entity has VehicleComponent, apply offset for red brick model rendering
@@ -423,6 +487,12 @@ void RenderingSystem::render()
                     0,
                     renderable.cpuData->positions.size()
                 );
+            }
+
+            // Restore normal rendering state if this was skybox
+            if (renderable.isSkybox) {
+                glDepthMask(GL_TRUE);
+                glFrontFace(GL_CCW);
             }
         }
         // Check if entity has a ModelRenderable component (complex 3D models)
@@ -601,6 +671,12 @@ void RenderingSystem::updateCameraTarget(const glm::vec3& position)
     if (targetTransform) {
         targetTransform->setPosition(position);
     }
+}
+
+glm::vec3 RenderingSystem::getCameraForward() const
+{
+    auto view = activeCamera->getViewMatrix();
+    return -glm::vec3(view[0][2], view[1][2], view[2][2]);
 }
 
 void RenderingSystem::cleanup() {

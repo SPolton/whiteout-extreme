@@ -16,4 +16,7 @@ struct VehicleComponent {
     float throttle = 0.0f;
     float brake = 0.0f;
     float steer = 0.0f;
+
+    // Snowball cooldown
+    float snowBallCooldown = 0.0f;
 };

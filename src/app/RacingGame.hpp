@@ -19,8 +19,6 @@ public:
 
 private:
     GameTime gameTime;
-    std::shared_ptr<RenderingSystem> renderingSystem;
-    std::shared_ptr<PhysicsSystem> physicsSystem;
     std::shared_ptr<VehicleControlSystem> vehicleControlSystem;
 
     std::unique_ptr<Text> textSystem;
@@ -30,7 +28,7 @@ private:
     // set default game state on main menu
     GameState gameState = GameState::MainMenu;
 
-    Entity playerVehicleEntity;
+    //Entity playerVehicleEntity;
     Entity Earth;
     Entity Mars;
     Entity WoodyModel;

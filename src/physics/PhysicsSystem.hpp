@@ -37,7 +37,7 @@ public:
     Entity createVehicleEntity();
     void spawnBoxPyramid(physx::PxU32 size, float halfLen, Renderable cubeRenderable);
 
-    RigidBody createRigidBodyFromSphere(Entity entity);
+    RigidBody createRigidBodyFromSphere(Entity entity, float radius = 1.f);
 
     void createMapCollision(const std::string& objPath, float scale, const glm::vec3& offset);
 

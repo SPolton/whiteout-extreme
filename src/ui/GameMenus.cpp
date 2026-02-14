@@ -56,11 +56,10 @@ MenuAction GameMenus::pollInputs() {
 
     // otherwise keyboard input works too
     // triggers pause menu
-            // triggers pause menu
     if (inputManager->isKeyPressedOnce(GLFW_KEY_P)) {
         // if paused, then resume game
         if (gameState == GameState::Pause) {
-            return MenuAction::GoToMainMenu;
+            return MenuAction::ResumeGame;
         }
         // if in game, render pause menu
         else if (gameState == GameState::InGame) {
@@ -75,7 +74,7 @@ MenuAction GameMenus::pollInputs() {
             return MenuAction::StartGame;
         }
         else if (gameState == GameState::Pause) {
-            return MenuAction::ResumeGame;
+            return MenuAction::GoToMainMenu;
         }
     }
 

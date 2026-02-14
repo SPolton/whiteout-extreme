@@ -256,7 +256,7 @@ void PhysicsSystem::spawnBoxPyramid(physx::PxU32 size, float halfLen, Renderable
     shape->release();
 }
 
-RigidBody PhysicsSystem::createRigidBodyFromSphere(Entity entity) {
+RigidBody PhysicsSystem::createRigidBodyFromSphere(Entity entity, float radius) {
     // 1. Retrieve the transform component from the entity
     auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
 
@@ -270,7 +270,7 @@ RigidBody PhysicsSystem::createRigidBodyFromSphere(Entity entity) {
     physx::PxRigidDynamic* body = mPhysics->createRigidDynamic(pxTran);
 
     //Create a simple shape (sphere) and attach it to the body
-    physx::PxShape* shape = mPhysics->createShape(physx::PxSphereGeometry(1.0f), *mMaterial);
+    physx::PxShape* shape = mPhysics->createShape(physx::PxSphereGeometry(radius), *mMaterial);
     body->attachShape(*shape);
 
     // Set mass and inertia
