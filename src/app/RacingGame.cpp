@@ -62,6 +62,11 @@ RacingGame::RacingGame()
     vehicleControlSystem->SetInputManager(renderingSystem->getInputManager());
 
     // 3.Create Entities and add Components to them:
+    
+    // Create Skybox first (if texture is available)
+    Entity Skybox = renderingSystem->createSkyboxEntity();
+    logger::info("Created Skybox entity");
+    
     // Create the player vehicle entity with physics components
     playerVehicleEntity = physicsSystem->createVehicleEntity();
     gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).playerID = 0;
