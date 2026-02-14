@@ -88,8 +88,8 @@ RacingGame::RacingGame()
     // Adjust scale and position
     auto& mapTransform = gCoordinator.GetComponent<PhysxTransform>(MapModel);
     mapTransform.scale = glm::vec3(0.2f);
-    mapTransform.pos = glm::vec3(0.f, -5.f, 0.f);
-    mapTransform.rot = glm::vec3(0.f, 90.f, 0.f);
+    mapTransform.pos = glm::vec3(0.f, -3.f, -50.f);
+    mapTransform.rot = glm::vec3(0.f, 45.f, 0.f);
 
     // Add physics collision to the map entity
     gCoordinator.AddComponent(

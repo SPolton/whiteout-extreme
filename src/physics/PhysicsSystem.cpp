@@ -295,7 +295,6 @@ RigidBody PhysicsSystem::createRigidBodyFromMesh(Entity entity)
 
     // Extract scale (use uniform scale for mesh loading)
     float scale = transform.scale.x;
-    glm::vec3 offset = transform.pos;
     const std::string& objPath = modelRenderable.modelLoader->getPath();
 
     // Load the OBJ file using Assimp
@@ -318,12 +317,12 @@ RigidBody PhysicsSystem::createRigidBodyFromMesh(Entity entity)
         aiMesh* mesh = scene->mMeshes[meshIndex];
         unsigned int indexOffset = vertices.size();
 
-        // Add vertices with scale and offset
+        // Add vertices with scale only (position will be applied via actor transform)
         for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
             vertices.push_back(PxVec3(
-                mesh->mVertices[i].x * scale + offset.x,
-                mesh->mVertices[i].y * scale + offset.y,
-                mesh->mVertices[i].z * scale + offset.z
+                mesh->mVertices[i].x * scale,
+                mesh->mVertices[i].y * scale,
+                mesh->mVertices[i].z * scale
             ));
         }
 
@@ -363,9 +362,9 @@ RigidBody PhysicsSystem::createRigidBodyFromMesh(Entity entity)
     PxDefaultMemoryInputData readBuffer(writeBuffer.getData(), writeBuffer.getSize());
     PxTriangleMesh* triangleMesh = mPhysics->createTriangleMesh(readBuffer);
 
-    // Create static actor with rotation from transform
+    // Create static actor with position and rotation from transform
     PxTransform pxTransform(
-        PxVec3(0.0f, 0.0f, 0.0f),  // Position is already baked into vertices
+        PxVec3(transform.pos.x, transform.pos.y, transform.pos.z),
         PxQuat(transform.rot.x, transform.rot.y, transform.rot.z, transform.rot.w)
     );
     PxTriangleMeshGeometry geom(triangleMesh);
