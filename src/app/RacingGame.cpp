@@ -93,7 +93,7 @@ RacingGame::RacingGame()
     // Add physics collision to the map entity
     gCoordinator.AddComponent(
         MapModel,
-        physicsSystem->createRigidBodyFromMesh("assets/obj/map/map.obj", mapTransform.scale.x, mapTransform.pos)
+        physicsSystem->createRigidBodyFromMesh(MapModel)
     );
 
     logger::info("Created Map model entity with collision");

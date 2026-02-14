@@ -33,6 +33,10 @@ public:
         return model->directory;
     }
 
+    const std::string& getPath() const {
+        return model->path_;
+    }
+
 private:
     std::unique_ptr<Model> model;
 };

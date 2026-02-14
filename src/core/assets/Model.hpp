@@ -22,9 +22,10 @@ class Model {
 public:
     // model data 
     std::vector<std::shared_ptr<Texture>> textures_loaded;
-    std::vector<Mesh>                     meshes;
-    std::string                           directory;
-    bool                                  gammaCorrection;
+    std::vector<Mesh> meshes;
+    std::string directory;
+    std::string path_;
+    bool gammaCorrection;
 
     // constructor, expects a filepath to a 3D model.
     Model(std::string const& path, bool gamma = false);

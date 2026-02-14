@@ -1,6 +1,7 @@
 #include "PhysicsSystem.hpp"
 #include "common/Flags.hpp"
 #include "common/PVD.h"
+#include "components/Model.h"
 #include "utils/logger.h"
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -286,8 +287,17 @@ RigidBody PhysicsSystem::createRigidBodyFromSphere(Entity entity, float radius)
     return RigidBody{ body };
 }
 
-RigidBody PhysicsSystem::createRigidBodyFromMesh(const std::string& objPath, float scale, const glm::vec3& offset)
+RigidBody PhysicsSystem::createRigidBodyFromMesh(Entity entity)
 {
+    // Retrieve the transform and model renderable components from the entity
+    auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
+    auto& modelRenderable = gCoordinator.GetComponent<ModelRenderable>(entity);
+
+    // Extract scale (use uniform scale for mesh loading)
+    float scale = transform.scale.x;
+    glm::vec3 offset = transform.pos;
+    const std::string& objPath = modelRenderable.modelLoader->getPath();
+
     // Load the OBJ file using Assimp
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(objPath,
@@ -369,7 +379,7 @@ RigidBody PhysicsSystem::createRigidBodyFromMesh(const std::string& objPath, flo
     // Add the actor to the scene
     mScene->addActor(*mapActor);
 
-    logger::info("Mesh collision rigid body created successfully");
+    logger::info("Mesh collision rigid body created successfully for entity {}", entity);
 
     // Return the RigidBody component
     return RigidBody{ mapActor };

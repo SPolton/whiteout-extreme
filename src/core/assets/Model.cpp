@@ -26,6 +26,7 @@ void Model::loadModel(std::string const& path)
     }
     // retrieve the directory path of the filepath
     directory = path.substr(0, path.find_last_of('/'));
+    path_ = path;
 
     // process ASSIMP's root node recursively
     processNode(scene->mRootNode, scene);

@@ -38,7 +38,7 @@ public:
 
     RigidBody createRigidBodyFromSphere(Entity entity, float radius = 1.f);
 
-    RigidBody createRigidBodyFromMesh(const std::string& objPath, float scale, const glm::vec3& offset);
+    RigidBody createRigidBodyFromMesh(Entity entity);
 
 private:
     // Initialization and cleanup functions
