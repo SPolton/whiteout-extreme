@@ -39,14 +39,23 @@ if(MSVC)
 endif()
 
 # --------------------------------------------------
-# Copy assets to build directory
+# Copy assets to build directory with dependency tracking
 message(STATUS "Copying assets to build directory")
-add_custom_command(TARGET ${APP_NAME} POST_BUILD
+
+# Gather all asset files to track as dependencies
+file(GLOB_RECURSE ASSET_FILES "${CMAKE_SOURCE_DIR}/assets/*")
+
+# Create a custom target that depends on all asset files
+add_custom_target(copy_assets ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/assets
         $<TARGET_FILE_DIR:${APP_NAME}>/assets
     COMMENT "Copying assets to build directory"
+    DEPENDS ${ASSET_FILES}
 )
+
+# Make the executable depend on the asset copying
+add_dependencies(${APP_NAME} copy_assets)
 
 # --------------------------------------------------
 # Third-party libraries folder
