@@ -37,6 +37,10 @@ public:
         return model->path_;
     }
 
+    const std::vector<Mesh>& getMeshes() const {
+        return model->meshes;
+    }
+
 private:
     std::unique_ptr<Model> model;
 };

@@ -3,9 +3,6 @@
 #include "common/PVD.h"
 #include "components/Model.h"
 #include "utils/logger.h"
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
 
 // OK in cpp files, not in headers
 using namespace physx;
@@ -297,43 +294,31 @@ RigidBody PhysicsSystem::createRigidBodyFromMesh(Entity entity)
     float scale = transform.scale.x;
     const std::string& objPath = modelRenderable.modelLoader->getPath();
 
-    // Load the OBJ file using Assimp
-    Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile(objPath,
-        aiProcess_Triangulate | aiProcess_GenNormals);
+    logger::info("Creating collision mesh from already-loaded model: {} ({} meshes)", 
+                 objPath, modelRenderable.modelLoader->getMeshCount());
 
-    if (!scene || !scene->mRootNode || scene->mNumMeshes == 0) {
-        logger::error("Failed to load mesh for collision: {}", objPath);
-        throw std::runtime_error("Failed to load mesh for collision");
-    }
-
-    logger::info("Loading collision mesh from: {} ({} meshes)", objPath, scene->mNumMeshes);
-
-    // Collect all vertices and indices from all meshes
+    // Collect all vertices and indices from all meshes in the loaded model
     std::vector<PxVec3> vertices;
     std::vector<PxU32> indices;
 
-    for (unsigned int meshIndex = 0; meshIndex < scene->mNumMeshes; meshIndex++) {
-        aiMesh* mesh = scene->mMeshes[meshIndex];
+    // Use the already-loaded mesh data from ModelLoader
+    const auto& meshes = modelRenderable.modelLoader->getMeshes();
+    
+    for (const auto& mesh : meshes) {
         unsigned int indexOffset = vertices.size();
 
-        // Add vertices with scale only (position will be applied via actor transform)
-        for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
+        // Add vertices with scale applied
+        for (const auto& vertex : mesh.vertices) {
             vertices.push_back(PxVec3(
-                mesh->mVertices[i].x * scale,
-                mesh->mVertices[i].y * scale,
-                mesh->mVertices[i].z * scale
+                vertex.Position.x * scale,
+                vertex.Position.y * scale,
+                vertex.Position.z * scale
             ));
         }
 
-        // Add indices
-        for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
-            aiFace face = mesh->mFaces[i];
-            if (face.mNumIndices == 3) {
-                indices.push_back(indexOffset + face.mIndices[0]);
-                indices.push_back(indexOffset + face.mIndices[1]);
-                indices.push_back(indexOffset + face.mIndices[2]);
-            }
+        // Add indices with offset
+        for (unsigned int idx : mesh.indices) {
+            indices.push_back(indexOffset + idx);
         }
     }
 
