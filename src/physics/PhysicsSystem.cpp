@@ -16,50 +16,6 @@ PhysicsSystem::PhysicsSystem()
     initGroundPlane();
 }
 
-void PhysicsSystem::init()
-{
-    // Create the Player Vehicle Entity
-    VehicleFourWheelDrive::ConstructData vehicleData{
-        .vehicleName = "VehiclePlayer1",
-        .vehicleDataPath = "assets/vehicledata",
-        .gravity = mGravity,
-        .physics = mPhysics,
-        .scene = mScene,
-        .material = mMaterial
-    };
-
-    // Create the vehicle instance
-    mVehicleSystem = new VehicleFourWheelDrive(vehicleData);
-}
-
-Entity PhysicsSystem::createVehicleEntity()
-{
-        // 1. Create a new entity for the vehicle
-        Entity vehicleEntity = gCoordinator.CreateEntity();
-    
-        // 2. Add necessary components to the vehicle entity
-        // Transform
-        gCoordinator.AddComponent(vehicleEntity, PhysxTransform{
-            glm::vec3(50.0f, 6.5f, 14.1f),                // Position
-            glm::quat(1.f, 0.f, 0.f, 0.f),           // Identity rotation
-            glm::vec3(1.65f, 1.4f, 3.75f)               // Scale
-            });
-    
-        // RigidBody (using the chassis actor from the vehicle)
-        gCoordinator.AddComponent(vehicleEntity, RigidBody{ mVehicleSystem->getRigidActor()});
-
-        // Set the actual PhysX actor position to match
-        PxTransform pxTransform(PxVec3(50.0f, 6.5f, 14.1f));
-        mVehicleSystem->getRigidActor()->setGlobalPose(pxTransform);
-    
-        // VehicleComponent (store the vehicle instance for later updates and access)
-        gCoordinator.AddComponent(vehicleEntity, VehicleComponent{.instance = mVehicleSystem});
-    
-        logger::info("Vehicle entity created with ID: {}", vehicleEntity);
-        
-        return vehicleEntity;
-}
-
 PhysicsSystem::~PhysicsSystem()
 {
     // Clean up vehicle system first
@@ -215,6 +171,47 @@ void PhysicsSystem::update(float deltaTime)
             transform.rot = glm::quat(pxPose.q.w, pxPose.q.x, pxPose.q.y, pxPose.q.z);
         }
     }
+}
+
+Entity PhysicsSystem::createVehicleEntity()
+{
+    // Create the Player Vehicle Entity
+    VehicleFourWheelDrive::ConstructData vehicleData{
+        .vehicleName = "VehiclePlayer1",
+        .vehicleDataPath = "assets/vehicledata",
+        .gravity = mGravity,
+        .physics = mPhysics,
+        .scene = mScene,
+        .material = mMaterial
+    };
+
+    // Create the vehicle instance
+    mVehicleSystem = new VehicleFourWheelDrive(vehicleData);
+
+    // 1. Create a new entity for the vehicle
+    Entity vehicleEntity = gCoordinator.CreateEntity();
+
+    // 2. Add necessary components to the vehicle entity
+    // Transform
+    gCoordinator.AddComponent(vehicleEntity, PhysxTransform{
+        glm::vec3(50.0f, 6.5f, 14.1f),                // Position
+        glm::quat(1.f, 0.f, 0.f, 0.f),           // Identity rotation
+        glm::vec3(1.65f, 1.4f, 3.75f)               // Scale
+        });
+
+    // RigidBody (using the chassis actor from the vehicle)
+    gCoordinator.AddComponent(vehicleEntity, RigidBody{ mVehicleSystem->getRigidActor() });
+
+    // Set the actual PhysX actor position to match
+    PxTransform pxTransform(PxVec3(50.0f, 6.5f, 14.1f));
+    mVehicleSystem->getRigidActor()->setGlobalPose(pxTransform);
+
+    // VehicleComponent (store the vehicle instance for later updates and access)
+    gCoordinator.AddComponent(vehicleEntity, VehicleComponent{ .instance = mVehicleSystem });
+
+    logger::info("Vehicle entity created with ID: {}", vehicleEntity);
+
+    return vehicleEntity;
 }
 
 void PhysicsSystem::spawnBoxPyramid(physx::PxU32 size, float halfLen, Renderable cubeRenderable)

@@ -25,7 +25,6 @@ public:
     std::vector<EntityPx> entityList;
 
     PhysicsSystem();
-    void init();
     ~PhysicsSystem();
 
     void update(float deltaTime);
@@ -74,6 +73,4 @@ private:
 
     // Box position tracker
     physx::PxVec3 lastBoxPos;
-
-    //void initBoxes();
 };

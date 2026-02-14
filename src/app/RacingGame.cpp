@@ -47,7 +47,6 @@ RacingGame::RacingGame()
         gCoordinator.SetSystemSignature<PhysicsSystem>(signature);
     }
 
-    physicsSystem->init();
     physicsSystem->spawnBoxPyramid(10, 0.5f, renderingSystem->getCubeRenderable());
 
     // VEHICLE CONTROL SYSTEM
