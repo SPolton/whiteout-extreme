@@ -297,12 +297,22 @@ RigidBody PhysicsSystem::createRigidBodyFromMesh(Entity entity)
     logger::info("Creating collision mesh from already-loaded model: {} ({} meshes)", 
                  objPath, modelRenderable.modelLoader->getMeshCount());
 
+    // Use the already-loaded mesh data from ModelLoader
+    const auto& meshes = modelRenderable.modelLoader->getMeshes();
+
+    // Pre-calculate total size to avoid reallocation
+    size_t totalVertices = 0;
+    size_t totalIndices = 0;
+    for (const auto& mesh : meshes) {
+        totalVertices += mesh.vertices.size();
+        totalIndices += mesh.indices.size();
+    }
+
     // Collect all vertices and indices from all meshes in the loaded model
     std::vector<PxVec3> vertices;
     std::vector<PxU32> indices;
-
-    // Use the already-loaded mesh data from ModelLoader
-    const auto& meshes = modelRenderable.modelLoader->getMeshes();
+    vertices.reserve(totalVertices);
+    indices.reserve(totalIndices);
     
     for (const auto& mesh : meshes) {
         unsigned int indexOffset = vertices.size();
