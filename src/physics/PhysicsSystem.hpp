@@ -25,7 +25,6 @@ public:
     std::vector<EntityPx> entityList;
 
     PhysicsSystem();
-    void init();
     ~PhysicsSystem();
 
     void update(float deltaTime);
@@ -38,6 +37,8 @@ public:
     void spawnBoxPyramid(physx::PxU32 size, float halfLen, Renderable cubeRenderable);
 
     RigidBody createRigidBodyFromSphere(Entity entity, float radius = 1.f);
+
+    RigidBody createRigidBodyFromMesh(Entity entity);
 
 private:
     // Initialization and cleanup functions
@@ -72,6 +73,4 @@ private:
 
     // Box position tracker
     physx::PxVec3 lastBoxPos;
-
-    //void initBoxes();
 };

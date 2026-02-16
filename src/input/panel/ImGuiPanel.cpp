@@ -1,7 +1,9 @@
 #include "ImGuiPanel.hpp"
 
+const glm::vec3 defaultBackgroundColor(0.47f, 0.82f, 1.0f);
+
 ImGuiPanel::ImGuiPanel()
-    : backgroundColor(0.2f, 0.3f, 0.3f)
+    : backgroundColor(defaultBackgroundColor)
 {
 }
 
@@ -53,7 +55,7 @@ void ImGuiPanel::renderRenderSettings()
         ImGui::SliderFloat("Animation Speed", &animationSpeed, 0.0f, 5.0f);
         
         if (ImGui::Button("Reset Defaults")) {
-            backgroundColor = glm::vec3(0.2f, 0.3f, 0.3f);
+            backgroundColor = defaultBackgroundColor;
             showWireframe = false;
             showNormals = false;
             animationSpeed = 1.0f;

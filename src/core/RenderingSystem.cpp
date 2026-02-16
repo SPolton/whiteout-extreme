@@ -381,7 +381,7 @@ Entity RenderingSystem::createModelEntity(const std::string& modelPath)
         auto modelLoader = std::make_shared<ModelLoader>(modelPath, false);
         logger::info("Model loaded successfully: {} with {} meshes", modelPath, modelLoader->getMeshCount());
         
-        // Add ModelRenderable component with the model loader and model-specific shader
+        // Add ModelRenderable component with the model loader and shader
         gCoordinator.AddComponent(
             model,
             ModelRenderable{modelLoader, modelShader.get()}

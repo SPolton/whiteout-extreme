@@ -1,76 +1,27 @@
 #include "PhysicsSystem.hpp"
 #include "common/Flags.hpp"
 #include "common/PVD.h"
+#include "components/Model.h"
 #include "utils/logger.h"
 
 // OK in cpp files, not in headers
 using namespace physx;
 
-PhysicsSystem::PhysicsSystem() {
+PhysicsSystem::PhysicsSystem()
+{
     // Core PhysX Initialization only (Foundation, PVD, Physics, Scene)
     initPhysX();
+    initGroundPlane();
 }
 
-void PhysicsSystem::init() {
-    
-
-    // Create the Ground Plane Entity
-    // We treat the ground as an entity so other systems (like Rendering) can interact with it
-    Entity ground = gCoordinator.CreateEntity();
-
-    // Create the static actor
-    mGroundPlane = PxCreatePlane(*mPhysics, PxPlane(0, 1, 0, 0), *mMaterial);
-    mScene->addActor(*mGroundPlane);
-
-    // Add the RigidBody component (Static actors don't necessarily need a Transform component 
-    // unless they move, but they MUST have a RigidBody for the PhysicsSystem signature)
-    gCoordinator.AddComponent(ground, RigidBody{ mGroundPlane });
-
-
-    // Create the Player Vehicle Entity
-    VehicleFourWheelDrive::ConstructData vehicleData{
-        .vehicleName = "VehiclePlayer1",
-        .vehicleDataPath = "assets/vehicledata",
-        .gravity = mGravity,
-        .physics = mPhysics,
-        .scene = mScene,
-        .material = mMaterial
-    };
-
-    // Create the vehicle instance
-    mVehicleSystem = new VehicleFourWheelDrive(vehicleData);
-}
-
-Entity PhysicsSystem::createVehicleEntity() {
-        // 1. Create a new entity for the vehicle
-        Entity vehicleEntity = gCoordinator.CreateEntity();
-    
-        // 2. Add necessary components to the vehicle entity
-        // Transform
-        gCoordinator.AddComponent(vehicleEntity, PhysxTransform{
-            glm::vec3(0.f, 0.f, 0.f),                // Position
-            glm::quat(1.f, 0.f, 0.f, 0.f),           // Identity rotation
-            glm::vec3(1.65f, 1.4f, 3.75f)               // Scale
-            });
-    
-        // RigidBody (using the chassis actor from the vehicle)
-        gCoordinator.AddComponent(vehicleEntity, RigidBody{ mVehicleSystem->getRigidActor()});
-    
-        // VehicleComponent (store the vehicle instance for later updates and access)
-        gCoordinator.AddComponent(vehicleEntity, VehicleComponent{.instance = mVehicleSystem});
-    
-        logger::info("Vehicle entity created with ID: {}", vehicleEntity);
-        
-        return vehicleEntity;
-}
-
-PhysicsSystem::~PhysicsSystem() {
+PhysicsSystem::~PhysicsSystem()
+{
     // Clean up vehicle system first
     if (mVehicleSystem) {
         delete mVehicleSystem;
         mVehicleSystem = nullptr;
     }
-    cleanupGroundPlane();
+    //cleanupGroundPlane();
     cleanupPhysX();
 }
 
@@ -149,6 +100,10 @@ void PhysicsSystem::cleanupPhysX()
 
 void PhysicsSystem::initGroundPlane()
 {
+    // Create the Ground Plane Entity
+    // We treat the ground as an entity so other systems (like Rendering) can interact with it
+    Entity ground = gCoordinator.CreateEntity();
+
     mGroundPlane = PxCreatePlane(*mPhysics, PxPlane(0, 1, 0, 0), *mMaterial);
     for (PxU32 i = 0; i < mGroundPlane->getNbShapes(); i++)
     {
@@ -160,6 +115,10 @@ void PhysicsSystem::initGroundPlane()
     }
     mScene->addActor(*mGroundPlane);
     logger::info("Ground plane created successfully.");
+
+    // Add the RigidBody component (Static actors don't necessarily need a Transform component 
+    // unless they move, but they MUST have a RigidBody for the PhysicsSystem signature)
+    gCoordinator.AddComponent(ground, RigidBody{ mGroundPlane });
 }
 
 void PhysicsSystem::cleanupGroundPlane()
@@ -175,7 +134,8 @@ PxVec3 PhysicsSystem::getPos(int i)
     return position;
 }
 
-void PhysicsSystem::update(float deltaTime) {
+void PhysicsSystem::update(float deltaTime)
+{
     // PRE-SIMULATION PHASE: Update any vehicle physics and prepare the scene
     for (auto const& entity : mEntities) {
         if (gCoordinator.HasComponent<VehicleComponent>(entity)) {
@@ -211,7 +171,49 @@ void PhysicsSystem::update(float deltaTime) {
     }
 }
 
-void PhysicsSystem::spawnBoxPyramid(physx::PxU32 size, float halfLen, Renderable cubeRenderable) {
+Entity PhysicsSystem::createVehicleEntity()
+{
+    // Create the Player Vehicle Entity
+    VehicleFourWheelDrive::ConstructData vehicleData{
+        .vehicleName = "VehiclePlayer1",
+        .vehicleDataPath = "assets/vehicledata",
+        .gravity = mGravity,
+        .physics = mPhysics,
+        .scene = mScene,
+        .material = mMaterial
+    };
+
+    // Create the vehicle instance
+    mVehicleSystem = new VehicleFourWheelDrive(vehicleData);
+
+    // 1. Create a new entity for the vehicle
+    Entity vehicleEntity = gCoordinator.CreateEntity();
+
+    // 2. Add necessary components to the vehicle entity
+    // Transform
+    gCoordinator.AddComponent(vehicleEntity, PhysxTransform{
+        glm::vec3(0.f, 0.f, 0.f),                // Position
+        glm::quat(1.f, 0.f, 0.f, 0.f),           // Identity rotation
+        glm::vec3(1.65f, 1.4f, 3.75f)            // Scale
+        });
+
+    // RigidBody (using the chassis actor from the vehicle)
+    gCoordinator.AddComponent(vehicleEntity, RigidBody{ mVehicleSystem->getRigidActor() });
+
+    // Set the actual PhysX actor position to match
+    PxTransform pxTransform(PxVec3(50.0f, 6.5f, 14.1f));
+    mVehicleSystem->getRigidActor()->setGlobalPose(pxTransform);
+
+    // VehicleComponent (store the vehicle instance for later updates and access)
+    gCoordinator.AddComponent(vehicleEntity, VehicleComponent{ .instance = mVehicleSystem });
+
+    logger::info("Vehicle entity created with ID: {}", vehicleEntity);
+
+    return vehicleEntity;
+}
+
+void PhysicsSystem::spawnBoxPyramid(physx::PxU32 size, float halfLen, Renderable cubeRenderable)
+{
     physx::PxShape* shape = mPhysics->createShape(physx::PxBoxGeometry(halfLen, halfLen, halfLen), *mMaterial);
     physx::PxFilterData boxFilter(COLLISION_FLAG_OBSTACLE, COLLISION_FLAG_OBSTACLE_AGAINST, 0, 0);
     shape->setSimulationFilterData(boxFilter);
@@ -249,7 +251,8 @@ void PhysicsSystem::spawnBoxPyramid(physx::PxU32 size, float halfLen, Renderable
     shape->release();
 }
 
-RigidBody PhysicsSystem::createRigidBodyFromSphere(Entity entity, float radius) {
+RigidBody PhysicsSystem::createRigidBodyFromSphere(Entity entity, float radius)
+{
     // 1. Retrieve the transform component from the entity
     auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
 
@@ -279,4 +282,103 @@ RigidBody PhysicsSystem::createRigidBodyFromSphere(Entity entity, float radius) 
 
     // 5. Return the RigidBody component
     return RigidBody{ body };
+}
+
+RigidBody PhysicsSystem::createRigidBodyFromMesh(Entity entity)
+{
+    // Retrieve the transform and model renderable components from the entity
+    auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
+    auto& modelRenderable = gCoordinator.GetComponent<ModelRenderable>(entity);
+
+    // Extract scale (use uniform scale for mesh loading)
+    float scale = transform.scale.x;
+    const std::string& objPath = modelRenderable.modelLoader->getPath();
+
+    logger::info("Creating collision mesh from already-loaded model: {} ({} meshes)", 
+                 objPath, modelRenderable.modelLoader->getMeshCount());
+
+    // Use the already-loaded mesh data from ModelLoader
+    const auto& meshes = modelRenderable.modelLoader->getMeshes();
+
+    // Pre-calculate total size to avoid reallocation
+    size_t totalVertices = 0;
+    size_t totalIndices = 0;
+    for (const auto& mesh : meshes) {
+        totalVertices += mesh.vertices.size();
+        totalIndices += mesh.indices.size();
+    }
+
+    // Collect all vertices and indices from all meshes in the loaded model
+    std::vector<PxVec3> vertices;
+    std::vector<PxU32> indices;
+    vertices.reserve(totalVertices);
+    indices.reserve(totalIndices);
+    
+    for (const auto& mesh : meshes) {
+        unsigned int indexOffset = vertices.size();
+
+        // Add vertices with scale applied
+        for (const auto& vertex : mesh.vertices) {
+            vertices.push_back(PxVec3(
+                vertex.Position.x * scale,
+                vertex.Position.y * scale,
+                vertex.Position.z * scale
+            ));
+        }
+
+        // Add indices with offset
+        for (unsigned int idx : mesh.indices) {
+            indices.push_back(indexOffset + idx);
+        }
+    }
+
+    logger::info("Collision mesh: {} vertices, {} triangles", vertices.size(), indices.size() / 3);
+
+    // Create PhysX triangle mesh
+    PxTriangleMeshDesc meshDesc;
+    meshDesc.points.count = vertices.size();
+    meshDesc.points.stride = sizeof(PxVec3);
+    meshDesc.points.data = vertices.data();
+
+    meshDesc.triangles.count = indices.size() / 3;
+    meshDesc.triangles.stride = 3 * sizeof(PxU32);
+    meshDesc.triangles.data = indices.data();
+
+    PxDefaultMemoryOutputStream writeBuffer;
+    PxTriangleMeshCookingResult::Enum result;
+    PxCookingParams params(mPhysics->getTolerancesScale());
+    bool status = PxCookTriangleMesh(params, meshDesc, writeBuffer, &result);
+
+    if (!status) {
+        logger::error("Failed to cook triangle mesh");
+        throw std::runtime_error("Failed to cook triangle mesh");
+    }
+
+    PxDefaultMemoryInputData readBuffer(writeBuffer.getData(), writeBuffer.getSize());
+    PxTriangleMesh* triangleMesh = mPhysics->createTriangleMesh(readBuffer);
+
+    // Create static actor with position and rotation from transform
+    PxTransform pxTransform(
+        PxVec3(transform.pos.x, transform.pos.y, transform.pos.z),
+        PxQuat(transform.rot.x, transform.rot.y, transform.rot.z, transform.rot.w)
+    );
+    PxTriangleMeshGeometry geom(triangleMesh);
+    geom.meshFlags = PxMeshGeometryFlag::eDOUBLE_SIDED;
+    PxRigidStatic* mapActor = PxCreateStatic(*mPhysics, pxTransform, geom, *mMaterial);
+
+    // Set collision flags
+    PxShape* shape = nullptr;
+    mapActor->getShapes(&shape, 1);
+    if (shape) {
+        shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
+        shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
+    }
+
+    // Add the actor to the scene
+    mScene->addActor(*mapActor);
+
+    logger::info("Mesh collision rigid body created successfully for entity {}", entity);
+
+    // Return the RigidBody component
+    return RigidBody{ mapActor };
 }

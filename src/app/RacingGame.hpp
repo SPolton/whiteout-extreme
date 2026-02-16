@@ -23,14 +23,15 @@ private:
 
     std::unique_ptr<Text> textSystem;
 
+    // access UI menus
+    std::unique_ptr<GameMenus> menus;
+    // set default game state on main menu
+    GameState gameState = GameState::MainMenu;
+
+    //Entity playerVehicleEntity;
     Entity Earth;
     Entity Mars;
     Entity WoodyModel;
     Entity BackpackModel;
-
-    // access UI menus
-    std::unique_ptr<GameMenus> menus;
-
-    // set default game state on main menu
-    GameState gameState = GameState::MainMenu;
+    Entity MapModel;
 };

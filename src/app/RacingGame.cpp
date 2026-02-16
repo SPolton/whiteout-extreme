@@ -47,7 +47,6 @@ RacingGame::RacingGame()
         gCoordinator.SetSystemSignature<PhysicsSystem>(signature);
     }
 
-    physicsSystem->init();
     physicsSystem->spawnBoxPyramid(10, 0.5f, renderingSystem->getCubeRenderable());
 
     // VEHICLE CONTROL SYSTEM
@@ -66,16 +65,6 @@ RacingGame::RacingGame()
     // Create Skybox first (if texture is available)
     Entity Skybox = renderingSystem->createSkyboxEntity();
     logger::info("Created Skybox entity");
-    
-    // Create the player vehicle entity with physics components
-    playerVehicleEntity = physicsSystem->createVehicleEntity();
-    gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).playerID = 0;
-    gCoordinator.AddComponent(playerVehicleEntity, Renderable{
-        renderingSystem->getCubeRenderable().geometry,
-        renderingSystem->getCubeRenderable().cpuData,
-        renderingSystem->getCubeRenderable().shader,
-        renderingSystem->vehicleTexture.get() // Use the same texture as the spheres for simplicity
-        });
 
     // Create Earth sphere entity
     Earth = renderingSystem->createSphereEntity();
@@ -93,11 +82,45 @@ RacingGame::RacingGame()
     BackpackModel = renderingSystem->createModelEntity("assets/obj/backpack/backpack.obj");
     logger::info("Created Backpack model entity");
 
+    // Create Map model entity
+    MapModel = renderingSystem->createModelEntity("assets/obj/map/map.obj");
+
+    // Adjust scale and position
+    auto& mapTransform = gCoordinator.GetComponent<PhysxTransform>(MapModel);
+    mapTransform.scale = glm::vec3(0.2f);
+    mapTransform.pos = glm::vec3(0.f, -3.f, -50.f);
+    mapTransform.rot = glm::vec3(0.f, 45.f, 0.f);
+
+    // Add physics collision to the map entity
+    gCoordinator.AddComponent(
+        MapModel,
+        physicsSystem->createRigidBodyFromMesh(MapModel)
+    );
+
+    logger::info("Created Map model entity with collision");
+
     // Note:
     // The createSphereEntity() method calls:
     //      - gCoordinator.AddComponent(sphere,PhysxTransform{...});
     //      - gCoordinator.AddComponent(sphere,Renderable{...});
     // Same components signature as RenderingSystem, so will be added to that system's entity list.
+
+    // Create the player vehicle entity with physics components
+    playerVehicleEntity = physicsSystem->createVehicleEntity();
+    gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).playerID = 0;
+
+    // Load snowmobile model for the player vehicle
+    Entity snowmobileVisual = renderingSystem->createModelEntity("assets/obj/snowmobile/snowmobile.obj");
+    auto& snowmobileRenderable = gCoordinator.GetComponent<ModelRenderable>(snowmobileVisual);
+    gCoordinator.AddComponent(playerVehicleEntity, snowmobileRenderable);
+    gCoordinator.DestroyEntity(snowmobileVisual);
+
+    // Fix rotation and scale
+    auto& vehicleTransform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
+    vehicleTransform.rot = glm::angleAxis(glm::radians(0.0f), glm::vec3(0.f, 1.f, 0.f));
+    vehicleTransform.scale = glm::vec3(1.0f);  // Uniform scale instead of stretched box scale
+
+    logger::info("Loaded snowmobile model for player vehicle");
 
     // 4.You can modify Component Data for entities
     
@@ -107,7 +130,7 @@ RacingGame::RacingGame()
     // Earth keeps the default earth texture
     
     // Position Mars to the side
-    gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(1.3f, 0.7f, -0.7f); // Move Mars slightly
+    gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(1.3f, 0.7f, 0.7f); // Move Mars slightly
     gCoordinator.GetComponent<PhysxTransform>(Mars).scale = glm::vec3(0.4f); // Scale down Mars
     gCoordinator.GetComponent<PhysxTransform>(Mars).rot = glm::angleAxis(glm::radians(23.5f), glm::vec3(0.f, 0.f, 1.f)); // Tilt Mars
     gCoordinator.GetComponent<Renderable>(Mars).texture = renderingSystem->texture2.get(); // Mars texture
