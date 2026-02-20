@@ -33,6 +33,17 @@ public:
         mSignatures[typeName].push_back(signature);
     }
 
+    template<typename T>
+    std::shared_ptr<T> GetSystem()
+    {
+        const char* typeName = typeid(T).name();
+
+        auto it = mSystems.find(typeName);
+        assert(it != mSystems.end() && "System not registered before use.");
+
+        return std::static_pointer_cast<T>(it->second);
+    }
+
     void EntityDestroyed(Entity entity)
     {
         for (auto const& pair : mSystems)

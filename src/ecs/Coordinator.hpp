@@ -103,6 +103,12 @@ public:
 		mSystemManager->SetSignature<T>(signature);
 	}
 
+    template<typename T>
+    std::shared_ptr<T> GetSystem()
+    {
+        return mSystemManager->GetSystem<T>();
+    }
+
 
 	// Event methods
 	void AddEventListener(EventId eventId, std::function<void(Event&)> const& listener)
