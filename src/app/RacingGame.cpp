@@ -14,6 +14,22 @@ Entity playerVehicleEntity;
 
 RacingGame::RacingGame()
 {
+    ///---- Input Manager and Window ----/// 
+    if (!glfwInit()) {
+        logger::error("GLFW Init Failed");
+        return;
+    }
+    inputManager = std::make_shared<InputManager>();
+
+    window = std::make_shared<Window>(inputManager, 1200, 800, "Whiteout Extreme");
+
+    window->makeContextCurrent();
+
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        logger::error("GLAD Init Failed");
+        return;
+    }
+
     ///---- START OF ECS SETUP ----///
     // 0.Global ECS Coordinator Initialization
     gCoordinator.Init();
@@ -28,7 +44,7 @@ RacingGame::RacingGame()
 
     // 2.Create Systems and Set Signatures
     // RENDERING SYSTEM: Requires Transform AND <Renderable OR ModelRenderable>
-    renderingSystem = gCoordinator.RegisterSystem<RenderingSystem>();
+    renderingSystem = gCoordinator.RegisterSystem<RenderingSystem>(inputManager, window);
     {
         Signature signature1;
         signature1.set(gCoordinator.GetComponentType<PhysxTransform>());
@@ -41,8 +57,19 @@ RacingGame::RacingGame()
         gCoordinator.SetSystemSignature<RenderingSystem>(signature2);
     }
 
+    window->setCallbacks(inputManager);
+
+    auto renderPtr = renderingSystem;
+    inputManager->setResizeCallback([renderPtr](int w, int h) {
+        renderPtr->onResize(w, h);
+        });
+    inputManager->setMouseWheelCallback([renderPtr](int w, int h) {
+        renderPtr->onMouseWheelChange(w, h);
+        });
+
+
     // PHYSICS SYSTEM : Requires Transform AND RigidBody
-    physicsSystem = gCoordinator.RegisterSystem<PhysicsSystem>();
+     physicsSystem = gCoordinator.RegisterSystem<PhysicsSystem>();
     {
         Signature signature;
         signature.set(gCoordinator.GetComponentType<PhysxTransform>());
@@ -53,7 +80,7 @@ RacingGame::RacingGame()
     physicsSystem->spawnBoxPyramid(10, 0.5f, renderingSystem->getCubeRenderable());
 
     // VEHICLE CONTROL SYSTEM
-    vehicleControlSystem = gCoordinator.RegisterSystem<VehicleControlSystem>(
+     vehicleControlSystem = gCoordinator.RegisterSystem<VehicleControlSystem>(
         gCoordinator.GetSystem<RenderingSystem>()->getInputManager(),
         gCoordinator.GetSystem<RenderingSystem>(),
         gCoordinator.GetSystem<PhysicsSystem>()
@@ -161,7 +188,7 @@ RacingGame::RacingGame()
 
     textSystem->setProjection(1440.0f, 1440.0f);
 
-    menus = std::make_unique<GameMenus>(textSystem.get(), renderingSystem->getInputManager().get(), gameState);
+    menus = std::make_unique<GameMenus>(textSystem.get(), inputManager.get(), gameState);
 }
 
 

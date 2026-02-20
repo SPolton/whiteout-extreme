@@ -15,7 +15,7 @@ bool ImGuiWrapper::init(GLFWwindow* window)
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.IniFilename = "imgui.ini";
     
-    if (!ImGui_ImplGlfw_InitForOpenGL(window, true))
+    if (!ImGui_ImplGlfw_InitForOpenGL(window, false))
     {
         return false;
     }

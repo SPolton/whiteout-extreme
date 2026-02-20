@@ -19,6 +19,9 @@ public:
 
 private:
     GameTime gameTime;
+    std::shared_ptr<InputManager> inputManager;
+    std::shared_ptr<Window> window;
+
     std::shared_ptr<RenderingSystem> renderingSystem;
     std::shared_ptr<PhysicsSystem> physicsSystem;
     std::shared_ptr<VehicleControlSystem> vehicleControlSystem;
@@ -31,9 +34,9 @@ private:
     GameState gameState = GameState::MainMenu;
 
     //Entity playerVehicleEntity;
-    Entity Earth;
-    Entity Mars;
-    Entity WoodyModel;
-    Entity BackpackModel;
-    Entity MapModel;
+    Entity Earth = 0;
+    Entity Mars = 0;
+    Entity WoodyModel = 0;
+    Entity BackpackModel = 0;
+    Entity MapModel = 0;
 };

@@ -30,6 +30,7 @@ extern Coordinator gCoordinator;
 class RenderingSystem : public System {
 public:
     RenderingSystem();
+    RenderingSystem(std::shared_ptr<InputManager> inputManager, std::shared_ptr<Window> window);
     //~RenderingSystem();
     void cleanup();
 
@@ -59,9 +60,13 @@ public:
     int getWindowWidth() const { return window->getWidth(); }
     int getWindowHeight() const { return window->getHeight(); }
 
+    void onResize(int width, int height);
+    void onMouseWheelChange(double xOffset, double yOffset);
+    bool init();
+
 private:
     // Core components following modular architecture
-    std::unique_ptr<Window> window;
+    std::shared_ptr<Window> window;
     std::unique_ptr<ShaderProgram> shader;
     std::unique_ptr<ShaderProgram> modelShader;
     std::unique_ptr<TurnTableCamera> turntableCamera;
@@ -95,13 +100,10 @@ private:
     glm::dvec2 previousCursorPosition{};
     bool cursorPositionIsSetOnce = false;
 
-    bool init();
     void processInput(float deltaTime);
     void processCameraInput(float deltaTime);
 
     void toggleCamera();
     void render();
-    void onResize(int width, int height);
-    void onMouseWheelChange(double xOffset, double yOffset);
     glm::mat4 getProjectionMatrix() const;
 };

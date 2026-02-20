@@ -9,7 +9,9 @@
 #include "components/Transform.h"
 #include "components/VehicleComponent.h"
 
-RenderingSystem::RenderingSystem() {
+RenderingSystem::RenderingSystem(std::shared_ptr<InputManager> inputManager, std::shared_ptr<Window> window)
+    : inputManager(inputManager), window(window)
+{
     if (!init()) {
         throw std::runtime_error("Failed to initialize RenderingSystem!");
     }
@@ -112,6 +114,7 @@ void RenderingSystem::processCameraInput(float deltaTime)
 
 bool RenderingSystem::init()
 {
+    /*
     // Initialize GLFW (needs to be done before creating Window)
     if (!glfwInit())
     {
@@ -125,7 +128,7 @@ bool RenderingSystem::init()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create window using our Window wrapper (RAII)
-    window = std::make_unique<Window>(1200, 800, "Racing Game");
+    // window = std::make_unique<Window>(1200, 800, "Racing Game");
     window->makeContextCurrent();
 
     // Initialize GLAD
@@ -134,6 +137,7 @@ bool RenderingSystem::init()
         logger::error("Failed to initialize GLAD");
         return false;
     }
+    */
 
     logger::info("OpenGL Version: {0}", (const char*)glGetString(GL_VERSION));
     logger::info("OpenGL Renderer: {0}", (const char*)glGetString(GL_RENDERER));
@@ -151,13 +155,14 @@ bool RenderingSystem::init()
     logger::info("ImGui initialized");
 
     // Initialize input manager with callbacks
+    /*
     inputManager = std::make_shared<InputManager>(
         [this](int const width, int const height)->void { onResize(width, height); },
         [this](double const xOffset, double const yOffset)->void { onMouseWheelChange(xOffset, yOffset); }
     );
     
     window->setCallbacks(inputManager);
-    logger::info("Input manager initialized");
+    logger::info("Input manager initialized");*/
 
     // Create shader using ShaderProgram (RAII)
     try
