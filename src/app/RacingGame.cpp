@@ -29,12 +29,17 @@ RacingGame::RacingGame()
     gCoordinator.RegisterComponent<VehicleComponent>();
 
     // 2.Create Systems and Set Signatures
-    // Rendering System signature: Only requires Transform component
-    // Entities can have either Renderable OR ModelRenderable (checked at render time)
+    // Rendering System signature: Requires Transform component AND either Renderable OR ModelRenderable
     renderingSystem = gCoordinator.RegisterSystem<RenderingSystem>();
     {
         Signature signature;
         signature.set(gCoordinator.GetComponentType<PhysxTransform>());
+        signature.set(gCoordinator.GetComponentType<Renderable>());
+        gCoordinator.SetSystemSignature<RenderingSystem>(signature);
+
+        signature.reset();
+        signature.set(gCoordinator.GetComponentType<PhysxTransform>());
+        signature.set(gCoordinator.GetComponentType<ModelRenderable>());
         gCoordinator.SetSystemSignature<RenderingSystem>(signature);
     }
 
