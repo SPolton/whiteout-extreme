@@ -1,20 +1,20 @@
 #include "VehicleControlSystem.hpp"
-#include "ecs/Coordinator.hpp"
 #include "utils/logger.h"
-#include "physics/PhysicsSystem.hpp"
-#include "core/RenderingSystem.hpp"
 //#include "app/RacingGame.cpp"
 
 #include <GLFW/glfw3.h>
 
 extern Coordinator gCoordinator;
-extern std::shared_ptr<RenderingSystem> renderingSystem;
-extern std::shared_ptr<PhysicsSystem> physicsSystem;
 extern Entity playerVehicleEntity;
 
-void VehicleControlSystem::SetInputManager(std::shared_ptr<InputManager> EinputManager)
+VehicleControlSystem::VehicleControlSystem(
+    std::shared_ptr<InputManager> inputManager,
+    std::shared_ptr<RenderingSystem> renderingSystem,
+    std::shared_ptr<PhysicsSystem> physicsSystem)
+    : inputManager(inputManager),
+    renderingSystem(renderingSystem),
+    physicsSystem(physicsSystem)
 {
-    inputManager = EinputManager;
 }
 
 void VehicleControlSystem::update(float deltaTime)

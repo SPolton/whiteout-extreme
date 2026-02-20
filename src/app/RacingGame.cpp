@@ -10,8 +10,6 @@
 
 //ECS global coordinator
 Coordinator gCoordinator;
-std::shared_ptr<RenderingSystem> renderingSystem;
-std::shared_ptr<PhysicsSystem> physicsSystem;
 Entity playerVehicleEntity;
 
 RacingGame::RacingGame()
@@ -29,21 +27,21 @@ RacingGame::RacingGame()
     gCoordinator.RegisterComponent<VehicleComponent>();
 
     // 2.Create Systems and Set Signatures
-    // Rendering System signature: Requires Transform component AND either Renderable OR ModelRenderable
+    // RENDERING SYSTEM: Requires Transform AND <Renderable OR ModelRenderable>
     renderingSystem = gCoordinator.RegisterSystem<RenderingSystem>();
     {
-        Signature signature;
-        signature.set(gCoordinator.GetComponentType<PhysxTransform>());
-        signature.set(gCoordinator.GetComponentType<Renderable>());
-        gCoordinator.SetSystemSignature<RenderingSystem>(signature);
+        Signature signature1;
+        signature1.set(gCoordinator.GetComponentType<PhysxTransform>());
+        signature1.set(gCoordinator.GetComponentType<Renderable>());
+        gCoordinator.SetSystemSignature<RenderingSystem>(signature1);
 
-        signature.reset();
-        signature.set(gCoordinator.GetComponentType<PhysxTransform>());
-        signature.set(gCoordinator.GetComponentType<ModelRenderable>());
-        gCoordinator.SetSystemSignature<RenderingSystem>(signature);
+        Signature signature2;
+        signature2.set(gCoordinator.GetComponentType<PhysxTransform>());
+        signature2.set(gCoordinator.GetComponentType<ModelRenderable>());
+        gCoordinator.SetSystemSignature<RenderingSystem>(signature2);
     }
 
-    // PHYSICS SYSTEM
+    // PHYSICS SYSTEM : Requires Transform AND RigidBody
     physicsSystem = gCoordinator.RegisterSystem<PhysicsSystem>();
     {
         Signature signature;
@@ -55,7 +53,11 @@ RacingGame::RacingGame()
     physicsSystem->spawnBoxPyramid(10, 0.5f, renderingSystem->getCubeRenderable());
 
     // VEHICLE CONTROL SYSTEM
-    vehicleControlSystem = gCoordinator.RegisterSystem<VehicleControlSystem>();
+    vehicleControlSystem = gCoordinator.RegisterSystem<VehicleControlSystem>(
+        gCoordinator.GetSystem<RenderingSystem>()->getInputManager(),
+        gCoordinator.GetSystem<RenderingSystem>(),
+        gCoordinator.GetSystem<PhysicsSystem>()
+    );
     {
         Signature signature;
         signature.set(gCoordinator.GetComponentType<VehicleComponent>());
@@ -63,7 +65,7 @@ RacingGame::RacingGame()
     }
     // We need to set the input manager for the vehicle control system so it can read player inputs
     // Borrowed from the rendering system since it creates and owns the input manager
-    vehicleControlSystem->SetInputManager(renderingSystem->getInputManager());
+    // vehicleControlSystem->SetInputManager(renderingSystem->getInputManager());
 
     // 3.Create Entities and add Components to them:
     
