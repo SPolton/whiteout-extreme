@@ -25,6 +25,40 @@ private:
 
     std::shared_ptr<ImGuiWrapper> imguiWrapper;
     std::shared_ptr<ImGuiPanel> imguiPanel;
+    void updateImGui() {
+        glm::vec3 bgColor = imguiPanel->getBackgroundColor();
+        glClearColor(bgColor.r, bgColor.g, bgColor.b, 1.0f);
+
+        // Set viewport
+        glViewport(0, 0, window->getWidth(), window->getHeight());
+
+        // Apply wireframe mode if enabled
+        if (imguiPanel->showWireframe) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        }
+        else {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
+
+        // Update camera stats for UI
+        imguiPanel->cameraStats = renderingSystem->getActiveCameraStats();
+        imguiPanel->cameraStats.aspect = static_cast<float>(window->getWidth()) / static_cast<float>(window->getHeight());
+
+        // Update UI
+        imguiWrapper->beginFrame();
+        imguiPanel->update();
+        imguiWrapper->renderFPS();
+        this->syncImgui();
+        imguiPanel->cameraStats = renderingSystem->getActiveCameraStats();
+        imguiWrapper->endFrame();
+    };
+
+    void syncImgui() {
+        renderingSystem->camSpeed = imguiPanel->camSpeed;
+        renderingSystem->camZoomSpeed = imguiPanel->camZoomSpeed;
+        //renderingSystem->wireframeMode = imguiPanel->showWireframe;
+    }
+
 
     std::shared_ptr<RenderingSystem> renderingSystem;
     std::shared_ptr<PhysicsSystem> physicsSystem;

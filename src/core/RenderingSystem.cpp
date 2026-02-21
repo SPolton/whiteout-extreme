@@ -11,25 +11,13 @@
 
 RenderingSystem::RenderingSystem(
     std::shared_ptr<InputManager> inputManager,
-    std::shared_ptr<Window> window,
-    std::shared_ptr<ImGuiWrapper> imguiWrapper,
-    std::shared_ptr<ImGuiPanel> imguiPanel)
-    : inputManager(inputManager), window(window), imguiWrapper(imguiWrapper), imguiPanel(imguiPanel)
+    std::shared_ptr<Window> window)
+    : inputManager(inputManager), window(window)
 {
     if (!init()) {
         throw std::runtime_error("Failed to initialize RenderingSystem!");
     }
 }
-
-/*
-RenderingSystem::~RenderingSystem()
-{
-    // ImGui cleanup via wrapper
-    if (imguiWrapper) {
-        imguiWrapper->shutdown();
-    }
-}
-*/
 
 void RenderingSystem::processInput(float deltaTime)
 {
@@ -87,8 +75,8 @@ void RenderingSystem::processCameraInput(float deltaTime)
             if (cursorPositionIsSetOnce) {
                 float const aspectRatio = static_cast<float>(window->getWidth()) / static_cast<float>(window->getHeight());
                 auto const deltaPosition = cursorPosition - previousCursorPosition;
-                turntableCamera->adjustTheta(-static_cast<float>(deltaPosition.x) * deltaTime * imguiPanel->camSpeed * (1 / aspectRatio));
-                turntableCamera->adjustPhi(-static_cast<float>(deltaPosition.y) * deltaTime * imguiPanel->camSpeed);
+                turntableCamera->adjustTheta(-static_cast<float>(deltaPosition.x) * deltaTime * this->camSpeed * (1 / aspectRatio));
+                turntableCamera->adjustPhi(-static_cast<float>(deltaPosition.y) * deltaTime * this->camSpeed);
             }
         }
         else if (inputManager->isControllerConnected())
@@ -103,8 +91,8 @@ void RenderingSystem::processCameraInput(float deltaTime)
             if (rx != 0.0f || ry != 0.0f) {
                 float const aspectRatio = static_cast<float>(window->getWidth()) / static_cast<float>(window->getHeight());
                 float sensitivity = 2.0f;
-                turntableCamera->adjustTheta(-rx * deltaTime * imguiPanel->camSpeed * sensitivity * (1.0f / aspectRatio));
-                turntableCamera->adjustPhi(-ry * deltaTime * imguiPanel->camSpeed * sensitivity);
+                turntableCamera->adjustTheta(-rx * deltaTime * this->camSpeed * sensitivity * (1.0f / aspectRatio));
+                turntableCamera->adjustPhi(-ry * deltaTime * this->camSpeed * sensitivity);
             }
         }
         // TurnTableCamera uses right-click drag
@@ -555,39 +543,8 @@ void RenderingSystem::update(float deltaTime)
 {
     processInput(deltaTime);
     
-    // Get settings from panel
-    glm::vec3 bgColor = imguiPanel->getBackgroundColor();
-    glClearColor(bgColor.r, bgColor.g, bgColor.b, 1.0f);
-    
-    // Set viewport
-    glViewport(0, 0, window->getWidth(), window->getHeight());
-    
-    // Apply wireframe mode if enabled
-    if (imguiPanel->showWireframe) {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    } else {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    }
-    
-    // Update camera stats for UI
-    imguiPanel->cameraStats = activeCamera->getStats();
-    imguiPanel->cameraStats.aspect = static_cast<float>(window->getWidth()) / static_cast<float>(window->getHeight());
-    
     // Render the rotating sphere (demo)
     render();
-}
-
-void RenderingSystem::updateUI()
-{
-    // Begin ImGui frame
-    imguiWrapper->beginFrame();
-
-    imguiWrapper->renderFPS();
-    imguiPanel->cameraStats = activeCamera->getStats();
-    imguiPanel->update();
-
-    // Finish ImGui frame
-    imguiWrapper->endFrame();
 }
 
 void RenderingSystem::endFrame()
@@ -610,7 +567,7 @@ void RenderingSystem::onResize(int width, int height)
 
 void RenderingSystem::onMouseWheelChange(double xOffset, double yOffset)
 {
-    float scroll = -static_cast<float>(yOffset) * imguiPanel->camZoomSpeed * 0.016f;
+    float scroll = -static_cast<float>(yOffset) * this->camZoomSpeed * 0.016f;
     activeCamera->adjustRadius(scroll);
 }
 
@@ -639,11 +596,4 @@ glm::vec3 RenderingSystem::getCameraForward() const
 {
     auto view = activeCamera->getViewMatrix();
     return -glm::vec3(view[0][2], view[1][2], view[2][2]);
-}
-
-void RenderingSystem::cleanup() {
-    if (imguiWrapper) {
-        imguiWrapper->shutdown();
-        imguiWrapper.reset();
-    }
 }

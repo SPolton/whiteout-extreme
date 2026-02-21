@@ -51,7 +51,7 @@ RacingGame::RacingGame()
 
     // 2.Create Systems and Set Signatures
     // RENDERING SYSTEM: Requires Transform AND <Renderable OR ModelRenderable>
-    renderingSystem = gCoordinator.RegisterSystem<RenderingSystem>(inputManager, window, imguiWrapper, imguiPanel);
+    renderingSystem = gCoordinator.RegisterSystem<RenderingSystem>(inputManager, window);
     {
         Signature signature1;
         signature1.set(gCoordinator.GetComponentType<PhysxTransform>());
@@ -272,7 +272,10 @@ void RacingGame::run()
                 gameTime.discardExcessTime();
             }
 
-                renderingSystem->update(gameTime.fpsF());
+
+            renderingSystem->update(gameTime.fpsF());
+            this->updateImGui();
+
 
             // If entity exists, update camera target to follow the player vehicle
             // We don't assume anymore that it's in the first position of the entity list, so we directly access it by its Entity ID
@@ -281,8 +284,6 @@ void RacingGame::run()
                 targetPos.y += 2.f;
                 renderingSystem->updateCameraTarget(targetPos);
             }
-
-            renderingSystem->updateUI();
 
             // Must be called after renderer update, but before text rendering
             // auto width = renderingSystem->getWindowWidth();
@@ -391,5 +392,4 @@ void RacingGame::run()
         }
     }
     logger::info("Shutting down systems...");
-    renderingSystem->cleanup();
 }
