@@ -8,6 +8,11 @@
 #include "components/VehicleComponent.h"
 #include "ecs/Coordinator.hpp"
 
+// test FMOD initialization
+#include <fmod.hpp>
+#include <iostream>
+// test FMOD initialization
+
 //ECS global coordinator
 Coordinator gCoordinator;
 std::shared_ptr<RenderingSystem> renderingSystem;
@@ -155,6 +160,29 @@ RacingGame::RacingGame()
     textSystem->setProjection(1440.0f, 1440.0f);
 
     menus = std::make_unique<GameMenus>(textSystem.get(), renderingSystem->getInputManager().get(), gameState);
+
+    // test FMOD initialization
+    FMOD::System* system = nullptr;
+    FMOD_RESULT result;
+
+    // Create FMOD system
+    result = FMOD::System_Create(&system);
+    if (result != FMOD_OK) {
+        std::cerr << "FMOD system creation failed: " << result << std::endl;
+    }
+
+    // Initialize system
+    result = system->init(32, FMOD_INIT_NORMAL, nullptr);
+    if (result != FMOD_OK) {
+        std::cerr << "FMOD system init failed: " << result << std::endl;
+    }
+
+    std::cout << "FMOD initialized successfully." << std::endl;
+
+    // Clean up
+    system->close();
+    system->release();
+    // test FMOD initialization
 }
 
 
