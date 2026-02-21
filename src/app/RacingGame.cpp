@@ -19,16 +19,23 @@ RacingGame::RacingGame()
         logger::error("GLFW Init Failed");
         return;
     }
+
     inputManager = std::make_shared<InputManager>();
-
     window = std::make_shared<Window>(inputManager, 1200, 800, "Whiteout Extreme");
-
     window->makeContextCurrent();
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         logger::error("GLAD Init Failed");
         return;
     }
+
+    ///---- Imgui Wrapper and Panel ----/// 
+    imguiWrapper = std::make_unique<ImGuiWrapper>();
+    if (!imguiWrapper->init(window->getGLFWwindow())) {
+        logger::error("ImGui Init Failed");
+    }
+    imguiPanel = std::make_unique<ImGuiPanel>();
+    logger::info("ImGui initialized");
 
     ///---- START OF ECS SETUP ----///
     // 0.Global ECS Coordinator Initialization
@@ -44,7 +51,7 @@ RacingGame::RacingGame()
 
     // 2.Create Systems and Set Signatures
     // RENDERING SYSTEM: Requires Transform AND <Renderable OR ModelRenderable>
-    renderingSystem = gCoordinator.RegisterSystem<RenderingSystem>(inputManager, window);
+    renderingSystem = gCoordinator.RegisterSystem<RenderingSystem>(inputManager, window, imguiWrapper, imguiPanel);
     {
         Signature signature1;
         signature1.set(gCoordinator.GetComponentType<PhysxTransform>());
@@ -227,53 +234,53 @@ void RacingGame::run()
             ); // This will add the Mars entity to the PhysicsSystem's entity list and it will start falling due to gravity
             addedRigidBodyToMars = true;
             logger::info("Added RigidBody component to Entity Mars at t = {} seconds", gameTime.tF());
-        }
-
-        if(addedRigidBodyToMars && !MarsIsBack) {
-            // Check if Mars position is close enough to Earth
-            glm::vec3 earthPos = gCoordinator.GetComponent<PhysxTransform>(Earth).pos;
-            glm::vec3 marsPos = gCoordinator.GetComponent<PhysxTransform>(Mars).pos;
-            float distance = glm::length(earthPos - marsPos);
-            if (distance < 2.5f) { // If Mars is close enough to Earth
-                MarsIsBack = true;
-                gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(1.3f, 0.7f, -0.7f); // Move Mars slightly
-                gCoordinator.GetComponent<PhysxTransform>(Mars).scale = glm::vec3(0.4f); // Scale down Mars
-                gCoordinator.GetComponent<PhysxTransform>(Mars).rot = glm::angleAxis(glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f)); // Rotate Mars
-                gCoordinator.GetComponent<Renderable>(Mars).texture = renderingSystem->texture2.get(); // Mars texture
-                gCoordinator.RemoveComponent<RigidBody>(Mars); // Remove physics from Mars
             }
-        }
 
-        // Vehicle control system Loop - process player inputs and update vehicle state before physics simulation
-        //vehicleControlSystem->update(gameTime.dtF());
-
-        // Physics System Loop, adaptive based on performance
-        int maxPhysicsSteps = gameTime.maxPhysicsSteps();
-        int physicsSteps = 0;
-        while (gameTime.accumulator >= gameTime.dt && physicsSteps < maxPhysicsSteps) {
-            if (gameTime.frameCount < 300 && gameTime.physicsFrameCount > maxPhysicsSteps) {
-                break; // Skip the first frames to avoid slow startup
+            if(addedRigidBodyToMars && !MarsIsBack) {
+                // Check if Mars position is close enough to Earth
+                glm::vec3 earthPos = gCoordinator.GetComponent<PhysxTransform>(Earth).pos;
+                glm::vec3 marsPos = gCoordinator.GetComponent<PhysxTransform>(Mars).pos;
+                float distance = glm::length(earthPos - marsPos);
+                if (distance < 2.5f) { // If Mars is close enough to Earth
+                    MarsIsBack = true;
+                    gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(1.3f, 0.7f, -0.7f); // Move Mars slightly
+                    gCoordinator.GetComponent<PhysxTransform>(Mars).scale = glm::vec3(0.4f); // Scale down Mars
+                    gCoordinator.GetComponent<PhysxTransform>(Mars).rot = glm::angleAxis(glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f)); // Rotate Mars
+                    gCoordinator.GetComponent<Renderable>(Mars).texture = renderingSystem->texture2.get(); // Mars texture
+                    gCoordinator.RemoveComponent<RigidBody>(Mars); // Remove physics from Mars
+                }
             }
-            vehicleControlSystem->update(gameTime.dtF());
-            physicsSystem->update(gameTime.dtF());
-            gameTime.physicsUpdate();
-            physicsSteps++;
-        }
+
+            // Vehicle control system Loop - process player inputs and update vehicle state before physics simulation
+            //vehicleControlSystem->update(gameTime.dtF());
+
+            // Physics System Loop, adaptive based on performance
+            int maxPhysicsSteps = gameTime.maxPhysicsSteps();
+            int physicsSteps = 0;
+            while (gameTime.accumulator >= gameTime.dt && physicsSteps < maxPhysicsSteps) {
+                if (gameTime.frameCount < 300 && gameTime.physicsFrameCount > maxPhysicsSteps) {
+                    break; // Skip the first frames to avoid slow startup
+                }
+                vehicleControlSystem->update(gameTime.dtF());
+                physicsSystem->update(gameTime.dtF());
+                gameTime.physicsUpdate();
+                physicsSteps++;
+            }
         
-        // Discard excess time when running slow to prevent spiral of death
-        if (physicsSteps >= maxPhysicsSteps) {
-            gameTime.discardExcessTime();
-        }
+            // Discard excess time when running slow to prevent spiral of death
+            if (physicsSteps >= maxPhysicsSteps) {
+                gameTime.discardExcessTime();
+            }
 
-            renderingSystem->update(gameTime.fpsF());
+                renderingSystem->update(gameTime.fpsF());
 
-        // If entity exists, update camera target to follow the player vehicle
-        // We don't assume anymore that it's in the first position of the entity list, so we directly access it by its Entity ID
-        if (gCoordinator.HasComponent<PhysxTransform>(playerVehicleEntity)) {
-            glm::vec3 targetPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
-            targetPos.y += 2.f;
-            renderingSystem->updateCameraTarget(targetPos);
-        }
+            // If entity exists, update camera target to follow the player vehicle
+            // We don't assume anymore that it's in the first position of the entity list, so we directly access it by its Entity ID
+            if (gCoordinator.HasComponent<PhysxTransform>(playerVehicleEntity)) {
+                glm::vec3 targetPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
+                targetPos.y += 2.f;
+                renderingSystem->updateCameraTarget(targetPos);
+            }
 
             renderingSystem->updateUI();
 

@@ -19,8 +19,12 @@ public:
 
 private:
     GameTime gameTime;
+
     std::shared_ptr<InputManager> inputManager;
     std::shared_ptr<Window> window;
+
+    std::shared_ptr<ImGuiWrapper> imguiWrapper;
+    std::shared_ptr<ImGuiPanel> imguiPanel;
 
     std::shared_ptr<RenderingSystem> renderingSystem;
     std::shared_ptr<PhysicsSystem> physicsSystem;

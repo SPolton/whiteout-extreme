@@ -29,8 +29,7 @@ extern Coordinator gCoordinator;
 
 class RenderingSystem : public System {
 public:
-    RenderingSystem();
-    RenderingSystem(std::shared_ptr<InputManager> inputManager, std::shared_ptr<Window> window);
+    RenderingSystem(std::shared_ptr<InputManager> inputManager, std::shared_ptr<Window> window, std::shared_ptr<ImGuiWrapper> imguiWrapper, std::shared_ptr<ImGuiPanel> imguiPanel);
     //~RenderingSystem();
     void cleanup();
 
@@ -92,8 +91,8 @@ private:
     std::unique_ptr<Texture> skyboxTexture;
     
     // ImGui management (separated concerns)
-    std::unique_ptr<ImGuiWrapper> imguiWrapper;  // Handles lifecycle
-    std::unique_ptr<ImGuiPanel> imguiPanel;       // Handles content
+    std::shared_ptr<ImGuiWrapper> imguiWrapper;  // Handles lifecycle
+    std::shared_ptr<ImGuiPanel> imguiPanel;       // Handles content
     
     // Input management
     std::shared_ptr<InputManager> inputManager;
