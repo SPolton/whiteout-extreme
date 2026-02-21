@@ -29,13 +29,11 @@ extern Coordinator gCoordinator;
 
 class RenderingSystem : public System {
 public:
-    RenderingSystem(std::shared_ptr<InputManager> inputManager, std::shared_ptr<Window> window);
+    RenderingSystem(std::shared_ptr<InputManager> inputManager);
     //~RenderingSystem();
     void cleanup();
 
     void update(float deltaTime);
-    void endFrame();
-    bool shouldClose() const;
 
     Entity createSphereEntity();
     Entity createModelEntity(const std::string& modelPath);
@@ -54,6 +52,10 @@ public:
     float camSpeed = 1.0f;
     float camZoomSpeed = 1.0f;
 
+    // Parameters window dimension resized on callback
+    int vWidth;
+    int vHeight;
+
     // For rendering physics entities
     void renderEntities(const std::vector<EntityPx>& entityList);
 
@@ -63,7 +65,6 @@ public:
     int getWindowWidth() const { return window->getWidth(); }
     int getWindowHeight() const { return window->getHeight(); }
 
-    void onResize(int width, int height);
     void onMouseWheelChange(double xOffset, double yOffset);
     bool init();
 

@@ -59,6 +59,11 @@ private:
         //renderingSystem->wireframeMode = imguiPanel->showWireframe;
     }
 
+    void endFrame() {
+        window->swapBuffers();
+        glfwPollEvents();
+    }
+
 
     std::shared_ptr<RenderingSystem> renderingSystem;
     std::shared_ptr<PhysicsSystem> physicsSystem;

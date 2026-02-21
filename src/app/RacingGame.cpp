@@ -51,7 +51,7 @@ RacingGame::RacingGame()
 
     // 2.Create Systems and Set Signatures
     // RENDERING SYSTEM: Requires Transform AND <Renderable OR ModelRenderable>
-    renderingSystem = gCoordinator.RegisterSystem<RenderingSystem>(inputManager, window);
+    renderingSystem = gCoordinator.RegisterSystem<RenderingSystem>(inputManager);
     {
         Signature signature1;
         signature1.set(gCoordinator.GetComponentType<PhysxTransform>());
@@ -64,14 +64,19 @@ RacingGame::RacingGame()
         gCoordinator.SetSystemSignature<RenderingSystem>(signature2);
     }
 
-    window->setCallbacks(inputManager);
+    renderingSystem->vWidth = window->getWidth();
+    renderingSystem->vHeight = window->getHeight();
 
-    auto renderPtr = renderingSystem;
-    inputManager->setResizeCallback([renderPtr](int w, int h) {
-        renderPtr->onResize(w, h);
+    window->setCallbacks(inputManager);
+    inputManager->setResizeCallback([this](int w, int h) {
+        glViewport(0, 0, w, h);
+        renderingSystem->vWidth = w;
+        renderingSystem->vHeight = h;
+        logger::info("Window resized to {}x{}", w, h);
         });
-    inputManager->setMouseWheelCallback([renderPtr](int w, int h) {
-        renderPtr->onMouseWheelChange(w, h);
+
+    inputManager->setMouseWheelCallback([this](int w, int h) {
+        renderingSystem->onMouseWheelChange(w, h);
         });
 
 
@@ -205,7 +210,7 @@ void RacingGame::run()
     bool addedRigidBodyToMars = false;
     bool MarsIsBack = false;
 
-    while (!renderingSystem->shouldClose())
+    while (!window->shouldClose())
     {
         // keep checking which input system we are using
         menus->checkInputSystem();
@@ -272,8 +277,14 @@ void RacingGame::run()
                 gameTime.discardExcessTime();
             }
 
+            // Process Escape key input to close window
+            if (inputManager->isKeyPressedOnce(GLFW_KEY_ESCAPE))
+                glfwSetWindowShouldClose(window->getGLFWwindow(), true);
 
+            // Process F key input to toggle camera, and IJKLUO to move the free camera
             renderingSystem->update(gameTime.fpsF());
+
+            // Update values and sync imgui parameters
             this->updateImGui();
 
 
@@ -348,7 +359,7 @@ void RacingGame::run()
             textSystem->endText();
 
             // Must be called last
-            renderingSystem->endFrame();
+            this->endFrame();
         }
         else if (gameState == GameState::MainMenu) {
             // render UI for main menu, take note of the action taken
@@ -360,7 +371,7 @@ void RacingGame::run()
             }
 
             // swap buffer
-            renderingSystem->endFrame();
+            this->endFrame();
         }
         else if (gameState == GameState::Pause) {
             // render UI for pause menu, take note of the action taken
@@ -376,7 +387,7 @@ void RacingGame::run()
             }
 
             // swap buffer
-            renderingSystem->endFrame();
+            this->endFrame();
         }
         else if (gameState == GameState::GameOver) {
             // render UI for race finished, take note of the action taken
@@ -388,7 +399,7 @@ void RacingGame::run()
             }
 
             // swap buffer
-            renderingSystem->endFrame();
+            this->endFrame();
         }
     }
     logger::info("Shutting down systems...");

@@ -10,9 +10,8 @@
 #include "components/VehicleComponent.h"
 
 RenderingSystem::RenderingSystem(
-    std::shared_ptr<InputManager> inputManager,
-    std::shared_ptr<Window> window)
-    : inputManager(inputManager), window(window)
+    std::shared_ptr<InputManager> inputManager)
+    : inputManager(inputManager)
 {
     if (!init()) {
         throw std::runtime_error("Failed to initialize RenderingSystem!");
@@ -21,9 +20,6 @@ RenderingSystem::RenderingSystem(
 
 void RenderingSystem::processInput(float deltaTime)
 {
-    if (inputManager->isKeyPressedOnce(GLFW_KEY_ESCAPE))
-        glfwSetWindowShouldClose(window->getGLFWwindow(), true);
-
     // Handle camera toggle with F key
     if (inputManager->isKeyPressedOnce(GLFW_KEY_F)) {
         toggleCamera();
@@ -73,7 +69,7 @@ void RenderingSystem::processCameraInput(float deltaTime)
         // TurnTableCamera uses right-click drag
         if (inputManager->isMousePressed(GLFW_MOUSE_BUTTON_RIGHT)) {
             if (cursorPositionIsSetOnce) {
-                float const aspectRatio = static_cast<float>(window->getWidth()) / static_cast<float>(window->getHeight());
+                float const aspectRatio = static_cast<float>(vWidth) / static_cast<float>(vHeight);
                 auto const deltaPosition = cursorPosition - previousCursorPosition;
                 turntableCamera->adjustTheta(-static_cast<float>(deltaPosition.x) * deltaTime * this->camSpeed * (1 / aspectRatio));
                 turntableCamera->adjustPhi(-static_cast<float>(deltaPosition.y) * deltaTime * this->camSpeed);
@@ -89,7 +85,7 @@ void RenderingSystem::processCameraInput(float deltaTime)
             if (std::abs(ry) < deadzone) ry = 0.0f;
 
             if (rx != 0.0f || ry != 0.0f) {
-                float const aspectRatio = static_cast<float>(window->getWidth()) / static_cast<float>(window->getHeight());
+                float const aspectRatio = static_cast<float>(vWidth) / static_cast<float>(vHeight);
                 float sensitivity = 2.0f;
                 turntableCamera->adjustTheta(-rx * deltaTime * this->camSpeed * sensitivity * (1.0f / aspectRatio));
                 turntableCamera->adjustPhi(-ry * deltaTime * this->camSpeed * sensitivity);
@@ -532,7 +528,7 @@ void RenderingSystem::renderEntities(const std::vector<EntityPx>& entityList)
 
 glm::mat4 RenderingSystem::getProjectionMatrix() const
 {
-    float const aspectRatio = static_cast<float>(window->getWidth()) / static_cast<float>(window->getHeight());
+    float const aspectRatio = static_cast<float>(vWidth) / static_cast<float>(vHeight);
     
     // Perspective projection for active camera
     // FOV is already in radians, no conversion needed
@@ -545,24 +541,6 @@ void RenderingSystem::update(float deltaTime)
     
     // Render the rotating sphere (demo)
     render();
-}
-
-void RenderingSystem::endFrame()
-{
-    // Swap buffers and poll events
-    window->swapBuffers();
-    glfwPollEvents();
-}
-
-bool RenderingSystem::shouldClose() const
-{
-    return window->shouldClose();
-}
-
-void RenderingSystem::onResize(int width, int height)
-{
-    glViewport(0, 0, width, height);
-    logger::info("Window resized to {}x{}", width, height);
 }
 
 void RenderingSystem::onMouseWheelChange(double xOffset, double yOffset)
