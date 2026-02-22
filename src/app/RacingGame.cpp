@@ -183,6 +183,39 @@ RacingGame::RacingGame()
     system->close();
     system->release();
     // test FMOD initialization
+
+    // FMOD Studio test
+    FMOD::Studio::System* studioSystem = nullptr;
+    FMOD_RESULT std_result;
+
+    // Create the FMOD Studio system (this also creates the low‑level system)
+    std_result = FMOD::Studio::System::create(&studioSystem);
+    if (std_result != FMOD_OK)
+    {
+        std::cerr << "FMOD Studio System creation failed: " << std_result << std::endl;
+    }
+    else
+    {
+        // Initialize the Studio system (512 voices, default flags)
+        std_result = studioSystem->initialize(
+            512,
+            FMOD_STUDIO_INIT_NORMAL,
+            FMOD_INIT_NORMAL,
+            nullptr
+        );
+
+        if (result != FMOD_OK)
+        {
+            std::cerr << "FMOD Studio System init failed: " << std_result << std::endl;
+        }
+        else
+        {
+            std::cout << "FMOD Studio initialized successfully." << std::endl;
+        }
+
+        // Shut down
+        studioSystem->release();
+    }
 }
 
 
@@ -194,6 +227,8 @@ void RacingGame::run()
 
     while (!renderingSystem->shouldClose())
     {
+        //audioSystem->updateAudio(gameTime.dtF());
+
         // keep checking which input system we are using
         menus->checkInputSystem();
 
