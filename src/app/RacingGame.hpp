@@ -5,6 +5,7 @@
 #include "core/Text.h"
 #include "input/VehicleControlSystem.hpp"
 #include "physics/PhysicsSystem.hpp"
+#include "audio/AudioSystem.hpp"
 #include "ui/GameMenus.hpp"
 #include "GameState.hpp"
 
@@ -16,6 +17,7 @@ public:
     RacingGame();
 
     void run();
+    void music();
 
 private:
     GameTime gameTime;
@@ -34,4 +36,10 @@ private:
     Entity WoodyModel;
     Entity BackpackModel;
     Entity MapModel;
+
+    // test sound
+    FMOD::Studio::System* audioStudio = nullptr;
+    FMOD::System* coreSystem = nullptr;
+    FMOD::Sound* musicSound = nullptr;
+    FMOD::Channel* musicChannel = nullptr;
 };
