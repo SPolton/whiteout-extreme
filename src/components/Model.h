@@ -24,5 +24,5 @@ public:
 // this component owns a loaded Model with multiple meshes and textures
 struct ModelRenderable {
     std::shared_ptr<ModelLoader> modelLoader;  // Shared ownership
-    ShaderProgram* shader;                      // Non-owning pointer to shader
+    std::shared_ptr<ShaderProgram> shader;     // Shared ownership
 };
