@@ -106,7 +106,7 @@ RacingGame::RacingGame()
     // 3.Create Entities and add Components to them:
     
     // Create Skybox first (if texture is available)
-    Skybox = renderingSystem->createSkyboxEntity("assets/textures/snow_landscape.hdr");
+    Skybox = renderingSystem->createSkyboxEntity("assets/textures/sky/snow_landscape.hdr");
     logger::info("Created Skybox entity");
 
     // Create Earth sphere entity
