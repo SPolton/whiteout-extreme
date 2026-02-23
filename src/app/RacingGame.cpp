@@ -89,7 +89,7 @@ RacingGame::RacingGame()
         gCoordinator.SetSystemSignature<PhysicsSystem>(signature);
     }
 
-    physicsSystem->spawnBoxPyramid(10, 0.5f, renderingSystem->getCubeRenderable());
+    physicsSystem->spawnBoxPyramid(10, 0.5f, renderingSystem->getCubeRenderable("assets/textures/carbon_fiber.jpg"));
 
     // VEHICLE CONTROL SYSTEM
      vehicleControlSystem = gCoordinator.RegisterSystem<VehicleControlSystem>(
@@ -106,15 +106,15 @@ RacingGame::RacingGame()
     // 3.Create Entities and add Components to them:
     
     // Create Skybox first (if texture is available)
-    Skybox = renderingSystem->createSkyboxEntity();
+    Skybox = renderingSystem->createSkyboxEntity("assets/textures/snow_landscape.hdr");
     logger::info("Created Skybox entity");
 
     // Create Earth sphere entity
-    Earth = renderingSystem->createSphereEntity();
+    Earth = renderingSystem->createSphereEntity("assets/textures/2k_earth_daymap.jpg");
     logger::info("Created Earth sphere entity");
     
     // Create Mars sphere entity
-    Mars = renderingSystem->createSphereEntity();
+    Mars = renderingSystem->createSphereEntity("assets/textures/2k_mars.jpg");
     logger::info("Created Mars sphere entity");
     
     // Create Woody model entity (separate from Earth and Mars)
@@ -176,7 +176,6 @@ RacingGame::RacingGame()
     gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(1.3f, 0.7f, 0.7f); // Move Mars slightly
     gCoordinator.GetComponent<PhysxTransform>(Mars).scale = glm::vec3(0.4f); // Scale down Mars
     gCoordinator.GetComponent<PhysxTransform>(Mars).rot = glm::angleAxis(glm::radians(23.5f), glm::vec3(0.f, 0.f, 1.f)); // Tilt Mars
-    gCoordinator.GetComponent<Renderable>(Mars).texture = renderingSystem->texture2.get(); // Mars texture
     
     // Position Woody model on the other side
     if (WoodyModel != 0) { // Check if model was successfully created
@@ -248,7 +247,6 @@ void RacingGame::run()
                     gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(1.3f, 0.7f, -0.7f); // Move Mars slightly
                     gCoordinator.GetComponent<PhysxTransform>(Mars).scale = glm::vec3(0.4f); // Scale down Mars
                     gCoordinator.GetComponent<PhysxTransform>(Mars).rot = glm::angleAxis(glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f)); // Rotate Mars
-                    gCoordinator.GetComponent<Renderable>(Mars).texture = renderingSystem->texture2.get(); // Mars texture
                     gCoordinator.RemoveComponent<RigidBody>(Mars); // Remove physics from Mars
                 }
             }
