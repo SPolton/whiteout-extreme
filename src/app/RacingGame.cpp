@@ -75,7 +75,7 @@ RacingGame::RacingGame()
         logger::info("Window resized to {}x{}", w, h);
         });
 
-    inputManager->setMouseWheelCallback([this](int w, int h) {
+    inputManager->setMouseWheelCallback([this](double w, double h) {
         renderingSystem->onMouseWheelChange(w, h);
         });
 
@@ -109,7 +109,7 @@ RacingGame::RacingGame()
     // 3.Create Entities and add Components to them:
     
     // Create Skybox first (if texture is available)
-    Entity Skybox = renderingSystem->createSkyboxEntity();
+    Skybox = renderingSystem->createSkyboxEntity();
     logger::info("Created Skybox entity");
 
     // Create Earth sphere entity
@@ -263,7 +263,7 @@ void RacingGame::run()
             int maxPhysicsSteps = gameTime.maxPhysicsSteps();
             int physicsSteps = 0;
             while (gameTime.accumulator >= gameTime.dt && physicsSteps < maxPhysicsSteps) {
-                if (gameTime.frameCount < 300 && gameTime.physicsFrameCount > maxPhysicsSteps) {
+                if (gameTime.frameCount < static_cast<unsigned>(300) && gameTime.physicsFrameCount > static_cast<unsigned>(maxPhysicsSteps)) {
                     break; // Skip the first frames to avoid slow startup
                 }
                 vehicleControlSystem->update(gameTime.dtF());

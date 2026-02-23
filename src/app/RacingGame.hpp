@@ -7,6 +7,10 @@
 #include "physics/PhysicsSystem.hpp"
 #include "ui/GameMenus.hpp"
 #include "GameState.hpp"
+#include "input/glfw/Window.hpp"
+#include "input/glfw/InputManager.hpp"
+#include "input/panel/ImGuiWrapper.hpp"
+#include "input/panel/ImGuiPanel.hpp"
 
 #include <iostream>
 #include <memory>
@@ -82,4 +86,5 @@ private:
     Entity WoodyModel = 0;
     Entity BackpackModel = 0;
     Entity MapModel = 0;
+    Entity Skybox = 0;
 };
