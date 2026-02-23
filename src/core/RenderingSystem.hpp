@@ -59,19 +59,11 @@ public:
     // For rendering physics entities
     void renderEntities(const std::vector<EntityPx>& entityList);
 
-    //inputManager getter
-    std::shared_ptr<InputManager> getInputManager() const { return inputManager; }
-
-    int getWindowWidth() const { return window->getWidth(); }
-    int getWindowHeight() const { return window->getHeight(); }
-
     void onMouseWheelChange(double xOffset, double yOffset);
     bool init();
 
 private:
     // Core components following modular architecture
-    std::shared_ptr<Window> window;
-
     std::unique_ptr<ShaderProgram> shader;
     std::unique_ptr<ShaderProgram> modelShader;
 

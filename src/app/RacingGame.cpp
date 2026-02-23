@@ -93,7 +93,7 @@ RacingGame::RacingGame()
 
     // VEHICLE CONTROL SYSTEM
      vehicleControlSystem = gCoordinator.RegisterSystem<VehicleControlSystem>(
-        gCoordinator.GetSystem<RenderingSystem>()->getInputManager(),
+        inputManager,
         gCoordinator.GetSystem<RenderingSystem>(),
         gCoordinator.GetSystem<PhysicsSystem>()
     );
@@ -102,9 +102,6 @@ RacingGame::RacingGame()
         signature.set(gCoordinator.GetComponentType<VehicleComponent>());
         gCoordinator.SetSystemSignature<VehicleControlSystem>(signature);
     }
-    // We need to set the input manager for the vehicle control system so it can read player inputs
-    // Borrowed from the rendering system since it creates and owns the input manager
-    // vehicleControlSystem->SetInputManager(renderingSystem->getInputManager());
 
     // 3.Create Entities and add Components to them:
     
