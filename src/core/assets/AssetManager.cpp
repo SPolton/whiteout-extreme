@@ -26,6 +26,15 @@ AssetManager::loadTexture(const std::string& path, GLint interpolation)
 }
 
 std::shared_ptr<ShaderProgram>
+AssetManager::loadShader(const std::string& name)
+{
+    // Convention-based path: assets/shaders/{name}.vert and assets/shaders/{name}.frag
+    std::string vertPath = assetsFolder + "/" + shadersFolder + "/" + name + ".vert";
+    std::string fragPath = assetsFolder + "/" + shadersFolder + "/" + name + ".frag";
+    return loadShader(name, vertPath, fragPath);
+}
+
+std::shared_ptr<ShaderProgram>
 AssetManager::loadShader(const std::string& name, const std::string& vertPath, const std::string& fragPath)
 {
     // Check if shader is already cached

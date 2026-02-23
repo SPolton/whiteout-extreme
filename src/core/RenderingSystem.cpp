@@ -107,11 +107,7 @@ bool RenderingSystem::init()
 
     try
     {
-        assetManager.loadShader(
-            "textured",
-            "assets/shaders/textured.vert", 
-            "assets/shaders/textured.frag"
-        );
+        assetManager.loadShader("textured");
         logger::info("Textured shader loaded successfully");
     }
     catch (const std::exception& e)
@@ -123,11 +119,7 @@ bool RenderingSystem::init()
     // Load model shader
     try
     {
-        assetManager.loadShader(
-            "model",
-            "assets/shaders/model.vert",
-            "assets/shaders/model.frag"
-        );
+        assetManager.loadShader("model");
         logger::info("Model shader loaded successfully");
     }
     catch (const std::exception& e)
@@ -172,7 +164,7 @@ Renderable RenderingSystem::getCubeRenderable(const std::string& texturePath)
     return Renderable{
         .geometry = assetManager.loadGeometry("cube", ShapeGenerator::unit_cube()),
         .cpuData = assetManager.getCPUGeometry("cube"),
-        .shader = assetManager.loadShader("textured", "assets/shaders/textured.vert", "assets/shaders/textured.frag"),
+        .shader = assetManager.loadShader("textured"),
         .texture = assetManager.loadTexture(texturePath, GL_LINEAR)
     };
 }
@@ -196,7 +188,7 @@ Entity RenderingSystem::createSkyboxEntity(const std::string& texturePath)
         Renderable{
             .geometry = assetManager.loadGeometry("skybox", ShapeGenerator::sphere(100.0f, 32, 32)),
             .cpuData = assetManager.getCPUGeometry("skybox"),
-            .shader = assetManager.loadShader("textured", "assets/shaders/textured.vert", "assets/shaders/textured.frag"),
+            .shader = assetManager.loadShader("textured"),
             .texture = assetManager.loadTexture(texturePath, GL_LINEAR),
             .isSkybox = true
         }
@@ -227,7 +219,7 @@ Entity RenderingSystem::createSphereEntity(const std::string& texturePath)
         Renderable{
             assetManager.loadGeometry("sphere", ShapeGenerator::sphere(1, 16, 16)),
             assetManager.getCPUGeometry("sphere"),
-            assetManager.loadShader("textured", "shaders/textured.vert", "shaders/textured.frag"),
+            assetManager.loadShader("textured"),
             assetManager.loadTexture(texturePath, GL_LINEAR)
         }
     );
@@ -259,7 +251,7 @@ Entity RenderingSystem::createModelEntity(const std::string& modelPath)
         // Add ModelRenderable component with the model loader and shader
         gCoordinator.AddComponent(
             model,
-            ModelRenderable{modelLoader, assetManager.loadShader("model", "shaders/model.vert", "shaders/model.frag")}
+            ModelRenderable{modelLoader, assetManager.loadShader("model")}
         );
     }
     catch (const std::exception& e) {
@@ -414,7 +406,7 @@ void RenderingSystem::render()
 void RenderingSystem::renderEntities(const std::vector<EntityPx>& entityList)
 {
     // Get shader and geometry
-    auto shader = assetManager.loadShader("textured", "shaders/textured.vert", "shaders/textured.frag");
+    auto shader = assetManager.loadShader("textured");
     auto cubeGeometry = assetManager.loadGeometry("cube", ShapeGenerator::unit_cube());
     auto cubeCPUData = assetManager.getCPUGeometry("cube");
     
