@@ -7,6 +7,10 @@
 #include "physics/PhysicsSystem.hpp"
 #include "ui/GameMenus.hpp"
 #include "GameState.hpp"
+#include "input/glfw/Window.hpp"
+#include "input/glfw/InputManager.hpp"
+#include "input/panel/ImGuiWrapper.hpp"
+#include "input/panel/ImGuiPanel.hpp"
 
 #include <iostream>
 #include <memory>
@@ -18,7 +22,20 @@ public:
     void run();
 
 private:
+    void updateImGui();
+    void syncImgui();
+    void endFrame();
+
     GameTime gameTime;
+
+    std::shared_ptr<InputManager> inputManager;
+    std::shared_ptr<Window> window;
+
+    std::shared_ptr<ImGuiWrapper> imguiWrapper;
+    std::shared_ptr<ImGuiPanel> imguiPanel;
+
+    std::shared_ptr<RenderingSystem> renderingSystem;
+    std::shared_ptr<PhysicsSystem> physicsSystem;
     std::shared_ptr<VehicleControlSystem> vehicleControlSystem;
 
     std::unique_ptr<Text> textSystem;
@@ -29,9 +46,10 @@ private:
     GameState gameState = GameState::MainMenu;
 
     //Entity playerVehicleEntity;
-    Entity Earth;
-    Entity Mars;
-    Entity WoodyModel;
-    Entity BackpackModel;
-    Entity MapModel;
+    Entity Earth = 0;
+    Entity Mars = 0;
+    Entity WoodyModel = 0;
+    Entity BackpackModel = 0;
+    Entity MapModel = 0;
+    Entity Skybox = 0;
 };

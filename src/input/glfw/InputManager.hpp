@@ -14,9 +14,12 @@ public:
     using MouseWheelCallback = std::function<void(double xOffset, double yOffset)>;
 
     explicit InputManager(
-        ResizeCallback resizeCallback,
-        MouseWheelCallback mouseWheelCallback
+        ResizeCallback resizeCallback = nullptr,
+        MouseWheelCallback mouseWheelCallback = nullptr
     );
+
+    void setResizeCallback(ResizeCallback cb) { mResizeCallback = std::move(cb); }
+    void setMouseWheelCallback(MouseWheelCallback cb) { mMouseWheelCallback = std::move(cb); }
 
     virtual ~InputManager() = default;
 
