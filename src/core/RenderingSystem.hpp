@@ -1,7 +1,8 @@
 #pragma once
 
-#include "core/assets/Texture.hpp"
+#include "core/assets/AssetManager.hpp"
 #include "core/assets/ModelLoader.hpp"
+#include "core/assets/Texture.hpp"
 #include "core/buffer/Geometry.hpp"
 #include "core/render/ShaderProgram.hpp"
 #include "core/scene/TurnTableCamera.hpp"
@@ -63,9 +64,7 @@ public:
     bool init();
 
 private:
-    // Core components following modular architecture
-    std::unique_ptr<ShaderProgram> shader;
-    std::unique_ptr<ShaderProgram> modelShader;
+    AssetManager& assetManager = AssetManager::getInstance();
 
     std::unique_ptr<TurnTableCamera> turntableCamera;
     std::unique_ptr<FreeCamera> freeCamera;

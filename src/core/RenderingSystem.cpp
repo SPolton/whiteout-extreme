@@ -108,30 +108,32 @@ bool RenderingSystem::init()
     // Create shader using ShaderProgram (RAII)
     try
     {
-        shader = std::make_unique<ShaderProgram>(
+        assetManager.loadShader(
+            "textured",
             "assets/shaders/textured.vert", 
             "assets/shaders/textured.frag"
         );
-        logger::info("Shaders loaded successfully");
+        logger::info("Textured shader loaded successfully");
     }
     catch (const std::exception& e)
     {
-        logger::error("Failed to load shaders: {0}", e.what());
+        logger::error("Failed to load textured shader: {0}", e.what());
         return false;
     }
 
-    // Create model shader for loaded 3D models (different vertex layout)
+    // Load model shader
     try
     {
-        modelShader = std::make_unique<ShaderProgram>(
+        assetManager.loadShader(
+            "model",
             "assets/shaders/model.vert",
             "assets/shaders/model.frag"
         );
-        logger::info("Model shaders loaded successfully");
+        logger::info("Model shader loaded successfully");
     }
     catch (const std::exception& e)
     {
-        logger::error("Failed to load model shaders: {0}", e.what());
+        logger::error("Failed to load model shader: {0}", e.what());
         return false;
     }
 
@@ -242,7 +244,7 @@ Renderable RenderingSystem::getCubeRenderable()
     return Renderable{
         .geometry = cubeGeometry.get(),
         .cpuData = cubeCPUData.get(),
-        .shader = shader.get(),
+        .shader = assetManager.loadShader("textured", "assets/shaders/textured.vert", "assets/shaders/textured.frag"),
         .texture = vehicleTexture.get()
     };
 }
@@ -267,7 +269,7 @@ Entity RenderingSystem::createSkyboxEntity()
         Renderable{
             .geometry = skyboxGeometry.get(),
             .cpuData = skyboxCPUData.get(),
-            .shader = shader.get(),
+            .shader = assetManager.loadShader("textured", "assets/shaders/textured.vert", "assets/shaders/textured.frag"),
             .texture = skyboxTexture.get(),
             .isSkybox = true
         }
@@ -298,7 +300,7 @@ Entity RenderingSystem::createSphereEntity()
         Renderable{
             triangleGeometry.get(),
             triangleCPUData.get(),
-            shader.get(),
+            assetManager.loadShader("textured", "shaders/textured.vert", "shaders/textured.frag"),
             texture.get()
         }
     );
@@ -330,7 +332,7 @@ Entity RenderingSystem::createModelEntity(const std::string& modelPath)
         // Add ModelRenderable component with the model loader and shader
         gCoordinator.AddComponent(
             model,
-            ModelRenderable{modelLoader, modelShader.get()}
+            ModelRenderable{modelLoader, assetManager.loadShader("model", "shaders/model.vert", "shaders/model.frag")}
         );
     }
     catch (const std::exception& e) {
@@ -484,6 +486,7 @@ void RenderingSystem::render()
 
 void RenderingSystem::renderEntities(const std::vector<EntityPx>& entityList)
 {
+    auto shader = assetManager.loadShader("textured", "shaders/textured.vert", "shaders/textured.frag");
     // Use shader
     shader->use();
     
