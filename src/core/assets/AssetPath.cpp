@@ -38,11 +38,11 @@ AssetPath::AssetPath() {
         }
         nameFileout.close();
         if (LogCalledOnce == false) {
-            logger::info("Override asset path is %s", mAssetPath.c_str());
+            logger::info("Override asset path is {}", mAssetPath.c_str());
         }
     } else {
         if (LogCalledOnce == false) {
-            logger::info("No override found, using the default directory: %s", mAssetPath.c_str());
+            logger::info("No override found, using the default directory: {}", mAssetPath.c_str());
         }
     }
 

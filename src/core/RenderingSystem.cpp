@@ -105,118 +105,40 @@ bool RenderingSystem::init()
     logger::info("OpenGL Version: {0}", (const char*)glGetString(GL_VERSION));
     logger::info("OpenGL Renderer: {0}", (const char*)glGetString(GL_RENDERER));
 
-    // Create shader using ShaderProgram (RAII)
     try
     {
-        shader = std::make_unique<ShaderProgram>(
-            "assets/shaders/textured.vert", 
-            "assets/shaders/textured.frag"
-        );
-        logger::info("Shaders loaded successfully");
+        assetManager.loadShader("textured");
+        logger::info("Textured shader loaded successfully");
     }
     catch (const std::exception& e)
     {
-        logger::error("Failed to load shaders: {0}", e.what());
+        logger::error("Failed to load textured shader: {0}", e.what());
         return false;
     }
 
-    // Create model shader for loaded 3D models (different vertex layout)
+    // Load model shader
     try
     {
-        modelShader = std::make_unique<ShaderProgram>(
-            "assets/shaders/model.vert",
-            "assets/shaders/model.frag"
-        );
-        logger::info("Model shaders loaded successfully");
+        assetManager.loadShader("model");
+        logger::info("Model shader loaded successfully");
     }
     catch (const std::exception& e)
     {
-        logger::error("Failed to load model shaders: {0}", e.what());
+        logger::error("Failed to load model shader: {0}", e.what());
         return false;
     }
 
-    // Load texture
-    try
-    {
-        texture = std::make_unique<Texture>(
-            "assets/textures/2k_earth_daymap.jpg",
-            GL_LINEAR
-        );
-        texture2 = std::make_unique<Texture>(
-            "assets/textures/2k_mars.jpg",
-            GL_LINEAR
-        );
-        texture_snowball = std::make_unique<Texture>(
-            "assets/textures/snowball.png",
-            GL_LINEAR
-        );
-        logger::info("Texture loaded successfully");
-    }
-    catch (const std::exception& e)
-    {
-        logger::error("Failed to load texture: {0}", e.what());
-        return false;
-    }
+    // Create common geometry through AssetManager
+    CPU_Geometry sphereCPU = ShapeGenerator::sphere(1, 16, 16);
+    assetManager.loadGeometry("sphere", sphereCPU);
+    logger::info("Sphere geometry initialized");
 
-    // Load vehicle texture
-    try
-    {
-        vehicleTexture = std::make_unique<Texture>(
-            "assets/textures/carbon_fiber.jpg",
-            GL_LINEAR
-        );
-        logger::info("Vehicle texture loaded successfully");
-    }
-    catch (const std::exception& e)
-    {
-        logger::error("Failed to load vehicle texture: {0}", e.what());
-        return false;
-    }
-
-    // Load skybox texture
-    try
-    {
-        skyboxTexture = std::make_unique<Texture>(
-            "assets/textures/sky/snow_landscape.hdr",
-            GL_LINEAR
-        );
-        logger::info("Skybox texture loaded successfully");
-    }
-    catch (const std::exception& e)
-    {
-        logger::warn("Failed to load skybox texture: {0}", e.what());
-        return false;
-    }
-
-    // Create geometry using GPU_Geometry (RAII)
-    triangleGeometry = std::make_unique<GPU_Geometry>();
-    triangleCPUData = std::make_unique<CPU_Geometry>();
-    
-    // Generate square using ShapeGenerator (better for textures)
-    *triangleCPUData = ShapeGenerator::sphere(1, 16, 16);
-
-    // Upload to GPU
-    triangleGeometry->Update(*triangleCPUData);
-    
-    logger::info("Geometry initialized");
-
-    // Create cube geometry for physics objects
-    cubeGeometry = std::make_unique<GPU_Geometry>();
-    cubeCPUData = std::make_unique<CPU_Geometry>();
-    
-    // Generate cube using ShapeGenerator
-    *cubeCPUData = ShapeGenerator::unit_cube();
-    
-    // Upload cube to GPU
-    cubeGeometry->Update(*cubeCPUData);
-    
+    CPU_Geometry cubeCPU = ShapeGenerator::unit_cube();
+    assetManager.loadGeometry("cube", cubeCPU);
     logger::info("Cube geometry initialized");
 
-    // Create skybox geometry (large sphere with more detail)
-    skyboxGeometry = std::make_unique<GPU_Geometry>();
-    skyboxCPUData = std::make_unique<CPU_Geometry>();
-    *skyboxCPUData = ShapeGenerator::sphere(100.0f, 32, 32);
-    skyboxGeometry->Update(*skyboxCPUData);
+    CPU_Geometry skyboxCPU = ShapeGenerator::sphere(100.0f, 32, 32);
+    assetManager.loadGeometry("skybox", skyboxCPU);
     logger::info("Skybox geometry initialized");
 
     // Create object tracking transform for camera (vehicle tracking)
@@ -237,18 +159,17 @@ bool RenderingSystem::init()
     return true;
 }
 
-Renderable RenderingSystem::getCubeRenderable()
+Renderable RenderingSystem::getCubeRenderable(const std::string& texturePath)
 {
     return Renderable{
-        .geometry = cubeGeometry.get(),
-        .cpuData = cubeCPUData.get(),
-        .shader = shader.get(),
-        .texture = vehicleTexture.get()
+        .geometry = assetManager.loadGeometry("cube", ShapeGenerator::unit_cube()),
+        .cpuData = assetManager.getCPUGeometry("cube"),
+        .shader = assetManager.loadShader("textured"),
+        .texture = assetManager.loadTexture(texturePath, GL_LINEAR)
     };
 }
 
-// TODO: refactor to avoid code duplication with createSphereEntity
-Entity RenderingSystem::createSkyboxEntity()
+Entity RenderingSystem::createSkyboxEntity(const std::string& texturePath)
 {
     // Create skybox entity
     Entity skybox = gCoordinator.CreateEntity();
@@ -265,10 +186,10 @@ Entity RenderingSystem::createSkyboxEntity()
     gCoordinator.AddComponent(
         skybox,
         Renderable{
-            .geometry = skyboxGeometry.get(),
-            .cpuData = skyboxCPUData.get(),
-            .shader = shader.get(),
-            .texture = skyboxTexture.get(),
+            .geometry = assetManager.loadGeometry("skybox", ShapeGenerator::sphere(100.0f, 32, 32)),
+            .cpuData = assetManager.getCPUGeometry("skybox"),
+            .shader = assetManager.loadShader("textured"),
+            .texture = assetManager.loadTexture(texturePath, GL_LINEAR),
             .isSkybox = true
         }
     );
@@ -279,9 +200,9 @@ Entity RenderingSystem::createSkyboxEntity()
 }
 
 //Create Entity and add PhysxTransform and Renderable Components
-Entity RenderingSystem::createSphereEntity()
+Entity RenderingSystem::createSphereEntity(const std::string& texturePath)
 {
-    // Create sphere entity with earth texture as a basis
+    // Create sphere entity
     Entity sphere = gCoordinator.CreateEntity();
 
     gCoordinator.AddComponent(
@@ -296,14 +217,14 @@ Entity RenderingSystem::createSphereEntity()
     gCoordinator.AddComponent(
         sphere,
         Renderable{
-            triangleGeometry.get(),
-            triangleCPUData.get(),
-            shader.get(),
-            texture.get()
+            assetManager.loadGeometry("sphere", ShapeGenerator::sphere(1, 16, 16)),
+            assetManager.getCPUGeometry("sphere"),
+            assetManager.loadShader("textured"),
+            assetManager.loadTexture(texturePath, GL_LINEAR)
         }
     );
 
-    logger::info("Sphere initialized");
+    logger::info("Sphere entity created with texture: {}", texturePath);
 
     return sphere;
 }
@@ -330,7 +251,7 @@ Entity RenderingSystem::createModelEntity(const std::string& modelPath)
         // Add ModelRenderable component with the model loader and shader
         gCoordinator.AddComponent(
             model,
-            ModelRenderable{modelLoader, modelShader.get()}
+            ModelRenderable{modelLoader, assetManager.loadShader("model")}
         );
     }
     catch (const std::exception& e) {
@@ -484,13 +405,13 @@ void RenderingSystem::render()
 
 void RenderingSystem::renderEntities(const std::vector<EntityPx>& entityList)
 {
+    // Get shader and geometry
+    auto shader = assetManager.loadShader("textured");
+    auto cubeGeometry = assetManager.loadGeometry("cube", ShapeGenerator::unit_cube());
+    auto cubeCPUData = assetManager.getCPUGeometry("cube");
+    
     // Use shader
     shader->use();
-    
-    // Bind vehicle texture to texture unit 0
-    glActiveTexture(GL_TEXTURE0);
-    vehicleTexture->bind();
-    glUniform1i(glGetUniformLocation(*shader, "baseColorTexture"), 0);
     
     // Get projection matrix (perspective projection for 3D)
     glm::mat4 projection = getProjectionMatrix();
@@ -517,11 +438,14 @@ void RenderingSystem::renderEntities(const std::vector<EntityPx>& entityList)
         // Send model matrix to shader
         glUniformMatrix4fv(glGetUniformLocation(*shader, "model"), 1, GL_FALSE, &model[0][0]);
         
-        // Draw the cube
-        if (!cubeCPUData->indices.empty()) {
-            glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(cubeCPUData->indices.size()), GL_UNSIGNED_INT, nullptr);
-        } else {
-            glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(cubeCPUData->positions.size()));
+        if (cubeCPUData) {
+            // Draw the cube
+            if (!cubeCPUData->indices.empty()) {
+                glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(cubeCPUData->indices.size()), GL_UNSIGNED_INT, nullptr);
+            }
+            else {
+                glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(cubeCPUData->positions.size()));
+            }
         }
     }
 }
