@@ -56,8 +56,5 @@ private:
     Entity Skybox = 0;
 
     // test sound
-    FMOD::Studio::System* audioStudio = nullptr;
-    FMOD::System* coreSystem = nullptr;
-    FMOD::Sound* musicSound = nullptr;
-    FMOD::Channel* musicChannel = nullptr;
+    CAudioEngine audioManager;
 };

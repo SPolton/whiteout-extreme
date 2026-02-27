@@ -11,6 +11,7 @@
 // test FMOD initialization
 #include <fmod.hpp>
 #include <iostream>
+#include <fmod_studio_common.h>
 // test FMOD initialization
 
 //ECS global coordinator
@@ -203,124 +204,11 @@ RacingGame::RacingGame()
 
     menus = std::make_unique<GameMenus>(textSystem.get(), inputManager.get(), gameState);
 
-    // test FMOD initialization
-    FMOD::System* system = nullptr;
-    FMOD_RESULT result;
-
-    // Create FMOD system
-    result = FMOD::System_Create(&system);
-    if (result != FMOD_OK) {
-        std::cerr << "FMOD system creation failed: " << result << std::endl;
-    }
-
-    // Initialize system
-    result = system->init(32, FMOD_INIT_NORMAL, nullptr);
-    if (result != FMOD_OK) {
-        std::cerr << "FMOD system init failed: " << result << std::endl;
-    }
-
-    std::cout << "FMOD initialized successfully." << std::endl;
-
-    // Clean up
-    system->close();
-    system->release();
-    // test FMOD initialization
-
-    // FMOD Studio test
-    FMOD::Studio::System* studioSystem = nullptr;
-    FMOD_RESULT std_result;
-
-    // Create the FMOD Studio system (this also creates the low‑level system)
-    std_result = FMOD::Studio::System::create(&studioSystem);
-    if (std_result != FMOD_OK)
-    {
-        std::cerr << "FMOD Studio System creation failed: " << std_result << std::endl;
-    }
-    else
-    {
-        // Initialize the Studio system (512 voices, default flags)
-        std_result = studioSystem->initialize(
-            512,
-            FMOD_STUDIO_INIT_NORMAL,
-            FMOD_INIT_NORMAL,
-            nullptr
-        );
-
-        if (result != FMOD_OK)
-        {
-            std::cerr << "FMOD Studio System init failed: " << std_result << std::endl;
-        }
-        else
-        {
-            std::cout << "FMOD Studio initialized successfully." << std::endl;
-        }
-
-        // Shut down
-        studioSystem->release();
-    }
-    // FMOD Studio test
+   // intiailize audio engine
+    audioManager.Init();
+    audioManager.LoadSound("assets/audio/game-music-loop.mp3", false, true, true);
+    audioManager.PlaySounds("assets/audio/game-music-loop.mp3", { 0,0,0 }, -8.0f);
 }
-
-// test sound with FMOD (but game blocked)
-void RacingGame::music() {
-    FMOD::Studio::System* studioAudioSystem = nullptr;
-    FMOD::System* coreSystem = nullptr;
-    FMOD_RESULT result;
-
-    // Create the FMOD Studio system
-    result = FMOD::Studio::System::create(&studioAudioSystem);
-    if (result != FMOD_OK) {
-        std::cerr << "FMOD Studio create failed: " << result << std::endl;
-    }
-
-    // Initialize Studio (also initializes Core)
-    result = studioAudioSystem->initialize(
-        32,
-        FMOD_STUDIO_INIT_NORMAL,
-        FMOD_INIT_NORMAL,
-        nullptr
-    );
-    if (result != FMOD_OK) {
-        std::cerr << "FMOD Studio init failed: " << result << std::endl;
-    }
-
-    // Get the core FMOD system
-    result = studioAudioSystem->getCoreSystem(&coreSystem);
-    if (result != FMOD_OK) {
-        std::cerr << "getCoreSystem failed: " << result << std::endl;
-    }
-
-    // Load a sound file (make sure this path is valid)
-    FMOD::Sound* sound = nullptr;
-    result = coreSystem->createSound("assets/audio/game-music-loop.mp3", FMOD_DEFAULT, nullptr, &sound);
-    if (result != FMOD_OK) {
-        std::cerr << "createSound failed: " << result << std::endl;
-    }
-
-    // Play the sound
-    FMOD::Channel* channel = nullptr;
-    result = coreSystem->playSound(sound, nullptr, false, &channel);
-    if (result != FMOD_OK) {
-        std::cerr << "playSound failed: " << result << std::endl;
-    }
-
-    std::cout << "Playing sound..." << std::endl;
-
-    // Simple update loop: wait until sound finishes
-    bool isPlaying = true;
-    while (isPlaying) {
-        channel->isPlaying(&isPlaying);
-        studioAudioSystem->update();
-    }
-
-    std::cout << "Finished playing." << std::endl;
-
-    // Clean up
-    sound->release();
-    studioAudioSystem->unloadAll();
-    studioAudioSystem->release();
-}
-// test sound with FMOD (but game blocked)
 
 /// Main game loop
 void RacingGame::run()
@@ -330,8 +218,8 @@ void RacingGame::run()
 
     while (!window->shouldClose())
     {
-        // TEST
-        music();
+        // TEST audio
+        audioManager.Update();
 
         // keep checking which input system we are using
         menus->checkInputSystem();
