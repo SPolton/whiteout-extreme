@@ -1,19 +1,25 @@
 #pragma once
 
 #include "components/VehicleComponent.h"
-#include "ecs/System.hpp"
 #include "input/glfw/InputManager.hpp"
 #include <memory>
+#include "ecs/Coordinator.hpp"
+#include "core/RenderingSystem.hpp"
+#include "physics/PhysicsSystem.hpp"
 
 class VehicleControlSystem : public System {
 public:
-    void SetInputManager(std::shared_ptr<InputManager> inputManager);
+    VehicleControlSystem(std::shared_ptr<InputManager> inputManager,
+        std::shared_ptr<RenderingSystem> renderingSystem,
+        std::shared_ptr<PhysicsSystem> physicsSystem);
 
     void update(float deltaTime);
 
 private:
     // Input management
     std::shared_ptr<InputManager> inputManager;
+    std::shared_ptr<RenderingSystem> renderingSystem;
+    std::shared_ptr<PhysicsSystem> physicsSystem;
 
     void processInputs();
     void processKeyboardInput();

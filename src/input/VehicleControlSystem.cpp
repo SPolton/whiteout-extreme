@@ -1,20 +1,20 @@
 #include "VehicleControlSystem.hpp"
-#include "ecs/Coordinator.hpp"
 #include "utils/logger.h"
-#include "physics/PhysicsSystem.hpp"
-#include "core/RenderingSystem.hpp"
 //#include "app/RacingGame.cpp"
 
 #include <GLFW/glfw3.h>
 
 extern Coordinator gCoordinator;
-extern std::shared_ptr<RenderingSystem> renderingSystem;
-extern std::shared_ptr<PhysicsSystem> physicsSystem;
 extern Entity playerVehicleEntity;
 
-void VehicleControlSystem::SetInputManager(std::shared_ptr<InputManager> EinputManager)
+VehicleControlSystem::VehicleControlSystem(
+    std::shared_ptr<InputManager> inputManager,
+    std::shared_ptr<RenderingSystem> renderingSystem,
+    std::shared_ptr<PhysicsSystem> physicsSystem)
+    : inputManager(inputManager),
+    renderingSystem(renderingSystem),
+    physicsSystem(physicsSystem)
 {
-    inputManager = EinputManager;
 }
 
 void VehicleControlSystem::update(float deltaTime)
@@ -219,14 +219,11 @@ void VehicleControlSystem::throwSnowball()
     glm::vec3 spawnPos = vehicleTransform.pos + (forward * 3.0f) + glm::vec3(0, 2.0f, 0);
 
     // 3. Create Visual Entity
-    Entity snowball = renderingSystem->createSphereEntity();
+    Entity snowball = renderingSystem->createSphereEntity("assets/textures/snowball.png");
 
     auto& ballTrans = gCoordinator.GetComponent<PhysxTransform>(snowball);
     ballTrans.pos = spawnPos;
     ballTrans.rot = vehicleTransform.rot; // Align snowball orientation with the car
-
-    // Apply Texture
-    gCoordinator.GetComponent<Renderable>(snowball).texture = renderingSystem->texture_snowball.get();
 
     // 4. Setup Physics
     float snowballRadius = 0.2f;

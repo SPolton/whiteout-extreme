@@ -1,7 +1,8 @@
 #pragma once
 
-#include "core/assets/Texture.hpp"
+#include "core/assets/AssetManager.hpp"
 #include "core/assets/ModelLoader.hpp"
+#include "core/assets/Texture.hpp"
 #include "core/buffer/Geometry.hpp"
 #include "core/render/ShaderProgram.hpp"
 #include "core/scene/TurnTableCamera.hpp"
@@ -29,79 +30,54 @@ extern Coordinator gCoordinator;
 
 class RenderingSystem : public System {
 public:
-    RenderingSystem();
+    RenderingSystem(std::shared_ptr<InputManager> inputManager);
     //~RenderingSystem();
     void cleanup();
 
     void update(float deltaTime);
-    void updateUI();
-    void endFrame();
-    bool shouldClose() const;
 
-    Entity createSphereEntity();
+    Entity createSphereEntity(const std::string& texturePath);
     Entity createModelEntity(const std::string& modelPath);
-    Entity createSkyboxEntity();
-    std::unique_ptr<Texture> texture2;
-    std::unique_ptr<Texture> texture_snowball;
-    std::unique_ptr<Texture> vehicleTexture;
+    Entity createSkyboxEntity(const std::string& texturePath);
 
-    Renderable getCubeRenderable();
+    Renderable getCubeRenderable(const std::string& texturePath);
     void updateCameraTarget(const glm::vec3& position);
     glm::vec3 getCameraForward() const;
     bool isTurnTableCamera() { return activeCamera == turntableCamera.get();};
+    CameraStats getActiveCameraStats() { return activeCamera->getStats(); };
+
+    // Parameters changed by Imgui in the syncImgui method of RacingGame
+    float camSpeed = 1.0f;
+    float camZoomSpeed = 1.0f;
+
+    // Parameters window dimension resized on callback
+    int vWidth;
+    int vHeight;
 
     // For rendering physics entities
     void renderEntities(const std::vector<EntityPx>& entityList);
 
-    //inputManager getter
-    std::shared_ptr<InputManager> getInputManager() const { return inputManager; }
-
-    int getWindowWidth() const { return window->getWidth(); }
-    int getWindowHeight() const { return window->getHeight(); }
+    void onMouseWheelChange(double xOffset, double yOffset);
+    bool init();
 
 private:
-    // Core components following modular architecture
-    std::unique_ptr<Window> window;
-    std::unique_ptr<ShaderProgram> shader;
-    std::unique_ptr<ShaderProgram> modelShader;
+    AssetManager& assetManager = AssetManager::getInstance();
+
     std::unique_ptr<TurnTableCamera> turntableCamera;
     std::unique_ptr<FreeCamera> freeCamera;
     BaseCamera* activeCamera;  // Pointer to the currently active camera
-    
+
     std::unique_ptr<SceneTransform> targetTransform; // Camera target
-    
-    // Geometry using RAII wrappers
-    std::unique_ptr<GPU_Geometry> triangleGeometry;
-    std::unique_ptr<CPU_Geometry> triangleCPUData;
-    
-    // Cube geometry for physics objects
-    std::unique_ptr<GPU_Geometry> cubeGeometry;
-    std::unique_ptr<CPU_Geometry> cubeCPUData;
-    
-    // Skybox geometry (large inverted sphere)
-    std::unique_ptr<GPU_Geometry> skyboxGeometry;
-    std::unique_ptr<CPU_Geometry> skyboxCPUData;
-    
-    // Textures
-    std::unique_ptr<Texture> texture;
-    std::unique_ptr<Texture> skyboxTexture;
-    
-    // ImGui management (separated concerns)
-    std::unique_ptr<ImGuiWrapper> imguiWrapper;  // Handles lifecycle
-    std::unique_ptr<ImGuiPanel> imguiPanel;       // Handles content
     
     // Input management
     std::shared_ptr<InputManager> inputManager;
     glm::dvec2 previousCursorPosition{};
     bool cursorPositionIsSetOnce = false;
 
-    bool init();
     void processInput(float deltaTime);
     void processCameraInput(float deltaTime);
 
     void toggleCamera();
     void render();
-    void onResize(int width, int height);
-    void onMouseWheelChange(double xOffset, double yOffset);
     glm::mat4 getProjectionMatrix() const;
 };

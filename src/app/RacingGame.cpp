@@ -15,12 +15,33 @@
 
 //ECS global coordinator
 Coordinator gCoordinator;
-std::shared_ptr<RenderingSystem> renderingSystem;
-std::shared_ptr<PhysicsSystem> physicsSystem;
 Entity playerVehicleEntity;
 
 RacingGame::RacingGame()
 {
+    ///---- Input Manager and Window ----/// 
+    if (!glfwInit()) {
+        logger::error("GLFW Init Failed");
+        return;
+    }
+
+    inputManager = std::make_shared<InputManager>();
+    window = std::make_shared<Window>(inputManager, 1200, 800, "Whiteout Extreme");
+    window->makeContextCurrent();
+
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        logger::error("GLAD Init Failed");
+        return;
+    }
+
+    ///---- Imgui Wrapper and Panel ----/// 
+    imguiWrapper = std::make_unique<ImGuiWrapper>();
+    if (!imguiWrapper->init(window->getGLFWwindow())) {
+        logger::error("ImGui Init Failed");
+    }
+    imguiPanel = std::make_unique<ImGuiPanel>();
+    logger::info("ImGui initialized");
+
     ///---- START OF ECS SETUP ----///
     // 0.Global ECS Coordinator Initialization
     gCoordinator.Init();
@@ -34,17 +55,38 @@ RacingGame::RacingGame()
     gCoordinator.RegisterComponent<VehicleComponent>();
 
     // 2.Create Systems and Set Signatures
-    // Rendering System signature: Only requires Transform component
-    // Entities can have either Renderable OR ModelRenderable (checked at render time)
-    renderingSystem = gCoordinator.RegisterSystem<RenderingSystem>();
+    // RENDERING SYSTEM: Requires Transform AND <Renderable OR ModelRenderable>
+    renderingSystem = gCoordinator.RegisterSystem<RenderingSystem>(inputManager);
     {
-        Signature signature;
-        signature.set(gCoordinator.GetComponentType<PhysxTransform>());
-        gCoordinator.SetSystemSignature<RenderingSystem>(signature);
+        Signature signature1;
+        signature1.set(gCoordinator.GetComponentType<PhysxTransform>());
+        signature1.set(gCoordinator.GetComponentType<Renderable>());
+        gCoordinator.SetSystemSignature<RenderingSystem>(signature1);
+
+        Signature signature2;
+        signature2.set(gCoordinator.GetComponentType<PhysxTransform>());
+        signature2.set(gCoordinator.GetComponentType<ModelRenderable>());
+        gCoordinator.SetSystemSignature<RenderingSystem>(signature2);
     }
 
-    // PHYSICS SYSTEM
-    physicsSystem = gCoordinator.RegisterSystem<PhysicsSystem>();
+    renderingSystem->vWidth = window->getWidth();
+    renderingSystem->vHeight = window->getHeight();
+
+    window->setCallbacks(inputManager);
+    inputManager->setResizeCallback([this](int w, int h) {
+        glViewport(0, 0, w, h);
+        renderingSystem->vWidth = w;
+        renderingSystem->vHeight = h;
+        logger::info("Window resized to {}x{}", w, h);
+        });
+
+    inputManager->setMouseWheelCallback([this](double w, double h) {
+        renderingSystem->onMouseWheelChange(w, h);
+        });
+
+
+    // PHYSICS SYSTEM : Requires Transform AND RigidBody
+     physicsSystem = gCoordinator.RegisterSystem<PhysicsSystem>();
     {
         Signature signature;
         signature.set(gCoordinator.GetComponentType<PhysxTransform>());
@@ -52,31 +94,32 @@ RacingGame::RacingGame()
         gCoordinator.SetSystemSignature<PhysicsSystem>(signature);
     }
 
-    physicsSystem->spawnBoxPyramid(10, 0.5f, renderingSystem->getCubeRenderable());
+    physicsSystem->spawnBoxPyramid(10, 0.5f, renderingSystem->getCubeRenderable("assets/textures/carbon_fiber.jpg"));
 
     // VEHICLE CONTROL SYSTEM
-    vehicleControlSystem = gCoordinator.RegisterSystem<VehicleControlSystem>();
+     vehicleControlSystem = gCoordinator.RegisterSystem<VehicleControlSystem>(
+        inputManager,
+        gCoordinator.GetSystem<RenderingSystem>(),
+        gCoordinator.GetSystem<PhysicsSystem>()
+    );
     {
         Signature signature;
         signature.set(gCoordinator.GetComponentType<VehicleComponent>());
         gCoordinator.SetSystemSignature<VehicleControlSystem>(signature);
     }
-    // We need to set the input manager for the vehicle control system so it can read player inputs
-    // Borrowed from the rendering system since it creates and owns the input manager
-    vehicleControlSystem->SetInputManager(renderingSystem->getInputManager());
 
     // 3.Create Entities and add Components to them:
     
     // Create Skybox first (if texture is available)
-    Entity Skybox = renderingSystem->createSkyboxEntity();
+    Skybox = renderingSystem->createSkyboxEntity("assets/textures/sky/snow_landscape.hdr");
     logger::info("Created Skybox entity");
 
     // Create Earth sphere entity
-    Earth = renderingSystem->createSphereEntity();
+    Earth = renderingSystem->createSphereEntity("assets/textures/2k_earth_daymap.jpg");
     logger::info("Created Earth sphere entity");
     
     // Create Mars sphere entity
-    Mars = renderingSystem->createSphereEntity();
+    Mars = renderingSystem->createSphereEntity("assets/textures/2k_mars.jpg");
     logger::info("Created Mars sphere entity");
     
     // Create Woody model entity (separate from Earth and Mars)
@@ -138,7 +181,6 @@ RacingGame::RacingGame()
     gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(1.3f, 0.7f, 0.7f); // Move Mars slightly
     gCoordinator.GetComponent<PhysxTransform>(Mars).scale = glm::vec3(0.4f); // Scale down Mars
     gCoordinator.GetComponent<PhysxTransform>(Mars).rot = glm::angleAxis(glm::radians(23.5f), glm::vec3(0.f, 0.f, 1.f)); // Tilt Mars
-    gCoordinator.GetComponent<Renderable>(Mars).texture = renderingSystem->texture2.get(); // Mars texture
     
     // Position Woody model on the other side
     if (WoodyModel != 0) { // Check if model was successfully created
@@ -159,7 +201,7 @@ RacingGame::RacingGame()
 
     textSystem->setProjection(1440.0f, 1440.0f);
 
-    menus = std::make_unique<GameMenus>(textSystem.get(), renderingSystem->getInputManager().get(), gameState);
+    menus = std::make_unique<GameMenus>(textSystem.get(), inputManager.get(), gameState);
 
     // test FMOD initialization
     FMOD::System* system = nullptr;
@@ -286,7 +328,7 @@ void RacingGame::run()
     bool addedRigidBodyToMars = false;
     bool MarsIsBack = false;
 
-    while (!renderingSystem->shouldClose())
+    while (!window->shouldClose())
     {
         // TEST
         music();
@@ -318,55 +360,61 @@ void RacingGame::run()
             ); // This will add the Mars entity to the PhysicsSystem's entity list and it will start falling due to gravity
             addedRigidBodyToMars = true;
             logger::info("Added RigidBody component to Entity Mars at t = {} seconds", gameTime.tF());
-        }
-
-        if(addedRigidBodyToMars && !MarsIsBack) {
-            // Check if Mars position is close enough to Earth
-            glm::vec3 earthPos = gCoordinator.GetComponent<PhysxTransform>(Earth).pos;
-            glm::vec3 marsPos = gCoordinator.GetComponent<PhysxTransform>(Mars).pos;
-            float distance = glm::length(earthPos - marsPos);
-            if (distance < 2.5f) { // If Mars is close enough to Earth
-                MarsIsBack = true;
-                gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(1.3f, 0.7f, -0.7f); // Move Mars slightly
-                gCoordinator.GetComponent<PhysxTransform>(Mars).scale = glm::vec3(0.4f); // Scale down Mars
-                gCoordinator.GetComponent<PhysxTransform>(Mars).rot = glm::angleAxis(glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f)); // Rotate Mars
-                gCoordinator.GetComponent<Renderable>(Mars).texture = renderingSystem->texture2.get(); // Mars texture
-                gCoordinator.RemoveComponent<RigidBody>(Mars); // Remove physics from Mars
             }
-        }
 
-        // Vehicle control system Loop - process player inputs and update vehicle state before physics simulation
-        //vehicleControlSystem->update(gameTime.dtF());
-
-        // Physics System Loop, adaptive based on performance
-        int maxPhysicsSteps = gameTime.maxPhysicsSteps();
-        int physicsSteps = 0;
-        while (gameTime.accumulator >= gameTime.dt && physicsSteps < maxPhysicsSteps) {
-            if (gameTime.frameCount < 300 && gameTime.physicsFrameCount > maxPhysicsSteps) {
-                break; // Skip the first frames to avoid slow startup
+            if(addedRigidBodyToMars && !MarsIsBack) {
+                // Check if Mars position is close enough to Earth
+                glm::vec3 earthPos = gCoordinator.GetComponent<PhysxTransform>(Earth).pos;
+                glm::vec3 marsPos = gCoordinator.GetComponent<PhysxTransform>(Mars).pos;
+                float distance = glm::length(earthPos - marsPos);
+                if (distance < 2.5f) { // If Mars is close enough to Earth
+                    MarsIsBack = true;
+                    gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(1.3f, 0.7f, -0.7f); // Move Mars slightly
+                    gCoordinator.GetComponent<PhysxTransform>(Mars).scale = glm::vec3(0.4f); // Scale down Mars
+                    gCoordinator.GetComponent<PhysxTransform>(Mars).rot = glm::angleAxis(glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f)); // Rotate Mars
+                    gCoordinator.RemoveComponent<RigidBody>(Mars); // Remove physics from Mars
+                }
             }
-            vehicleControlSystem->update(gameTime.dtF());
-            physicsSystem->update(gameTime.dtF());
-            gameTime.physicsUpdate();
-            physicsSteps++;
-        }
+
+            // Vehicle control system Loop - process player inputs and update vehicle state before physics simulation
+            //vehicleControlSystem->update(gameTime.dtF());
+
+            // Physics System Loop, adaptive based on performance
+            int maxPhysicsSteps = gameTime.maxPhysicsSteps();
+            int physicsSteps = 0;
+            while (gameTime.accumulator >= gameTime.dt && physicsSteps < maxPhysicsSteps) {
+                if (gameTime.frameCount < static_cast<unsigned>(300) && gameTime.physicsFrameCount > static_cast<unsigned>(maxPhysicsSteps)) {
+                    break; // Skip the first frames to avoid slow startup
+                }
+                vehicleControlSystem->update(gameTime.dtF());
+                physicsSystem->update(gameTime.dtF());
+                gameTime.physicsUpdate();
+                physicsSteps++;
+            }
         
-        // Discard excess time when running slow to prevent spiral of death
-        if (physicsSteps >= maxPhysicsSteps) {
-            gameTime.discardExcessTime();
-        }
+            // Discard excess time when running slow to prevent spiral of death
+            if (physicsSteps >= maxPhysicsSteps) {
+                gameTime.discardExcessTime();
+            }
 
+            // Process Escape key input to close window
+            if (inputManager->isKeyPressedOnce(GLFW_KEY_ESCAPE))
+                glfwSetWindowShouldClose(window->getGLFWwindow(), true);
+
+            // Process F key input to toggle camera, and IJKLUO to move the free camera
             renderingSystem->update(gameTime.fpsF());
 
-        // If entity exists, update camera target to follow the player vehicle
-        // We don't assume anymore that it's in the first position of the entity list, so we directly access it by its Entity ID
-        if (gCoordinator.HasComponent<PhysxTransform>(playerVehicleEntity)) {
-            glm::vec3 targetPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
-            targetPos.y += 2.f;
-            renderingSystem->updateCameraTarget(targetPos);
-        }
+            // Update values and sync imgui parameters
+            this->updateImGui();
 
-            renderingSystem->updateUI();
+
+            // If entity exists, update camera target to follow the player vehicle
+            // We don't assume anymore that it's in the first position of the entity list, so we directly access it by its Entity ID
+            if (gCoordinator.HasComponent<PhysxTransform>(playerVehicleEntity)) {
+                glm::vec3 targetPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
+                targetPos.y += 2.f;
+                renderingSystem->updateCameraTarget(targetPos);
+            }
 
             // Must be called after renderer update, but before text rendering
             // auto width = renderingSystem->getWindowWidth();
@@ -431,7 +479,7 @@ void RacingGame::run()
             textSystem->endText();
 
             // Must be called last
-            renderingSystem->endFrame();
+            this->endFrame();
         }
         else if (gameState == GameState::MainMenu) {
             // render UI for main menu, take note of the action taken
@@ -443,7 +491,7 @@ void RacingGame::run()
             }
 
             // swap buffer
-            renderingSystem->endFrame();
+            this->endFrame();
         }
         else if (gameState == GameState::Pause) {
             // render UI for pause menu, take note of the action taken
@@ -459,7 +507,7 @@ void RacingGame::run()
             }
 
             // swap buffer
-            renderingSystem->endFrame();
+            this->endFrame();
         }
         else if (gameState == GameState::GameOver) {
             // render UI for race finished, take note of the action taken
@@ -471,9 +519,47 @@ void RacingGame::run()
             }
 
             // swap buffer
-            renderingSystem->endFrame();
+            this->endFrame();
         }
     }
     logger::info("Shutting down systems...");
-    renderingSystem->cleanup();
+}
+
+void RacingGame::updateImGui() {
+    glm::vec3 bgColor = imguiPanel->getBackgroundColor();
+    glClearColor(bgColor.r, bgColor.g, bgColor.b, 1.0f);
+
+    // Set viewport
+    glViewport(0, 0, window->getWidth(), window->getHeight());
+
+    // Apply wireframe mode if enabled
+    if (imguiPanel->showWireframe) {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
+    else {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+
+    // Update camera stats for UI
+    imguiPanel->cameraStats = renderingSystem->getActiveCameraStats();
+    imguiPanel->cameraStats.aspect = static_cast<float>(window->getWidth()) / static_cast<float>(window->getHeight());
+
+    // Update UI
+    imguiWrapper->beginFrame();
+    imguiPanel->update();
+    imguiWrapper->renderFPS();
+    this->syncImgui();
+    imguiPanel->cameraStats = renderingSystem->getActiveCameraStats();
+    imguiWrapper->endFrame();
+};
+
+void RacingGame::syncImgui() {
+    renderingSystem->camSpeed = imguiPanel->camSpeed;
+    renderingSystem->camZoomSpeed = imguiPanel->camZoomSpeed;
+    //renderingSystem->wireframeMode = imguiPanel->showWireframe;
+}
+
+void RacingGame::endFrame() {
+    window->swapBuffers();
+    glfwPollEvents();
 }
