@@ -206,8 +206,9 @@ RacingGame::RacingGame()
 
    // intiailize audio engine
     audioManager.Init();
+    // load the main menu game music
     audioManager.LoadSound("assets/audio/game-music-loop.mp3", false, true, true);
-    audioManager.PlaySounds("assets/audio/game-music-loop.mp3", { 0,0,0 }, -8.0f);
+    musicChannelID = audioManager.PlaySounds("assets/audio/game-music-loop.mp3", { 0,0,0 }, -8.0f);
 }
 
 /// Main game loop
@@ -218,7 +219,7 @@ void RacingGame::run()
 
     while (!window->shouldClose())
     {
-        // TEST audio
+        // update audio
         audioManager.Update();
 
         // keep checking which input system we are using
@@ -234,6 +235,10 @@ void RacingGame::run()
 
         // if in game
         if (gameState == GameState::InGame) {
+
+            // if in game, don't play lobby music
+            audioManager.PauseChannel(musicChannelID);
+
             gameTime.update();
 
             // 5. You can also add/remove components at runtime to change entity behavior
@@ -378,6 +383,9 @@ void RacingGame::run()
                 gameState = GameState::InGame;
             }
 
+            // if on main menu, play lobby music
+            audioManager.ResumeChannel(musicChannelID);
+
             // swap buffer
             this->endFrame();
         }
@@ -393,6 +401,9 @@ void RacingGame::run()
             else if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
                 gameState = GameState::MainMenu;
             }
+
+            // if on pause menu, play lobby music
+            audioManager.ResumeChannel(musicChannelID);
 
             // swap buffer
             this->endFrame();
@@ -411,6 +422,8 @@ void RacingGame::run()
         }
     }
     logger::info("Shutting down systems...");
+    // shut down audio engine
+    audioManager.Shutdown();
 }
 
 void RacingGame::updateImGui() {

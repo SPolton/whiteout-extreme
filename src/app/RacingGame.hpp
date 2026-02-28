@@ -5,7 +5,7 @@
 #include "core/Text.h"
 #include "input/VehicleControlSystem.hpp"
 #include "physics/PhysicsSystem.hpp"
-#include "audio/AudioSystem.hpp"
+#include "audio/AudioEngine.h"
 #include "ui/GameMenus.hpp"
 #include "GameState.hpp"
 #include "input/glfw/Window.hpp"
@@ -57,4 +57,5 @@ private:
 
     // test sound
     CAudioEngine audioManager;
+    int musicChannelID;
 };

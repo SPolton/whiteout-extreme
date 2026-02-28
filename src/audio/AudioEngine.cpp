@@ -115,6 +115,52 @@ int CAudioEngine::PlaySounds(const std::string& strSoundName, const Vector3& vPo
     return nChannelId;
 }
 
+// based on given channel, pauses the sound
+void CAudioEngine::PauseChannel(int nChannelId)
+{
+    // initialize var for pointer
+    FMOD::Channel* pChannel = nullptr;
+
+    // look for channel with id
+    auto tFoundIt = sgpImplementation->mChannels.find(nChannelId);
+    // if found and not at end of map
+    if (tFoundIt != sgpImplementation->mChannels.end())
+    {
+        // retrieve pointer
+        pChannel = tFoundIt->second;
+    }
+
+    // if channel exists
+    if (pChannel)
+    {
+        // pause audio
+        CAudioEngine::ErrorCheck(pChannel->setPaused(true));
+    }
+}
+
+// based on given channel, resume playing the sound
+void CAudioEngine::ResumeChannel(int nChannelId)
+{
+    // initialize var for pointer
+    FMOD::Channel* pChannel = nullptr;
+
+    // look for channel with id
+    auto tFoundIt = sgpImplementation->mChannels.find(nChannelId);
+    // if found and not at end of map
+    if (tFoundIt != sgpImplementation->mChannels.end())
+    {
+        // retrieve pointer
+        pChannel = tFoundIt->second;
+    }
+
+    // if channel exists
+    if (pChannel)
+    {
+        // resume audio
+        CAudioEngine::ErrorCheck(pChannel->setPaused(false));
+    }
+}
+
 // set volume and position of sound
 void CAudioEngine::SetChannel3dPosition(int nChannelId, const Vector3& vPosition)
 {
@@ -135,86 +181,86 @@ void CAudioEngine::SetChannelVolume(int nChannelId, float fVolumedB)
     CAudioEngine::ErrorCheck(tFoundIt->second->setVolume(dbToVolume(fVolumedB)));
 }
 
-// load and play events
-void CAudioEngine::LoadBank(const std::string& strBankName, FMOD_STUDIO_LOAD_BANK_FLAGS flags) {
-    auto tFoundIt = sgpImplementation->mBanks.find(strBankName);
-    if (tFoundIt != sgpImplementation->mBanks.end())
-        return;
-    FMOD::Studio::Bank* pBank;
-    CAudioEngine::ErrorCheck(sgpImplementation->mpStudioSystem->loadBankFile(strBankName.c_str(), flags, &pBank));
-    if (pBank) {
-        sgpImplementation->mBanks[strBankName] = pBank;
-    }
-}
+//// load and play events
+//void CAudioEngine::LoadBank(const std::string& strBankName, FMOD_STUDIO_LOAD_BANK_FLAGS flags) {
+//    auto tFoundIt = sgpImplementation->mBanks.find(strBankName);
+//    if (tFoundIt != sgpImplementation->mBanks.end())
+//        return;
+//    FMOD::Studio::Bank* pBank;
+//    CAudioEngine::ErrorCheck(sgpImplementation->mpStudioSystem->loadBankFile(strBankName.c_str(), flags, &pBank));
+//    if (pBank) {
+//        sgpImplementation->mBanks[strBankName] = pBank;
+//    }
+//}
 
-void CAudioEngine::LoadEvent(const std::string& strEventName) {
-    auto tFoundit = sgpImplementation->mEvents.find(strEventName);
-    if (tFoundit != sgpImplementation->mEvents.end())
-        return;
-    FMOD::Studio::EventDescription* pEventDescription = NULL;
-    CAudioEngine::ErrorCheck(sgpImplementation->mpStudioSystem->getEvent(strEventName.c_str(), &pEventDescription));
-    if (pEventDescription) {
-        FMOD::Studio::EventInstance* pEventInstance = NULL;
-        CAudioEngine::ErrorCheck(pEventDescription->createInstance(&pEventInstance));
-        if (pEventInstance) {
-            sgpImplementation->mEvents[strEventName] = pEventInstance;
-        }
-    }
-}
-
-void CAudioEngine::PlayEvent(const string& strEventName) {
-    auto tFoundit = sgpImplementation->mEvents.find(strEventName);
-    if (tFoundit == sgpImplementation->mEvents.end()) {
-        LoadEvent(strEventName);
-        tFoundit = sgpImplementation->mEvents.find(strEventName);
-        if (tFoundit == sgpImplementation->mEvents.end())
-            return;
-    }
-    tFoundit->second->start();
-}
-
-// stop event
-void CAudioEngine::StopEvent(const string& strEventName, bool bImmediate) {
-    auto tFoundIt = sgpImplementation->mEvents.find(strEventName);
-    if (tFoundIt == sgpImplementation->mEvents.end())
-        return;
-
-    FMOD_STUDIO_STOP_MODE eMode;
-    eMode = bImmediate ? FMOD_STUDIO_STOP_IMMEDIATE : FMOD_STUDIO_STOP_ALLOWFADEOUT;
-    CAudioEngine::ErrorCheck(tFoundIt->second->stop(eMode));
-}
-
-// check if event is running
-bool CAudioEngine::IsEventPlaying(const string& strEventName) const {
-    auto tFoundIt = sgpImplementation->mEvents.find(strEventName);
-    if (tFoundIt == sgpImplementation->mEvents.end())
-        return false;
-
-    FMOD_STUDIO_PLAYBACK_STATE* state = NULL;
-    if (tFoundIt->second->getPlaybackState(state) == FMOD_STUDIO_PLAYBACK_PLAYING) {
-        return true;
-    }
-    return false;
-}
-
-// set event params
-void CAudioEngine::GetEventParameter(const string& strEventName, const string& strParameterName, float* parameter) {
-    auto tFoundIt = sgpImplementation->mEvents.find(strEventName);
-    if (tFoundIt == sgpImplementation->mEvents.end())
-        return;
-
-    float value = 0.0f;
-    CAudioEngine::ErrorCheck(tFoundIt->second->getParameterByName(strParameterName.c_str(), &value));
-}
-
-void CAudioEngine::SetEventParameter(const string& strEventName, const string& strParameterName, float fValue) {
-    auto tFoundIt = sgpImplementation->mEvents.find(strEventName);
-    if (tFoundIt == sgpImplementation->mEvents.end())
-        return;
-
-    float value = 0.0f;
-    CAudioEngine::ErrorCheck(tFoundIt->second->getParameterByName(strParameterName.c_str(), &value));
-}
+//void CAudioEngine::LoadEvent(const std::string& strEventName) {
+//    auto tFoundit = sgpImplementation->mEvents.find(strEventName);
+//    if (tFoundit != sgpImplementation->mEvents.end())
+//        return;
+//    FMOD::Studio::EventDescription* pEventDescription = NULL;
+//    CAudioEngine::ErrorCheck(sgpImplementation->mpStudioSystem->getEvent(strEventName.c_str(), &pEventDescription));
+//    if (pEventDescription) {
+//        FMOD::Studio::EventInstance* pEventInstance = NULL;
+//        CAudioEngine::ErrorCheck(pEventDescription->createInstance(&pEventInstance));
+//        if (pEventInstance) {
+//            sgpImplementation->mEvents[strEventName] = pEventInstance;
+//        }
+//    }
+//}
+//
+//void CAudioEngine::PlayEvent(const string& strEventName) {
+//    auto tFoundit = sgpImplementation->mEvents.find(strEventName);
+//    if (tFoundit == sgpImplementation->mEvents.end()) {
+//        LoadEvent(strEventName);
+//        tFoundit = sgpImplementation->mEvents.find(strEventName);
+//        if (tFoundit == sgpImplementation->mEvents.end())
+//            return;
+//    }
+//    tFoundit->second->start();
+//}
+//
+//// stop event
+//void CAudioEngine::StopEvent(const string& strEventName, bool bImmediate) {
+//    auto tFoundIt = sgpImplementation->mEvents.find(strEventName);
+//    if (tFoundIt == sgpImplementation->mEvents.end())
+//        return;
+//
+//    FMOD_STUDIO_STOP_MODE eMode;
+//    eMode = bImmediate ? FMOD_STUDIO_STOP_IMMEDIATE : FMOD_STUDIO_STOP_ALLOWFADEOUT;
+//    CAudioEngine::ErrorCheck(tFoundIt->second->stop(eMode));
+//}
+//
+//// check if event is running
+//bool CAudioEngine::IsEventPlaying(const string& strEventName) const {
+//    auto tFoundIt = sgpImplementation->mEvents.find(strEventName);
+//    if (tFoundIt == sgpImplementation->mEvents.end())
+//        return false;
+//
+//    FMOD_STUDIO_PLAYBACK_STATE* state = NULL;
+//    if (tFoundIt->second->getPlaybackState(state) == FMOD_STUDIO_PLAYBACK_PLAYING) {
+//        return true;
+//    }
+//    return false;
+//}
+//
+//// set event params
+//void CAudioEngine::GetEventParameter(const string& strEventName, const string& strParameterName, float* parameter) {
+//    auto tFoundIt = sgpImplementation->mEvents.find(strEventName);
+//    if (tFoundIt == sgpImplementation->mEvents.end())
+//        return;
+//
+//    float value = 0.0f;
+//    CAudioEngine::ErrorCheck(tFoundIt->second->getParameterByName(strParameterName.c_str(), &value));
+//}
+//
+//void CAudioEngine::SetEventParameter(const string& strEventName, const string& strParameterName, float fValue) {
+//    auto tFoundIt = sgpImplementation->mEvents.find(strEventName);
+//    if (tFoundIt == sgpImplementation->mEvents.end())
+//        return;
+//
+//    float value = 0.0f;
+//    CAudioEngine::ErrorCheck(tFoundIt->second->getParameterByName(strParameterName.c_str(), &value));
+//}
 
 // Helper functions (converters and error checking)
 //=============================================================================================================//
