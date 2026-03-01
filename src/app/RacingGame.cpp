@@ -212,6 +212,9 @@ RacingGame::RacingGame()
     // load the main menu game music
     audioManager->LoadSound("assets/audio/game-music-loop-12.mp3", false, true, true);
     musicChannelID = audioManager->PlaySounds("assets/audio/game-music-loop-12.mp3", { 0,0,0 }, -8.0f);
+    // load the in-game music
+    audioManager->LoadSound("assets/audio/in-game-music.mp3", false, true, true);
+    inGameMusicChannelID = audioManager->PlaySounds("assets/audio/in-game-music.mp3", { 0,0,0 }, -15.0f);
 
     // load sound to play when entering game
     audioManager->LoadSound("assets/audio/game-start.mp3", false, false, false);
@@ -242,6 +245,8 @@ void RacingGame::run()
         if (actionButtons == MenuAction::StartGame || actionButtons == MenuAction::ResumeGame) {
             // play an "entering game" sound when button clicked
             audioManager->PlaySounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
+            // play in game music
+            audioManager->ResumeChannel(inGameMusicChannelID);
             gameState = GameState::InGame;
         }
 
@@ -250,6 +255,8 @@ void RacingGame::run()
 
             // if in game, don't play lobby music
             audioManager->PauseChannel(musicChannelID);
+            // play in-game music
+            audioManager->ResumeChannel(inGameMusicChannelID);
 
             gameTime.update();
 
@@ -395,6 +402,8 @@ void RacingGame::run()
                 gameState = GameState::InGame;
             }
 
+            // if NOT in game, don't play in-game music
+            audioManager->PauseChannel(inGameMusicChannelID);
             // if on main menu, play lobby music
             audioManager->ResumeChannel(musicChannelID);
 
@@ -416,6 +425,8 @@ void RacingGame::run()
                 gameState = GameState::MainMenu;
             }
 
+            // if NOT in game, don't play in-game music
+            audioManager->PauseChannel(inGameMusicChannelID);
             // if on pause menu, play lobby music
             audioManager->ResumeChannel(musicChannelID);
 
@@ -432,6 +443,9 @@ void RacingGame::run()
                 audioManager->PlaySounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
                 gameState = GameState::MainMenu;
             }
+
+            // if NOT in game, don't play in-game music
+            audioManager->PauseChannel(inGameMusicChannelID);
 
             // swap buffer
             this->endFrame();

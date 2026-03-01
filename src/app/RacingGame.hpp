@@ -58,4 +58,5 @@ private:
     // test sound
     std::shared_ptr<CAudioEngine> audioManager;
     int musicChannelID;
+    int inGameMusicChannelID;
 };
