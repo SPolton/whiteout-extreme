@@ -11,6 +11,7 @@
 //ECS global coordinator
 Coordinator gCoordinator;
 Entity playerVehicleEntity;
+Entity aiVehicleEntity;
 
 RacingGame::RacingGame()
 {
@@ -149,13 +150,17 @@ RacingGame::RacingGame()
     // Same components signature as RenderingSystem, so will be added to that system's entity list.
 
     // Create the player vehicle entity with physics components
-    playerVehicleEntity = physicsSystem->createVehicleEntity();
+    playerVehicleEntity = physicsSystem->createVehicleEntity("VehiclePlayer1", physx::PxVec3(50.0f, 6.5f, 14.1f));
     gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).playerID = 0;
+
+    aiVehicleEntity = physicsSystem->createVehicleEntity("VehicleAI", physx::PxVec3(15.f, 5.f, 0.f));
+    gCoordinator.GetComponent<VehicleComponent>(aiVehicleEntity).playerID = 1;
 
     // Load snowmobile model for the player vehicle
     Entity snowmobileVisual = renderingSystem->createModelEntity("assets/obj/snowmobile/snowmobile.obj");
     auto& snowmobileRenderable = gCoordinator.GetComponent<ModelRenderable>(snowmobileVisual);
     gCoordinator.AddComponent(playerVehicleEntity, snowmobileRenderable);
+    gCoordinator.AddComponent(aiVehicleEntity, snowmobileRenderable);
     gCoordinator.DestroyEntity(snowmobileVisual);
 
     // Fix rotation and scale
@@ -164,6 +169,15 @@ RacingGame::RacingGame()
     vehicleTransform.scale = glm::vec3(1.0f);  // Uniform scale instead of stretched box scale
 
     logger::info("Loaded snowmobile model for player vehicle");
+
+    auto& aiVehicleTransform = gCoordinator.GetComponent<PhysxTransform>(aiVehicleEntity);
+    aiVehicleTransform.rot = glm::angleAxis(glm::radians(0.0f), glm::vec3(0.f, 1.f, 0.f));
+    aiVehicleTransform.scale = glm::vec3(1.0f);  // Uniform scale instead of stretched box scale
+
+    auto& aiVehicleComponent = gCoordinator.GetComponent<VehicleComponent>(aiVehicleEntity);
+    aiVehicleComponent.throttle = 0.5f; // Set a constant throttle for the AI vehicle to move forward
+
+    logger::info("Loaded snowmobile model for ai vehicle");
 
     // 4.You can modify Component Data for entities
     

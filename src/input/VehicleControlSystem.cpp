@@ -41,6 +41,15 @@ void VehicleControlSystem::update(float deltaTime)
                     vehicle.steer
                 );
             }
+        } else if (vehicle.playerID == 1) {
+
+            if (vehicle.instance) {
+                vehicle.instance->setInputs(
+                    vehicle.throttle,
+                    vehicle.brake,
+                    vehicle.steer
+                );
+            }
         }
         //vehicle.instance->stepPhysics(deltaTime);
     }

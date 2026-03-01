@@ -33,7 +33,7 @@ public:
     std::vector<PhysxTransform*> transformList;
     //void updateTransforms();
 
-    Entity createVehicleEntity();
+    Entity createVehicleEntity(const char* name, physx::PxVec3 spawnPos);
     void spawnBoxPyramid(physx::PxU32 size, float halfLen, Renderable cubeRenderable);
 
     RigidBody createRigidBodyFromSphere(Entity entity, float radius = 1.f);
@@ -67,7 +67,7 @@ private:
     physx::PxRigidStatic* mGroundPlane = NULL;
 
     // Vehicle system
-    VehicleFourWheelDrive* mVehicleSystem = NULL;
+  //VehicleFourWheelDrive* mVehicleSystem = NULL;
 
     ContactReportCallback* mContactReportCallback = NULL;
 

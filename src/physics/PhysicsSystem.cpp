@@ -17,10 +17,12 @@ PhysicsSystem::PhysicsSystem()
 PhysicsSystem::~PhysicsSystem()
 {
     // Clean up vehicle system first
+    /*
     if (mVehicleSystem) {
         delete mVehicleSystem;
         mVehicleSystem = nullptr;
     }
+    */
     //cleanupGroundPlane();
     cleanupPhysX();
 }
@@ -171,11 +173,11 @@ void PhysicsSystem::update(float deltaTime)
     }
 }
 
-Entity PhysicsSystem::createVehicleEntity()
+Entity PhysicsSystem::createVehicleEntity(const char* name, physx::PxVec3 spawnPos)
 {
     // Create the Player Vehicle Entity
     VehicleFourWheelDrive::ConstructData vehicleData{
-        .vehicleName = "VehiclePlayer1",
+        .vehicleName = name,
         .vehicleDataPath = "assets/vehicledata",
         .gravity = mGravity,
         .physics = mPhysics,
@@ -184,7 +186,7 @@ Entity PhysicsSystem::createVehicleEntity()
     };
 
     // Create the vehicle instance
-    mVehicleSystem = new VehicleFourWheelDrive(vehicleData);
+    auto* newVehicleSystem = new VehicleFourWheelDrive(vehicleData);
 
     // 1. Create a new entity for the vehicle
     Entity vehicleEntity = gCoordinator.CreateEntity();
@@ -192,20 +194,20 @@ Entity PhysicsSystem::createVehicleEntity()
     // 2. Add necessary components to the vehicle entity
     // Transform
     gCoordinator.AddComponent(vehicleEntity, PhysxTransform{
-        glm::vec3(0.f, 0.f, 0.f),                // Position
+        glm::vec3(spawnPos.x, spawnPos.y, spawnPos.z),                // Position
         glm::quat(1.f, 0.f, 0.f, 0.f),           // Identity rotation
         glm::vec3(1.65f, 1.4f, 3.75f)            // Scale
         });
 
     // RigidBody (using the chassis actor from the vehicle)
-    gCoordinator.AddComponent(vehicleEntity, RigidBody{ mVehicleSystem->getRigidActor() });
+    gCoordinator.AddComponent(vehicleEntity, RigidBody{ newVehicleSystem->getRigidActor() });
 
     // Set the actual PhysX actor position to match
-    PxTransform pxTransform(PxVec3(50.0f, 6.5f, 14.1f));
-    mVehicleSystem->getRigidActor()->setGlobalPose(pxTransform);
+    PxTransform pxTransform(spawnPos);
+    newVehicleSystem->getRigidActor()->setGlobalPose(pxTransform);
 
     // VehicleComponent (store the vehicle instance for later updates and access)
-    gCoordinator.AddComponent(vehicleEntity, VehicleComponent{ .instance = mVehicleSystem });
+    gCoordinator.AddComponent(vehicleEntity, VehicleComponent{ .instance = newVehicleSystem });
 
     logger::info("Vehicle entity created with ID: {}", vehicleEntity);
 
