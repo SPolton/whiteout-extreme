@@ -46,10 +46,15 @@ private:
     GameState gameState = GameState::MainMenu;
 
     //Entity playerVehicleEntity;
+    Entity MapModel = 0;
+    Entity Skybox = 0;
+    Entity Waypoint = 0;
+
+    /*
     Entity Earth = 0;
     Entity Mars = 0;
     Entity WoodyModel = 0;
     Entity BackpackModel = 0;
-    Entity MapModel = 0;
-    Entity Skybox = 0;
+    */
+
 };

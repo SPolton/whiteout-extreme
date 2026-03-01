@@ -90,9 +90,9 @@ RacingGame::RacingGame()
         gCoordinator.SetSystemSignature<PhysicsSystem>(signature);
     }
 
-    physicsSystem->spawnBoxPyramid(10, 0.5f, renderingSystem->getCubeRenderable("assets/textures/carbon_fiber.jpg"));
+    // physicsSystem->spawnBoxPyramid(10, 0.5f, renderingSystem->getCubeRenderable("assets/textures/carbon_fiber.jpg"));
 
-    // VEHICLE CONTROL SYSTEM
+    // VEHICLE CONTROL SYSTEM : Requires VehicleComponent (which itself contains a pointer to the PhysX vehicle instance, so we can update it based on input)
      vehicleControlSystem = gCoordinator.RegisterSystem<VehicleControlSystem>(
         inputManager,
         gCoordinator.GetSystem<RenderingSystem>(),
@@ -110,6 +110,13 @@ RacingGame::RacingGame()
     Skybox = renderingSystem->createSkyboxEntity("assets/textures/sky/snow_landscape.hdr");
     logger::info("Created Skybox entity");
 
+    /*
+    // Note:
+    // The createSphereEntity() method calls:
+    //      - gCoordinator.AddComponent(sphere,PhysxTransform{...});
+    //      - gCoordinator.AddComponent(sphere,Renderable{...});
+    // Same components signature as RenderingSystem, so will be added to that system's entity list.
+
     // Create Earth sphere entity
     Earth = renderingSystem->createSphereEntity("assets/textures/2k_earth_daymap.jpg");
     logger::info("Created Earth sphere entity");
@@ -125,6 +132,7 @@ RacingGame::RacingGame()
     // Create Backpack model entity to test shading maps
     BackpackModel = renderingSystem->createModelEntity("assets/obj/backpack/backpack.obj");
     logger::info("Created Backpack model entity");
+    */
 
     // Create Map model entity
     MapModel = renderingSystem->createModelEntity("assets/obj/map/map.obj");
@@ -143,17 +151,11 @@ RacingGame::RacingGame()
 
     logger::info("Created Map model entity with collision");
 
-    // Note:
-    // The createSphereEntity() method calls:
-    //      - gCoordinator.AddComponent(sphere,PhysxTransform{...});
-    //      - gCoordinator.AddComponent(sphere,Renderable{...});
-    // Same components signature as RenderingSystem, so will be added to that system's entity list.
-
     // Create the player vehicle entity with physics components
-    playerVehicleEntity = physicsSystem->createVehicleEntity("VehiclePlayer1", physx::PxVec3(50.0f, 6.5f, 14.1f));
+    playerVehicleEntity = physicsSystem->createVehicleEntity("VehiclePlayer1", physx::PxVec3(10.0f, 0.f, 0.f));
     gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).playerID = 0;
 
-    aiVehicleEntity = physicsSystem->createVehicleEntity("VehicleAI", physx::PxVec3(15.f, 5.f, 0.f));
+    aiVehicleEntity = physicsSystem->createVehicleEntity("VehicleAI", physx::PxVec3(0.f, 0.f, 0.f));
     gCoordinator.GetComponent<VehicleComponent>(aiVehicleEntity).playerID = 1;
 
     // Load snowmobile model for the player vehicle
@@ -175,12 +177,18 @@ RacingGame::RacingGame()
     aiVehicleTransform.scale = glm::vec3(1.0f);  // Uniform scale instead of stretched box scale
 
     auto& aiVehicleComponent = gCoordinator.GetComponent<VehicleComponent>(aiVehicleEntity);
-    aiVehicleComponent.throttle = 0.5f; // Set a constant throttle for the AI vehicle to move forward
+    aiVehicleComponent.throttle = 0.3f; // Set a constant throttle for the AI vehicle to move forward
 
     logger::info("Loaded snowmobile model for ai vehicle");
 
+    Waypoint = renderingSystem->createSphereEntity("assets/textures/carbon_fiber.jpg");
+    gCoordinator.GetComponent<PhysxTransform>(Waypoint).pos = glm::vec3(0.f, 2.f, 20.f);
+    gCoordinator.GetComponent<PhysxTransform>(Waypoint).scale = glm::vec3(0.5f);
+
+
     // 4.You can modify Component Data for entities
-    
+
+    /*
     // Position Earth at the origin
     gCoordinator.GetComponent<PhysxTransform>(Earth).pos = glm::vec3(0.0f, 0.0f, 0.0f);
     gCoordinator.GetComponent<PhysxTransform>(Earth).scale = glm::vec3(1.0f);
@@ -203,6 +211,7 @@ RacingGame::RacingGame()
         gCoordinator.GetComponent<PhysxTransform>(BackpackModel).pos = glm::vec3(3.0f, 0.0f, -10.0f);
         // Model will use its material/texture maps from the .mtl file
     }
+    */
 
     ///---- END OF ECS SETUP ----///
 
@@ -217,8 +226,6 @@ RacingGame::RacingGame()
 /// Main game loop
 void RacingGame::run()
 {
-    bool addedRigidBodyToMars = false;
-    bool MarsIsBack = false;
 
     while (!window->shouldClose())
     {
@@ -236,34 +243,6 @@ void RacingGame::run()
         // if in game
         if (gameState == GameState::InGame) {
             gameTime.update();
-
-            // 5. You can also add/remove components at runtime to change entity behavior
-            // After 20 seconds, add a RigidBody component to sphere2 (Mars) to make it fall
-            if (gameTime.currentTime >= 15.0 && !addedRigidBodyToMars) {
-                gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(5.f, 10.f, 1.f);
-                gCoordinator.GetComponent<PhysxTransform>(Mars).scale = glm::vec3(1.f);
-
-            gCoordinator.AddComponent(
-                Mars,
-                physicsSystem->createRigidBodyFromSphere(Mars)
-            ); // This will add the Mars entity to the PhysicsSystem's entity list and it will start falling due to gravity
-            addedRigidBodyToMars = true;
-            logger::info("Added RigidBody component to Entity Mars at t = {} seconds", gameTime.tF());
-            }
-
-            if(addedRigidBodyToMars && !MarsIsBack) {
-                // Check if Mars position is close enough to Earth
-                glm::vec3 earthPos = gCoordinator.GetComponent<PhysxTransform>(Earth).pos;
-                glm::vec3 marsPos = gCoordinator.GetComponent<PhysxTransform>(Mars).pos;
-                float distance = glm::length(earthPos - marsPos);
-                if (distance < 2.5f) { // If Mars is close enough to Earth
-                    MarsIsBack = true;
-                    gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(1.3f, 0.7f, -0.7f); // Move Mars slightly
-                    gCoordinator.GetComponent<PhysxTransform>(Mars).scale = glm::vec3(0.4f); // Scale down Mars
-                    gCoordinator.GetComponent<PhysxTransform>(Mars).rot = glm::angleAxis(glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f)); // Rotate Mars
-                    gCoordinator.RemoveComponent<RigidBody>(Mars); // Remove physics from Mars
-                }
-            }
 
             // Vehicle control system Loop - process player inputs and update vehicle state before physics simulation
             //vehicleControlSystem->update(gameTime.dtF());
@@ -349,21 +328,6 @@ void RacingGame::run()
                 "Pause: Start button / P",
                 { centerX * 1.2f, topY - 200.f, 0.7f }, { 0.0f, 0.90f, 0.95f });
 
-            if(MarsIsBack) {
-            textSystem->renderText(
-                "BRAVO ! Mars has reached Earth",
-                { centerX * 0.15f, centerY * 0.4f - 50.f, 0.6f }, { 1.f, 0.35f, 0.15f });
-            } else if (addedRigidBodyToMars){
-            textSystem->renderText(
-                "Mars is gone. Don't Panic !",
-                { centerX * 0.15f, centerY * 0.4f, 0.6f }, { 1.f, 0.35f, 0.15f });
-            textSystem->renderText(
-                "MISSION: Bring Mars back to Earth",
-                { centerX * 0.15f, centerY * 0.4f - 50.f, 0.6f }, { 1.f, 0.35f, 0.15f });
-            textSystem->renderText(
-                "TIP: Nudge Mars back to Earth using snowballs",
-                { centerX * 0.15f, centerY * 0.4f - 100.f, 0.6f }, { 1.f, 0.8f, 0.2f });
-            }
             
             textSystem->endText();
 
