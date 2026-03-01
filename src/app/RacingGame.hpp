@@ -56,6 +56,6 @@ private:
     Entity Skybox = 0;
 
     // test sound
-    CAudioEngine audioManager;
+    std::shared_ptr<CAudioEngine> audioManager;
     int musicChannelID;
 };

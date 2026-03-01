@@ -26,6 +26,8 @@ RacingGame::RacingGame()
         return;
     }
 
+    audioManager = std::make_shared<CAudioEngine>();
+
     inputManager = std::make_shared<InputManager>();
     window = std::make_shared<Window>(inputManager, 1200, 800, "Whiteout Extreme");
     window->makeContextCurrent();
@@ -100,6 +102,7 @@ RacingGame::RacingGame()
     // VEHICLE CONTROL SYSTEM
      vehicleControlSystem = gCoordinator.RegisterSystem<VehicleControlSystem>(
         inputManager,
+        audioManager,
         gCoordinator.GetSystem<RenderingSystem>(),
         gCoordinator.GetSystem<PhysicsSystem>()
     );
@@ -205,10 +208,17 @@ RacingGame::RacingGame()
     menus = std::make_unique<GameMenus>(textSystem.get(), inputManager.get(), gameState);
 
    // intiailize audio engine
-    audioManager.Init();
+    audioManager->Init();
     // load the main menu game music
-    audioManager.LoadSound("assets/audio/game-music-loop.mp3", false, true, true);
-    musicChannelID = audioManager.PlaySounds("assets/audio/game-music-loop.mp3", { 0,0,0 }, -8.0f);
+    audioManager->LoadSound("assets/audio/game-music-loop-12.mp3", false, true, true);
+    musicChannelID = audioManager->PlaySounds("assets/audio/game-music-loop-12.mp3", { 0,0,0 }, -8.0f);
+
+    // load sound to play when entering game
+    audioManager->LoadSound("assets/audio/game-start.mp3", false, false, false);
+    // load sound for pressing menu buttons
+    audioManager->LoadSound("assets/audio/menu-button.mp3", false, false, false);
+
+    vehicleControlSystem->loadVehicleSounds();
 }
 
 /// Main game loop
@@ -220,7 +230,7 @@ void RacingGame::run()
     while (!window->shouldClose())
     {
         // update audio
-        audioManager.Update();
+        audioManager->Update();
 
         // keep checking which input system we are using
         menus->checkInputSystem();
@@ -230,6 +240,8 @@ void RacingGame::run()
 
         // check for entering game
         if (actionButtons == MenuAction::StartGame || actionButtons == MenuAction::ResumeGame) {
+            // play an "entering game" sound when button clicked
+            audioManager->PlaySounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
             gameState = GameState::InGame;
         }
 
@@ -237,7 +249,7 @@ void RacingGame::run()
         if (gameState == GameState::InGame) {
 
             // if in game, don't play lobby music
-            audioManager.PauseChannel(musicChannelID);
+            audioManager->PauseChannel(musicChannelID);
 
             gameTime.update();
 
@@ -384,7 +396,7 @@ void RacingGame::run()
             }
 
             // if on main menu, play lobby music
-            audioManager.ResumeChannel(musicChannelID);
+            audioManager->ResumeChannel(musicChannelID);
 
             // swap buffer
             this->endFrame();
@@ -399,11 +411,13 @@ void RacingGame::run()
             }
             // if "Quit" is pressed, return to the main menu
             else if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
+                // play button clicked sound
+                audioManager->PlaySounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
                 gameState = GameState::MainMenu;
             }
 
             // if on pause menu, play lobby music
-            audioManager.ResumeChannel(musicChannelID);
+            audioManager->ResumeChannel(musicChannelID);
 
             // swap buffer
             this->endFrame();
@@ -414,6 +428,8 @@ void RacingGame::run()
 
             // if "Return to main menu" is pressed, return to the main menu
             if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
+                // play button clicked sound
+                audioManager->PlaySounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
                 gameState = GameState::MainMenu;
             }
 
@@ -423,7 +439,7 @@ void RacingGame::run()
     }
     logger::info("Shutting down systems...");
     // shut down audio engine
-    audioManager.Shutdown();
+    audioManager->Shutdown();
 }
 
 void RacingGame::updateImGui() {

@@ -9,9 +9,11 @@ extern Entity playerVehicleEntity;
 
 VehicleControlSystem::VehicleControlSystem(
     std::shared_ptr<InputManager> inputManager,
+    std::shared_ptr<CAudioEngine> audioManager,
     std::shared_ptr<RenderingSystem> renderingSystem,
     std::shared_ptr<PhysicsSystem> physicsSystem)
     : inputManager(inputManager),
+    audioManager(audioManager),
     renderingSystem(renderingSystem),
     physicsSystem(physicsSystem)
 {
@@ -159,6 +161,7 @@ void VehicleControlSystem::accelerate()
     logger::info("Accelerating...");
     // apply transformation here to move car forward
     currentThrottle = 0.7f; // full throttle
+    audioManager->ResumeChannel(channelID); // throttle sound
 }
 
 void VehicleControlSystem::brake()
@@ -205,6 +208,8 @@ void VehicleControlSystem::throwSnowball()
     // ...and that the current camera is the TurnTable one
     if (!renderingSystem->isTurnTableCamera()) return;
 
+    // play sound of throwing snowball
+    audioManager->PlaySounds("assets/audio/snowball-hit-01.mp3", { 0,0,0 }, -8.0f);
     logger::info("Throwing snowball...");
 
     // 2. Retrieve Player Transform
@@ -246,4 +251,15 @@ void VehicleControlSystem::throwSnowball()
         dynamicActor->setMass(dynamicActor->getMass() * 15);
     }
     vehicleComponent.snowBallCooldown = 0.5f;
+}
+
+// load basic vehicle sounds
+void VehicleControlSystem::loadVehicleSounds()
+{
+    // for acceleration
+    audioManager->LoadSound("assets/audio/snowmobiles-4-trimmed.mp3", false, false, false);
+    channelID = audioManager->PlaySounds("assets/audio/snowmobiles-4-trimmed.mp3", { 0,0,0 }, -8.0f);
+    audioManager->PauseChannel(channelID); // don't play throttle sound yet
+    // for throwing snowball
+    audioManager->LoadSound("assets/audio/snowball-hit-01.mp3", false, false, false);
 }

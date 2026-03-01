@@ -6,18 +6,25 @@
 #include "ecs/Coordinator.hpp"
 #include "core/RenderingSystem.hpp"
 #include "physics/PhysicsSystem.hpp"
+#include "audio/AudioEngine.h";
 
 class VehicleControlSystem : public System {
 public:
     VehicleControlSystem(std::shared_ptr<InputManager> inputManager,
+        std::shared_ptr<CAudioEngine> audioManager,
         std::shared_ptr<RenderingSystem> renderingSystem,
         std::shared_ptr<PhysicsSystem> physicsSystem);
 
     void update(float deltaTime);
 
+    // Sound
+    void loadVehicleSounds();
+    int channelID;
+
 private:
     // Input management
     std::shared_ptr<InputManager> inputManager;
+    std::shared_ptr<CAudioEngine> audioManager;
     std::shared_ptr<RenderingSystem> renderingSystem;
     std::shared_ptr<PhysicsSystem> physicsSystem;
 
