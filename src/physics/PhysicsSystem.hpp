@@ -1,22 +1,19 @@
 #pragma once
 
-#include "PxPhysicsAPI.h"
-#include "VehicleFourWheelDrive.hpp"
 #include "common/PhysicsCallback.hpp"
-#include "components/Entity.h"
-#include "components/Transform.h"
-#include <vector>
-#include <iostream>
+#include "VehicleFourWheelDrive.hpp"
 
-#include "ecs/Coordinator.hpp"
+#include "components/Entity.h"
 #include "components/Renderable.h"
 #include "components/Transform.h"
 #include "components/RigidBody.h"
 #include "components/VehicleComponent.h"
-#include "core/RenderingSystem.hpp"
 
-#include "core/render/ShaderProgram.hpp"
-#include "core/buffer/Geometry.hpp"
+#include "ecs/Coordinator.hpp"
+
+#include <PxPhysicsAPI.h>
+#include <iostream>
+#include <vector>
 
 extern Coordinator gCoordinator;
 
