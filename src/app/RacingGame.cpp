@@ -26,7 +26,7 @@ RacingGame::RacingGame()
         return;
     }
 
-    audioManager = std::make_shared<CAudioEngine>();
+    audioManager = std::make_shared<AudioEngine>();
 
     inputManager = std::make_shared<InputManager>();
     window = std::make_shared<Window>(inputManager, 1200, 800, "Whiteout Extreme");
@@ -205,7 +205,7 @@ RacingGame::RacingGame()
 
     textSystem->setProjection(1440.0f, 1440.0f);
 
-    menus = std::make_unique<GameMenus>(textSystem.get(), inputManager.get(), gameState);
+    menus = std::make_unique<GameMenus>(textSystem.get(), inputManager.get(), audioManager.get(), gameState);
 
    // intiailize audio engine
     audioManager->Init();
@@ -216,11 +216,8 @@ RacingGame::RacingGame()
     audioManager->LoadSound("assets/audio/in-game-music.mp3", false, true, true);
     inGameMusicChannelID = audioManager->PlaySounds("assets/audio/in-game-music.mp3", { 0,0,0 }, -15.0f);
 
-    // load sound to play when entering game
-    audioManager->LoadSound("assets/audio/game-start.mp3", false, false, false);
-    // load sound for pressing menu buttons
-    audioManager->LoadSound("assets/audio/menu-button.mp3", false, false, false);
-
+    // call functions that will load sounds this component will use
+    menus->loadMenuSounds();
     vehicleControlSystem->loadVehicleSounds();
 }
 
@@ -420,8 +417,6 @@ void RacingGame::run()
             }
             // if "Quit" is pressed, return to the main menu
             else if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
-                // play button clicked sound
-                audioManager->PlaySounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
                 gameState = GameState::MainMenu;
             }
 
@@ -439,8 +434,6 @@ void RacingGame::run()
 
             // if "Return to main menu" is pressed, return to the main menu
             if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
-                // play button clicked sound
-                audioManager->PlaySounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
                 gameState = GameState::MainMenu;
             }
 

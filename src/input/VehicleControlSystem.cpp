@@ -9,7 +9,7 @@ extern Entity playerVehicleEntity;
 
 VehicleControlSystem::VehicleControlSystem(
     std::shared_ptr<InputManager> inputManager,
-    std::shared_ptr<CAudioEngine> audioManager,
+    std::shared_ptr<AudioEngine> audioManager,
     std::shared_ptr<RenderingSystem> renderingSystem,
     std::shared_ptr<PhysicsSystem> physicsSystem)
     : inputManager(inputManager),
@@ -209,7 +209,7 @@ void VehicleControlSystem::throwSnowball()
     if (!renderingSystem->isTurnTableCamera()) return;
 
     // play sound of throwing snowball
-    audioManager->PlaySounds("assets/audio/snowball-hit-01.mp3", { 0,0,0 }, -8.0f);
+    audioManager->PlaySounds("assets/audio/snowball-hit-01.mp3", { 0,0,0 }, -1.0f);
     logger::info("Throwing snowball...");
 
     // 2. Retrieve Player Transform

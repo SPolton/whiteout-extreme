@@ -49,7 +49,7 @@ struct Implementation {
 * calls to Implementation struct to start, stop, and update FMOD
 * handles basic things like loading, playing, stopping, and updating information on sounds and events
 */
-class CAudioEngine {
+class AudioEngine {
 public:
     static void Init();
     static void Update();

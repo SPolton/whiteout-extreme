@@ -6,18 +6,18 @@
 Implementation::Implementation() {
     mpStudioSystem = NULL;
     // check that all FMOD calls are successful
-    CAudioEngine::ErrorCheck(FMOD::Studio::System::create(&mpStudioSystem));
-    CAudioEngine::ErrorCheck(mpStudioSystem->initialize(32, FMOD_STUDIO_INIT_LIVEUPDATE, FMOD_INIT_PROFILE_ENABLE, NULL));
+    AudioEngine::ErrorCheck(FMOD::Studio::System::create(&mpStudioSystem));
+    AudioEngine::ErrorCheck(mpStudioSystem->initialize(32, FMOD_STUDIO_INIT_LIVEUPDATE, FMOD_INIT_PROFILE_ENABLE, NULL));
 
     mpSystem = NULL;
-    CAudioEngine::ErrorCheck(mpStudioSystem->getCoreSystem(&mpSystem));
+    AudioEngine::ErrorCheck(mpStudioSystem->getCoreSystem(&mpSystem));
 }
 
 
 // implementation deconstructor, cleans up FMOD
 Implementation::~Implementation() {
-    CAudioEngine::ErrorCheck(mpStudioSystem->unloadAll());
-    CAudioEngine::ErrorCheck(mpStudioSystem->release());
+    AudioEngine::ErrorCheck(mpStudioSystem->unloadAll());
+    AudioEngine::ErrorCheck(mpStudioSystem->release());
 }
 
 // checks if channel has stop playing, then destroy
@@ -37,23 +37,23 @@ void Implementation::Update() {
     {
         mChannels.erase(it);
     }
-    CAudioEngine::ErrorCheck(mpStudioSystem->update());
+    AudioEngine::ErrorCheck(mpStudioSystem->update());
 }
 
 Implementation* sgpImplementation = nullptr;
 
 // Audio Engine methods
 //=============================================================================================================//
-void CAudioEngine::Init() {
+void AudioEngine::Init() {
     sgpImplementation = new Implementation;
 }
 
-void CAudioEngine::Update() {
+void AudioEngine::Update() {
     sgpImplementation->Update();
 }
 
 // to load sounds with filename
-void CAudioEngine::LoadSound(const std::string& strSoundName, bool b3d, bool bLooping, bool bStream)
+void AudioEngine::LoadSound(const std::string& strSoundName, bool b3d, bool bLooping, bool bStream)
 {
     auto tFoundIt = sgpImplementation->mSounds.find(strSoundName);
     if (tFoundIt != sgpImplementation->mSounds.end())
@@ -65,7 +65,7 @@ void CAudioEngine::LoadSound(const std::string& strSoundName, bool b3d, bool bLo
     eMode |= bStream ? FMOD_CREATESTREAM : FMOD_CREATECOMPRESSEDSAMPLE;
 
     FMOD::Sound* pSound = nullptr;
-    CAudioEngine::ErrorCheck(sgpImplementation->mpSystem->createSound(strSoundName.c_str(), eMode, nullptr, &pSound));
+    AudioEngine::ErrorCheck(sgpImplementation->mpSystem->createSound(strSoundName.c_str(), eMode, nullptr, &pSound));
     if (pSound) {
         sgpImplementation->mSounds[strSoundName] = pSound;
     }
@@ -73,19 +73,19 @@ void CAudioEngine::LoadSound(const std::string& strSoundName, bool b3d, bool bLo
 }
 
 // sound unloader to free memory
-void CAudioEngine::UnLoadSound(const std::string& strSoundName)
+void AudioEngine::UnLoadSound(const std::string& strSoundName)
 {
     auto tFoundIt = sgpImplementation->mSounds.find(strSoundName);
     if (tFoundIt == sgpImplementation->mSounds.end())
         return;
 
-    CAudioEngine::ErrorCheck(tFoundIt->second->release());
+    AudioEngine::ErrorCheck(tFoundIt->second->release());
     sgpImplementation->mSounds.erase(tFoundIt);
 }
 
 // check if sound exists, if not, then load
 // find open channel and play sound
-int CAudioEngine::PlaySounds(const std::string& strSoundName, const Vector3& vPosition, float fVolumedB)
+int AudioEngine::PlaySounds(const std::string& strSoundName, const Vector3& vPosition, float fVolumedB)
 {
     int nChannelId = sgpImplementation->mnNextChannelId++;
     auto tFoundIt = sgpImplementation->mSounds.find(strSoundName);
@@ -99,24 +99,24 @@ int CAudioEngine::PlaySounds(const std::string& strSoundName, const Vector3& vPo
         }
     }
     FMOD::Channel* pChannel = nullptr;
-    CAudioEngine::ErrorCheck(sgpImplementation->mpSystem->playSound(tFoundIt->second, nullptr, true, &pChannel));
+    AudioEngine::ErrorCheck(sgpImplementation->mpSystem->playSound(tFoundIt->second, nullptr, true, &pChannel));
     if (pChannel)
     {
         FMOD_MODE currMode;
         tFoundIt->second->getMode(&currMode);
         if (currMode & FMOD_3D) {
             FMOD_VECTOR position = VectorToFmod(vPosition);
-            CAudioEngine::ErrorCheck(pChannel->set3DAttributes(&position, nullptr));
+            AudioEngine::ErrorCheck(pChannel->set3DAttributes(&position, nullptr));
         }
-        CAudioEngine::ErrorCheck(pChannel->setVolume(dbToVolume(fVolumedB)));
-        CAudioEngine::ErrorCheck(pChannel->setPaused(false));
+        AudioEngine::ErrorCheck(pChannel->setVolume(dbToVolume(fVolumedB)));
+        AudioEngine::ErrorCheck(pChannel->setPaused(false));
         sgpImplementation->mChannels[nChannelId] = pChannel;
     }
     return nChannelId;
 }
 
 // based on given channel, pauses the sound
-void CAudioEngine::PauseChannel(int nChannelId)
+void AudioEngine::PauseChannel(int nChannelId)
 {
     // initialize var for pointer
     FMOD::Channel* pChannel = nullptr;
@@ -134,12 +134,12 @@ void CAudioEngine::PauseChannel(int nChannelId)
     if (pChannel)
     {
         // pause audio
-        CAudioEngine::ErrorCheck(pChannel->setPaused(true));
+        AudioEngine::ErrorCheck(pChannel->setPaused(true));
     }
 }
 
 // based on given channel, resume playing the sound
-void CAudioEngine::ResumeChannel(int nChannelId)
+void AudioEngine::ResumeChannel(int nChannelId)
 {
     // initialize var for pointer
     FMOD::Channel* pChannel = nullptr;
@@ -157,28 +157,28 @@ void CAudioEngine::ResumeChannel(int nChannelId)
     if (pChannel)
     {
         // resume audio
-        CAudioEngine::ErrorCheck(pChannel->setPaused(false));
+        AudioEngine::ErrorCheck(pChannel->setPaused(false));
     }
 }
 
 // set volume and position of sound
-void CAudioEngine::SetChannel3dPosition(int nChannelId, const Vector3& vPosition)
+void AudioEngine::SetChannel3dPosition(int nChannelId, const Vector3& vPosition)
 {
     auto tFoundIt = sgpImplementation->mChannels.find(nChannelId);
     if (tFoundIt == sgpImplementation->mChannels.end())
         return;
 
     FMOD_VECTOR position = VectorToFmod(vPosition);
-    CAudioEngine::ErrorCheck(tFoundIt->second->set3DAttributes(&position, NULL));
+    AudioEngine::ErrorCheck(tFoundIt->second->set3DAttributes(&position, NULL));
 }
 
-void CAudioEngine::SetChannelVolume(int nChannelId, float fVolumedB)
+void AudioEngine::SetChannelVolume(int nChannelId, float fVolumedB)
 {
     auto tFoundIt = sgpImplementation->mChannels.find(nChannelId);
     if (tFoundIt == sgpImplementation->mChannels.end())
         return;
 
-    CAudioEngine::ErrorCheck(tFoundIt->second->setVolume(dbToVolume(fVolumedB)));
+    AudioEngine::ErrorCheck(tFoundIt->second->setVolume(dbToVolume(fVolumedB)));
 }
 
 //// load and play events
@@ -264,7 +264,7 @@ void CAudioEngine::SetChannelVolume(int nChannelId, float fVolumedB)
 
 // Helper functions (converters and error checking)
 //=============================================================================================================//
-FMOD_VECTOR CAudioEngine::VectorToFmod(const Vector3& vPosition) {
+FMOD_VECTOR AudioEngine::VectorToFmod(const Vector3& vPosition) {
     FMOD_VECTOR fVec;
     fVec.x = vPosition.x;
     fVec.y = vPosition.y;
@@ -272,17 +272,17 @@ FMOD_VECTOR CAudioEngine::VectorToFmod(const Vector3& vPosition) {
     return fVec;
 }
 
-float  CAudioEngine::dbToVolume(float dB)
+float  AudioEngine::dbToVolume(float dB)
 {
     return powf(10.0f, 0.05f * dB);
 }
 
-float  CAudioEngine::VolumeTodB(float volume)
+float  AudioEngine::VolumeTodB(float volume)
 {
     return 20.0f * log10f(volume);
 }
 
-int CAudioEngine::ErrorCheck(FMOD_RESULT result) {
+int AudioEngine::ErrorCheck(FMOD_RESULT result) {
     if (result != FMOD_OK) {
         cout << "FMOD ERROR " << result << endl;
         return 1;
@@ -292,6 +292,6 @@ int CAudioEngine::ErrorCheck(FMOD_RESULT result) {
 }
 
 // engine shutdown
-void CAudioEngine::Shutdown() {
+void AudioEngine::Shutdown() {
     delete sgpImplementation;
 }

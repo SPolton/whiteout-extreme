@@ -21,7 +21,6 @@ public:
     RacingGame();
 
     void run();
-    void music();
 
 private:
     void updateImGui();
@@ -55,8 +54,8 @@ private:
     Entity MapModel = 0;
     Entity Skybox = 0;
 
-    // test sound
-    std::shared_ptr<CAudioEngine> audioManager;
+    // sound
+    std::shared_ptr<AudioEngine> audioManager;
     int musicChannelID;
     int inGameMusicChannelID;
 };
