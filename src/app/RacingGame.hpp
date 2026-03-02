@@ -58,4 +58,7 @@ private:
     std::shared_ptr<AudioEngine> audioManager;
     int musicChannelID;
     int inGameMusicChannelID;
+    // keep track of engine sound playing state
+    int engineChannelID;
+    bool enginePlaying = false;
 };

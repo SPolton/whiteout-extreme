@@ -167,6 +167,10 @@ void PhysicsSystem::update(float deltaTime)
             
             // Sync Rotation (PhysX Quat to GLM Quat)
             transform.rot = glm::quat(pxPose.q.w, pxPose.q.x, pxPose.q.y, pxPose.q.z);
+
+            // get the linear velocity and store it in the rigid body for later use
+            physx::PxVec3 pxVelocity = dynamicActor->getLinearVelocity();
+            rb.linearVelocity = glm::vec3(pxVelocity.x, pxVelocity.y, pxVelocity.z);
         }
     }
 }

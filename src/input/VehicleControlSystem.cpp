@@ -161,7 +161,6 @@ void VehicleControlSystem::accelerate()
     logger::info("Accelerating...");
     // apply transformation here to move car forward
     currentThrottle = 0.7f; // full throttle
-    audioManager->ResumeChannel(channelID); // throttle sound
 }
 
 void VehicleControlSystem::brake()
@@ -257,9 +256,7 @@ void VehicleControlSystem::throwSnowball()
 void VehicleControlSystem::loadVehicleSounds()
 {
     // for acceleration
-    audioManager->LoadSound("assets/audio/snowmobiles-4-trimmed.mp3", false, false, false);
-    channelID = audioManager->PlaySounds("assets/audio/snowmobiles-4-trimmed.mp3", { 0,0,0 }, -8.0f);
-    audioManager->PauseChannel(channelID); // don't play throttle sound yet
+    audioManager->LoadSound("assets/audio/snowmobiles-4-trimmed.mp3", false, true, true);
     // for throwing snowball
     audioManager->LoadSound("assets/audio/snowball-hit-01.mp3", false, false, false);
 }

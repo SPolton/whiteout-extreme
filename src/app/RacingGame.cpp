@@ -240,8 +240,6 @@ void RacingGame::run()
 
         // check for entering game
         if (actionButtons == MenuAction::StartGame || actionButtons == MenuAction::ResumeGame) {
-            // play an "entering game" sound when button clicked
-            audioManager->PlaySounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
             // play in game music
             audioManager->ResumeChannel(inGameMusicChannelID);
             gameState = GameState::InGame;
@@ -299,6 +297,20 @@ void RacingGame::run()
                 physicsSystem->update(gameTime.dtF());
                 gameTime.physicsUpdate();
                 physicsSteps++;
+            }
+
+            // get velocity of the vehicle
+            float speed = glm::length(gCoordinator.GetComponent<RigidBody>(playerVehicleEntity).linearVelocity);
+
+            // if speed is more than 1, that means vehicle is moving, play the engine sound
+            if (speed > 1.0f && !enginePlaying) {
+                engineChannelID = audioManager->PlaySounds("assets/audio/snowmobiles-4-trimmed.mp3", { 0,0,0 }, -15.0f);
+                enginePlaying = true;
+            }
+            else if (speed <= 1.0f && enginePlaying) {
+                // otherwise vehicle is not considered moving, pause the channel that plays the engine sound
+                audioManager->PauseChannel(engineChannelID);
+                enginePlaying = false;
             }
         
             // Discard excess time when running slow to prevent spiral of death
