@@ -1,9 +1,11 @@
 #pragma once
 
+#include "Avalanche.hpp"
 #include "common/PhysicsCallback.hpp"
 #include "VehicleFourWheelDrive.hpp"
 
 #include "components/Entity.h"
+#include "components/Physics.hpp"
 #include "components/Renderable.h"
 #include "components/Transform.h"
 #include "components/RigidBody.h"
@@ -31,6 +33,8 @@ public:
     //void updateTransforms();
 
     Entity createVehicleEntity();
+    Entity createAvalancheEntity(const glm::vec3& startPos, float initialSpeed = 15.0f);
+    
     void spawnBoxPyramid(physx::PxU32 size, float halfLen, Renderable cubeRenderable);
 
     RigidBody createRigidBodyFromSphere(Entity entity, float radius = 1.f);

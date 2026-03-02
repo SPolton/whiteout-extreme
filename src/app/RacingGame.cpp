@@ -3,6 +3,7 @@
 
 //#include "components/CameraComponent.h"
 #include "components/Model.h"
+#include "components/Physics.hpp"
 #include "components/Renderable.h"
 #include "components/Transform.h"
 #include "components/VehicleComponent.h"
@@ -48,6 +49,7 @@ RacingGame::RacingGame()
     gCoordinator.RegisterComponent<PhysxTransform>();
     gCoordinator.RegisterComponent<RigidBody>();
     gCoordinator.RegisterComponent<VehicleComponent>();
+    gCoordinator.RegisterComponent<AvalancheComponent>();
 
     // 2.Create Systems and Set Signatures
     // RENDERING SYSTEM: Requires Transform AND <Renderable OR ModelRenderable>
@@ -167,6 +169,10 @@ RacingGame::RacingGame()
 
     // 4.You can modify Component Data for entities
     
+    // Create the avalanche entity (appears far behind the starting position)
+    Entity avalancheEntity = physicsSystem->createAvalancheEntity(glm::vec3(0.f, 15.f, -200.f), 15.0f);
+    logger::info("Avalanche entity created");
+
     // Position Earth at the origin
     gCoordinator.GetComponent<PhysxTransform>(Earth).pos = glm::vec3(0.0f, 0.0f, 0.0f);
     gCoordinator.GetComponent<PhysxTransform>(Earth).scale = glm::vec3(1.0f);
