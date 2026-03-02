@@ -171,6 +171,12 @@ RacingGame::RacingGame()
     
     // Create the avalanche entity (appears far behind the starting position)
     Entity avalancheEntity = physicsSystem->createAvalancheEntity(glm::vec3(0.f, 15.f, -200.f), 15.0f);
+    
+    // Add rendering to the avalanche
+    gCoordinator.AddComponent(
+        avalancheEntity,
+        renderingSystem->getCubeRenderable("assets/textures/snowball.png")
+    );
     logger::info("Avalanche entity created");
 
     // Position Earth at the origin
