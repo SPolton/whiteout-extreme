@@ -109,6 +109,7 @@ RacingGame::RacingGame()
     
     // Create Skybox first (if texture is available)
     Skybox = renderingSystem->createSkyboxEntity("assets/textures/sky/snow_landscape.hdr");
+    gCoordinator.GetComponent<PhysxTransform>(Skybox).scale = glm::vec3(3.f);
     logger::info("Created Skybox entity");
 
     /*
