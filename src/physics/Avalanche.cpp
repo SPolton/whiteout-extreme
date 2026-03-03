@@ -70,7 +70,7 @@ void Avalanche::update(float deltaTime, const std::vector<glm::vec3>& playerPosi
     // Update speed based on player positions (rubber-banding)
     // Do this even if playerPositions is empty (avalanche keeps moving at base speed)
     if (!playerPositions.empty()) {
-    updateRubberbanding(playerPositions);
+        updateRubberbanding(playerPositions);
         checkPlayerCollisions(playerPositions);
     } else {
         // No players yet - move at base speed
@@ -98,15 +98,51 @@ void Avalanche::updatePosition(float deltaTime)
 
 void Avalanche::updateRubberbanding(const std::vector<glm::vec3>& playerPositions)
 {
-    //todo
+    if (playerPositions.empty()) {
+        return;
+    }
+
+    // Find the last player (furthest back in Z)
+    size_t lastPlayerIndex = 0;
+    float furthestZ = playerPositions[0].z;
+
+    for (size_t i = 1; i < playerPositions.size(); ++i) {
+        if (playerPositions[i].z < furthestZ) {
+            furthestZ = playerPositions[i].z;
+            lastPlayerIndex = i;
+        }
+    }
+
+    // Calculate distance to last player
+    float distanceToLastPlayer = playerPositions[lastPlayerIndex].z - mPosition.z;
+
+    // Increase speed to maintain pressure
+    if (distanceToLastPlayer < 50.0f && distanceToLastPlayer > 0.0f) {
+        // Catch-up mode
+        float speedMultiplier = 1.0f + (1.0f - (distanceToLastPlayer / 50.0f)) * catchUpSpeedMultiplier;
+        mSpeed = mBaseSpeed * speedMultiplier;
+    } else {
+        // Normal pursuit
+        mSpeed = mBaseSpeed;
+    }
+
+    // Clamp speed
+    mSpeed = glm::clamp(mSpeed, mBaseSpeed, mMaxSpeed);
 }
 
 void Avalanche::checkPlayerCollisions(const std::vector<glm::vec3>& playerPositions)
 {
-    //todo
+    for (size_t i = 0; i < playerPositions.size(); ++i) {
+        if (isPlayerEngulfed(i)) {
+            continue;  // Already engulfed
+        }
+
+        //todo
+        //float distance = glm::distance(playerPositions[i], mPosition);
+    }
 }
 
 bool Avalanche::isPlayerEngulfed(size_t playerIndex) const
 {
-    return false;
+    return std::find(mEngulfedPlayerIndices.begin(), mEngulfedPlayerIndices.end(), playerIndex) != mEngulfedPlayerIndices.end();
 }

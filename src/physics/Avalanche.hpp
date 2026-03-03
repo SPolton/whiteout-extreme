@@ -54,10 +54,6 @@ private:
     void checkPlayerCollisions(const std::vector<glm::vec3>& playerPositions);
     void updateRubberbanding(const std::vector<glm::vec3>& playerPositions);
 
-    // Time tracking for rubber-banding
-    float mTimeLastPlayerInBack = 0.0f;
-    size_t mLastPlayerIndex = 0;
-
     // Constants
     static constexpr float engulfThreshold = 3.0f;  // Distance to engulf player
     static constexpr float autoEngulfTime = 5.0f;   // Seconds before auto-engulf
