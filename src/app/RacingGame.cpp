@@ -105,6 +105,18 @@ RacingGame::RacingGame()
         gCoordinator.SetSystemSignature<VehicleControlSystem>(signature);
     }
 
+    // RACING SYSTEM: Requires Transform AND Racer
+    racingSystem = gCoordinator.RegisterSystem<RacingSystem>(
+        gCoordinator.GetSystem<RenderingSystem>(),
+        gCoordinator.GetSystem<PhysicsSystem>()
+    );
+    {
+        Signature signature;
+        signature.set(gCoordinator.GetComponentType<Racer>());
+        signature.set(gCoordinator.GetComponentType<PhysxTransform>());
+        gCoordinator.SetSystemSignature<RacingSystem>(signature);
+    }
+
     // 3.Create Entities and add Components to them:
     
     // Create Skybox first (if texture is available)
@@ -183,10 +195,13 @@ RacingGame::RacingGame()
 
     logger::info("Loaded snowmobile model for ai vehicle");
 
-    Waypoint = renderingSystem->createSphereEntity("assets/textures/carbon_fiber.jpg");
-    gCoordinator.GetComponent<PhysxTransform>(Waypoint).pos = glm::vec3(0.f, 2.f, 20.f);
-    gCoordinator.GetComponent<PhysxTransform>(Waypoint).scale = glm::vec3(0.5f);
+    racingSystem->initGates();
+    logger::info("Loaded gates and waypoints for race");
 
+    gCoordinator.AddComponent(playerVehicleEntity, Racer{
+        racingSystem->getGatePtr(0),
+        racingSystem->getGatePtr(1)
+        });
 
     // 4.You can modify Component Data for entities
 
@@ -260,6 +275,8 @@ void RacingGame::run()
                 physicsSystem->update(gameTime.dtF());
                 gameTime.physicsUpdate();
                 physicsSteps++;
+
+                racingSystem->update(gameTime.dtF());
             }
         
             // Discard excess time when running slow to prevent spiral of death
