@@ -15,6 +15,11 @@ public:
 
     void initGates();
 
+    void restart();
+
+    bool raceFinished = false;
+    bool playerWinner = false;
+
     float totalRaceLength = 0.f;
     
     const Gate* getGatePtr(size_t index) { return &gates.at(index); }

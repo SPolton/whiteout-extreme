@@ -30,7 +30,19 @@ void RacingSystem::update(float deltaTime)
         auto& racer = gCoordinator.GetComponent<Racer>(entity);
         auto& racerTransf = gCoordinator.GetComponent<PhysxTransform>(entity);
 
-        if (!racer.targetGate || !racer.lastGate) continue;
+        if (!racer.targetGate) {
+            racer.raceCompletion = 1.0f;
+            raceFinished = true;
+            playerWinner = entity == playerVehicleEntity ? true : false;
+            if (shouldLog) {
+                logger::info("Winner !");
+            }
+            continue;
+        }
+
+        if (!racer.lastGate) {
+            continue;
+        }
 
         float distTarget = getDistanceToGateLine(racerTransf.pos, *racer.targetGate);
         float distLast = getDistanceToGateLine(racerTransf.pos, *racer.lastGate);
@@ -59,11 +71,9 @@ void RacingSystem::update(float deltaTime)
 
         // A. FORWARD : checks if racer reached next gate
         if (dotTarget < 0.0f) {
-            if (racer.targetGate->nextGate) {
                 racer.lastGate = racer.targetGate;
                 racer.targetGate = racer.targetGate->nextGate;
                 logger::info("Next Gate !");
-            }
         }
         // B. BACKWARD : checks if racer got back behind last gate
         else if (dotLast > 0.0f) {
@@ -74,6 +84,89 @@ void RacingSystem::update(float deltaTime)
             }
         }
     }
+}
+
+void RacingSystem::restart() {
+    if (gates.empty()) return;
+
+    // Reset booleans
+    raceFinished = false;
+    playerWinner = false;
+
+    auto& startGate = gates.at(0);
+    auto& nextGate = gates.at(1);
+
+    int index = 0;
+    int totalEntities = mEntities.size();
+
+    for (auto const& entity : mEntities) {
+        auto& racer = gCoordinator.GetComponent<Racer>(entity);
+        auto& racerTransf = gCoordinator.GetComponent<PhysxTransform>(entity);
+
+        // 1. Reset gates
+        racer.lastGate = &startGate;
+        racer.targetGate = &nextGate;
+        racer.raceCompletion = 0.0f;
+
+        // 2. Compute Start position
+        float spread = startGate.width * 0.5f;
+        float offsetMultiplier = (totalEntities > 1)
+            ? (float)index / (totalEntities - 1) - 0.5f
+            : 0.0f;
+
+        racer.targetPercLane = offsetMultiplier + 0.5f;
+        logger::info("targetperlane: {0}", racer.targetPercLane);
+        glm::vec3 startOffset = startGate.right * (offsetMultiplier * spread);
+        racerTransf.pos = startGate.position + startOffset;
+
+        // Vehicle a bit above ground
+        racerTransf.pos.y += 0.5f;
+
+        // 3. Orientation of vehicle
+        glm::vec3 forward = glm::normalize(startGate.direction);
+        glm::vec3 worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
+        glm::vec3 right = glm::normalize(glm::cross(worldUp, forward));
+        glm::vec3 up = glm::cross(forward, right);
+
+        // column 0 : Right, column 1 : Up, column 2 : Forward
+        glm::mat3 rotationMat(right, up, forward);
+
+        // CONVERSION ET NORMALIZATION 
+        racerTransf.rot = glm::normalize(glm::quat_cast(rotationMat));
+
+        if (std::isnan(racerTransf.rot.w)) {
+            logger::error("Orientation failed! Resetting to identity.");
+            racerTransf.rot = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+        }
+
+        // 2. PhysX syncronization
+        if (gCoordinator.HasComponent<VehicleComponent>(entity)) {
+            auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(entity);
+
+            // Reset position, orientation and velocity
+            physx::PxRigidActor* actor = vehicle.instance->getRigidActor();
+            if (actor) {
+                physx::PxTransform pxTrans(
+                    physx::PxVec3(racerTransf.pos.x, racerTransf.pos.y, racerTransf.pos.z),
+                    physx::PxQuat(racerTransf.rot.x, racerTransf.rot.y, racerTransf.rot.z, racerTransf.rot.w)
+                );
+
+                actor->setGlobalPose(pxTrans);
+
+                physx::PxRigidDynamic* dynamicActor = actor->is<physx::PxRigidDynamic>();
+                if (dynamicActor) {
+
+                    dynamicActor->setLinearVelocity(physx::PxVec3(0.0f, 0.0f, 0.0f));
+                    dynamicActor->setAngularVelocity(physx::PxVec3(0.0f, 0.0f, 0.0f));
+                    dynamicActor->clearForce();
+                    dynamicActor->clearTorque();
+                }
+            }
+        }
+        index++;
+    }
+
+    logger::info("Race Restarted: {} vehicles on grid", index);
 }
 
 float RacingSystem::getDistanceToGateLine(const glm::vec3& racerPos, const Gate& gate) {

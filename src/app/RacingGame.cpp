@@ -231,6 +231,7 @@ RacingGame::RacingGame()
     gCoordinator.AddComponent(aiVehicleEntity2, Racer{});
     gCoordinator.AddComponent(aiVehicleEntity2, AI{});
 
+    racingSystem->restart();
 
 
     // 4.You can modify Component Data for entities
@@ -307,6 +308,10 @@ void RacingGame::run()
                 physicsSteps++;
 
                 racingSystem->update(gameTime.dtF());
+                if (racingSystem->raceFinished) {
+                    gameState = GameState::GameOver;
+                }
+                aiSystem->update(gameTime.dtF());
             }
         
             // Discard excess time when running slow to prevent spiral of death
@@ -389,6 +394,7 @@ void RacingGame::run()
 
             // if "Start" is pressed, go in the game
             if (actionButtons == MenuAction::StartGame || actionCursor == MenuAction::StartGame) {
+                racingSystem->restart();
                 gameState = GameState::InGame;
             }
 
