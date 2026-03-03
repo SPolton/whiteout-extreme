@@ -49,6 +49,7 @@ RacingGame::RacingGame()
     gCoordinator.RegisterComponent<PhysxTransform>();
     gCoordinator.RegisterComponent<RigidBody>();
     gCoordinator.RegisterComponent<VehicleComponent>();
+    gCoordinator.RegisterComponent<Racer>();
 
     // 2.Create Systems and Set Signatures
     // RENDERING SYSTEM: Requires Transform AND <Renderable OR ModelRenderable>
