@@ -41,7 +41,7 @@ void VehicleControlSystem::update(float deltaTime)
                     vehicle.steer
                 );
             }
-        } else if (vehicle.playerID == 1) {
+        } else if (vehicle.playerID > 0) {
 
             if (vehicle.instance) {
                 vehicle.instance->setInputs(

@@ -9,4 +9,12 @@ public:
     glm::vec3 pos;
     glm::quat rot;
     glm::vec3 scale{ 1.f };
+
+    glm::vec3 getForwardVector() const {
+        return rot * glm::vec3(0.0f, 0.0f, 1.0f);
+    }
+
+    glm::vec3 getRightVector() const {
+        return rot * glm::vec3(1.0f, 0.0f, 0.0f);
+    }
 };

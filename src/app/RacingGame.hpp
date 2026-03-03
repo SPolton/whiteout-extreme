@@ -4,6 +4,7 @@
 #include "core/RenderingSystem.hpp"
 #include "core/Text.h"
 #include "ai/RacingSystem.hpp"
+#include "ai/AISystem.hpp"
 #include "input/VehicleControlSystem.hpp"
 #include "physics/PhysicsSystem.hpp"
 #include "ui/GameMenus.hpp"
@@ -39,6 +40,7 @@ private:
     std::shared_ptr<PhysicsSystem> physicsSystem;
     std::shared_ptr<VehicleControlSystem> vehicleControlSystem;
     std::shared_ptr<RacingSystem> racingSystem;
+    std::shared_ptr<AISystem> aiSystem;
 
     std::unique_ptr<Text> textSystem;
 

@@ -11,7 +11,8 @@
 //ECS global coordinator
 Coordinator gCoordinator;
 Entity playerVehicleEntity;
-Entity aiVehicleEntity;
+Entity aiVehicleEntity1;
+Entity aiVehicleEntity2;
 
 RacingGame::RacingGame()
 {
@@ -50,6 +51,7 @@ RacingGame::RacingGame()
     gCoordinator.RegisterComponent<RigidBody>();
     gCoordinator.RegisterComponent<VehicleComponent>();
     gCoordinator.RegisterComponent<Racer>();
+    gCoordinator.RegisterComponent<AI>();
 
     // 2.Create Systems and Set Signatures
     // RENDERING SYSTEM: Requires Transform AND <Renderable OR ModelRenderable>
@@ -117,6 +119,21 @@ RacingGame::RacingGame()
         gCoordinator.SetSystemSignature<RacingSystem>(signature);
     }
 
+
+    // AI SYSTEM: Requires Transform AND VehicleComponent AND Racer AND AI
+    aiSystem = gCoordinator.RegisterSystem<AISystem>(
+        gCoordinator.GetSystem<RenderingSystem>(),
+        gCoordinator.GetSystem<PhysicsSystem>()
+    );
+    {
+        Signature signature;
+        signature.set(gCoordinator.GetComponentType<AI>());
+        signature.set(gCoordinator.GetComponentType<Racer>());
+        signature.set(gCoordinator.GetComponentType<VehicleComponent>());
+        signature.set(gCoordinator.GetComponentType<PhysxTransform>());
+        gCoordinator.SetSystemSignature<AISystem>(signature);
+    }
+
     // 3.Create Entities and add Components to them:
     
     // Create Skybox first (if texture is available)
@@ -169,14 +186,18 @@ RacingGame::RacingGame()
     playerVehicleEntity = physicsSystem->createVehicleEntity("VehiclePlayer1", physx::PxVec3(10.0f, 0.f, 0.f));
     gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).playerID = 0;
 
-    aiVehicleEntity = physicsSystem->createVehicleEntity("VehicleAI", physx::PxVec3(0.f, 0.f, 0.f));
-    gCoordinator.GetComponent<VehicleComponent>(aiVehicleEntity).playerID = 1;
+    aiVehicleEntity1 = physicsSystem->createVehicleEntity("VehicleAI1", physx::PxVec3(20.f, 0.f, 0.f));
+    gCoordinator.GetComponent<VehicleComponent>(aiVehicleEntity1).playerID = 1;
 
-    // Load snowmobile model for the player vehicle
+    aiVehicleEntity2 = physicsSystem->createVehicleEntity("VehicleAI2", physx::PxVec3(30.f, 0.f, 0.f));
+    gCoordinator.GetComponent<VehicleComponent>(aiVehicleEntity2).playerID = 2;
+
+    // Load snowmobile model for the player and AI vehicles
     Entity snowmobileVisual = renderingSystem->createModelEntity("assets/obj/snowmobile/snowmobile.obj");
     auto& snowmobileRenderable = gCoordinator.GetComponent<ModelRenderable>(snowmobileVisual);
     gCoordinator.AddComponent(playerVehicleEntity, snowmobileRenderable);
-    gCoordinator.AddComponent(aiVehicleEntity, snowmobileRenderable);
+    gCoordinator.AddComponent(aiVehicleEntity1, snowmobileRenderable);
+    gCoordinator.AddComponent(aiVehicleEntity2, snowmobileRenderable);
     gCoordinator.DestroyEntity(snowmobileVisual);
 
     // Fix rotation and scale
@@ -186,14 +207,15 @@ RacingGame::RacingGame()
 
     logger::info("Loaded snowmobile model for player vehicle");
 
-    auto& aiVehicleTransform = gCoordinator.GetComponent<PhysxTransform>(aiVehicleEntity);
+    auto& aiVehicleTransform = gCoordinator.GetComponent<PhysxTransform>(aiVehicleEntity1);
     aiVehicleTransform.rot = glm::angleAxis(glm::radians(0.0f), glm::vec3(0.f, 1.f, 0.f));
     aiVehicleTransform.scale = glm::vec3(1.0f);  // Uniform scale instead of stretched box scale
 
-    auto& aiVehicleComponent = gCoordinator.GetComponent<VehicleComponent>(aiVehicleEntity);
-    aiVehicleComponent.throttle = 0.3f; // Set a constant throttle for the AI vehicle to move forward
+    auto& aiVehicleTransform2 = gCoordinator.GetComponent<PhysxTransform>(aiVehicleEntity2);
+    aiVehicleTransform2.rot = glm::angleAxis(glm::radians(0.0f), glm::vec3(0.f, 1.f, 0.f));
+    aiVehicleTransform2.scale = glm::vec3(1.0f);  // Uniform scale instead of stretched box scale
 
-    logger::info("Loaded snowmobile model for ai vehicle");
+    logger::info("Loaded snowmobile models for ai vehicles");
 
     racingSystem->initGates();
     logger::info("Loaded gates and waypoints for race");
@@ -202,6 +224,14 @@ RacingGame::RacingGame()
         racingSystem->getGatePtr(0),
         racingSystem->getGatePtr(1)
         });
+
+    gCoordinator.AddComponent(aiVehicleEntity1, Racer{});
+    gCoordinator.AddComponent(aiVehicleEntity1, AI{});
+
+    gCoordinator.AddComponent(aiVehicleEntity2, Racer{});
+    gCoordinator.AddComponent(aiVehicleEntity2, AI{});
+
+
 
     // 4.You can modify Component Data for entities
 
