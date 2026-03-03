@@ -463,6 +463,17 @@ void RenderingSystem::update(float deltaTime)
 {
     processInput(deltaTime);
     
+    // center skybox on camera
+    for (auto const& entity : mEntities) {
+        if (gCoordinator.HasComponent<Renderable>(entity)) {
+            auto& renderable = gCoordinator.GetComponent<Renderable>(entity);
+            if (renderable.isSkybox) {
+                auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
+                transform.pos = activeCamera->getPosition();
+            }
+        }
+    }
+    
     // Render the rotating sphere (demo)
     render();
 }
