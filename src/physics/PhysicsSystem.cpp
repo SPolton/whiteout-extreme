@@ -232,8 +232,8 @@ Entity PhysicsSystem::createAvalancheEntity(const glm::vec3& startPos, float ini
         .baseSpeed = 15.0f,
         .maxSpeed = 50.0f,
         .width = 150.0f,
-        .height = 80.0f,
-        .depth = 50.0f,
+        .height = 30.0f,
+        .depth = 40.0f,
         .physics = mPhysics,
         .scene = mScene,
         .material = mMaterial
@@ -248,7 +248,7 @@ Entity PhysicsSystem::createAvalancheEntity(const glm::vec3& startPos, float ini
     gCoordinator.AddComponent(avalancheEntity, PhysxTransform{
         startPos,
         glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
-        glm::vec3(150.0f, 80.0f, 50.0f)
+        glm::vec3(avalancheData.width, avalancheData.height, avalancheData.depth)
     });
 
     gCoordinator.AddComponent(avalancheEntity, RigidBody{ avalancheInstance->mPhysicsActor });
