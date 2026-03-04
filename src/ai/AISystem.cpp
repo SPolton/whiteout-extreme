@@ -19,63 +19,79 @@ void AISystem::update(float deltaTime)
 {
     static float logTimer = 0.0f;
     logTimer += deltaTime;
-    bool shouldLog = false;
-
-    if (logTimer >= 1.f) {
-        shouldLog = true;
-        logTimer = 0.0f;
-    }
+    bool shouldLog = (logTimer >= 1.f);
+    if (shouldLog) logTimer = 0.0f;
 
     for (auto const& entity : mEntities) {
         auto& aiRacer = gCoordinator.GetComponent<Racer>(entity);
-        auto& aiLogic = gCoordinator.GetComponent<AI>(entity);
         auto& aiTransf = gCoordinator.GetComponent<PhysxTransform>(entity);
         auto& aiVehicle = gCoordinator.GetComponent<VehicleComponent>(entity);
 
         if (!aiRacer.targetGate) continue;
 
-        // 1. Calculate direction vectors (3D space)
+        // 1. Calculate direction vectors
         glm::vec3 targetPos = aiRacer.getTargetPosition();
-
-        // Calculate vector from AI to target and normalize it
         glm::vec3 toTargetVec = targetPos - aiTransf.pos;
         float distanceToTarget = glm::length(toTargetVec);
-
-        // Prevent normalization of a zero vector if the AI is exactly on the target
         glm::vec3 toTarget = (distanceToTarget > 0.001f) ? glm::normalize(toTargetVec) : aiTransf.getForwardVector();
-
-        // Get the current facing direction of the vehicle
         glm::vec3 forward = aiTransf.getForwardVector();
 
-        // 2. Calculate angle between Forward and Target (Dot Product)
-        // Clamp the dot product to [-1, 1] to prevent NaN errors in acos due to floating point precision
+        // 2. Calculate angle between forward vector and target direction
         float dot = glm::clamp(glm::dot(forward, toTarget), -1.0f, 1.0f);
-        float angle = glm::acos(dot);
+        float angle = glm::acos(dot); // Radians [0, PI]
 
-        // 3. Determine steering direction (Cross Product)
-        // The sign of the Y component tells us if the target is to the left or right of the forward vector
+        // 3. Steering direction (Left or Right)
         glm::vec3 crossResult = glm::cross(forward, toTarget);
         float steerDirection = (crossResult.y > 0.0f) ? 1.0f : -1.0f;
+        aiVehicle.steer = glm::clamp(angle * steerDirection * 2.0f, -1.0f, 1.0f);
 
-        // 4. Calculate Final Steering (Error * Direction)
-        // Small angles result in subtle steering; large angles result in sharp turns
-        float steerError = angle * steerDirection;
+        // 4. Movement and Braking Logic
+        float currentSpeed = aiVehicle.speed();
+        float maxThrottle = 0.7f;
 
-        // Apply a gain factor (e.g., 1.5f) to increase steering responsiveness
-        aiVehicle.steer = glm::clamp(steerError * 1.5f, -1.0f, 1.0f);
+        if (aiVehicle.forwardGearDesired) {
+            // Racing Forward:
+            // If angle > 50°
+            if (angle > glm::radians(50.f)) {
+                // FLAG1: Sharp turn or orientation error
 
-        // 5. Speed Management (Throttle / Brake)
-        // Reduce speed proportionally to the sharpness of the turn (steering angle)
-        // A speedFactor of 1.0 means full cruise speed; lower means slowing down for curves
-        float speedFactor = 1.0f - glm::clamp(glm::abs(steerError) / glm::pi<float>(), 0.0f, 0.7f);
-        aiVehicle.throttle = 0.7f * speedFactor; // Base cruise speed scaled by the curve factor
+                if (currentSpeed < 1.5f) {
+                    // DEBLOCKING LOGIC: We are too slow to turn properly.
+                    // Force throttle to 100% of max and release brakes to "kick" the car 
+                    // and allow the wheels to rotate the chassis.
+                    aiVehicle.throttle = maxThrottle;
+                    aiVehicle.brake = 0.0f;
+                }
+                else {
+                    // Standard Braking: We have enough speed, so we slow down to tighten the radius
+                    aiVehicle.throttle = 0.1f;
+                    aiVehicle.brake = glm::clamp(angle * 0.6f, 0.3f, 0.8f);
+                }
+            }
+            // If angle <= 50°
+            else {
+                // FLAG2: Straight line / Correct orientation
+                aiVehicle.brake = 0.0f;
+                float speedFactor = 1.0f - glm::clamp(angle, 0.0f, 0.5f);
+                aiVehicle.throttle = maxThrottle * speedFactor;
+            }
+        }
 
-        // Apply braking if the turn angle is too sharp (roughly > 45 degrees)
-        aiVehicle.brake = (glm::abs(steerError) > 0.8f) ? 0.2f : 0.0f;
+        // 5. Gear State Synchronization (Ensure PhysX gear matches intent)
+        if (!aiVehicle.hasGearDesired()) {
+            if (currentSpeed < 1.0f) {
+                aiVehicle.setGearDesired();
+            }
+            else {
+                // Must stop completely before shifting
+                aiVehicle.throttle = 0.0f;
+                aiVehicle.brake = 1.0f;
+            }
+        }
 
         if (shouldLog) {
-            logger::info("AI Entity {}: Target Gate {}, Steer: {:.2f}, Throttle: {:.2f}",
-                entity, aiRacer.targetGate->id, aiVehicle.steer, aiVehicle.throttle);
+            logger::info("AI {}: Gate {}, Angle: {:.2f}, Brake: {:.2f}, Throttle: {:.2f}, Forward: {}",
+                entity, aiRacer.targetGate->id, angle, aiVehicle.brake, aiVehicle.throttle, aiVehicle.forwardGearDesired);
         }
     }
 }
