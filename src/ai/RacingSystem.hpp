@@ -22,6 +22,8 @@ public:
     bool playerWinner = false;
 
     float totalRaceLength = 0.f;
+
+    std::vector<Entity> leaderboard;
     
     const Gate* getGatePtr(size_t index) { return &gates.at(index); }
 
@@ -50,7 +52,7 @@ private:
         // Exit toward Finish Line
         {8, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, 25.0f, glm::vec3{130.0f, 0.0f, 135.0f}},
         {9, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, 20.0f, glm::vec3{155.0f, 0.0f, 115.0f}},
-        {10, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, 15.0f, glm::vec3{170.0f, 0.0f, 90.0f}} // Finish Line
+        {10, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, 15.0f, glm::vec3{170.0f, 0.0f, 90.0f}}
     };
 
     std::vector<Gate> gates = {
@@ -68,7 +70,7 @@ private:
 
         // --- Wide turn (width 25.0) ---
         {6, {0.0f, 0.0f, 100.0f},  {20.0f, 0.0f, 110.0f}},
-        {7, {40.0f, 0.0f, 120.0f}, {65.0f, 0.0f, 130.0f}}, // Très large ici
+        {7, {40.0f, 0.0f, 120.0f}, {65.0f, 0.0f, 130.0f}},
         {8, {80.0f, 0.0f, 110.0f}, {100.0f, 0.0f, 125.0f}},
 
         // --- Finish Line (width 15.0) ---

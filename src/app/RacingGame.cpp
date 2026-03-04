@@ -137,6 +137,17 @@ RacingGame::RacingGame()
     }
 
     // 3.Create Entities and add Components to them:
+
+    // Create the player vehicle entity with physics components
+    aiVehicleEntity1 = physicsSystem->createVehicleEntity("VehicleAI1", physx::PxVec3(20.f, 0.f, 0.f));
+    gCoordinator.GetComponent<VehicleComponent>(aiVehicleEntity1).playerID = 1;
+
+    aiVehicleEntity2 = physicsSystem->createVehicleEntity("VehicleAI2", physx::PxVec3(30.f, 0.f, 0.f));
+    gCoordinator.GetComponent<VehicleComponent>(aiVehicleEntity2).playerID = 2;
+
+    playerVehicleEntity = physicsSystem->createVehicleEntity("VehiclePlayer1", physx::PxVec3(10.0f, 0.f, 0.f));
+    gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).playerID = 0;
+
     
     // Create Skybox first (if texture is available)
     Skybox = renderingSystem->createSkyboxEntity("assets/textures/sky/snow_landscape.hdr");
@@ -187,16 +198,6 @@ RacingGame::RacingGame()
     );
 
     logger::info("Created Map model entity with collision");
-
-    // Create the player vehicle entity with physics components
-    playerVehicleEntity = physicsSystem->createVehicleEntity("VehiclePlayer1", physx::PxVec3(10.0f, 0.f, 0.f));
-    gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).playerID = 0;
-
-    aiVehicleEntity1 = physicsSystem->createVehicleEntity("VehicleAI1", physx::PxVec3(20.f, 0.f, 0.f));
-    gCoordinator.GetComponent<VehicleComponent>(aiVehicleEntity1).playerID = 1;
-
-    aiVehicleEntity2 = physicsSystem->createVehicleEntity("VehicleAI2", physx::PxVec3(30.f, 0.f, 0.f));
-    gCoordinator.GetComponent<VehicleComponent>(aiVehicleEntity2).playerID = 2;
 
     // Load snowmobile model for the player and AI vehicles
     Entity snowmobileVisual = renderingSystem->createModelEntity("assets/obj/snowmobile/snowmobile.obj");
@@ -384,15 +385,13 @@ void RacingGame::run()
             // textSystem->setProjection(width, height);
 
             textSystem->beginText();
-
             textSystem->loadFont("arial.ttf", 48);
 
             float marginX = 30.f;
-            float topY = static_cast<float>(1440) - 50.f;
+            float screenHeight = 1440.f;
+            float topY = screenHeight - 50.f;
 
-            textSystem->renderText("Hello!",
-                { marginX, topY, 1.f }, { 0.5f, 0.8f, 0.2f });
-
+            // --- Debug & System Info ---
             textSystem->renderText(
                 "Rendered Frames: " + std::to_string(gameTime.frameCount),
                 { marginX, topY - 50.f, 0.75f }, { 0.2f, 0.5f, 0.8f });
@@ -405,27 +404,42 @@ void RacingGame::run()
                 "Game FPS: " + std::to_string(static_cast<int>(1.0f / gameTime.fpsF())),
                 { marginX, topY - 150.f, 00.75f }, { 0.8f, 0.8f, 0.2f });
 
-            float centerX = static_cast<float>(1440) / 2.0f;
-            float centerY = static_cast<float>(1440) / 2.0f;
+            // --- Leaderboard Section ---
+            float lbYStart = topY - 250.f;
+            textSystem->renderText("LEADERBOARD", { marginX, lbYStart, 0.8f }, { 1.f, 1.f, 1.f });
+
+            for (size_t i = 0; i < racingSystem->leaderboard.size(); ++i) {
+                Entity e = racingSystem->leaderboard[i];
+                auto& racer = gCoordinator.GetComponent<Racer>(e);
+                auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(e);
+
+                // Color: Gold for Player (ID 0), White/Grey for AI
+                glm::vec3 color = (vehicle.playerID == 0) ? glm::vec3(1.0f, 0.85f, 0.0f) : glm::vec3(0.1f, 0.3f, 1.0f);
+
+                std::string name = (vehicle.playerID == 0) ? "PLAYER" : "AI_Entity#" + std::to_string(e);
+                std::string entry = std::to_string(i + 1) + ". " + name;
+
+                // Optional: Add progress percentage for debugging
+                // entry += " (" + std::to_string(static_cast<int>(racer.raceCompletion * 100)) + "%)";
+
+                textSystem->renderText(entry, { marginX, lbYStart - 50.f - (i * 45.f), 0.65f }, color);
+            }
+
+            // --- Crosshair / Center UI ---
+            float centerX = screenHeight / 2.0f;
+            float centerY = screenHeight / 2.0f;
             textSystem->renderText("+", { centerX - 5.f, centerY - 5.f, 0.75f }, { 1.f, 1.f, 1.f });
 
-            textSystem->renderText(
-                "Move: Left Joystick / WASD",
-                { centerX * 1.2f, topY - 50.f, 0.7f }, { 0.0f, 0.90f, 0.95f });
-            textSystem->renderText(
-                "Boost: Y button / SHIFT",
-                { centerX * 1.2f, topY - 100.f, 0.7f }, { 0.0f, 0.90f, 0.95f });
-            textSystem->renderText(
-                "Snowball: X button / SPACE",
-                { centerX * 1.2f, topY - 150.f, 0.7f }, { 0.0f, 0.90f, 0.95f });
-            textSystem->renderText(
-                "Pause: Start button / P",
-                { centerX * 1.2f, topY - 200.f, 0.7f }, { 0.0f, 0.90f, 0.95f });
-
+            // --- Input Controls Info (Top Right) ---
+            float controlX = centerX * 1.2f;
+            textSystem->renderText("CONTROLS", { controlX, topY, 0.75f }, { 1.f, 1.f, 1.f });
+            textSystem->renderText("Drive: RT-LT / W-S", { controlX, topY - 50.f, 0.65f }, { 0.0f, 0.9f, 0.95f });
+            textSystem->renderText("Steer: L-Stick / A-D", { controlX, topY - 100.f, 0.65f }, { 0.0f, 0.9f, 0.95f });
+            textSystem->renderText("Boost: Y-Btn / SHIFT", { controlX, topY - 150.f, 0.65f }, { 0.0f, 0.9f, 0.95f });
+            textSystem->renderText("Shoot: X-Btn / SPACE", { controlX, topY - 200.f, 0.65f }, { 0.0f, 0.9f, 0.95f });
+            textSystem->renderText("Pause: Start / P", { controlX, topY - 250.f, 0.65f }, { 0.0f, 0.9f, 0.95f });
             
             textSystem->endText();
-
-            // Must be called last
             this->endFrame();
         }
         else if (gameState == GameState::MainMenu) {
@@ -459,7 +473,9 @@ void RacingGame::run()
         }
         else if (gameState == GameState::GameOver) {
             // render UI for race finished, take note of the action taken
-            MenuAction actionCursor = menus->renderGameOver();
+            auto& playerRacer = gCoordinator.GetComponent<Racer>(playerVehicleEntity);
+            int rank = playerRacer.currentRank;
+            MenuAction actionCursor = menus->renderGameOver(rank);
 
             // if "Return to main menu" is pressed, return to the main menu
             if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {

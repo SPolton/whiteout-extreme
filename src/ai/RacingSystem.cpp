@@ -84,6 +84,19 @@ void RacingSystem::update(float deltaTime)
             }
         }
     }
+
+    leaderboard.assign(mEntities.begin(), mEntities.end());
+
+    std::sort(leaderboard.begin(), leaderboard.end(), [](Entity a, Entity b) {
+        auto& racerA = gCoordinator.GetComponent<Racer>(a);
+        auto& racerB = gCoordinator.GetComponent<Racer>(b);
+
+        return racerA.raceCompletion > racerB.raceCompletion;
+        });
+
+    for (size_t i = 0; i < leaderboard.size(); ++i) {
+        gCoordinator.GetComponent<Racer>(leaderboard[i]).currentRank = static_cast<int>(i + 1);
+    }
 }
 
 void RacingSystem::restart() {

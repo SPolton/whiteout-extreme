@@ -27,6 +27,7 @@ struct Racer {
     const Gate* targetGate = nullptr;
     float targetPercLane = 0.5f;
     float raceCompletion = 0.0f;
+    int currentRank = 0;
 
     glm::vec3 getTargetPosition() const
     {

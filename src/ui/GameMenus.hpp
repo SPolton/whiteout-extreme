@@ -19,7 +19,7 @@ public:
     // returns the action taken
     MenuAction renderMainMenu();
     MenuAction renderPauseMenu();
-    MenuAction renderGameOver();
+    MenuAction renderGameOver(int rank);
 
     // input related functions
     MenuAction pollInputs();
