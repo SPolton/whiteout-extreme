@@ -34,23 +34,18 @@ void VehicleControlSystem::update(float deltaTime)
             vehicle.brake = currentBrake;
             vehicle.steer = currentSteer;
 
-            if (vehicle.instance) {
-                vehicle.instance->setInputs(
-                    vehicle.throttle,
-                    vehicle.brake,
-                    vehicle.steer
-                );
-            }
-        } else if (vehicle.playerID > 0) {
-
-            if (vehicle.instance) {
-                vehicle.instance->setInputs(
-                    vehicle.throttle,
-                    vehicle.brake,
-                    vehicle.steer
-                );
+            if (!vehicle.hasGearDesired()) {
+                if (vehicle.speed() < 1.f) {
+                    vehicle.setGearDesired();
+                }
             }
         }
+
+        vehicle.instance->setInputs(
+            vehicle.throttle,
+            vehicle.brake,
+            vehicle.steer
+        );
         //vehicle.instance->stepPhysics(deltaTime);
     }
 }
@@ -165,28 +160,48 @@ void VehicleControlSystem::processKeyboardInput()
 
 void VehicleControlSystem::accelerate()
 {
-    logger::info("Accelerating...");
+    //logger::info("Accelerating...");
     // apply transformation here to move car forward
-    currentThrottle = 0.7f; // full throttle
+
+    auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity);
+
+    vehicle.forwardGearDesired = true;
+
+    if (vehicle.hasGearDesired()) {
+        currentThrottle = 0.7f;
+    }
+    else {
+        currentBrake = 1.0f;
+    }
 }
 
 void VehicleControlSystem::brake()
 {
-    logger::info("Braking...");
+    //logger::info("Braking...");
     // apply transformation here to slow car down
-    currentBrake = 1.0f; // full brake
+
+    auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity);
+
+    vehicle.forwardGearDesired = false;
+
+    if (vehicle.hasGearDesired()) {
+        currentThrottle = 0.7f;
+    }
+    else {
+        currentBrake = 1.0f;
+    }
 }
 
 void VehicleControlSystem::steerRight()
 {
-    logger::info("Steer Right...");
+    //logger::info("Steer Right...");
     // apply transformation here to steer the car to the right
     currentSteer = -1.0f; // full right steer
 }
 
 void VehicleControlSystem::steerLeft()
 {
-    logger::info("Steer Left...");
+    //logger::info("Steer Left...");
     // apply transformation here steer the car to the left
     currentSteer = 1.0f; // full left steer 
 }
@@ -196,7 +211,7 @@ void VehicleControlSystem::steerLeft()
 
 void VehicleControlSystem::boost()
 {
-    logger::info("Activate Boost...");
+    //logger::info("Activate Boost...");
     // apply transformation here accelerate car even faster due to boost.
     // probably need a CD for this?
     currentThrottle = 1.f; // full throttle

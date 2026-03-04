@@ -32,6 +32,11 @@ public:
         mCurrentSteer = steer;
     }
 
+    physx::vehicle2::PxVehicleDirectDriveTransmissionCommandState::Enum setTargetGear(physx::vehicle2::PxVehicleDirectDriveTransmissionCommandState::Enum state) {
+        mVehicle.mTransmissionCommandState.targetGear = state;
+        return state;
+    }
+
 private:
     EngineDriveVehicle mVehicle;
 
