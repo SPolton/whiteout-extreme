@@ -192,7 +192,7 @@ Entity PhysicsSystem::createVehicleEntity()
     // 2. Add necessary components to the vehicle entity
     // Transform
     gCoordinator.AddComponent(vehicleEntity, PhysxTransform{
-        glm::vec3(0.f, 0.f, 0.f),                // Position
+        glm::vec3(-730.0f, 670.4f, -400.0f),                // Position
         glm::quat(1.f, 0.f, 0.f, 0.f),           // Identity rotation
         glm::vec3(1.65f, 1.4f, 3.75f)            // Scale
         });
@@ -201,7 +201,7 @@ Entity PhysicsSystem::createVehicleEntity()
     gCoordinator.AddComponent(vehicleEntity, RigidBody{ mVehicleSystem->getRigidActor() });
 
     // Set the actual PhysX actor position to match
-    PxTransform pxTransform(PxVec3(50.0f, 6.5f, 14.1f));
+    PxTransform pxTransform(PxVec3(-730.0f, 670.4f, -400.0f));
     mVehicleSystem->getRigidActor()->setGlobalPose(pxTransform);
 
     // VehicleComponent (store the vehicle instance for later updates and access)

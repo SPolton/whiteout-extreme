@@ -216,6 +216,12 @@ bool VehicleFourWheelDrive::initVehicles(ConstructData info)
         shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
         shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
         shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
+
+        // Disable chassis collision to prevent catching on terrain
+        PxGeometryHolder geomHolder = shape->getGeometry();
+        if (geomHolder.getType() == PxGeometryType::eBOX) {
+            shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+        }
     }
 
 	//Set up the simulation context.
