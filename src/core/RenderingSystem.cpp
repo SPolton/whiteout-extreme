@@ -6,8 +6,6 @@
 #include "components/Transform.h"
 #include "components/VehicleComponent.h"
 
-#include <iostream>
-#include <cmath>
 #include <glm/gtc/type_ptr.hpp>
 
 using namespace render;
@@ -129,28 +127,6 @@ bool RenderingSystem::init()
         return false;
     }
 
-    // Create common geometry through AssetManager
-    CPU_Geometry sphereCPU = ShapeGenerator::sphere(1, 16, 16);
-    assetManager.loadGeometry("sphere", sphereCPU);
-    logger::info("Sphere geometry initialized");
-
-    CPU_Geometry cubeCPU = ShapeGenerator::cube();
-    assetManager.loadGeometry("cube", cubeCPU);
-    logger::info("Cube geometry initialized");
-
-    CPU_Geometry skyboxCPU = ShapeGenerator::sphere(100.0f, 32, 32);
-    assetManager.loadGeometry("skybox", skyboxCPU);
-    logger::info("Skybox geometry initialized");
-
-    CPU_Geometry planeCPU = ShapeGenerator::plane(1.0f);
-    assetManager.loadGeometry("plane", planeCPU);
-    logger::info("Plane geometry initialized");
-
-    // Create infinite ground plane with repeating texture (10000 units, 500 UV repeats)
-    CPU_Geometry infinitePlaneCPU = ShapeGenerator::infinitePlane(10000.0f, 500.0f);
-    assetManager.loadGeometry("infinite_plane", infinitePlaneCPU);
-    logger::info("Infinite plane geometry initialized");
-
     // Create object tracking transform for camera (vehicle tracking)
     targetTransform = std::make_unique<SceneTransform>();
     targetTransform->setPosition(glm::vec3(0.f, 0.f, 0.f));
@@ -197,8 +173,7 @@ Entity RenderingSystem::createPlaneEntity(const std::string& texturePath, const 
     
     if (config.isInfinite) {
         geomKey = "infinite_plane";
-        const float infiniteSize = 10000.0f;
-        planeCPU = ShapeGenerator::infinitePlane(infiniteSize, config.uvRepeat);
+        planeCPU = ShapeGenerator::infinitePlane(config.infinitePlaneSize, config.uvRepeat);
         logger::info("Infinite plane entity created with UV repeat: {}", config.uvRepeat);
     } else {
         geomKey = "plane";
@@ -326,7 +301,6 @@ Entity RenderingSystem::createModelEntity(const std::string& modelPath, const Mo
     }
     catch (const std::exception& e) {
         logger::error("Failed to load model {}: {}", modelPath, e.what());
-        gCoordinator.DestroyEntity(model);
         throw;
     }
 
