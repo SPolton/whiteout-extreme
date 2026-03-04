@@ -142,6 +142,10 @@ bool RenderingSystem::init()
     assetManager.loadGeometry("skybox", skyboxCPU);
     logger::info("Skybox geometry initialized");
 
+    CPU_Geometry planeCPU = ShapeGenerator::plane(1.0f);
+    assetManager.loadGeometry("plane", planeCPU);
+    logger::info("Plane geometry initialized");
+
     // Create object tracking transform for camera (vehicle tracking)
     targetTransform = std::make_unique<SceneTransform>();
     targetTransform->setPosition(glm::vec3(0.f, 0.f, 0.f));
@@ -198,6 +202,34 @@ Entity RenderingSystem::createSkyboxEntity(const std::string& texturePath)
     logger::info("Skybox entity created");
 
     return skybox;
+}
+
+Entity RenderingSystem::createGroundPlaneEntity(const std::string& texturePath, float size)
+{
+    Entity groundPlane = gCoordinator.CreateEntity();
+
+    gCoordinator.AddComponent(
+        groundPlane,
+        PhysxTransform{
+            glm::vec3(0.f, 0.f, 0.f),  // Initial position (will follow camera in XZ)
+            glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
+            glm::vec3(size, 1.f, size)  // Scale to match skybox diameter (default 200.0f)
+        }
+    );
+
+    gCoordinator.AddComponent(
+        groundPlane,
+        Renderable{
+            .geometry = assetManager.loadGeometry("plane", ShapeGenerator::plane(1.0f)),
+            .cpuData = assetManager.getCPUGeometry("plane"),
+            .shader = assetManager.loadShader("textured"),
+                .texture = assetManager.loadTexture(texturePath, GL_LINEAR)
+        }
+    );
+
+    logger::info("Ground plane entity created with diameter: {} (matches skybox)", size);
+
+    return groundPlane;
 }
 
 //Create Entity and add PhysxTransform and Renderable Components
@@ -479,7 +511,7 @@ void RenderingSystem::update(float deltaTime)
         if (gCoordinator.HasComponent<Renderable>(entity)) {
             auto& renderable = gCoordinator.GetComponent<Renderable>(entity);
             if (renderable.isSkybox) {
-                auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
+            auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
                 transform.pos = activeCamera->getPosition();
             }
         }
