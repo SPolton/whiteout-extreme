@@ -172,3 +172,7 @@ bool Avalanche::isPlayerEngulfed(size_t playerIndex) const
 {
     return std::find(mEngulfedPlayerIndices.begin(), mEngulfedPlayerIndices.end(), playerIndex) != mEngulfedPlayerIndices.end();
 }
+
+bool Avalanche::areAllPlayersEngulfed(size_t totalPlayers) const {
+    return totalPlayers > 0 && mEngulfedPlayerIndices.size() >= totalPlayers;
+}

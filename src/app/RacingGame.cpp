@@ -283,6 +283,30 @@ void RacingGame::run()
                 gameTime.discardExcessTime();
             }
 
+            // Check if all players are engulfed by avalanche
+            for (auto const& entity : physicsSystem->mEntities) {
+                if (gCoordinator.HasComponent<AvalancheComponent>(entity)) {
+                    auto& avalancheComp = gCoordinator.GetComponent<AvalancheComponent>(entity);
+                    
+                    if (avalancheComp.instance) {
+                        // Count total number of players
+                        size_t totalPlayers = 0;
+                        for (auto const& playerEntity : physicsSystem->mEntities) {
+                            if (gCoordinator.HasComponent<VehicleComponent>(playerEntity)) {
+                                totalPlayers++;
+                            }
+                        }
+                        
+                        // Check if all players are engulfed
+                        if (avalancheComp.instance->areAllPlayersEngulfed(totalPlayers)) {
+                            logger::warn("All {} player(s) engulfed by avalanche! Game Over!", totalPlayers);
+                            gameState = GameState::GameOver;
+                            break;
+                        }
+                    }
+                }
+            }
+
             // Process Escape key input to close window
             if (inputManager->isKeyPressedOnce(GLFW_KEY_ESCAPE))
                 glfwSetWindowShouldClose(window->getGLFWwindow(), true);

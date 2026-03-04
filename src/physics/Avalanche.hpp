@@ -32,6 +32,7 @@ public:
     // Get list of engulfed players (as indices into the playerPositions array)
     const std::vector<size_t>& getEngulfedPlayerIndices() const { return mEngulfedPlayerIndices; }
     bool isPlayerEngulfed(size_t playerIndex) const;
+    bool areAllPlayersEngulfed(size_t totalPlayers) const;
 
     // State
     glm::vec3 mPosition;
