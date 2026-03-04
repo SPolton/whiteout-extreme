@@ -5,6 +5,7 @@
 #include "core/assets/Texture.hpp"
 #include "core/buffer/Geometry.hpp"
 #include "core/render/ShaderProgram.hpp"
+#include "core/render/ShapeConfig.hpp"
 #include "core/scene/TurnTableCamera.hpp"
 #include "core/scene/FreeCamera.hpp"
 #include "core/scene/Transform.hpp"
@@ -36,11 +37,11 @@ public:
 
     void update(float deltaTime);
 
-    Entity createSphereEntity(const std::string& texturePath);
-    Entity createModelEntity(const std::string& modelPath);
-    Entity createSkyboxEntity(const std::string& texturePath);
+    // Flexible entity creation methods
+    Entity createSphereEntity(const std::string& texturePath, const render::SphereConfig& config = {});
+    Entity createPlaneEntity(const std::string& texturePath, const render::PlaneConfig& config = {});
+    Entity createModelEntity(const std::string& modelPath, const render::ModelConfig& config = {});
     Entity createGateEntity(const glm::vec3& pos, const glm::vec3& direction, float width, const std::string& texturePath);
-    Entity createGroundPlaneEntity(const std::string& texturePath, float size = 10.0f);
 
     Renderable getCubeRenderable(const std::string& texturePath);
     void updateCameraTarget(const glm::vec3& position);

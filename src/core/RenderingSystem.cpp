@@ -10,6 +10,8 @@
 #include <cmath>
 #include <glm/gtc/type_ptr.hpp>
 
+using namespace render;
+
 RenderingSystem::RenderingSystem(
     std::shared_ptr<InputManager> inputManager)
     : inputManager(inputManager)
@@ -179,93 +181,44 @@ Renderable RenderingSystem::getCubeRenderable(const std::string& texturePath)
     };
 }
 
-Entity RenderingSystem::createSkyboxEntity(const std::string& texturePath)
+Entity RenderingSystem::createPlaneEntity(const std::string& texturePath, const PlaneConfig& config)
 {
-    // Create skybox entity
-    Entity skybox = gCoordinator.CreateEntity();
+    Entity plane = gCoordinator.CreateEntity();
 
     gCoordinator.AddComponent(
-        skybox,
+        plane,
         PhysxTransform{
-            glm::vec3(0.f, 0.f, 0.f),
-            glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
-            glm::vec3(1.f)
+            config.position,
+            config.rotation,
+            config.scale
         }
     );
+
+    std::string geomKey;
+    CPU_Geometry planeCPU;
+    
+    if (config.isInfinite) {
+        geomKey = "infinite_plane";
+        const float infiniteSize = 10000.0f;
+        planeCPU = ShapeGenerator::infinitePlane(infiniteSize, config.uvRepeat);
+        logger::info("Infinite plane entity created with UV repeat: {}", config.uvRepeat);
+    } else {
+        geomKey = "plane";
+        planeCPU = ShapeGenerator::plane(config.size);
+        logger::info("Plane entity created with size: {}", config.size);
+    }
 
     gCoordinator.AddComponent(
-        skybox,
+        plane,
         Renderable{
-            .geometry = assetManager.loadGeometry("skybox", ShapeGenerator::sphere(100.0f, 32, 32)),
-            .cpuData = assetManager.getCPUGeometry("skybox"),
+            .geometry = assetManager.loadGeometry(geomKey, planeCPU),
+            .cpuData = assetManager.getCPUGeometry(geomKey),
             .shader = assetManager.loadShader("textured"),
-            .texture = assetManager.loadTexture(texturePath, GL_LINEAR),
-            .isSkybox = true
+            .texture = assetManager.loadTexture(texturePath, config.textureFilterMode, config.textureWrapMode)
         }
     );
 
-    logger::info("Skybox entity created");
-
-    return skybox;
-}
-
-Entity RenderingSystem::createGroundPlaneEntity(const std::string& texturePath, float size)
-{
-    Entity groundPlane = gCoordinator.CreateEntity();
-
-    bool isInfinite = (size <= 0.0f);
-    
-    if (isInfinite) {
-        // Create infinite ground plane with repeating texture
-        const float infiniteSize = 10000.0f;
-        const float uvRepeat = 500.0f;
-        
-        gCoordinator.AddComponent(
-            groundPlane,
-            PhysxTransform{
-                glm::vec3(0.f, 0.f, 0.f),  // Centered at origin
-                glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
-                glm::vec3(1.f, 1.f, 1.f)  // No scaling needed since geometry is already large
-            }
-        );
-
-        gCoordinator.AddComponent(
-            groundPlane,
-            Renderable{
-                .geometry = assetManager.loadGeometry("infinite_plane", ShapeGenerator::infinitePlane(infiniteSize, uvRepeat)),
-                .cpuData = assetManager.getCPUGeometry("infinite_plane"),
-                .shader = assetManager.loadShader("textured"),
-                .texture = assetManager.loadTexture(texturePath, GL_LINEAR, GL_REPEAT)  // Use GL_REPEAT for tiling
-            }
-        );
-
-        logger::info("Infinite ground plane entity created with repeating texture");
-    }
-    else {
-        // Create normal sized plane
-        gCoordinator.AddComponent(
-            groundPlane,
-            PhysxTransform{
-                glm::vec3(0.f, 0.f, 0.f),  // Centered at origin
-                glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
-                glm::vec3(size, 1.f, size)  // Scale plane to requested size
-            }
-        );
-
-        gCoordinator.AddComponent(
-            groundPlane,
-            Renderable{
-                .geometry = assetManager.loadGeometry("plane", ShapeGenerator::plane(1.0f)),
-                .cpuData = assetManager.getCPUGeometry("plane"),
-                .shader = assetManager.loadShader("textured"),
-                .texture = assetManager.loadTexture(texturePath, GL_LINEAR, GL_CLAMP_TO_EDGE)  // Clamp for normal plane
-            }
-        );
-
-        logger::info("Ground plane entity created with size: {}", size);
-    }
-
-    return groundPlane;
+    return plane;
 }
 
 Entity RenderingSystem::createGateEntity(const glm::vec3& pos, const glm::vec3& direction, float width, const std::string& texturePath)
@@ -315,55 +268,59 @@ Entity RenderingSystem::createGateEntity(const glm::vec3& pos, const glm::vec3& 
 }
 
 //Create Entity and add PhysxTransform and Renderable Components
-Entity RenderingSystem::createSphereEntity(const std::string& texturePath)
+Entity RenderingSystem::createSphereEntity(const std::string& texturePath, const SphereConfig& config)
 {
-    // Create sphere entity
     Entity sphere = gCoordinator.CreateEntity();
 
     gCoordinator.AddComponent(
         sphere,
         PhysxTransform{
-            glm::vec3(0.f, 0.f, 0.f),
-            glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
-            glm::vec3(1.f)
+            config.position,
+            config.rotation,
+            config.scale
         }
     );
 
+    // Generate geometry key based on config
+    std::string geomKey = config.isSkybox ? "skybox" : "sphere";
+    
+    // Create geometry with specified parameters
+    CPU_Geometry sphereCPU = ShapeGenerator::sphere(config.radius, config.slices, config.stacks);
+    
     gCoordinator.AddComponent(
         sphere,
         Renderable{
-            assetManager.loadGeometry("sphere", ShapeGenerator::sphere(1, 16, 16)),
-            assetManager.getCPUGeometry("sphere"),
-            assetManager.loadShader("textured"),
-            assetManager.loadTexture(texturePath, GL_LINEAR)
+            .geometry = assetManager.loadGeometry(geomKey, sphereCPU),
+            .cpuData = assetManager.getCPUGeometry(geomKey),
+            .shader = assetManager.loadShader("textured"),
+            .texture = assetManager.loadTexture(texturePath, config.textureFilterMode, config.textureWrapMode),
+            .isSkybox = config.isSkybox
         }
     );
 
-    logger::info("Sphere entity created with texture: {}", texturePath);
+    logger::info("Sphere entity created (radius={}, skybox={}) with texture: {}", 
+                 config.radius, config.isSkybox, texturePath);
 
     return sphere;
 }
 
-Entity RenderingSystem::createModelEntity(const std::string& modelPath)
+Entity RenderingSystem::createModelEntity(const std::string& modelPath, const ModelConfig& config)
 {
-    // Create model entity
     Entity model = gCoordinator.CreateEntity();
 
     gCoordinator.AddComponent(
         model,
         PhysxTransform{
-            glm::vec3(0.f, 0.f, 0.f),
-            glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
-            glm::vec3(1.f)
+            config.position,
+            config.rotation,
+            config.scale
         }
     );
 
-    // Create a new ModelLoader for this entity
     try {
         auto modelLoader = std::make_shared<ModelLoader>(modelPath, false);
         logger::info("Model loaded successfully: {} with {} meshes", modelPath, modelLoader->getMeshCount());
         
-        // Add ModelRenderable component with the model loader and shader
         gCoordinator.AddComponent(
             model,
             ModelRenderable{modelLoader, assetManager.loadShader("model")}
@@ -371,7 +328,6 @@ Entity RenderingSystem::createModelEntity(const std::string& modelPath)
     }
     catch (const std::exception& e) {
         logger::error("Failed to load model {}: {}", modelPath, e.what());
-        // Clean up the entity if model loading failed
         gCoordinator.DestroyEntity(model);
         throw;
     }
