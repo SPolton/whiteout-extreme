@@ -134,7 +134,7 @@ bool RenderingSystem::init()
     assetManager.loadGeometry("sphere", sphereCPU);
     logger::info("Sphere geometry initialized");
 
-    CPU_Geometry cubeCPU = ShapeGenerator::unit_cube();
+    CPU_Geometry cubeCPU = ShapeGenerator::cube();
     assetManager.loadGeometry("cube", cubeCPU);
     logger::info("Cube geometry initialized");
 
@@ -147,7 +147,7 @@ bool RenderingSystem::init()
     logger::info("Plane geometry initialized");
 
     // Create infinite ground plane with repeating texture (10000 units, 500 UV repeats)
-    CPU_Geometry infinitePlaneCPU = ShapeGenerator::infinite_plane(10000.0f, 500.0f);
+    CPU_Geometry infinitePlaneCPU = ShapeGenerator::infinitePlane(10000.0f, 500.0f);
     assetManager.loadGeometry("infinite_plane", infinitePlaneCPU);
     logger::info("Infinite plane geometry initialized");
 
@@ -172,7 +172,7 @@ bool RenderingSystem::init()
 Renderable RenderingSystem::getCubeRenderable(const std::string& texturePath)
 {
     return Renderable{
-        .geometry = assetManager.loadGeometry("cube", ShapeGenerator::unit_cube()),
+        .geometry = assetManager.loadGeometry("cube", ShapeGenerator::cube()),
         .cpuData = assetManager.getCPUGeometry("cube"),
         .shader = assetManager.loadShader("textured"),
         .texture = assetManager.loadTexture(texturePath, GL_LINEAR)
@@ -232,7 +232,7 @@ Entity RenderingSystem::createGroundPlaneEntity(const std::string& texturePath, 
         gCoordinator.AddComponent(
             groundPlane,
             Renderable{
-                .geometry = assetManager.loadGeometry("infinite_plane", ShapeGenerator::infinite_plane(infiniteSize, uvRepeat)),
+                .geometry = assetManager.loadGeometry("infinite_plane", ShapeGenerator::infinitePlane(infiniteSize, uvRepeat)),
                 .cpuData = assetManager.getCPUGeometry("infinite_plane"),
                 .shader = assetManager.loadShader("textured"),
                 .texture = assetManager.loadTexture(texturePath, GL_LINEAR, GL_REPEAT)  // Use GL_REPEAT for tiling
@@ -486,7 +486,7 @@ void RenderingSystem::renderEntities(const std::vector<EntityPx>& entityList)
 {
     // Get shader and geometry
     auto shader = assetManager.loadShader("textured");
-    auto cubeGeometry = assetManager.loadGeometry("cube", ShapeGenerator::unit_cube());
+    auto cubeGeometry = assetManager.loadGeometry("cube", ShapeGenerator::cube());
     auto cubeCPUData = assetManager.getCPUGeometry("cube");
     
     // Use shader

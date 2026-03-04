@@ -8,17 +8,17 @@ namespace ShapeGenerator
     CPU_Geometry sphere(float radius, int slices, int stacks);
 
     [[nodiscard]]
-    CPU_Geometry unit_cube();
+    CPU_Geometry cube();
 
     [[nodiscard]]
-    CPU_Geometry triangle_2D();
+    CPU_Geometry triangle();
 
     [[nodiscard]]
-    CPU_Geometry square_2D();
+    CPU_Geometry square();
 
     [[nodiscard]]
     CPU_Geometry plane(float size);
 
     [[nodiscard]]
-    CPU_Geometry infinite_plane(float size, float uvRepeat);
+    CPU_Geometry infinitePlane(float size, float uvRepeat);
 };

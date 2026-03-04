@@ -110,7 +110,7 @@ static void positiveYFace(std::vector<glm::vec3> const &originQuad, CPU_Geometry
 static void negativeYFace(std::vector<glm::vec3> const &originQuad, CPU_Geometry &geom);
 
 // Returns a 1x1x1 cube with different color sides.
-CPU_Geometry ShapeGenerator::unit_cube()
+CPU_Geometry ShapeGenerator::cube()
 {
     std::vector<glm::vec3> originQuad{};
     originQuad.emplace_back(-0.5, 0.5, 0.0); // top-left
@@ -285,7 +285,7 @@ void negativeYFace(std::vector<glm::vec3> const &originQuad, CPU_Geometry &geom)
     geom.uvs.emplace_back(1.0f, 1.0f);
 }
 
-CPU_Geometry ShapeGenerator::triangle_2D()
+CPU_Geometry ShapeGenerator::triangle()
 {
     CPU_Geometry geom{};
     
@@ -316,7 +316,7 @@ CPU_Geometry ShapeGenerator::triangle_2D()
     return geom;
 }
 
-CPU_Geometry ShapeGenerator::square_2D()
+CPU_Geometry ShapeGenerator::square()
 {
     CPU_Geometry geom{};
     
@@ -389,7 +389,7 @@ CPU_Geometry ShapeGenerator::plane(float size)
     return geom;
 }
 
-CPU_Geometry ShapeGenerator::infinite_plane(float size, float uvRepeat)
+CPU_Geometry ShapeGenerator::infinitePlane(float size, float uvRepeat)
 {
     // Start with a regular plane
     CPU_Geometry geom = plane(size);
