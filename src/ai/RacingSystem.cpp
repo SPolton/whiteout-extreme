@@ -50,7 +50,7 @@ void RacingSystem::update(float deltaTime)
         float lengthOnLane = distLast / (distLast + distTarget) * racer.lastGate->laneLength;
         racer.raceCompletion = (racer.lastGate->raceLength + lengthOnLane) / totalRaceLength;
 
-        if (shouldLog) {
+        if (shouldLog && false) {
             // LOGGER INFO BLOCK
             logger::info("--- Racer Debug ---");
             logger::info("Racer Pos: ({:.2f}, {:.2f}, {:.2f})", racerTransf.pos.x, racerTransf.pos.y, racerTransf.pos.z);
@@ -139,7 +139,7 @@ void RacingSystem::restart() {
             racerTransf.rot = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
         }
 
-        // 2. PhysX syncronization
+        // 2. PhysX synchronization
         if (gCoordinator.HasComponent<VehicleComponent>(entity)) {
             auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(entity);
 
@@ -193,13 +193,57 @@ void RacingSystem::initGates() {
 
     constexpr glm::vec3 upVec{ 0.f, 1.f, 0.f };
 
-    for (size_t i = 0; i < gates.size(); i++)
+    for (size_t i = 0; i < gatesOld.size(); i++)
     {
+        auto& gate = gatesOld.at(i);
+        gate.raceLength = totalRaceLength;
+
+        if (i == gatesOld.size()-1) {
+            gate.direction = gatesOld.at(i - 1).direction;
+        }
+        else {
+            auto& nextGate = gatesOld.at(i + 1);
+            gate.nextGate = &nextGate;
+            gate.lane = nextGate.position - gate.position;
+            gate.laneLength = glm::length(gate.lane);
+            totalRaceLength += gate.laneLength;
+            gate.direction = glm::normalize(gate.lane);
+        }
+
+        if (i > 0) {
+            auto& prevGate = gatesOld.at(i - 1);
+            gate.prevGate = &prevGate;
+        }
+
+        gate.right = glm::normalize(glm::cross(gate.direction, upVec));
+
+        std::string tex = (i == 0 || i == gatesOld.size()-1) ? "assets/textures/2k_mars.jpg" : "assets/textures/carbon_fiber.jpg";
+        renderingSystem->createGateEntity(gate.position, gate.direction, gate.width, tex);
+    }
+}
+
+void RacingSystem::initGatesFromPoints() {
+    constexpr glm::vec3 upVec{ 0.f, 1.f, 0.f };
+    totalRaceLength = 0.0f;
+
+    for (auto& gate : gates) {
+        gate.position = (gate.leftPoint + gate.rightPoint) * 0.5f;
+
+        gate.width = glm::distance(gate.leftPoint, gate.rightPoint);
+
+
+        if (gate.width > 0.001f) {
+            gate.right = (gate.rightPoint - gate.leftPoint) / gate.width;
+        }
+    }
+
+    for (size_t i = 0; i < gates.size(); i++) {
         auto& gate = gates.at(i);
         gate.raceLength = totalRaceLength;
 
-        if (i == gates.size()-1) {
-            gate.direction = gates.at(i - 1).direction;
+        if (i == gates.size() - 1) {
+            gate.direction = (i > 0) ? gates.at(i - 1).direction : glm::vec3(0, 0, 1);
+            gate.nextGate = nullptr;
         }
         else {
             auto& nextGate = gates.at(i + 1);
@@ -211,13 +255,12 @@ void RacingSystem::initGates() {
         }
 
         if (i > 0) {
-            auto& prevGate = gates.at(i - 1);
-            gate.prevGate = &prevGate;
+            gate.prevGate = &gates.at(i - 1);
         }
 
         gate.right = glm::normalize(glm::cross(gate.direction, upVec));
 
-        std::string tex = (i == 0 || i == gates.size()-1) ? "assets/textures/2k_mars.jpg" : "assets/textures/carbon_fiber.jpg";
+        std::string tex = (i == 0 || i == gates.size() - 1) ? "assets/textures/2k_mars.jpg" : "assets/textures/carbon_fiber.jpg";
         renderingSystem->createGateEntity(gate.position, gate.direction, gate.width, tex);
     }
 }

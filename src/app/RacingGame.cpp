@@ -217,7 +217,7 @@ RacingGame::RacingGame()
 
     logger::info("Loaded snowmobile models for ai vehicles");
 
-    racingSystem->initGates();
+    racingSystem->initGatesFromPoints();
     logger::info("Loaded gates and waypoints for race");
 
     gCoordinator.AddComponent(playerVehicleEntity, Racer{

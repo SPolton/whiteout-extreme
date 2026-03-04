@@ -4,13 +4,20 @@
 
 struct Gate {
     int id;
+
+    glm::vec3 leftPoint;
+    glm::vec3 rightPoint;
+
     float width;
     glm::vec3 position;
+
     glm::vec3 lane = glm::vec3(0.0f);
     float laneLength = 0.0f;
     float raceLength = 0.0f;
+
     glm::vec3 direction = glm::vec3(0.0f);
     glm::vec3 right = glm::vec3(0.0f);
+
     Gate* nextGate = nullptr;
     Gate* prevGate = nullptr;
 };
