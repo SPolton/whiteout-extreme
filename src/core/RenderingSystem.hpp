@@ -39,6 +39,7 @@ public:
     Entity createSphereEntity(const std::string& texturePath);
     Entity createModelEntity(const std::string& modelPath);
     Entity createSkyboxEntity(const std::string& texturePath);
+    Entity createGroundPlaneEntity(const std::string& texturePath, float size = 10.0f);
 
     Renderable getCubeRenderable(const std::string& texturePath);
     void updateCameraTarget(const glm::vec3& position);

@@ -9,7 +9,7 @@
 
 class Texture {
 public:
-	Texture(std::string path, GLint interpolation);
+	Texture(std::string path, GLint interpolation, GLint wrapMode = GL_REPEAT);
 
 	// Because we're using the TextureHandle to do RAII for the texture for us
 	// and our other types are trivial or provide their own RAII

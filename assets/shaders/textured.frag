@@ -3,13 +3,14 @@
 #version 330 core
 
 uniform sampler2D baseColorTexture;
-uniform sampler2D overlayColorTexture;
+uniform vec2 textureScrollOffset;
 
-in vec3 outColor;
 in vec2 texCoord;
 out vec4 fragColor;
 
 void main()
 {
-	fragColor = texture(baseColorTexture, texCoord);
+    // Apply scroll offset and use fract() to wrap UVs for seamless tiling
+    vec2 rollingUV = fract(texCoord + textureScrollOffset);
+    fragColor = texture(baseColorTexture, rollingUV);
 }

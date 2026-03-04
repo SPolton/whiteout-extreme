@@ -18,7 +18,7 @@ public:
 
     // Load or get cached texture
     std::shared_ptr<Texture>
-    loadTexture(const std::string& path, GLint interpolation = GL_LINEAR);
+    loadTexture(const std::string& path, GLint interpolation = GL_LINEAR, GLint wrapMode = GL_REPEAT);
 
     // Load or get cached shader (convention-based: assumes shaders/{name}.vert and shaders/{name}.frag)
     std::shared_ptr<ShaderProgram>
