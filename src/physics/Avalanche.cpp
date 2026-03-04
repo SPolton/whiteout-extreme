@@ -1,4 +1,5 @@
 #include "Avalanche.hpp"
+#include "common/Flags.hpp"
 #include "utils/logger.h"
 
 Avalanche::Avalanche(const ConstructData& data)
@@ -50,6 +51,13 @@ void Avalanche::initPhysicsActor(const ConstructData& data)
     mPhysicsShape->setFlag(physx::PxShapeFlag::eSCENE_QUERY_SHAPE, true);
     mPhysicsShape->setFlag(physx::PxShapeFlag::eSIMULATION_SHAPE, true);
     mPhysicsShape->setFlag(physx::PxShapeFlag::eTRIGGER_SHAPE, false);
+
+    // Set collision filtering
+    physx::PxFilterData filterData;
+    filterData.word0 = COLLISION_FLAG_AVALANCHE;
+    filterData.word1 = COLLISION_FLAG_AVALANCHE_AGAINST;
+    mPhysicsShape->setSimulationFilterData(filterData);
+    mPhysicsShape->setQueryFilterData(filterData);
 
     // Attach shape to actor
     mPhysicsActor->attachShape(*mPhysicsShape);
