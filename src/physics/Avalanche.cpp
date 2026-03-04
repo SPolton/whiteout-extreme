@@ -2,6 +2,8 @@
 #include "common/Flags.hpp"
 #include "utils/logger.h"
 
+#include <cmath>
+
 Avalanche::Avalanche(const ConstructData& data)
     : mPosition(data.startPosition)
     , mSize(data.width, data.height, data.depth)
@@ -145,8 +147,24 @@ void Avalanche::checkPlayerCollisions(const std::vector<glm::vec3>& playerPositi
             continue;  // Already engulfed
         }
 
-        //todo
-        //float distance = glm::distance(playerPositions[i], mPosition);
+        // Check if player is within the avalanche bounding box
+        glm::vec3 playerPos = playerPositions[i];
+        glm::vec3 halfSize = mSize / 2.0f;
+        
+        // Calculate relative position to avalanche center
+        glm::vec3 relativePos = playerPos - mPosition;
+        
+        // Check if player is inside the bounding box
+        bool insideX = std::abs(relativePos.x) < halfSize.x;
+        bool insideY = std::abs(relativePos.y) < halfSize.y;
+        bool insideZ = std::abs(relativePos.z) < halfSize.z;
+        
+        if (insideX && insideY && insideZ) {
+            // Player is engulfed!
+            mEngulfedPlayerIndices.push_back(i);
+            logger::warn("Player {} engulfed by avalanche at position ({}, {}, {})", 
+                        i, playerPos.x, playerPos.y, playerPos.z);
+        }
     }
 }
 
