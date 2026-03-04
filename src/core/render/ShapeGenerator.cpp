@@ -388,3 +388,21 @@ CPU_Geometry ShapeGenerator::plane(float size)
 
     return geom;
 }
+
+CPU_Geometry ShapeGenerator::infinite_plane(float size, float uvRepeat)
+{
+    // Start with a regular plane
+    CPU_Geometry geom = plane(size);
+
+    // Override UVs to create repeating texture pattern for infinite appearance
+    geom.uvs = {
+        glm::vec2(0.0f, 0.0f),
+        glm::vec2(uvRepeat, 0.0f),
+        glm::vec2(uvRepeat, uvRepeat),
+        glm::vec2(uvRepeat, uvRepeat),
+        glm::vec2(0.0f, uvRepeat),
+        glm::vec2(0.0f, 0.0f)
+    };
+
+    return geom;
+}

@@ -112,7 +112,7 @@ RacingGame::RacingGame()
     logger::info("Created Skybox entity");
 
     // Create infinite ground plane with repeating snow texture
-    Entity groundPlane = renderingSystem->createGroundPlaneEntity("assets/textures/snowball.png", 100);
+    Entity groundPlane = renderingSystem->createGroundPlaneEntity("assets/textures/snowball.png", 0);
     logger::info("Created ground plane entity");
 
     // Create Earth sphere entity

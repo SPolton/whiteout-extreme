@@ -18,4 +18,7 @@ namespace ShapeGenerator
 
     [[nodiscard]]
     CPU_Geometry plane(float size);
+
+    [[nodiscard]]
+    CPU_Geometry infinite_plane(float size, float uvRepeat);
 };
