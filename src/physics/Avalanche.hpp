@@ -13,9 +13,10 @@ public:
     struct ConstructData {
         const char* name;
         glm::vec3 startPosition;
+        glm::vec3 direction = glm::vec3(0.f, 0.f, 1.f);
         float initialSpeed;
-        float baseSpeed;
-        float maxSpeed;
+        float baseSpeed = 0.5f;
+        float maxSpeed = 1.f;
         float width;
         float height;
         float depth;
@@ -29,6 +30,9 @@ public:
     // Update avalanche position and state
     void update(float deltaTime, const std::vector<glm::vec3>& playerPositions);
 
+    // Set a new direction for the avalanche (will update physics rotation)
+    void setDirection(const glm::vec3& newDirection);
+
     // Get list of engulfed players (as indices into the playerPositions array)
     const std::vector<size_t>& getEngulfedPlayerIndices() const { return mEngulfedPlayerIndices; }
     bool isPlayerEngulfed(size_t playerIndex) const;
@@ -37,9 +41,10 @@ public:
     // State
     glm::vec3 mPosition;
     glm::vec3 mSize;
+    glm::vec3 mDirection;
     float mSpeed = 1.f;
-    float mBaseSpeed = 1.f;
-    float mMaxSpeed = 1.f;
+    float mBaseSpeed;
+    float mMaxSpeed;
     bool mIsActive = true;
 
     // Physics

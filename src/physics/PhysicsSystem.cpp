@@ -228,6 +228,7 @@ Entity PhysicsSystem::createAvalancheEntity(const glm::vec3& startPos, float ini
     Avalanche::ConstructData avalancheData{
         .name = "Avalanche",
         .startPosition = startPos,
+        .direction = glm::vec3(0.2f, 0.f, 1.f),
         .initialSpeed = initialSpeed,
         .baseSpeed = 15.0f,
         .maxSpeed = 50.0f,
@@ -244,10 +245,14 @@ Entity PhysicsSystem::createAvalancheEntity(const glm::vec3& startPos, float ini
     // Create a new entity for the avalanche
     Entity avalancheEntity = gCoordinator.CreateEntity();
 
+    // Calculate rotation to match the direction
+    glm::vec3 defaultForward(0.f, 0.f, 1.f);
+    glm::quat visualRotation = glm::rotation(defaultForward, glm::normalize(avalancheData.direction));
+
     // Add Transform component
     gCoordinator.AddComponent(avalancheEntity, PhysxTransform{
         startPos,
-        glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
+        visualRotation,
         glm::vec3(avalancheData.width, avalancheData.height, avalancheData.depth)
     });
 

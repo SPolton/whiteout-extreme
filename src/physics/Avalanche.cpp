@@ -7,12 +7,15 @@
 Avalanche::Avalanche(const ConstructData& data)
     : mPosition(data.startPosition)
     , mSize(data.width, data.height, data.depth)
+    , mDirection(glm::normalize(data.direction))
     , mSpeed(data.initialSpeed)
     , mBaseSpeed(data.baseSpeed)
     , mMaxSpeed(data.maxSpeed)
 {
     initPhysicsActor(data);
-    logger::info("Avalanche created at position ({}, {}, {})", data.startPosition.x, data.startPosition.y, data.startPosition.z);
+    logger::info("Avalanche created at position ({}, {}, {}) with direction ({}, {}, {})", 
+                 data.startPosition.x, data.startPosition.y, data.startPosition.z,
+                 mDirection.x, mDirection.y, mDirection.z);
 }
 
 void Avalanche::initPhysicsActor(const ConstructData& data)
@@ -22,11 +25,16 @@ void Avalanche::initPhysicsActor(const ConstructData& data)
         throw std::invalid_argument("ConstructData contains null physics pointers");
     }
 
+    // Calculate rotation to align box with direction vector
+    // Default PhysX box faces +Z, we want it to face our direction
+    glm::vec3 defaultForward(0.f, 0.f, 1.f);
+    glm::quat rotation = glm::rotation(defaultForward, mDirection);
+
     // Create a kinematic rigid body for the avalanche
     // Kinematic bodies don't respond to forces but can be moved by code
     physx::PxTransform pose(
         physx::PxVec3(mPosition.x, mPosition.y, mPosition.z),
-        physx::PxQuat(physx::PxIdentity)
+        physx::PxQuat(rotation.x, rotation.y, rotation.z, rotation.w)
     );
 
     mPhysicsActor = data.physics->createRigidDynamic(pose);
@@ -83,7 +91,7 @@ void Avalanche::update(float deltaTime, const std::vector<glm::vec3>& playerPosi
         updateRubberbanding(playerPositions);
         checkPlayerCollisions(playerPositions);
     } else {
-        // No players yet - move at base speed
+        // No players yet move at base speed
         mSpeed = mBaseSpeed;
     }
 
@@ -91,12 +99,34 @@ void Avalanche::update(float deltaTime, const std::vector<glm::vec3>& playerPosi
     updatePosition(deltaTime);
 }
 
+void Avalanche::setDirection(const glm::vec3& newDirection)
+{
+    // Normalize and store the new direction
+    mDirection = glm::normalize(newDirection);
+
+    // Update the physics actor rotation to match the new direction
+    if (mPhysicsActor) {
+        glm::vec3 defaultForward(0.f, 0.f, 1.f);
+        glm::quat rotation = glm::rotation(defaultForward, mDirection);
+
+        // Get current position and update with new rotation
+        physx::PxTransform currentPose = mPhysicsActor->getGlobalPose();
+        physx::PxTransform newPose(
+            currentPose.p,
+            physx::PxQuat(rotation.x, rotation.y, rotation.z, rotation.w)
+        );
+        mPhysicsActor->setKinematicTarget(newPose);
+
+        logger::info("Avalanche direction changed to ({}, {}, {})", mDirection.x, mDirection.y, mDirection.z);
+    }
+}
+
 void Avalanche::updatePosition(float deltaTime)
 {
-    // Move forward in Z direction (match your coordinate system)
-    mPosition.z += mSpeed * deltaTime;
+    // Move in the direction vector
+    mPosition += mDirection * mSpeed * deltaTime;
 
-    // Update physics actor position
+    // Update physics actor position (keep the rotation)
     if (mPhysicsActor) {
         physx::PxTransform newPose(
             physx::PxVec3(mPosition.x, mPosition.y, mPosition.z),
