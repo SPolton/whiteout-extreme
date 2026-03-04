@@ -142,19 +142,20 @@ void Avalanche::updateRubberbanding(const std::vector<glm::vec3>& playerPosition
         return;
     }
 
-    // Find the last player (furthest back in Z)
+    // Find the last player (furthest back along direction vector)
     size_t lastPlayerIndex = 0;
-    float furthestZ = playerPositions[0].z;
+    float furthestDistance = glm::dot(playerPositions[0] - mPosition, mDirection);
 
     for (size_t i = 1; i < playerPositions.size(); ++i) {
-        if (playerPositions[i].z < furthestZ) {
-            furthestZ = playerPositions[i].z;
+        float distance = glm::dot(playerPositions[i] - mPosition, mDirection);
+        if (distance < furthestDistance) {
+            furthestDistance = distance;
             lastPlayerIndex = i;
         }
     }
 
-    // Calculate distance to last player
-    float distanceToLastPlayer = playerPositions[lastPlayerIndex].z - mPosition.z;
+    // Calculate distance to last player along the direction axis
+    float distanceToLastPlayer = glm::dot(playerPositions[lastPlayerIndex] - mPosition, mDirection);
 
     // Increase speed to maintain pressure
     if (distanceToLastPlayer < 50.0f && distanceToLastPlayer > 0.0f) {
@@ -177,17 +178,26 @@ void Avalanche::checkPlayerCollisions(const std::vector<glm::vec3>& playerPositi
             continue;  // Already engulfed
         }
 
-        // Check if player is within the avalanche bounding box
+        // Get the player position in world space
         glm::vec3 playerPos = playerPositions[i];
-        glm::vec3 halfSize = mSize / 2.0f;
         
-        // Calculate relative position to avalanche center
+        // Calculate the rotation quaternion from direction
+        glm::vec3 defaultForward(0.f, 0.f, 1.f);
+        glm::quat avalancheRotation = glm::rotation(defaultForward, mDirection);
+        
+        // Transform player position into avalanche's local space
+        // Translate to avalanche center
         glm::vec3 relativePos = playerPos - mPosition;
         
-        // Check if player is inside the bounding box
-        bool insideX = std::abs(relativePos.x) < halfSize.x;
-        bool insideY = std::abs(relativePos.y) < halfSize.y;
-        bool insideZ = std::abs(relativePos.z) < halfSize.z;
+        // Rotate by inverse of avalanche rotation to get local coordinates
+        glm::quat invRotation = glm::inverse(avalancheRotation);
+        glm::vec3 localPos = invRotation * relativePos;
+        
+        // Check if player is inside the oriented bounding box (in local space)
+        glm::vec3 halfSize = mSize / 2.0f;
+        bool insideX = std::abs(localPos.x) < halfSize.x;
+        bool insideY = std::abs(localPos.y) < halfSize.y;
+        bool insideZ = std::abs(localPos.z) < halfSize.z;
         
         if (insideX && insideY && insideZ) {
             // Player is engulfed!
