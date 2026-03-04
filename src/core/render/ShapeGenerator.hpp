@@ -15,4 +15,7 @@ namespace ShapeGenerator
 
     [[nodiscard]]
     CPU_Geometry square_2D();
+
+    [[nodiscard]]
+    CPU_Geometry plane(float size);
 };

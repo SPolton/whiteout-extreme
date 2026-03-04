@@ -358,3 +358,33 @@ CPU_Geometry ShapeGenerator::square_2D()
     
     return geom;
 }
+
+CPU_Geometry ShapeGenerator::plane(float size)
+{
+    CPU_Geometry geom{};
+    float half = size / 2.0f;
+
+    geom.positions = {
+        glm::vec3(-half, 0.0f, -half),  // Back-left
+        glm::vec3(half, 0.0f, -half),   // Back-right
+        glm::vec3(half, 0.0f,  half),   // Front-right
+        glm::vec3(half, 0.0f,  half),   // Front-right
+        glm::vec3(-half, 0.0f,  half),  // Front-left
+        glm::vec3(-half, 0.0f, -half)   // Back-left
+    };
+
+    geom.normals = std::vector<Normal>(6, glm::vec3(0.0f, 1.0f, 0.0f));
+    geom.colors = std::vector<Color>(6, glm::vec3(0.7f, 0.7f, 0.7f));
+
+    float uvScale = size / 10.0f;
+    geom.uvs = {
+        glm::vec2(0.0f, 0.0f),
+        glm::vec2(uvScale, 0.0f),
+        glm::vec2(uvScale, uvScale),
+        glm::vec2(uvScale, uvScale),
+        glm::vec2(0.0f, uvScale),
+        glm::vec2(0.0f, 0.0f)
+    };
+
+    return geom;
+}
