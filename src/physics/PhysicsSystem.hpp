@@ -1,22 +1,21 @@
 #pragma once
 
-#include "PxPhysicsAPI.h"
-#include "VehicleFourWheelDrive.hpp"
+#include "Avalanche.hpp"
 #include "common/PhysicsCallback.hpp"
-#include "components/Entity.h"
-#include "components/Transform.h"
-#include <vector>
-#include <iostream>
+#include "VehicleFourWheelDrive.hpp"
 
-#include "ecs/Coordinator.hpp"
+#include "components/Entity.h"
+#include "components/Physics.hpp"
 #include "components/Renderable.h"
 #include "components/Transform.h"
 #include "components/RigidBody.h"
 #include "components/VehicleComponent.h"
-#include "core/RenderingSystem.hpp"
 
-#include "core/render/ShaderProgram.hpp"
-#include "core/buffer/Geometry.hpp"
+#include "ecs/Coordinator.hpp"
+
+#include <PxPhysicsAPI.h>
+#include <iostream>
+#include <vector>
 
 extern Coordinator gCoordinator;
 
@@ -34,6 +33,8 @@ public:
     //void updateTransforms();
 
     Entity createVehicleEntity(const char* name, physx::PxVec3 spawnPos);
+    Entity createAvalancheEntity(const glm::vec3& startPos, float initialSpeed = 15.0f);
+    
     void spawnBoxPyramid(physx::PxU32 size, float halfLen, Renderable cubeRenderable);
 
     RigidBody createRigidBodyFromSphere(Entity entity, float radius = 1.f);

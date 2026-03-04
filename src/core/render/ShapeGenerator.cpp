@@ -110,7 +110,7 @@ static void positiveYFace(std::vector<glm::vec3> const &originQuad, CPU_Geometry
 static void negativeYFace(std::vector<glm::vec3> const &originQuad, CPU_Geometry &geom);
 
 // Returns a 1x1x1 cube with different color sides.
-CPU_Geometry ShapeGenerator::unit_cube()
+CPU_Geometry ShapeGenerator::cube()
 {
     std::vector<glm::vec3> originQuad{};
     originQuad.emplace_back(-0.5, 0.5, 0.0); // top-left
@@ -285,7 +285,7 @@ void negativeYFace(std::vector<glm::vec3> const &originQuad, CPU_Geometry &geom)
     geom.uvs.emplace_back(1.0f, 1.0f);
 }
 
-CPU_Geometry ShapeGenerator::triangle_2D()
+CPU_Geometry ShapeGenerator::triangle()
 {
     CPU_Geometry geom{};
     
@@ -316,7 +316,7 @@ CPU_Geometry ShapeGenerator::triangle_2D()
     return geom;
 }
 
-CPU_Geometry ShapeGenerator::square_2D()
+CPU_Geometry ShapeGenerator::square()
 {
     CPU_Geometry geom{};
     
@@ -356,5 +356,53 @@ CPU_Geometry ShapeGenerator::square_2D()
         glm::vec2(0.0f, 0.0f)   // Bottom-left
     };
     
+    return geom;
+}
+
+CPU_Geometry ShapeGenerator::plane(float size)
+{
+    CPU_Geometry geom{};
+    float half = size / 2.0f;
+
+    geom.positions = {
+        glm::vec3(-half, 0.0f, -half),  // Back-left
+        glm::vec3(half, 0.0f, -half),   // Back-right
+        glm::vec3(half, 0.0f,  half),   // Front-right
+        glm::vec3(half, 0.0f,  half),   // Front-right
+        glm::vec3(-half, 0.0f,  half),  // Front-left
+        glm::vec3(-half, 0.0f, -half)   // Back-left
+    };
+
+    geom.normals = std::vector<Normal>(6, glm::vec3(0.0f, 1.0f, 0.0f));
+    geom.colors = std::vector<Color>(6, glm::vec3(0.7f, 0.7f, 0.7f));
+
+    float uvScale = size / 10.0f;
+    geom.uvs = {
+        glm::vec2(0.0f, 0.0f),
+        glm::vec2(uvScale, 0.0f),
+        glm::vec2(uvScale, uvScale),
+        glm::vec2(uvScale, uvScale),
+        glm::vec2(0.0f, uvScale),
+        glm::vec2(0.0f, 0.0f)
+    };
+
+    return geom;
+}
+
+CPU_Geometry ShapeGenerator::infinitePlane(float size, float uvRepeat)
+{
+    // Start with a regular plane
+    CPU_Geometry geom = plane(size);
+
+    // Override UVs to create repeating texture pattern for infinite appearance
+    geom.uvs = {
+        glm::vec2(0.0f, 0.0f),
+        glm::vec2(uvRepeat, 0.0f),
+        glm::vec2(uvRepeat, uvRepeat),
+        glm::vec2(uvRepeat, uvRepeat),
+        glm::vec2(0.0f, uvRepeat),
+        glm::vec2(0.0f, 0.0f)
+    };
+
     return geom;
 }

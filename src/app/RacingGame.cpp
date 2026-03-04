@@ -3,6 +3,7 @@
 
 //#include "components/CameraComponent.h"
 #include "components/Model.h"
+#include "components/Physics.hpp"
 #include "components/Renderable.h"
 #include "components/Transform.h"
 #include "components/VehicleComponent.h"
@@ -50,6 +51,7 @@ RacingGame::RacingGame()
     gCoordinator.RegisterComponent<PhysxTransform>();
     gCoordinator.RegisterComponent<RigidBody>();
     gCoordinator.RegisterComponent<VehicleComponent>();
+    gCoordinator.RegisterComponent<AvalancheComponent>();
     gCoordinator.RegisterComponent<Racer>();
     gCoordinator.RegisterComponent<AI>();
 
@@ -140,6 +142,10 @@ RacingGame::RacingGame()
     Skybox = renderingSystem->createSkyboxEntity("assets/textures/sky/snow_landscape.hdr");
     gCoordinator.GetComponent<PhysxTransform>(Skybox).scale = glm::vec3(3.f);
     logger::info("Created Skybox entity");
+
+    // Create infinite ground plane with repeating snow texture
+    Entity groundPlane = renderingSystem->createGroundPlaneEntity("assets/textures/snowball.png", 0);
+    logger::info("Created ground plane entity");
 
     /*
     // Note:
@@ -235,6 +241,16 @@ RacingGame::RacingGame()
 
 
     // 4.You can modify Component Data for entities
+    
+    // Create the avalanche entity (appears far behind the starting position)
+    Entity avalancheEntity = physicsSystem->createAvalancheEntity(glm::vec3(0.f, 15.f, -200.f), 15.0f);
+    
+    // Add rendering to the avalanche
+    auto avCubeRender = renderingSystem->getCubeRenderable("assets/textures/snowball.png");
+    avCubeRender.hasRollingTexture = true;
+    gCoordinator.AddComponent(avalancheEntity, avCubeRender);
+    logger::info("Avalanche entity created");
+
 
     /*
     // Position Earth at the origin
@@ -317,6 +333,30 @@ void RacingGame::run()
             // Discard excess time when running slow to prevent spiral of death
             if (physicsSteps >= maxPhysicsSteps) {
                 gameTime.discardExcessTime();
+            }
+
+            // Check if all players are engulfed by avalanche
+            for (auto const& entity : physicsSystem->mEntities) {
+                if (gCoordinator.HasComponent<AvalancheComponent>(entity)) {
+                    auto& avalancheComp = gCoordinator.GetComponent<AvalancheComponent>(entity);
+                    
+                    if (avalancheComp.instance) {
+                        // Count total number of players
+                        size_t totalPlayers = 0;
+                        for (auto const& playerEntity : physicsSystem->mEntities) {
+                            if (gCoordinator.HasComponent<VehicleComponent>(playerEntity)) {
+                                totalPlayers++;
+                            }
+                        }
+                        
+                        // Check if all players are engulfed
+                        if (avalancheComp.instance->areAllPlayersEngulfed(totalPlayers)) {
+                            logger::warn("All {} player(s) engulfed by avalanche! Game Over!", totalPlayers);
+                            gameState = GameState::GameOver;
+                            break;
+                        }
+                    }
+                }
             }
 
             // Process Escape key input to close window

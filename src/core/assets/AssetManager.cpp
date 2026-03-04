@@ -3,10 +3,13 @@
 #include "utils/logger.h"
 
 std::shared_ptr<Texture>
-AssetManager::loadTexture(const std::string& path, GLint interpolation)
+AssetManager::loadTexture(const std::string& path, GLint interpolation, GLint wrapMode)
 {
+    // Create unique cache key based on path, interpolation, and wrap mode
+    std::string cacheKey = path + "_" + std::to_string(interpolation) + "_" + std::to_string(wrapMode);
+    
     // Check if texture is already cached
-    auto it = textureCache.find(path);
+    auto it = textureCache.find(cacheKey);
     if (it != textureCache.end()) {
         logger::info("Using cached texture: {}", path);
         return it->second;
@@ -14,9 +17,9 @@ AssetManager::loadTexture(const std::string& path, GLint interpolation)
 
     // Load new texture
     try {
-        auto texture = std::make_shared<Texture>(path, interpolation);
-        textureCache[path] = texture;
-        logger::info("Loaded new texture: {}", path);
+        auto texture = std::make_shared<Texture>(path, interpolation, wrapMode);
+        textureCache[cacheKey] = texture;
+        logger::info("Loaded new texture: {} (wrap: {})", path, wrapMode == GL_REPEAT ? "REPEAT" : "CLAMP");
         return texture;
     }
     catch (const std::exception& e) {
