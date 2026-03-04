@@ -31,9 +31,8 @@ extern Coordinator gCoordinator;
 
 class RenderingSystem : public System {
 public:
-    RenderingSystem(std::shared_ptr<InputManager> inputManager);
-    //~RenderingSystem();
-    void cleanup();
+RenderingSystem(std::shared_ptr<InputManager> inputManager);
+void cleanup();
 
     void update(float deltaTime);
 

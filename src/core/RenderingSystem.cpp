@@ -94,8 +94,6 @@ void RenderingSystem::processCameraInput(float deltaTime)
                 turntableCamera->adjustPhi(-ry * deltaTime * this->camSpeed * sensitivity);
             }
         }
-        // TurnTableCamera uses right-click drag
-        
     }
 
     // Always update cursor position tracking
@@ -339,11 +337,7 @@ Entity RenderingSystem::createModelEntity(const std::string& modelPath, const Mo
 
 void RenderingSystem::render()
 {
-    // Clear buffers
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    //auto& camTransform = gCoordinator.GetComponent<PhysxTransform>(cameraEntity);
-    //auto& camComp = gCoordinator.GetComponent<CameraComponent>(cameraEntity);
 
     glm::mat4 view = activeCamera->getViewMatrix();
     glm::mat4 projection = getProjectionMatrix();
@@ -564,7 +558,6 @@ void RenderingSystem::update(float deltaTime)
         }
     }
     
-    // Render the rotating sphere (demo)
     render();
 }
 
