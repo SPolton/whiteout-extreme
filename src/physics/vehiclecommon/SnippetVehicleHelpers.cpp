@@ -44,28 +44,39 @@ PxFilterObjectAttributes attributes0, PxFilterData filterData0,
 PxFilterObjectAttributes attributes1, PxFilterData filterData1,
 PxPairFlags& pairFlags, const void* constantBlock, PxU32 constantBlockSize)
 {
-	/*
-    PX_UNUSED(attributes0);
-	PX_UNUSED(filterData0);
+	PX_UNUSED(attributes0);
 	PX_UNUSED(attributes1);
-	PX_UNUSED(filterData1);
-	PX_UNUSED(pairFlags);
 	PX_UNUSED(constantBlock);
 	PX_UNUSED(constantBlockSize);
-    return PxFilterFlag::eSUPPRESS;
-    */
+
+    // Only apply filtering if BOTH objects have filter data set (word0 != 0)
+    // This ensures objects without explicit filtering (like ground) still collide normally
+    if (filterData0.word0 != 0 && filterData1.word0 != 0) {
+        // Check if the two objects should collide based on their filter data
+        // word0 = what this object is
+        // word1 = what it collides with
+        bool shouldCollide = (filterData0.word0 & filterData1.word1) && (filterData1.word0 & filterData0.word1);
+        
+        if (!shouldCollide) {
+            // Suppress collision if filtering explicitly prevents it
+            return PxFilterFlag::eSUPPRESS;
+        }
+    }
+
+    // Default collision behavior
     pairFlags = PxPairFlag::eCONTACT_DEFAULT;
 
+    // Special notification for obstacle-chassis collisions
     if ((filterData0.word0 == COLLISION_FLAG_OBSTACLE && filterData1.word0 == COLLISION_FLAG_CHASSIS) ||
         (filterData0.word0 == COLLISION_FLAG_CHASSIS && filterData1.word0 == COLLISION_FLAG_OBSTACLE)) {
-
         pairFlags |= physx::PxPairFlag::eNOTIFY_TOUCH_FOUND;
         logger::debug("Collision detected between OBSTACLE and CHASSIS");
     }
-    pairFlags |= physx::PxPairFlags(physx::PxU16(filterData0.word2 | filterData1.word2)); // Remember, our enums are bitwise
-    return physx::PxFilterFlags();
 
-    //return PxFilterFlag::eDEFAULT;
+    // Apply additional pair flags from word2 (enums are bitwise)
+    pairFlags |= physx::PxPairFlags(physx::PxU16(filterData0.word2 | filterData1.word2));
+    
+    return physx::PxFilterFlags();
 }
 
 

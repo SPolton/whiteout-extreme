@@ -136,12 +136,27 @@ PxVec3 PhysicsSystem::getPos(int i)
 
 void PhysicsSystem::update(float deltaTime)
 {
-    // PRE-SIMULATION PHASE: Update any vehicle physics and prepare the scene
+    // PRE-SIMULATION PHASE: Update physics-related components before stepping the simulation
     for (auto const& entity : mEntities) {
         if (gCoordinator.HasComponent<VehicleComponent>(entity)) {
             auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(entity);
             if (vehicle.instance) {
                 vehicle.instance->stepPhysics(deltaTime);
+            }
+        }
+        if (gCoordinator.HasComponent<AvalancheComponent>(entity)) {
+            auto& avalancheComp = gCoordinator.GetComponent<AvalancheComponent>(entity);
+
+            if (avalancheComp.instance && avalancheComp.instance->mIsActive) {
+                // Collect player positions for avalanche
+                std::vector<glm::vec3> playerPositions;
+                for (auto const& playerEntity : mEntities) {
+                    if (gCoordinator.HasComponent<VehicleComponent>(playerEntity)) {
+                        const auto& transform = gCoordinator.GetComponent<PhysxTransform>(playerEntity);
+                        playerPositions.push_back(transform.pos);
+                    }
+                }
+                avalancheComp.instance->update(deltaTime, playerPositions);
             }
         }
     }
@@ -155,17 +170,12 @@ void PhysicsSystem::update(float deltaTime)
         auto& rb = gCoordinator.GetComponent<RigidBody>(entity);
         auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
 
-        // We only want to sync entities that actually move (Dynamic bodies)
-        // Static bodies (like the ground) don't need their transform updated every frame
+        // Sync dynamic and kinematic actors
         physx::PxRigidDynamic* dynamicActor = rb.actor->is<physx::PxRigidDynamic>();
 
         if (dynamicActor) {
             physx::PxTransform pxPose = dynamicActor->getGlobalPose();
-
-            // Sync Position
             transform.pos = glm::vec3(pxPose.p.x, pxPose.p.y, pxPose.p.z);
-            
-            // Sync Rotation (PhysX Quat to GLM Quat)
             transform.rot = glm::quat(pxPose.q.w, pxPose.q.x, pxPose.q.y, pxPose.q.z);
         }
     }
@@ -210,6 +220,48 @@ Entity PhysicsSystem::createVehicleEntity()
     logger::info("Vehicle entity created with ID: {}", vehicleEntity);
 
     return vehicleEntity;
+}
+
+Entity PhysicsSystem::createAvalancheEntity(const glm::vec3& startPos, float initialSpeed)
+{
+    // Create the avalanche instance
+    Avalanche::ConstructData avalancheData{
+        .name = "Avalanche",
+        .startPosition = startPos,
+        .direction = glm::vec3(0.2f, 0.f, 1.f),
+        .initialSpeed = initialSpeed,
+        .baseSpeed = 15.0f,
+        .maxSpeed = 50.0f,
+        .width = 150.0f,
+        .height = 30.0f,
+        .depth = 40.0f,
+        .physics = mPhysics,
+        .scene = mScene,
+        .material = mMaterial
+    };
+
+    auto avalancheInstance = std::make_shared<Avalanche>(avalancheData);
+
+    // Create a new entity for the avalanche
+    Entity avalancheEntity = gCoordinator.CreateEntity();
+
+    // Calculate rotation to match the direction
+    glm::vec3 defaultForward(0.f, 0.f, 1.f);
+    glm::quat visualRotation = glm::rotation(defaultForward, glm::normalize(avalancheData.direction));
+
+    // Add Transform component
+    gCoordinator.AddComponent(avalancheEntity, PhysxTransform{
+        startPos,
+        visualRotation,
+        glm::vec3(avalancheData.width, avalancheData.height, avalancheData.depth)
+    });
+
+    gCoordinator.AddComponent(avalancheEntity, RigidBody{ avalancheInstance->mPhysicsActor });
+    gCoordinator.AddComponent(avalancheEntity, AvalancheComponent{avalancheInstance});
+
+    logger::info("Avalanche entity created with ID: {}", avalancheEntity);
+
+    return avalancheEntity;
 }
 
 void PhysicsSystem::spawnBoxPyramid(physx::PxU32 size, float halfLen, Renderable cubeRenderable)

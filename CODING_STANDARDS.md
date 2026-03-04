@@ -35,7 +35,7 @@ By default, follow the [C++ Core Guidelines](https://github.com/isocpp/CppCoreGu
 
 * Name all variables in `camelCase`. Constants, too.
 * Use descriptive names that are not too long.
-* Class member variables may have a suffix underscore `_`.
+* Class member variables may have `m` prefix (Physx style `mCamelCase`).
 * Loop indices can be `i`, `j`, `k`, if their meaning is otherwise irrelevant.
 
 ### Macros

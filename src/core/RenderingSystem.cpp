@@ -2,12 +2,13 @@
 #include "utils/logger.h"
 #include "core/render/ShapeGenerator.hpp"
 
-#include <iostream>
-#include <cmath>
-
 #include "ecs/Coordinator.hpp"
 #include "components/Transform.h"
 #include "components/VehicleComponent.h"
+
+#include <iostream>
+#include <cmath>
+#include <glm/gtc/type_ptr.hpp>
 
 RenderingSystem::RenderingSystem(
     std::shared_ptr<InputManager> inputManager)
@@ -294,6 +295,8 @@ void RenderingSystem::render()
         {
             auto& renderable = gCoordinator.GetComponent<Renderable>(entity);
 
+            renderable.updateRollingTexture(transform.pos);
+
             // Apply special rendering settings for skybox
             if (renderable.isSkybox) {
                 glDepthMask(GL_FALSE);  // Don't write to depth buffer
@@ -316,6 +319,13 @@ void RenderingSystem::render()
             glUniform1i(
                 glGetUniformLocation(*renderable.shader, "baseColorTexture"),
                 0
+            );
+
+            // Pass texture scroll offsets to shader for rolling textures
+            glUniform2fv(
+                glGetUniformLocation(*renderable.shader, "textureScrollOffset"),
+                1,
+                glm::value_ptr(renderable.textureScrollOffset)
             );
 
             glm::mat4 model =
@@ -362,6 +372,7 @@ void RenderingSystem::render()
                 glFrontFace(GL_CCW);
             }
         }
+
         // Check if entity has a ModelRenderable component (complex 3D models)
         else if (gCoordinator.HasComponent<ModelRenderable>(entity))
         {
@@ -462,6 +473,17 @@ glm::mat4 RenderingSystem::getProjectionMatrix() const
 void RenderingSystem::update(float deltaTime)
 {
     processInput(deltaTime);
+
+    // center skybox on camera
+    for (auto const& entity : mEntities) {
+        if (gCoordinator.HasComponent<Renderable>(entity)) {
+            auto& renderable = gCoordinator.GetComponent<Renderable>(entity);
+            if (renderable.isSkybox) {
+                auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
+                transform.pos = activeCamera->getPosition();
+            }
+        }
+    }
     
     // Render the rotating sphere (demo)
     render();
