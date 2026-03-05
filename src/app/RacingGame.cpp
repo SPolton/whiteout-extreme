@@ -183,7 +183,7 @@ RacingGame::RacingGame()
     // 4.You can modify Component Data for entities
     
     // Create the avalanche entity (appears far behind the starting position)
-    Entity avalancheEntity = physicsSystem->createAvalancheEntity(glm::vec3(0.f, 15.f, -200.f), 15.0f);
+    avalancheEntity = physicsSystem->createAvalancheEntity(glm::vec3(0.f, 15.f, -200.f), 15.0f);
     
     // Add rendering to the avalanche
     auto avCubeRender = renderingSystem->getCubeRenderable("assets/textures/snowball.png");
@@ -230,6 +230,9 @@ RacingGame::RacingGame()
     // load the in-game music
     audioManager->LoadSound("assets/audio/in-game-music.mp3", false, true, true);
     inGameMusicChannelID = audioManager->PlaySounds("assets/audio/in-game-music.mp3", { 0,0,0 }, -15.0f);
+    // load avalanche sound
+    audioManager->LoadSound("assets/audio/rock-avalanche-2.wav", false, true, true);
+    avalancheChannelID = audioManager->PlaySounds("assets/audio/rock-avalanche-2.wav", { 0,0,0 }, -20.0f);
 
     // call functions that will load sounds this component will use
     menus->loadMenuSounds();
@@ -267,6 +270,8 @@ void RacingGame::run()
             audioManager->PauseChannel(musicChannelID);
             // play in-game music
             audioManager->ResumeChannel(inGameMusicChannelID);
+            // play avalanche sounds
+            audioManager->ResumeChannel(avalancheChannelID);
 
             gameTime.update();
 
@@ -313,6 +318,17 @@ void RacingGame::run()
                 gameTime.physicsUpdate();
                 physicsSteps++;
             }
+
+            // get the positions of the avalanche and the player
+            glm::vec3 avalanchePos = gCoordinator.GetComponent<PhysxTransform>(avalancheEntity).pos;
+            glm::vec3 playerPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
+            // calculate the distance between them
+            float distance = glm::length(avalanchePos - playerPos);
+
+            // use that distance against the maxAudible distance. multiply by a quiet value so that it increases in sound
+            float volumeInDB = std::clamp(distance / maxAudibleDistance, 0.0f, 1.0f) * -15.f; // need to clamp value between 0 and 1 to act as a percentage
+            // set volume of avalanche based on distance
+            audioManager->SetChannelVolume(avalancheChannelID, volumeInDB);
 
             // get velocity of the vehicle
             float speed = glm::length(gCoordinator.GetComponent<RigidBody>(playerVehicleEntity).linearVelocity);
@@ -454,6 +470,8 @@ void RacingGame::run()
             audioManager->PauseChannel(inGameMusicChannelID);
             // if on main menu, play lobby music
             audioManager->ResumeChannel(musicChannelID);
+            // pause avalanche sounds in menus
+            audioManager->PauseChannel(avalancheChannelID);
 
             // swap buffer
             this->endFrame();
@@ -475,6 +493,8 @@ void RacingGame::run()
             audioManager->PauseChannel(inGameMusicChannelID);
             // if on pause menu, play lobby music
             audioManager->ResumeChannel(musicChannelID);
+            // pause avalanche sounds in menus
+            audioManager->PauseChannel(avalancheChannelID);
 
             // swap buffer
             this->endFrame();
@@ -490,6 +510,8 @@ void RacingGame::run()
 
             // if NOT in game, don't play in-game music
             audioManager->PauseChannel(inGameMusicChannelID);
+            // pause avalanche sounds in menus
+            audioManager->PauseChannel(avalancheChannelID);
 
             // swap buffer
             this->endFrame();

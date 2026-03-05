@@ -53,12 +53,16 @@ private:
     Entity BackpackModel = 0;
     Entity MapModel = 0;
     Entity Skybox = 0;
+    Entity avalancheEntity = 0;
 
     // sound
     std::shared_ptr<AudioEngine> audioManager;
     int musicChannelID;
     int inGameMusicChannelID;
+    int avalancheChannelID;
     // keep track of engine sound playing state
     int engineChannelID;
     bool enginePlaying = false;
+    // avalanche range
+    float maxAudibleDistance = 200.f;
 };

@@ -58,21 +58,21 @@ public:
 
     void LoadSound(const string& strSoundName, bool b3d = true, bool bLooping = false, bool bStream = false);
     void UnLoadSound(const string& strSoundName);
-    int PlaySounds(const string& strSoundName, const Vector3& vPos = Vector3{ 0, 0, 0 }, float fVolumedB = 0.0f);
+    int PlaySounds(const string& strSoundName, const Vector3& vPos = Vector3{ 0, 0, 0 }, float fVolumeDB = 0.0f);
     void PauseChannel(int nChannelId);
     void ResumeChannel(int nChannelId);
-    void SetChannel3dPosition(int nChannelId, const Vector3& vPosition);
-    void SetChannelVolume(int nChannelId, float fVolumedB);
-    float dbToVolume(float db);
+    void SetChannel3dPosition(int nChannelId, const Vector3& vPos);
+    void Set3dListenerAndOrientation(const Vector3& vPos = Vector3{ 0, 0, 0 }, float fVolumeDB = 0.0f);
+    void SetChannelVolume(int nChannelId, float fVolumeDB);
+    float dbToVolume(float dB);
     float VolumeTodB(float volume);
-    FMOD_VECTOR VectorToFmod(const Vector3& vPosition);
+    FMOD_VECTOR VectorToFmod(const Vector3& vPos);
 
     // not used?
     void StopChannel(int nChannelId);
     bool IsPlaying(int nChannelId) const;
     void LoadBank(const string& strBankName, FMOD_STUDIO_LOAD_BANK_FLAGS flags);
     void LoadEvent(const string& strEventName);
-    void Set3dListenerAndOrientation(const Vector3& vPos = Vector3{ 0, 0, 0 }, float fVolumedB = 0.0f);
     void PlayEvent(const string& strEventName);
     void StopEvent(const string& strEventName, bool bImmediate = false);
     void GetEventParameter(const string& strEventName, const string& strEventParameter, float* parameter);
