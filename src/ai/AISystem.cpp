@@ -19,7 +19,7 @@ void AISystem::update(float deltaTime)
 {
     static float logTimer = 0.0f;
     logTimer += deltaTime;
-    bool shouldLog = (logTimer >= 1.f);
+    bool shouldLog = (logTimer >= 4.f);
     if (shouldLog) logTimer = 0.0f;
 
     for (auto const& entity : mEntities) {
@@ -30,7 +30,8 @@ void AISystem::update(float deltaTime)
         if (!aiRacer.targetGate) continue;
 
         // 1. Calculate direction vectors
-        glm::vec3 targetPos = aiRacer.getTargetPosition();
+        //glm::vec3 targetPos = aiRacer.getTargetPosition();
+        glm::vec3 targetPos = aiRacer.getLookAheadTarget(10.f);
         glm::vec3 toTargetVec = targetPos - aiTransf.pos;
         float distanceToTarget = glm::length(toTargetVec);
         glm::vec3 toTarget = (distanceToTarget > 0.001f) ? glm::normalize(toTargetVec) : aiTransf.getForwardVector();
