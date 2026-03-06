@@ -141,24 +141,15 @@ void PhysicsSystem::update(float deltaTime)
     // PRE-SIMULATION PHASE: Update physics-related components before stepping the simulation
     for (auto const& entity : mEntities) {
         if (gCoordinator.HasComponent<VehicleComponent>(entity)) {
-            auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(entity);
-            if (vehicle.instance) {
-                vehicle.instance->stepPhysics(deltaTime);
+            auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(entity).instance;
+            if (vehicle) {
+                vehicle->stepPhysics(deltaTime);
             }
         }
         if (gCoordinator.HasComponent<AvalancheComponent>(entity)) {
-            auto& avalancheComp = gCoordinator.GetComponent<AvalancheComponent>(entity);
-
-            if (avalancheComp.instance && avalancheComp.instance->mIsActive) {
-                // Collect player positions for avalanche
-                std::vector<glm::vec3> playerPositions;
-                for (auto const& playerEntity : mEntities) {
-                    if (gCoordinator.HasComponent<VehicleComponent>(playerEntity)) {
-                        const auto& transform = gCoordinator.GetComponent<PhysxTransform>(playerEntity);
-                        playerPositions.push_back(transform.pos);
-                    }
-                }
-                avalancheComp.instance->update(deltaTime, playerPositions);
+            auto& avalanche = gCoordinator.GetComponent<AvalancheComponent>(entity).instance;
+            if (avalanche && avalanche->mIsActive) {
+                avalanche->stepPhysics(deltaTime);
             }
         }
     }
@@ -234,9 +225,12 @@ Entity PhysicsSystem::createAvalancheEntity(const glm::vec3& startPos, float ini
         .initialSpeed = initialSpeed,
         .baseSpeed = 15.0f,
         .maxSpeed = 50.0f,
-        .width = 150.0f,
-        .height = 30.0f,
-        .depth = 40.0f,
+        //.width = 150.0f,
+        //.height = 30.0f,
+        //.depth = 40.0f,
+        .width = 28.0f,
+        .height = 2.0f,
+        .depth = 10.0f,
         .physics = mPhysics,
         .scene = mScene,
         .material = mMaterial

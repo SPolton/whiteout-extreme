@@ -79,49 +79,36 @@ void Avalanche::initPhysicsActor(const ConstructData& data)
     logger::info("Avalanche physics actor initialized: size=({}, {}, {})", mSize.x, mSize.y, mSize.z);
 }
 
-void Avalanche::update(float deltaTime, const std::vector<glm::vec3>& playerPositions)
-{
-    if (!mIsActive) {
-        return;
-    }
-
-    // Update speed based on player positions (rubber-banding)
-    // Do this even if playerPositions is empty (avalanche keeps moving at base speed)
-    if (!playerPositions.empty()) {
-        updateRubberbanding(playerPositions);
-        checkPlayerCollisions(playerPositions);
-    } else {
-        // No players yet move at base speed
-        mSpeed = mBaseSpeed;
-    }
-
-    // Move avalanche forward
-    updatePosition(deltaTime);
-}
-
 void Avalanche::setDirection(const glm::vec3& newDirection)
 {
-    // Normalize and store the new direction
-    mDirection = glm::normalize(newDirection);
-
-    // Update the physics actor rotation to match the new direction
-    if (mPhysicsActor) {
-        glm::vec3 defaultForward(0.f, 0.f, 1.f);
-        glm::quat rotation = glm::rotation(defaultForward, mDirection);
-
-        // Get current position and update with new rotation
-        physx::PxTransform currentPose = mPhysicsActor->getGlobalPose();
-        physx::PxTransform newPose(
-            currentPose.p,
-            physx::PxQuat(rotation.x, rotation.y, rotation.z, rotation.w)
-        );
-        mPhysicsActor->setKinematicTarget(newPose);
-
-        logger::info("Avalanche direction changed to ({}, {}, {})", mDirection.x, mDirection.y, mDirection.z);
+    if (glm::length(newDirection) > 0.0001f) {
+        mDirection = glm::normalize(newDirection);
     }
 }
 
-void Avalanche::updatePosition(float deltaTime)
+void Avalanche::setOrientation(const glm::vec3& lookDir, float deltaTime)
+{
+    if (glm::length(lookDir) > 0.0001f) {
+        glm::vec3 dir = glm::normalize(lookDir);
+        glm::vec3 defaultForward(0.f, 0.f, 1.f);
+
+        // Secure case if -180° exactly
+        if (glm::dot(defaultForward, dir) < -0.9999f) {
+            // If 180° required, we force a rotation axis
+            mRotation = glm::angleAxis(glm::pi<float>(), glm::vec3(0, 1, 0));
+            return;
+        }
+
+        glm::quat targetRot = glm::rotation(defaultForward, dir);
+
+        // Change orientation with a SLERP
+        if (!std::isnan(targetRot.w)) {
+            mRotation = glm::slerp(mRotation, targetRot, deltaTime * 2.0f);
+        }
+    }
+}
+
+void Avalanche::stepPhysics(float deltaTime)
 {
     // Move in the direction vector
     mPosition += mDirection * mSpeed * deltaTime;
@@ -130,10 +117,73 @@ void Avalanche::updatePosition(float deltaTime)
     if (mPhysicsActor) {
         physx::PxTransform newPose(
             physx::PxVec3(mPosition.x, mPosition.y, mPosition.z),
-            mPhysicsActor->getGlobalPose().q
+            physx::PxQuat(mRotation.x, mRotation.y, mRotation.z, mRotation.w) // On utilise mRotation
         );
-        mPhysicsActor->setKinematicTarget(newPose);
+    mPhysicsActor->setKinematicTarget(newPose);
     }
+}
+
+void Avalanche::adaptSpeed(float distanceToLastRacer, float deltaTime, float firstRacerCompletion, float percentageToEngulfLastStandingRacer)
+{
+    // --- Logarithmic crurve ---
+    // Formula : mSpeed = mBaseSpeed + K * log(distance + 1)
+    // We adjust K to reach mMaxSpeed at certain distance
+
+    // Forced engulfment after certain percentage
+    if(firstRacerCompletion >= percentageToEngulfLastStandingRacer) {
+        //mSpeed = mMaxSpeed;
+        float logFactor = std::log(distanceToLastRacer + 1.0f);
+        mSpeed = mBaseSpeed + (logFactor * 12.0f);
+        logger::warn("3 force engulfing: first racer completion at{}", firstRacerCompletion);
+    }
+    // Purchases the last racer
+    else if (distanceToLastRacer > mSafeDistance) {
+        float logFactor = std::log(distanceToLastRacer + 1.0f);
+        mSpeed = mBaseSpeed + (logFactor * 12.0f); // 12.0f arbitrary factor to adjust if desired
+        //logger::error("1 out of range: distance to last racer at {}", distanceToLastPlayer);
+
+        // Reset proximity timer when racer got out of proximity range
+        // mCloseProximityTimer = std::max(0.0f, mCloseProximityTimer - deltaTime);
+        mCloseProximityTimer = 0.0f;
+    }
+    // Proximity with last racer
+    else if (distanceToLastRacer > 0.1f) {
+        mSpeed = mBaseSpeed * 0.5f;
+
+        //logger::error("2 in range: time in proximity for last racer at {}", mCloseProximityTimer);
+        mCloseProximityTimer += deltaTime;
+
+        // If players is close too long
+        if (mCloseProximityTimer >= mDeathThresholdTime){
+            logger::warn("2 in range for too long > {} -> last racer will be engulfed", mDeathThresholdTime);
+            //mSpeed = mMaxSpeed; 
+            float logFactor = std::log(distanceToLastRacer + 1.0f);
+            mSpeed = mBaseSpeed + (logFactor * 12.0f);
+        }
+    }
+
+    mSpeed = glm::clamp(mSpeed, 0.0f, mMaxSpeed);
+}
+
+/*
+void Avalanche::update(float deltaTime, float distanceToLastRacer, const std::vector<glm::vec3>& playerPositions)
+{
+    if (!mIsActive) {
+        return;
+    }
+
+    // Update speed based on player positions (rubber-banding)
+    // Do this even if playerPositions is empty (avalanche keeps moving at base speed)
+    if (!playerPositions.empty()) {
+        //adaptSpeed(distanceToLastPlayer);
+        checkPlayerCollisions(playerPositions);
+    } else {
+        // No players yet move at base speed
+        mSpeed = mBaseSpeed;
+    }
+
+    // Move avalanche forward
+    //updatePosition(deltaTime);
 }
 
 void Avalanche::updateRubberbanding(const std::vector<glm::vec3>& playerPositions)
@@ -171,6 +221,7 @@ void Avalanche::updateRubberbanding(const std::vector<glm::vec3>& playerPosition
     mSpeed = glm::clamp(mSpeed, mBaseSpeed, mMaxSpeed);
 }
 
+
 void Avalanche::checkPlayerCollisions(const std::vector<glm::vec3>& playerPositions)
 {
     for (size_t i = 0; i < playerPositions.size(); ++i) {
@@ -201,12 +252,13 @@ void Avalanche::checkPlayerCollisions(const std::vector<glm::vec3>& playerPositi
         
         if (insideX && insideY && insideZ) {
             // Player is engulfed!
-            mEngulfedPlayerIndices.push_back(i);
+            //mEngulfedPlayerIndices.push_back(i);
             logger::warn("Player {} engulfed by avalanche at position ({}, {}, {})", 
                         i, playerPos.x, playerPos.y, playerPos.z);
         }
     }
 }
+
 
 bool Avalanche::isPlayerEngulfed(size_t playerIndex) const
 {
@@ -216,3 +268,4 @@ bool Avalanche::isPlayerEngulfed(size_t playerIndex) const
 bool Avalanche::areAllPlayersEngulfed(size_t totalPlayers) const {
     return totalPlayers > 0 && mEngulfedPlayerIndices.size() >= totalPlayers;
 }
+*/
