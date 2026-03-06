@@ -90,18 +90,16 @@ void Avalanche::setOrientation(const glm::vec3& lookDir, float deltaTime)
 {
     if (glm::length(lookDir) > 0.0001f) {
         glm::vec3 dir = glm::normalize(lookDir);
-        glm::vec3 defaultForward(0.f, 0.f, 1.f);
+        glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 
-        // Secure case if -180° exactly
-        if (glm::dot(defaultForward, dir) < -0.9999f) {
-            // If 180° required, we force a rotation axis
-            mRotation = glm::angleAxis(glm::pi<float>(), glm::vec3(0, 1, 0));
-            return;
+        if (glm::abs(glm::dot(dir, up)) > 0.999f) {
+            up = glm::vec3(0.0f, 0.0f, 1.0f);
         }
 
-        glm::quat targetRot = glm::rotation(defaultForward, dir);
+        glm::quat targetRot = glm::quatLookAt(dir, up);
 
-        // Change orientation with a SLERP
+        glm::vec3 defaultForward(0.f, 0.f, 1.f);
+
         if (!std::isnan(targetRot.w)) {
             mRotation = glm::slerp(mRotation, targetRot, deltaTime * 2.0f);
         }
@@ -131,16 +129,16 @@ void Avalanche::adaptSpeed(float distanceToLastRacer, float deltaTime, float fir
 
     // Forced engulfment after certain percentage
     if(firstRacerCompletion >= percentageToEngulfLastStandingRacer) {
-        //mSpeed = mMaxSpeed;
-        float logFactor = std::log(distanceToLastRacer + 1.0f);
-        mSpeed = mBaseSpeed + (logFactor * 12.0f);
+        //float logFactor = std::log(distanceToLastRacer + 1.0f);
+        //mSpeed = mBaseSpeed + (logFactor * 12.0f);
+        mSpeed = mMaxSpeed;
         logger::warn("3 force engulfing: first racer completion at{}", firstRacerCompletion);
     }
     // Purchases the last racer
-    else if (distanceToLastRacer > mSafeDistance) {
+    else if (distanceToLastRacer > 9.f) {
         float logFactor = std::log(distanceToLastRacer + 1.0f);
         mSpeed = mBaseSpeed + (logFactor * 12.0f); // 12.0f arbitrary factor to adjust if desired
-        //logger::error("1 out of range: distance to last racer at {}", distanceToLastPlayer);
+        logger::error("1 out of range: distance to last racer at {}", distanceToLastRacer);
 
         // Reset proximity timer when racer got out of proximity range
         // mCloseProximityTimer = std::max(0.0f, mCloseProximityTimer - deltaTime);
@@ -150,7 +148,7 @@ void Avalanche::adaptSpeed(float distanceToLastRacer, float deltaTime, float fir
     else if (distanceToLastRacer > 0.1f) {
         mSpeed = mBaseSpeed * 0.5f;
 
-        //logger::error("2 in range: time in proximity for last racer at {}", mCloseProximityTimer);
+        logger::error("2 in range: time in proximity for last racer at {}", mCloseProximityTimer);
         mCloseProximityTimer += deltaTime;
 
         // If players is close too long

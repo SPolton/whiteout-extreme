@@ -43,7 +43,7 @@ void RacingSystem::update(float deltaTime)
             continue;
         }
 
-        checkRacerEngulfment(racer, racerTransf);
+        if(!racer.engulfed) checkRacerEngulfment(racer, racerTransf);
         if (racer.engulfed) {
             continue;
         }
@@ -123,23 +123,19 @@ void RacingSystem::update(float deltaTime)
         directionToNextGate = avalanche->gate->position - avalanchePos;
         avalanche->setDirection(directionToNextGate);
 
-        auto& lastRacerTransf = gCoordinator.GetComponent<PhysxTransform>(lastRacerEntity);
-        float distanceToLastRacer = glm::length(lastRacerTransf.pos - avalanchePos);
-
-
         // ORIENTATION
         if (avalanche->gate->prevGate == &gates.at(0)) {
             glm::vec3 lookDirCircuit = avalanche->gate->prevGate->direction;
             avalanche->setOrientation(lookDirCircuit, deltaTime);
             //logger::error("avalanche race completion at {}", avalanche->raceCompletion);
-
+            avalanche->raceCompletion = 0.0f;
         }
         else {
             // 1. Compute progression in current lane
             float segmentLen = avalanche->gate->prevGate->laneLength;
-            float lengthOnSegment = glm::length(avalanchePos - avalanche->gate->prevGate->position);
+            float lengthOnSegment = 5.0f + glm::length(avalanchePos - avalanche->gate->prevGate->position);
             avalanche->raceCompletion = (avalanche->gate->prevGate->raceLength + lengthOnSegment) / totalRaceLength;
-            //logger::error("avalanche race completion at {}", avalanche->raceCompletion);
+            logger::error("avalanche race completion at {}", avalanche->raceCompletion);
 
             float progress = lengthOnSegment / segmentLen;
             progress = glm::clamp(progress, 0.0f, 1.0f);
@@ -166,6 +162,16 @@ void RacingSystem::update(float deltaTime)
 
         auto& lastRacerVehicle = gCoordinator.GetComponent<VehicleComponent>(lastRacerEntity);
         float firstRacerCompletion = gCoordinator.GetComponent<Racer>(firstRacerEntity).raceCompletion;
+
+        //auto& lastRacerTransf = gCoordinator.GetComponent<PhysxTransform>(lastRacerEntity);
+        //float distanceToLastRacer = glm::length(lastRacerTransf.pos - avalanchePos);
+        auto& lastRacer = gCoordinator.GetComponent<Racer>(lastRacerEntity);
+
+        //float percentagePerUnit = this->totalRaceLength / 100.f;
+        float distanceToLastRacer = (lastRacer.raceCompletion - avalanche->raceCompletion) * this->totalRaceLength; //* 100.f * percentagePerUnit;
+        //float avalancheRaceLength = avalanche->raceCompletion * 100.f * percentagePerUnit;
+        //float distanceToLastRacer = lastRacerRaceLength - avalancheRaceLength;
+        logger::info("distanceToLastRacer: {}", distanceToLastRacer);
 
         avalanche->adaptSpeed(distanceToLastRacer, deltaTime, firstRacerCompletion, percentageToEngulfLastStandingRacer);
     }
@@ -315,6 +321,7 @@ void RacingSystem::restart() {
     avalanche->gate->prevGate = &gates.at(0);
     glm::vec3 spawnPos = gates.at(0).position - (gates.at(0).direction * 150.0f);
     avalanche->mPosition = spawnPos;
+    logger::error("x {}, y {}, z {}", spawnPos.x, spawnPos.y, spawnPos.z);
 
     // Immediate Physic Reset
     if (avalanche->mPhysicsActor) {
@@ -326,7 +333,7 @@ void RacingSystem::restart() {
 
     avalanche->mBaseSpeed = 5.0f;
     avalanche->mCloseProximityTimer = 0.0f;
-    avalanche->raceCompletion = -1.0f;
+    avalanche->raceCompletion = 0.0f;
     avalanche->mIsActive = true;
 
     logger::info("Race Restarted: {} vehicles on grid", leaderboard.size());
@@ -360,7 +367,7 @@ void RacingSystem::checkRacerEngulfment(Racer& racer, PhysxTransform& racerTrans
 
     // Calculate the rotation quaternion from direction
     glm::vec3 defaultForward(0.f, 0.f, 1.f);
-    glm::quat avalancheRotation = glm::rotation(defaultForward, avalanche->mDirection);
+    glm::quat avalancheRotation = avalanche->mRotation;// = glm::rotation(defaultForward, avalanche->mDirection);
 
     // Transform player position into avalanche's local space
     // Translate to avalanche center
@@ -376,7 +383,7 @@ void RacingSystem::checkRacerEngulfment(Racer& racer, PhysxTransform& racerTrans
     bool insideY = std::abs(localPos.y) < halfSize.y;
     bool insideZ = std::abs(localPos.z) < halfSize.z;
 
-    if (insideX && insideY && insideZ) {
+    if (false && insideX && insideY && insideZ) {
         // Racer is engulfed!
         racer.engulfed = true;
         avalanche->mCloseProximityTimer = 0.0f;

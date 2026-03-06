@@ -199,7 +199,6 @@ RacingGame::RacingGame()
     );
 
     logger::info("Created Map model entity with collision");
-
     // Load snowmobile model for the player and AI vehicles
     Entity snowmobileVisual = renderingSystem->createModelEntity("assets/obj/snowmobile/snowmobile.obj");
     auto& snowmobileRenderable = gCoordinator.GetComponent<ModelRenderable>(snowmobileVisual);
@@ -213,7 +212,6 @@ RacingGame::RacingGame()
     auto& vehicleTransform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
     vehicleTransform.rot = glm::angleAxis(glm::radians(0.0f), glm::vec3(0.f, 1.f, 0.f));
     vehicleTransform.scale = glm::vec3(1.5f);  // Doubled the vehicle size
-    vehicleTransform.scale = glm::vec3(2.0f);  // Doubled the vehicle size
 
     logger::info("Loaded snowmobile model for player vehicle");
 

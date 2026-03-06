@@ -90,7 +90,7 @@ void AISystem::update(float deltaTime)
             }
         }
 
-        if (shouldLog) {
+        if (shouldLog && false) {
             logger::info("AI {}: Gate {}, Angle: {:.2f}, Brake: {:.2f}, Throttle: {:.2f}, Forward: {}",
                 entity, aiRacer.targetGate->id, angle, aiVehicle.brake, aiVehicle.throttle, aiVehicle.forwardGearDesired);
         }
