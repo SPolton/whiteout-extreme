@@ -223,19 +223,16 @@ void VehicleControlSystem::throwSnowball()
     if (vehicleComponent.snowBallCooldown > 0.f) return;
 
     auto& vehicleTransform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
-    //logger::info("{{{}, {}, {}}}", vehicleTransform.pos.x, vehicleTransform.pos.y, vehicleTransform.pos.z);
     std::cout << "{" << vehicleTransform.pos.x << ", "
         << vehicleTransform.pos.y << ", "
         << vehicleTransform.pos.z << "}" << std::endl;
     vehicleComponent.snowBallCooldown = 0.5f;
 
-
-    /*
     // 1. Safety Check: Ensure the player entity is valid
     if (!gCoordinator.HasComponent<VehicleComponent>(playerVehicleEntity)) return;
 
     //  ...and that the snow ball cool down is finished
-    auto& vehicleComponent = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity);
+    // auto& vehicleComponent = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity);
     if (vehicleComponent.snowBallCooldown > 0.f) return;
 
     // ...and that the current camera is the TurnTable one
@@ -244,7 +241,7 @@ void VehicleControlSystem::throwSnowball()
     //logger::info("Throwing snowball...");
 
     // 2. Retrieve Player Transform
-    auto& vehicleTransform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
+    // auto& vehicleTransform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
     logger::info("{{}, {}, {}}", vehicleTransform.pos.x, vehicleTransform.pos.y, vehicleTransform.pos.z);
 
     // Calculate the Forward direction based on the vehicle's current rotation
@@ -283,5 +280,4 @@ void VehicleControlSystem::throwSnowball()
         dynamicActor->setMass(dynamicActor->getMass() * 1000);
     }
     vehicleComponent.snowBallCooldown = 0.5f;
-    */
 }
