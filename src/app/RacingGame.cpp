@@ -448,7 +448,7 @@ void RacingGame::run()
             // render UI for race finished, take note of the action taken
             auto& playerRacer = gCoordinator.GetComponent<Racer>(playerVehicleEntity);
             int rank = playerRacer.currentRank;
-            MenuAction actionCursor = menus->renderGameOver(rank);
+            MenuAction actionCursor = menus->renderGameOver(rank, playerRacer.engulfed);
 
             // if "Return to main menu" is pressed, return to the main menu
             if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {

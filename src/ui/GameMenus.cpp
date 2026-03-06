@@ -189,7 +189,7 @@ MenuAction GameMenus::renderPauseMenu() {
 }
 
 
-MenuAction GameMenus::renderGameOver(int rank)
+MenuAction GameMenus::renderGameOver(int rank, bool engulfed)
 {
     // Clear buffers
     glClearColor(0.6f, 0.8f, 1.0f, 0.8f);
@@ -205,19 +205,21 @@ MenuAction GameMenus::renderGameOver(int rank)
 
     // 1. Determine the correct English ordinal suffix
     std::string suffix = "th";
-    if (rank % 10 == 1 && rank % 100 != 11) suffix = "st";
+    if (rank % 10 == 1 && rank % 100 != 11) suffix = "st !";
     else if (rank % 10 == 2 && rank % 100 != 12) suffix = "nd";
     else if (rank % 10 == 3 && rank % 100 != 13) suffix = "rd";
 
     // 2. Prepare the result string
-    std::string rankText = std::to_string(rank) + suffix + " Place";
+    std::string rankText = std::to_string(rank) + suffix; // +" Place";
 
     // 3. Render Final UI
     textSystem->renderText("Game Over!", { 470.f, 1100.f, 0.75f }, { 0.f, 0.f, 0.55f });
     textSystem->renderText("You finished", { 470.f, 900.f, 0.65f }, { 0.f, 0.f, 0.55f });
 
     // Display the Rank (positioned 100 pixels below the previous line)
-    textSystem->renderText(rankText, { 450.f, 700.f, 1.0f }, { 0.8f, 0.2f, 1.0f });
+    textSystem->renderText(rankText, { 600.f, 700.f, 1.0f }, { 0.8f, 0.2f, 1.0f });
+
+    if(engulfed) textSystem->renderText("ENGULFED !", {525.f, 600.f, 0.65f}, { 0.9f, 0.35f, 0.20f });
 
     // default color for the "Return to menu" button
     glm::vec3 defaultColor = { 0.f, 0.f, 0.6f };
