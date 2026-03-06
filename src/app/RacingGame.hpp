@@ -53,6 +53,7 @@ private:
     Entity MapModel = 0;
     Entity Skybox = 0;
     Entity Waypoint = 0;
+    Entity AvalancheEntity = 0;
 
     /*
     Entity Earth = 0;

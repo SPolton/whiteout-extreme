@@ -26,16 +26,15 @@ void RacingSystem::update(float deltaTime)
         logTimer = 0.0f;
     }
 
+    ///===== RACER LOGIC ====================
     for (auto const& entity : mEntities) {
         auto& racer = gCoordinator.GetComponent<Racer>(entity);
         auto& racerTransf = gCoordinator.GetComponent<PhysxTransform>(entity);
 
         if (!racer.targetGate) {
             racer.raceCompletion = 1.0f;
-            raceFinished = true;
-            playerWinner = entity == playerVehicleEntity ? true : false;
-            if (shouldLog) {
-                logger::info("Winner !");
+            if (numberOfRacers() - numberOfEngulfedRacers() == 1) {
+                raceFinished = true;
             }
             continue;
         }
@@ -44,10 +43,16 @@ void RacingSystem::update(float deltaTime)
             continue;
         }
 
+        checkRacerEngulfment(racer, racerTransf);
+        if (racer.engulfed) {
+            continue;
+        }
+        
         float distTarget = getDistanceToGateLine(racerTransf.pos, *racer.targetGate);
         float distLast = getDistanceToGateLine(racerTransf.pos, *racer.lastGate);
 
         float lengthOnLane = distLast / (distLast + distTarget) * racer.lastGate->laneLength;
+        racer.lengthOnLane = lengthOnLane;
         racer.raceCompletion = (racer.lastGate->raceLength + lengthOnLane) / totalRaceLength;
 
         if (shouldLog && false) {
@@ -73,18 +78,140 @@ void RacingSystem::update(float deltaTime)
         if (dotTarget < 0.0f) {
                 racer.lastGate = racer.targetGate;
                 racer.targetGate = racer.targetGate->nextGate;
-                logger::info("Next Gate !");
         }
         // B. BACKWARD : checks if racer got back behind last gate
         else if (dotLast > 0.0f) {
             if (racer.lastGate->prevGate) {
                 racer.targetGate = racer.lastGate;
                 racer.lastGate = racer.lastGate->prevGate;
-                logger::info("Back to Last Gate !");
             }
         }
     }
 
+    this->refreshLeaderboard();
+
+    ///===== AVALANCHE LOGIC ====================
+    if(avalanche->mIsActive){
+        glm::vec3 avalanchePos = avalanche->mPosition;
+
+        Entity firstRacerEntity = getFirstRacerEntity();
+        Entity lastRacerEntity = getLastNonEngulfedRacerEntity();
+
+        glm::vec3 directionToNextGate;
+
+        // --- Gate logic ---
+    
+        glm::vec3 avPosFlat{ avalanchePos.x, 0.0f, avalanchePos.z };
+        glm::vec3 targetPosFlat{ avalanche->gate->position.x, 0.0f, avalanche->gate->position.z };
+        glm::vec3 lastPosFlat{ avalanche->gate->prevGate->position.x, 0.0f, avalanche->gate->prevGate->position.z };
+
+        float dotTarget = glm::dot(targetPosFlat - avPosFlat, avalanche->gate->direction);
+        float dotLast = glm::dot(lastPosFlat - avPosFlat, avalanche->gate->prevGate->direction);
+
+        // A. FORWARD : checks if avalanche reached next gate
+        if (dotTarget < 0.0f) {
+            if (avalanche->gate->nextGate) {
+                avalanche->gate = avalanche->gate->nextGate;
+                logger::info("Next Gate for avalanche!");
+            }
+            else {
+                avalanche->mIsActive = false;
+            }
+        }
+
+        // DIRECTION
+        directionToNextGate = avalanche->gate->position - avalanchePos;
+        avalanche->setDirection(directionToNextGate);
+
+        auto& lastRacerTransf = gCoordinator.GetComponent<PhysxTransform>(lastRacerEntity);
+        float distanceToLastRacer = glm::length(lastRacerTransf.pos - avalanchePos);
+
+
+        // ORIENTATION
+        if (avalanche->gate->prevGate == &gates.at(0)) {
+            glm::vec3 lookDirCircuit = avalanche->gate->prevGate->direction;
+            avalanche->setOrientation(lookDirCircuit, deltaTime);
+            //logger::error("avalanche race completion at {}", avalanche->raceCompletion);
+
+        }
+        else {
+            // 1. Compute progression in current lane
+            float segmentLen = avalanche->gate->prevGate->laneLength;
+            float lengthOnSegment = glm::length(avalanchePos - avalanche->gate->prevGate->position);
+            avalanche->raceCompletion = (avalanche->gate->prevGate->raceLength + lengthOnSegment) / totalRaceLength;
+            //logger::error("avalanche race completion at {}", avalanche->raceCompletion);
+
+            float progress = lengthOnSegment / segmentLen;
+            progress = glm::clamp(progress, 0.0f, 1.0f);
+
+            // 2. Orientation via LERP between direction of last and next gate
+            glm::vec3 lookDirCircuit = glm::normalize(glm::mix(
+                avalanche->gate->prevGate->direction,
+                avalanche->gate->direction,
+                progress
+            ));
+            avalanche->setOrientation(lookDirCircuit, deltaTime);
+        }
+
+        // SPEED
+        int NRacers = numberOfRacers();
+        int NEngulfedRacers = numberOfEngulfedRacers();
+        int NStandingRacers = NRacers - NEngulfedRacers;
+        if (NRacers == NEngulfedRacers) {
+            raceFinished = true;
+        }
+
+        float percentageToEngulfLastStandingRacer = NStandingRacers == 1? 1.0f:
+            1.0f - 1.0f / ((NEngulfedRacers+1) * 2);
+
+        auto& lastRacerVehicle = gCoordinator.GetComponent<VehicleComponent>(lastRacerEntity);
+        float firstRacerCompletion = gCoordinator.GetComponent<Racer>(firstRacerEntity).raceCompletion;
+
+        avalanche->adaptSpeed(distanceToLastRacer, deltaTime, firstRacerCompletion, percentageToEngulfLastStandingRacer);
+    }
+}
+
+
+int RacingSystem::numberOfRacers() {
+    return leaderboard.size();
+}
+
+
+int RacingSystem::numberOfEngulfedRacers() {
+    int result = 0;
+    for (int i = static_cast<int>(leaderboard.size()) - 1; i >= 0; i--)
+    {
+        Entity currentEntity = leaderboard.at(i);
+        auto& currentRacer = gCoordinator.GetComponent<Racer>(currentEntity);
+
+        if (currentRacer.engulfed) {
+            result++;
+        }
+    }
+    return result;
+}
+
+Entity RacingSystem::getFirstRacerEntity(){
+    return leaderboard.at(0);
+}
+
+Entity RacingSystem::getLastNonEngulfedRacerEntity() {
+
+    Entity lastRacerEntity = this->leaderboard.at(leaderboard.size() - 1);
+    for (int i = static_cast<int>(leaderboard.size()) - 1; i >= 0; i--)
+    {
+        Entity currentEntity = leaderboard.at(i);
+        auto& currentRacer = gCoordinator.GetComponent<Racer>(currentEntity);
+
+        if (!currentRacer.engulfed) {
+            lastRacerEntity = currentEntity;
+            break;
+        }
+    }
+    return lastRacerEntity;
+}
+
+void RacingSystem::refreshLeaderboard() {
     leaderboard.assign(mEntities.begin(), mEntities.end());
 
     std::sort(leaderboard.begin(), leaderboard.end(), [](Entity a, Entity b) {
@@ -102,10 +229,11 @@ void RacingSystem::update(float deltaTime)
 void RacingSystem::restart() {
     if (gates.empty()) return;
 
-    // Reset booleans
+    // Reset booleans 
     raceFinished = false;
     playerWinner = false;
 
+    // RACERS RESET
     auto& startGate = gates.at(0);
     auto& nextGate = gates.at(1);
 
@@ -116,10 +244,11 @@ void RacingSystem::restart() {
         auto& racer = gCoordinator.GetComponent<Racer>(entity);
         auto& racerTransf = gCoordinator.GetComponent<PhysxTransform>(entity);
 
-        // 1. Reset gates
+        // 1. Reset gates, race completion and engulfment status
         racer.lastGate = &startGate;
         racer.targetGate = &nextGate;
         racer.raceCompletion = 0.0f;
+        racer.engulfed = false;
 
         // 2. Compute Start position
         float spread = startGate.width * 0.5f;
@@ -179,7 +308,28 @@ void RacingSystem::restart() {
         index++;
     }
 
-    logger::info("Race Restarted: {} vehicles on grid", index);
+    this->refreshLeaderboard();
+
+    // AVALANCHE RESET
+    avalanche->gate = &gates.at(1);
+    avalanche->gate->prevGate = &gates.at(0);
+    glm::vec3 spawnPos = gates.at(0).position - (gates.at(0).direction * 150.0f);
+    avalanche->mPosition = spawnPos;
+
+    // Immediate Physic Reset
+    if (avalanche->mPhysicsActor) {
+        physx::PxTransform tp(physx::PxVec3(spawnPos.x, spawnPos.y, spawnPos.z),
+            physx::PxQuat(0, 0, 0, 1));
+        avalanche->mPhysicsActor->setGlobalPose(tp);
+        avalanche->mPhysicsActor->setKinematicTarget(tp);
+    }
+
+    avalanche->mBaseSpeed = 5.0f;
+    avalanche->mCloseProximityTimer = 0.0f;
+    avalanche->raceCompletion = -1.0f;
+    avalanche->mIsActive = true;
+
+    logger::info("Race Restarted: {} vehicles on grid", leaderboard.size());
 }
 
 float RacingSystem::getDistanceToGateLine(const glm::vec3& racerPos, const Gate& gate) {
@@ -202,37 +352,50 @@ float RacingSystem::getDistanceToGateLine(const glm::vec3& racerPos, const Gate&
     return glm::length(vecToLine);
 }
 
-void RacingSystem::initGates() {
+void RacingSystem::checkRacerEngulfment(Racer& racer, PhysxTransform& racerTransf)
+{
+    if (racer.engulfed) return;
+    // Get the player position in world space
+    glm::vec3 playerPos = racerTransf.pos;
 
-    constexpr glm::vec3 upVec{ 0.f, 1.f, 0.f };
+    // Calculate the rotation quaternion from direction
+    glm::vec3 defaultForward(0.f, 0.f, 1.f);
+    glm::quat avalancheRotation = glm::rotation(defaultForward, avalanche->mDirection);
 
-    for (size_t i = 0; i < gatesOld.size(); i++)
-    {
-        auto& gate = gatesOld.at(i);
-        gate.raceLength = totalRaceLength;
+    // Transform player position into avalanche's local space
+    // Translate to avalanche center
+    glm::vec3 relativePos = racerTransf.pos - avalanche->mPosition;
 
-        if (i == gatesOld.size()-1) {
-            gate.direction = gatesOld.at(i - 1).direction;
-        }
-        else {
-            auto& nextGate = gatesOld.at(i + 1);
-            gate.nextGate = &nextGate;
-            gate.lane = nextGate.position - gate.position;
-            gate.laneLength = glm::length(gate.lane);
-            totalRaceLength += gate.laneLength;
-            gate.direction = glm::normalize(gate.lane);
-        }
+    // Rotate by inverse of avalanche rotation to get local coordinates
+    glm::quat invRotation = glm::inverse(avalancheRotation);
+    glm::vec3 localPos = invRotation * relativePos;
 
-        if (i > 0) {
-            auto& prevGate = gatesOld.at(i - 1);
-            gate.prevGate = &prevGate;
-        }
+    // Check if player is inside the oriented bounding box (in local space)
+    glm::vec3 halfSize = avalanche->mSize / 2.0f;
+    bool insideX = std::abs(localPos.x) < halfSize.x;
+    bool insideY = std::abs(localPos.y) < halfSize.y;
+    bool insideZ = std::abs(localPos.z) < halfSize.z;
 
-        gate.right = glm::normalize(glm::cross(gate.direction, upVec));
-
-        std::string tex = (i == 0 || i == gatesOld.size()-1) ? "assets/textures/2k_mars.jpg" : "assets/textures/carbon_fiber.jpg";
-        renderingSystem->createGateEntity(gate.position, gate.direction, gate.width, tex);
+    if (insideX && insideY && insideZ) {
+        // Racer is engulfed!
+        racer.engulfed = true;
+        avalanche->mCloseProximityTimer = 0.0f;
+        logger::warn("Racer at rank #{} engulfed by avalanche at position ({}, {}, {}) --> INSIDE avalanche",
+            racer.currentRank, racerTransf.pos.x, racerTransf.pos.y, racerTransf.pos.z);
     }
+
+    // Check if racer is behind the avalanche
+    if (racer.raceCompletion < avalanche->raceCompletion) {
+        racer.engulfed = true;
+        logger::warn("Racer at rank #{} engulfed by avalanche at position ({}, {}, {}) --> BEHIND the avalanche",
+            racer.currentRank, racerTransf.pos.x, racerTransf.pos.y, racerTransf.pos.z);
+    }
+}
+
+void RacingSystem::init(std::shared_ptr<Avalanche> avalanche) {
+    this->avalanche = avalanche;
+    initGatesFromPoints();
+    this->restart();
 }
 
 void RacingSystem::initGatesFromPoints() {
@@ -277,3 +440,38 @@ void RacingSystem::initGatesFromPoints() {
         renderingSystem->createGateEntity(gate.position, gate.direction, gate.width, tex);
     }
 }
+
+/*
+void RacingSystem::initGatesOld() {
+
+    constexpr glm::vec3 upVec{ 0.f, 1.f, 0.f };
+
+    for (size_t i = 0; i < gatesOld.size(); i++)
+    {
+        auto& gate = gatesOld.at(i);
+        gate.raceLength = totalRaceLength;
+
+        if (i == gatesOld.size() - 1) {
+            gate.direction = gatesOld.at(i - 1).direction;
+        }
+        else {
+            auto& nextGate = gatesOld.at(i + 1);
+            gate.nextGate = &nextGate;
+            gate.lane = nextGate.position - gate.position;
+            gate.laneLength = glm::length(gate.lane);
+            totalRaceLength += gate.laneLength;
+            gate.direction = glm::normalize(gate.lane);
+        }
+
+        if (i > 0) {
+            auto& prevGate = gatesOld.at(i - 1);
+            gate.prevGate = &prevGate;
+        }
+
+        gate.right = glm::normalize(glm::cross(gate.direction, upVec));
+
+        std::string tex = (i == 0 || i == gatesOld.size() - 1) ? "assets/textures/2k_mars.jpg" : "assets/textures/carbon_fiber.jpg";
+        renderingSystem->createGateEntity(gate.position, gate.direction, gate.width, tex);
+    }
+}
+*/

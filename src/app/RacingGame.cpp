@@ -224,13 +224,7 @@ RacingGame::RacingGame()
 
     logger::info("Loaded snowmobile models for ai vehicles");
 
-    racingSystem->initGatesFromPoints();
-    logger::info("Loaded gates and waypoints for race");
-
-    gCoordinator.AddComponent(playerVehicleEntity, Racer{
-        racingSystem->getGatePtr(0),
-        racingSystem->getGatePtr(1)
-        });
+    gCoordinator.AddComponent(playerVehicleEntity, Racer{});
 
     gCoordinator.AddComponent(aiVehicleEntity1, Racer{});
     gCoordinator.AddComponent(aiVehicleEntity1, AI{});
@@ -238,20 +232,21 @@ RacingGame::RacingGame()
     gCoordinator.AddComponent(aiVehicleEntity2, Racer{});
     gCoordinator.AddComponent(aiVehicleEntity2, AI{});
 
-    racingSystem->restart();
-
-
     // 4.You can modify Component Data for entities
     
     // Create the avalanche entity (appears far behind the starting position)
-    Entity avalancheEntity = physicsSystem->createAvalancheEntity(glm::vec3(0.f, 15.f, -200.f), 15.0f);
+    AvalancheEntity = physicsSystem->createAvalancheEntity(glm::vec3(0.f, 15.f, -200.f), 15.0f);
     
     // Add rendering to the avalanche
     auto avCubeRender = renderingSystem->getCubeRenderable("assets/textures/snowball.png");
     avCubeRender.hasRollingTexture = true;
-    gCoordinator.AddComponent(avalancheEntity, avCubeRender);
+    gCoordinator.AddComponent(AvalancheEntity, avCubeRender);
     logger::info("Avalanche entity created");
 
+    auto& Avalanche = gCoordinator.GetComponent<AvalancheComponent>(AvalancheEntity).instance;
+
+    racingSystem->init(Avalanche);
+    logger::info("Loaded gates and avalanche for the race");
 
     /*
     // Position Earth at the origin
@@ -336,30 +331,6 @@ void RacingGame::run()
                 gameTime.discardExcessTime();
             }
 
-            // Check if all players are engulfed by avalanche
-            for (auto const& entity : physicsSystem->mEntities) {
-                if (gCoordinator.HasComponent<AvalancheComponent>(entity)) {
-                    auto& avalancheComp = gCoordinator.GetComponent<AvalancheComponent>(entity);
-                    
-                    if (avalancheComp.instance) {
-                        // Count total number of players
-                        size_t totalPlayers = 0;
-                        for (auto const& playerEntity : physicsSystem->mEntities) {
-                            if (gCoordinator.HasComponent<VehicleComponent>(playerEntity)) {
-                                totalPlayers++;
-                            }
-                        }
-                        
-                        // Check if all players are engulfed
-                        if (avalancheComp.instance->areAllPlayersEngulfed(totalPlayers)) {
-                            logger::warn("All {} player(s) engulfed by avalanche! Game Over!", totalPlayers);
-                            gameState = GameState::GameOver;
-                            break;
-                        }
-                    }
-                }
-            }
-
             // Process Escape key input to close window
             if (inputManager->isKeyPressedOnce(GLFW_KEY_ESCAPE))
                 glfwSetWindowShouldClose(window->getGLFWwindow(), true);
@@ -406,23 +377,25 @@ void RacingGame::run()
 
             // --- Leaderboard Section ---
             float lbYStart = topY - 250.f;
-            textSystem->renderText("LEADERBOARD", { marginX, lbYStart, 0.8f }, { 1.f, 1.f, 1.f });
+            textSystem->renderText("LEADERBOARD", { marginX, lbYStart, 0.85f }, { 0.35f, 0.25f, 0.5f });
 
             for (size_t i = 0; i < racingSystem->leaderboard.size(); ++i) {
                 Entity e = racingSystem->leaderboard[i];
                 auto& racer = gCoordinator.GetComponent<Racer>(e);
                 auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(e);
-
+                
                 // Color: Gold for Player (ID 0), White/Grey for AI
-                glm::vec3 color = (vehicle.playerID == 0) ? glm::vec3(1.0f, 0.85f, 0.0f) : glm::vec3(0.1f, 0.3f, 1.0f);
+                glm::vec3 color = racer.engulfed? glm::vec3(0.8f, 0.25f, 0.15f): (vehicle.playerID == 0) ? glm::vec3(1.0f, 0.8f, 0.0f) : glm::vec3(0.1f, 0.3f, 1.0f);
 
-                std::string name = (vehicle.playerID == 0) ? "PLAYER" : "AI_Entity#" + std::to_string(e);
-                std::string entry = std::to_string(i + 1) + ". " + name;
+                std::string name = (vehicle.playerID == 0) ? "PLAYER" : "AI_" + std::to_string(e);
+                std::string entry = std::to_string(i + 1) + ". " + name + (racer.engulfed? " (X engulfed racer)" : "") + " at " + std::to_string(static_cast<int>(racer.raceCompletion * 100)) + "%";
 
-                // Optional: Add progress percentage for debugging
-                // entry += " (" + std::to_string(static_cast<int>(racer.raceCompletion * 100)) + "%)";
+                float textX = marginX;
+                float textY = lbYStart - 50.f - (i * 50.f);
+                float scale = 0.75f;
 
-                textSystem->renderText(entry, { marginX, lbYStart - 50.f - (i * 45.f), 0.65f }, color);
+                textSystem->renderText(entry, { textX + 2.0f, textY - 2.0f, scale }, { 0.0f, 0.0f, 0.0f });
+                textSystem->renderText(entry, { textX, textY, scale }, color);
             }
 
             // --- Crosshair / Center UI ---
