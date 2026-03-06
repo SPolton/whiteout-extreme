@@ -495,6 +495,15 @@ void RenderingSystem::render()
             if (modelRenderable.modelLoader && modelRenderable.shader) {
                 modelRenderable.shader->use();
 
+                // --- COMPUTE NEW MATRIX WITH OFFSET FOR SNOWMOBILES ---
+                glm::vec3 offsetInWorldSpace = transform.rot * modelRenderable.visualOffsetPos;
+
+                glm::mat4 correctedModelMatrix =
+                    glm::translate(glm::mat4(1.0f), transform.pos + offsetInWorldSpace)
+                    * glm::toMat4(transform.rot)
+                    * glm::scale(glm::mat4(1.0f), transform.scale);
+                // ------------------------------------------
+
                 // Set up view and projection matrices
                 glUniformMatrix4fv(
                     glGetUniformLocation(*modelRenderable.shader, "view"),
@@ -509,7 +518,7 @@ void RenderingSystem::render()
                 // Set model matrix using the entity's transform
                 glUniformMatrix4fv(
                     glGetUniformLocation(*modelRenderable.shader, "model"),
-                    1, GL_FALSE, &modelMatrix[0][0]
+                    1, GL_FALSE, &correctedModelMatrix[0][0]
                 );
 
                 // Set lighting uniforms for the model shader

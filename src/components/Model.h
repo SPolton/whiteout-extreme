@@ -25,4 +25,6 @@ public:
 struct ModelRenderable {
     std::shared_ptr<ModelLoader> modelLoader;  // Shared ownership
     std::shared_ptr<ShaderProgram> shader;     // Shared ownership
+
+    glm::vec3 visualOffsetPos = glm::vec3(0.0f);
 };

@@ -139,6 +139,7 @@ RacingGame::RacingGame()
     // 3.Create Entities and add Components to them:
 
     // Create the player vehicle entity with physics components
+    //physx::PxVec3 spawnPos(-730.0f, 670.4f, -400.0f);
     aiVehicleEntity1 = physicsSystem->createVehicleEntity("VehicleAI1", physx::PxVec3(20.f, 0.f, 0.f));
     gCoordinator.GetComponent<VehicleComponent>(aiVehicleEntity1).playerID = 1;
 
@@ -202,6 +203,7 @@ RacingGame::RacingGame()
     // Load snowmobile model for the player and AI vehicles
     Entity snowmobileVisual = renderingSystem->createModelEntity("assets/obj/snowmobile/snowmobile.obj");
     auto& snowmobileRenderable = gCoordinator.GetComponent<ModelRenderable>(snowmobileVisual);
+    snowmobileRenderable.visualOffsetPos = glm::vec3(0.0f, 0.0f, 1.5f);
     gCoordinator.AddComponent(playerVehicleEntity, snowmobileRenderable);
     gCoordinator.AddComponent(aiVehicleEntity1, snowmobileRenderable);
     gCoordinator.AddComponent(aiVehicleEntity2, snowmobileRenderable);
@@ -210,17 +212,18 @@ RacingGame::RacingGame()
     // Fix rotation and scale
     auto& vehicleTransform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
     vehicleTransform.rot = glm::angleAxis(glm::radians(0.0f), glm::vec3(0.f, 1.f, 0.f));
+    vehicleTransform.scale = glm::vec3(1.5f);  // Doubled the vehicle size
     vehicleTransform.scale = glm::vec3(2.0f);  // Doubled the vehicle size
 
     logger::info("Loaded snowmobile model for player vehicle");
 
     auto& aiVehicleTransform = gCoordinator.GetComponent<PhysxTransform>(aiVehicleEntity1);
     aiVehicleTransform.rot = glm::angleAxis(glm::radians(0.0f), glm::vec3(0.f, 1.f, 0.f));
-    aiVehicleTransform.scale = glm::vec3(1.0f);  // Uniform scale instead of stretched box scale
+    aiVehicleTransform.scale = glm::vec3(1.5f);  // Uniform scale instead of stretched box scale
 
     auto& aiVehicleTransform2 = gCoordinator.GetComponent<PhysxTransform>(aiVehicleEntity2);
     aiVehicleTransform2.rot = glm::angleAxis(glm::radians(0.0f), glm::vec3(0.f, 1.f, 0.f));
-    aiVehicleTransform2.scale = glm::vec3(1.0f);  // Uniform scale instead of stretched box scale
+    aiVehicleTransform2.scale = glm::vec3(1.5f);  // Uniform scale instead of stretched box scale
 
     logger::info("Loaded snowmobile models for ai vehicles");
 
@@ -388,7 +391,7 @@ void RacingGame::run()
                 glm::vec3 color = racer.engulfed? glm::vec3(0.8f, 0.25f, 0.15f): (vehicle.playerID == 0) ? glm::vec3(1.0f, 0.8f, 0.0f) : glm::vec3(0.1f, 0.3f, 1.0f);
 
                 std::string name = (vehicle.playerID == 0) ? "PLAYER" : "AI_" + std::to_string(e);
-                std::string entry = std::to_string(i + 1) + ". " + name + (racer.engulfed? " (X engulfed racer)" : "") + " at " + std::to_string(static_cast<int>(racer.raceCompletion * 100)) + "%";
+                std::string entry = std::to_string(i + 1) + ". " + name + (racer.engulfed? " X engulfed" : "") + ", at " + std::to_string(static_cast<int>(racer.raceCompletion * 100)) + "%";
 
                 float textX = marginX;
                 float textY = lbYStart - 50.f - (i * 50.f);
