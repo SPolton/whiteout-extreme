@@ -92,7 +92,7 @@ include(cmake/ui.cmake)
 include(cmake/physx.cmake)
 
 # FMOD
-# include(cmake/fmod.cmake)
+include(cmake/fmod.cmake)
 
 # --------------------------------------------------
 # Enable Hot Reload for MSVC compilers if supported.

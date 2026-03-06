@@ -177,6 +177,10 @@ void PhysicsSystem::update(float deltaTime)
             physx::PxTransform pxPose = dynamicActor->getGlobalPose();
             transform.pos = glm::vec3(pxPose.p.x, pxPose.p.y, pxPose.p.z);
             transform.rot = glm::quat(pxPose.q.w, pxPose.q.x, pxPose.q.y, pxPose.q.z);
+
+            // get the linear velocity and store it in the rigid body for later use
+            physx::PxVec3 pxVelocity = dynamicActor->getLinearVelocity();
+            rb.linearVelocity = glm::vec3(pxVelocity.x, pxVelocity.y, pxVelocity.z);
         }
     }
 }
