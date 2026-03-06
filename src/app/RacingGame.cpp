@@ -223,16 +223,16 @@ RacingGame::RacingGame()
     menus = std::make_unique<GameMenus>(textSystem.get(), inputManager.get(), audioManager.get(), gameState);
 
    // intiailize audio engine
-    audioManager->Init();
+    audioManager->init();
     // load the main menu game music
-    audioManager->LoadSound("assets/audio/game-music-loop-12.mp3", false, true, true);
-    musicChannelID = audioManager->PlaySounds("assets/audio/game-music-loop-12.mp3", { 0,0,0 }, -8.0f);
+    audioManager->loadSound("assets/audio/game-music-loop-12.mp3", false, true, true);
+    musicChannelID = audioManager->playSounds("assets/audio/game-music-loop-12.mp3", { 0,0,0 }, -8.0f);
     // load the in-game music
-    audioManager->LoadSound("assets/audio/in-game-music.mp3", false, true, true);
-    inGameMusicChannelID = audioManager->PlaySounds("assets/audio/in-game-music.mp3", { 0,0,0 }, -15.0f);
+    audioManager->loadSound("assets/audio/in-game-music.mp3", false, true, true);
+    inGameMusicChannelID = audioManager->playSounds("assets/audio/in-game-music.mp3", { 0,0,0 }, -15.0f);
     // load avalanche sound
-    audioManager->LoadSound("assets/audio/rock-avalanche-2.wav", false, true, true);
-    avalancheChannelID = audioManager->PlaySounds("assets/audio/rock-avalanche-2.wav", { 0,0,0 }, -20.0f);
+    audioManager->loadSound("assets/audio/rock-avalanche-2.wav", false, true, true);
+    avalancheChannelID = audioManager->playSounds("assets/audio/rock-avalanche-2.wav", { 0,0,0 }, -20.0f);
 
     // call functions that will load sounds this component will use
     menus->loadMenuSounds();
@@ -248,7 +248,7 @@ void RacingGame::run()
     while (!window->shouldClose())
     {
         // update audio
-        audioManager->Update();
+        audioManager->update();
 
         // keep checking which input system we are using
         menus->checkInputSystem();
@@ -259,7 +259,7 @@ void RacingGame::run()
         // check for entering game
         if (actionButtons == MenuAction::StartGame || actionButtons == MenuAction::ResumeGame) {
             // play in game music
-            audioManager->ResumeChannel(inGameMusicChannelID);
+            audioManager->resumeChannel(inGameMusicChannelID);
             gameState = GameState::InGame;
         }
 
@@ -267,11 +267,11 @@ void RacingGame::run()
         if (gameState == GameState::InGame) {
 
             // if in game, don't play lobby music
-            audioManager->PauseChannel(musicChannelID);
+            audioManager->pauseChannel(musicChannelID);
             // play in-game music
-            audioManager->ResumeChannel(inGameMusicChannelID);
+            audioManager->resumeChannel(inGameMusicChannelID);
             // play avalanche sounds
-            audioManager->ResumeChannel(avalancheChannelID);
+            audioManager->resumeChannel(avalancheChannelID);
 
             gameTime.update();
 
@@ -328,19 +328,19 @@ void RacingGame::run()
             // use that distance against the maxAudible distance. multiply by a quiet value so that it increases in sound
             float volumeInDB = std::clamp(distance / maxAudibleDistance, 0.0f, 1.0f) * -15.f; // need to clamp value between 0 and 1 to act as a percentage
             // set volume of avalanche based on distance
-            audioManager->SetChannelVolume(avalancheChannelID, volumeInDB);
+            audioManager->setChannelVolume(avalancheChannelID, volumeInDB);
 
             // get velocity of the vehicle
             float speed = glm::length(gCoordinator.GetComponent<RigidBody>(playerVehicleEntity).linearVelocity);
 
             // if speed is more than 1, that means vehicle is moving, play the engine sound
             if (speed > 1.0f && !enginePlaying) {
-                engineChannelID = audioManager->PlaySounds("assets/audio/snowmobiles-4-trimmed.mp3", { 0,0,0 }, -15.0f);
+                engineChannelID = audioManager->playSounds("assets/audio/snowmobiles-4-trimmed.mp3", { 0,0,0 }, -15.0f);
                 enginePlaying = true;
             }
             else if (speed <= 1.0f && enginePlaying) {
                 // otherwise vehicle is not considered moving, pause the channel that plays the engine sound
-                audioManager->PauseChannel(engineChannelID);
+                audioManager->pauseChannel(engineChannelID);
                 enginePlaying = false;
             }
         
@@ -467,11 +467,11 @@ void RacingGame::run()
             }
 
             // if NOT in game, don't play in-game music
-            audioManager->PauseChannel(inGameMusicChannelID);
+            audioManager->pauseChannel(inGameMusicChannelID);
             // if on main menu, play lobby music
-            audioManager->ResumeChannel(musicChannelID);
+            audioManager->resumeChannel(musicChannelID);
             // pause avalanche sounds in menus
-            audioManager->PauseChannel(avalancheChannelID);
+            audioManager->pauseChannel(avalancheChannelID);
 
             // swap buffer
             this->endFrame();
@@ -490,11 +490,11 @@ void RacingGame::run()
             }
 
             // if NOT in game, don't play in-game music
-            audioManager->PauseChannel(inGameMusicChannelID);
+            audioManager->pauseChannel(inGameMusicChannelID);
             // if on pause menu, play lobby music
-            audioManager->ResumeChannel(musicChannelID);
+            audioManager->resumeChannel(musicChannelID);
             // pause avalanche sounds in menus
-            audioManager->PauseChannel(avalancheChannelID);
+            audioManager->pauseChannel(avalancheChannelID);
 
             // swap buffer
             this->endFrame();
@@ -509,9 +509,9 @@ void RacingGame::run()
             }
 
             // if NOT in game, don't play in-game music
-            audioManager->PauseChannel(inGameMusicChannelID);
+            audioManager->pauseChannel(inGameMusicChannelID);
             // pause avalanche sounds in menus
-            audioManager->PauseChannel(avalancheChannelID);
+            audioManager->pauseChannel(avalancheChannelID);
 
             // swap buffer
             this->endFrame();
@@ -519,7 +519,7 @@ void RacingGame::run()
     }
     logger::info("Shutting down systems...");
     // shut down audio engine
-    audioManager->Shutdown();
+    audioManager->shutdown();
 }
 
 void RacingGame::updateImGui() {

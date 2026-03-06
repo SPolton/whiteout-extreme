@@ -26,7 +26,7 @@ struct Implementation {
     Implementation();
     ~Implementation();
 
-    void Update();
+    void update();
 
     FMOD::Studio::System* mpStudioSystem;
     FMOD::System* mpSystem;
@@ -51,34 +51,23 @@ struct Implementation {
 */
 class AudioEngine {
 public:
-    static void Init();
-    static void Update();
-    static void Shutdown();
-    static int ErrorCheck(FMOD_RESULT result);
+    static void init();
+    static void update();
+    static void shutdown();
+    static int errorCheck(FMOD_RESULT result);
 
-    void LoadSound(const string& strSoundName, bool b3d = true, bool bLooping = false, bool bStream = false);
-    void UnLoadSound(const string& strSoundName);
-    int PlaySounds(const string& strSoundName, const Vector3& vPos = Vector3{ 0, 0, 0 }, float fVolumeDB = 0.0f);
-    void PauseChannel(int nChannelId);
-    void ResumeChannel(int nChannelId);
-    void SetChannel3dPosition(int nChannelId, const Vector3& vPos);
-    void Set3dListenerAndOrientation(const Vector3& vPos = Vector3{ 0, 0, 0 }, float fVolumeDB = 0.0f);
-    void SetChannelVolume(int nChannelId, float fVolumeDB);
+    void loadSound(const string& strSoundName, bool b3d = true, bool bLooping = false, bool bStream = false);
+    void unLoadSound(const string& strSoundName);
+    int playSounds(const string& strSoundName, const Vector3& vPos = Vector3{ 0, 0, 0 }, float fVolumeDB = 0.0f);
+    void pauseChannel(int nChannelId);
+    void resumeChannel(int nChannelId);
+    void setChannel3dPosition(int nChannelId, const Vector3& vPos);
+    void set3dListenerAndOrientation(const Vector3& vPos = Vector3{ 0, 0, 0 }, float fVolumeDB = 0.0f);
+    void setChannelVolume(int nChannelId, float fVolumeDB);
     float dbToVolume(float dB);
-    float VolumeTodB(float volume);
-    FMOD_VECTOR VectorToFmod(const Vector3& vPos);
+    float volumeToDB(float volume);
+    FMOD_VECTOR vectorToFmod(const Vector3& vPos);
 
-    // not used?
-    void StopChannel(int nChannelId);
-    bool IsPlaying(int nChannelId) const;
-    void LoadBank(const string& strBankName, FMOD_STUDIO_LOAD_BANK_FLAGS flags);
-    void LoadEvent(const string& strEventName);
-    void PlayEvent(const string& strEventName);
-    void StopEvent(const string& strEventName, bool bImmediate = false);
-    void GetEventParameter(const string& strEventName, const string& strEventParameter, float* parameter);
-    void SetEventParameter(const string& strEventName, const string& strParameterName, float fValue);
-    void StopAllChannels();
-    bool IsEventPlaying(const string& strEventName) const;
 };
 
 #endif

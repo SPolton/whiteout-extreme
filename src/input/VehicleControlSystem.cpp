@@ -208,7 +208,7 @@ void VehicleControlSystem::throwSnowball()
     if (!renderingSystem->isTurnTableCamera()) return;
 
     // play sound of throwing snowball
-    audioManager->PlaySounds("assets/audio/snowball-hit-01.mp3", { 0,0,0 }, -1.0f);
+    audioManager->playSounds("assets/audio/snowball-hit-01.mp3", { 0,0,0 }, -1.0f);
     logger::info("Throwing snowball...");
 
     // 2. Retrieve Player Transform
@@ -256,7 +256,7 @@ void VehicleControlSystem::throwSnowball()
 void VehicleControlSystem::loadVehicleSounds()
 {
     // for acceleration
-    audioManager->LoadSound("assets/audio/snowmobiles-4-trimmed.mp3", false, true, true);
+    audioManager->loadSound("assets/audio/snowmobiles-4-trimmed.mp3", false, true, true);
     // for throwing snowball
-    audioManager->LoadSound("assets/audio/snowball-hit-01.mp3", false, false, false);
+    audioManager->loadSound("assets/audio/snowball-hit-01.mp3", false, false, false);
 }
