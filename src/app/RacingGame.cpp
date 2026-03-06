@@ -210,7 +210,7 @@ RacingGame::RacingGame()
     // Fix rotation and scale
     auto& vehicleTransform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
     vehicleTransform.rot = glm::angleAxis(glm::radians(0.0f), glm::vec3(0.f, 1.f, 0.f));
-    vehicleTransform.scale = glm::vec3(1.0f);  // Uniform scale instead of stretched box scale
+    vehicleTransform.scale = glm::vec3(2.0f);  // Doubled the vehicle size
 
     logger::info("Loaded snowmobile model for player vehicle");
 

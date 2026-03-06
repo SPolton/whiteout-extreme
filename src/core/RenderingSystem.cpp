@@ -581,7 +581,7 @@ glm::mat4 RenderingSystem::getProjectionMatrix() const
     
     // Perspective projection for active camera
     // FOV is already in radians, no conversion needed
-    return glm::perspective(activeCamera->getFOV(), aspectRatio, 0.1f, 900.0f);
+    return glm::perspective(activeCamera->getFOV(), aspectRatio, 0.1f, 5000.0f);
 }
 
 void RenderingSystem::update(float deltaTime)
