@@ -132,13 +132,13 @@ void Avalanche::adaptSpeed(float distanceToLastRacer, float deltaTime, float fir
         //float logFactor = std::log(distanceToLastRacer + 1.0f);
         //mSpeed = mBaseSpeed + (logFactor * 12.0f);
         mSpeed = mMaxSpeed;
-        logger::warn("3 force engulfing: first racer completion at{}", firstRacerCompletion);
+        logger::warn("Forcing engulfment of last racer: first racer completion at{}", firstRacerCompletion);
     }
     // Purchases the last racer
     else if (distanceToLastRacer > 14.f) {
         float logFactor = std::log(distanceToLastRacer + 1.0f);
         mSpeed = mBaseSpeed + (logFactor * 12.0f); // 12.0f arbitrary factor to adjust if desired
-        logger::error("1 out of range: distance to last racer at {}", distanceToLastRacer);
+        //logger::error("1 out of range: distance to last racer at {}", distanceToLastRacer);
 
         // Reset proximity timer when racer got out of proximity range
         // mCloseProximityTimer = std::max(0.0f, mCloseProximityTimer - deltaTime);
@@ -148,12 +148,12 @@ void Avalanche::adaptSpeed(float distanceToLastRacer, float deltaTime, float fir
     else if (distanceToLastRacer > 0.1f) {
         mSpeed = mBaseSpeed * 0.5f;
 
-        logger::error("2 in range: time in proximity for last racer at {}", mCloseProximityTimer);
+        //logger::error("2 in range: time in proximity for last racer at {}", mCloseProximityTimer);
         mCloseProximityTimer += deltaTime;
 
         // If players is close too long
         if (mCloseProximityTimer >= mDeathThresholdTime){
-            logger::warn("2 in range for too long > {} -> last racer will be engulfed", mDeathThresholdTime);
+            logger::warn("Last racer in proximity for too long > {} -> will be engulfed", mDeathThresholdTime);
             //mSpeed = mMaxSpeed; 
             float logFactor = std::log(distanceToLastRacer + 1.0f);
             mSpeed = mBaseSpeed + (logFactor * 12.0f);

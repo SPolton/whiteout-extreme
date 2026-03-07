@@ -135,7 +135,7 @@ void RacingSystem::update(float deltaTime)
             float segmentLen = avalanche->gate->prevGate->laneLength;
             float lengthOnSegment = 10.0f + glm::length(avalanchePos - avalanche->gate->prevGate->position);
             avalanche->raceCompletion = (avalanche->gate->prevGate->raceLength + lengthOnSegment) / totalRaceLength;
-            logger::error("avalanche race completion at {}", avalanche->raceCompletion);
+            //logger::error("avalanche race completion at {}", avalanche->raceCompletion);
 
             float progress = lengthOnSegment / segmentLen;
             progress = glm::clamp(progress, 0.0f, 1.0f);
@@ -171,7 +171,7 @@ void RacingSystem::update(float deltaTime)
         float distanceToLastRacer = (lastRacer.raceCompletion - avalanche->raceCompletion) * this->totalRaceLength; //* 100.f * percentagePerUnit;
         //float avalancheRaceLength = avalanche->raceCompletion * 100.f * percentagePerUnit;
         //float distanceToLastRacer = lastRacerRaceLength - avalancheRaceLength;
-        logger::info("distanceToLastRacer: {}", distanceToLastRacer);
+        //logger::info("distanceToLastRacer: {}", distanceToLastRacer);
 
         avalanche->adaptSpeed(distanceToLastRacer, deltaTime, firstRacerCompletion, percentageToEngulfLastStandingRacer);
     }

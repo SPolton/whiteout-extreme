@@ -228,7 +228,6 @@ void VehicleControlSystem::throwSnowball()
     std::cout << "{" << vehicleTransform.pos.x << ", "
         << vehicleTransform.pos.y << ", "
         << vehicleTransform.pos.z << "}" << std::endl;
-    vehicleComponent.snowBallCooldown = 0.5f;
 
     // 1. Safety Check: Ensure the player entity is valid
     if (!gCoordinator.HasComponent<VehicleComponent>(playerVehicleEntity)) return;
@@ -246,7 +245,6 @@ void VehicleControlSystem::throwSnowball()
 
     // 2. Retrieve Player Transform
     // auto& vehicleTransform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
-    logger::info("{{}, {}, {}}", vehicleTransform.pos.x, vehicleTransform.pos.y, vehicleTransform.pos.z);
 
     // Calculate the Forward direction based on the vehicle's current rotation
     // In many coordinate systems, (0, 0, 1) is the local forward axis
@@ -264,7 +262,7 @@ void VehicleControlSystem::throwSnowball()
     ballTrans.rot = vehicleTransform.rot; // Align snowball orientation with the car
 
     // 4. Setup Physics
-    float snowballRadius = 0.2f;
+    float snowballRadius = 0.5f;
     ballTrans.scale = glm::vec3(snowballRadius);
 
     // Create the RigidBody and add it to the ECS
@@ -273,7 +271,7 @@ void VehicleControlSystem::throwSnowball()
     // 5. Apply Initial Velocity
     physx::PxRigidDynamic* dynamicActor = gCoordinator.GetComponent<RigidBody>(snowball).actor->is<physx::PxRigidDynamic>();
     if (dynamicActor) {
-        float launchSpeed = 30.f; // Meters per second
+        float launchSpeed = 90.f; // Meters per second
         glm::vec3 velocity = forward * launchSpeed;
 
         // Enable CCD (Continuous Collision Detection)
@@ -281,9 +279,9 @@ void VehicleControlSystem::throwSnowball()
 
         // Pass the velocity vector to PhysX
         dynamicActor->setLinearVelocity(physx::PxVec3(velocity.x, velocity.y, velocity.z));
-        dynamicActor->setMass(dynamicActor->getMass() * 1000);
+        dynamicActor->setMass(dynamicActor->getMass() * 25);
     }
-    vehicleComponent.snowBallCooldown = 0.5f;
+    vehicleComponent.snowBallCooldown = 3.0f;
 }
 
 // load basic vehicle sounds

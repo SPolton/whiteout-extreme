@@ -234,7 +234,7 @@ Entity PhysicsSystem::createAvalancheEntity(const glm::vec3& startPos, float ini
         //.depth = 40.0f,
         //.width = 28.0f, for flat track demo
         .width = 120.0f,
-        .height = 3.0f,
+        .height = 5.0f,
         .depth = 20.0f,
         .physics = mPhysics,
         .scene = mScene,
