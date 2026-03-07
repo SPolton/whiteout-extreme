@@ -17,10 +17,12 @@ PhysicsSystem::PhysicsSystem()
 PhysicsSystem::~PhysicsSystem()
 {
     // Clean up vehicle system first
+    /*
     if (mVehicleSystem) {
         delete mVehicleSystem;
         mVehicleSystem = nullptr;
     }
+    */
     //cleanupGroundPlane();
     cleanupPhysX();
 }
@@ -139,24 +141,15 @@ void PhysicsSystem::update(float deltaTime)
     // PRE-SIMULATION PHASE: Update physics-related components before stepping the simulation
     for (auto const& entity : mEntities) {
         if (gCoordinator.HasComponent<VehicleComponent>(entity)) {
-            auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(entity);
-            if (vehicle.instance) {
-                vehicle.instance->stepPhysics(deltaTime);
+            auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(entity).instance;
+            if (vehicle) {
+                vehicle->stepPhysics(deltaTime);
             }
         }
         if (gCoordinator.HasComponent<AvalancheComponent>(entity)) {
-            auto& avalancheComp = gCoordinator.GetComponent<AvalancheComponent>(entity);
-
-            if (avalancheComp.instance && avalancheComp.instance->mIsActive) {
-                // Collect player positions for avalanche
-                std::vector<glm::vec3> playerPositions;
-                for (auto const& playerEntity : mEntities) {
-                    if (gCoordinator.HasComponent<VehicleComponent>(playerEntity)) {
-                        const auto& transform = gCoordinator.GetComponent<PhysxTransform>(playerEntity);
-                        playerPositions.push_back(transform.pos);
-                    }
-                }
-                avalancheComp.instance->update(deltaTime, playerPositions);
+            auto& avalanche = gCoordinator.GetComponent<AvalancheComponent>(entity).instance;
+            if (avalanche && avalanche->mIsActive) {
+                avalanche->stepPhysics(deltaTime);
             }
         }
     }
@@ -185,11 +178,11 @@ void PhysicsSystem::update(float deltaTime)
     }
 }
 
-Entity PhysicsSystem::createVehicleEntity()
+Entity PhysicsSystem::createVehicleEntity(const char* name, physx::PxVec3 spawnPos)
 {
     // Create the Player Vehicle Entity
     VehicleFourWheelDrive::ConstructData vehicleData{
-        .vehicleName = "VehiclePlayer1",
+        .vehicleName = name,
         .vehicleDataPath = "assets/vehicledata",
         .gravity = mGravity,
         .physics = mPhysics,
@@ -198,7 +191,7 @@ Entity PhysicsSystem::createVehicleEntity()
     };
 
     // Create the vehicle instance
-    mVehicleSystem = new VehicleFourWheelDrive(vehicleData);
+    auto* newVehicleSystem = new VehicleFourWheelDrive(vehicleData);
 
     // 1. Create a new entity for the vehicle
     Entity vehicleEntity = gCoordinator.CreateEntity();
@@ -206,20 +199,20 @@ Entity PhysicsSystem::createVehicleEntity()
     // 2. Add necessary components to the vehicle entity
     // Transform
     gCoordinator.AddComponent(vehicleEntity, PhysxTransform{
-        glm::vec3(-730.0f, 670.4f, -400.0f),                // Position
+        glm::vec3(spawnPos.x, spawnPos.y, spawnPos.z),                // Position
         glm::quat(1.f, 0.f, 0.f, 0.f),           // Identity rotation
         glm::vec3(1.65f, 1.4f, 3.75f)            // Scale
         });
 
     // RigidBody (using the chassis actor from the vehicle)
-    gCoordinator.AddComponent(vehicleEntity, RigidBody{ mVehicleSystem->getRigidActor() });
+    gCoordinator.AddComponent(vehicleEntity, RigidBody{ newVehicleSystem->getRigidActor() });
 
     // Set the actual PhysX actor position to match
-    PxTransform pxTransform(PxVec3(-730.0f, 670.4f, -400.0f));
-    mVehicleSystem->getRigidActor()->setGlobalPose(pxTransform);
+    PxTransform pxTransform(spawnPos);
+    newVehicleSystem->getRigidActor()->setGlobalPose(pxTransform);
 
     // VehicleComponent (store the vehicle instance for later updates and access)
-    gCoordinator.AddComponent(vehicleEntity, VehicleComponent{ .instance = mVehicleSystem });
+    gCoordinator.AddComponent(vehicleEntity, VehicleComponent{ .instance = newVehicleSystem });
 
     logger::info("Vehicle entity created with ID: {}", vehicleEntity);
 
@@ -236,9 +229,13 @@ Entity PhysicsSystem::createAvalancheEntity(const glm::vec3& startPos, float ini
         .initialSpeed = initialSpeed,
         .baseSpeed = 15.0f,
         .maxSpeed = 50.0f,
-        .width = 150.0f,
-        .height = 30.0f,
-        .depth = 40.0f,
+        //.width = 150.0f,
+        //.height = 30.0f,
+        //.depth = 40.0f,
+        //.width = 28.0f, for flat track demo
+        .width = 120.0f,
+        .height = 5.0f,
+        .depth = 20.0f,
         .physics = mPhysics,
         .scene = mScene,
         .material = mMaterial
@@ -371,7 +368,7 @@ RigidBody PhysicsSystem::createRigidBodyFromMesh(Entity entity)
     indices.reserve(totalIndices);
     
     for (const auto& mesh : meshes) {
-        unsigned int indexOffset = vertices.size();
+        size_t indexOffset = vertices.size();
 
         // Add vertices with scale applied
         for (const auto& vertex : mesh.vertices) {
@@ -384,7 +381,7 @@ RigidBody PhysicsSystem::createRigidBodyFromMesh(Entity entity)
 
         // Add indices with offset
         for (unsigned int idx : mesh.indices) {
-            indices.push_back(indexOffset + idx);
+            indices.push_back(static_cast<unsigned int>(indexOffset) + idx);
         }
     }
 
@@ -392,11 +389,11 @@ RigidBody PhysicsSystem::createRigidBodyFromMesh(Entity entity)
 
     // Create PhysX triangle mesh
     PxTriangleMeshDesc meshDesc;
-    meshDesc.points.count = vertices.size();
+    meshDesc.points.count = static_cast<PxU32>(vertices.size());
     meshDesc.points.stride = sizeof(PxVec3);
     meshDesc.points.data = vertices.data();
 
-    meshDesc.triangles.count = indices.size() / 3;
+    meshDesc.triangles.count = static_cast<PxU32>(indices.size() / 3);
     meshDesc.triangles.stride = 3 * sizeof(PxU32);
     meshDesc.triangles.data = indices.data();
 

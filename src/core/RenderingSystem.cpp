@@ -268,6 +268,52 @@ Entity RenderingSystem::createGroundPlaneEntity(const std::string& texturePath, 
     return groundPlane;
 }
 
+Entity RenderingSystem::createGateEntity(const glm::vec3& pos, const glm::vec3& direction, float width, const std::string& texturePath)
+{
+    Entity gate = gCoordinator.CreateEntity();
+
+    // 1. Calculate Rotation using LookAt
+    // We create a view matrix looking from the origin (0,0,0) towards our direction.
+    // The 'direction' vector represents where the gate's Z-axis (Forward) should point.
+    glm::vec3 up(0.f, 1.f, 0.f);
+
+    // LookAt creates a VIEW matrix. To get the WORLD orientation of the object,
+    // we take the inverse (or conjugate for quaternions) of the lookAt rotation.
+    glm::mat4 lookAtMatrix = glm::lookAt(glm::vec3(0.0f), direction, up);
+
+    // Convert the rotation part of the LookAt matrix to a quaternion.
+    // We conjugate because LookAt defines how the world rotates around the camera,
+    // whereas we want to define how the gate rotates in the world.
+    glm::quat rotation = glm::conjugate(glm::quat_cast(lookAtMatrix));
+
+    // 2. Add PhysxTransform Component
+    // Scale X by width to create the "line" across the track.
+    // Y and Z are kept thin to represent a ground strip.
+    gCoordinator.AddComponent(
+        gate,
+        PhysxTransform{
+            pos,
+            rotation,
+            glm::vec3(width, 0.1f, 0.1f)
+        }
+    );
+
+    // 3. Add Renderable Component
+    gCoordinator.AddComponent(
+        gate,
+        Renderable{
+            .geometry = assetManager.loadGeometry("cube", ShapeGenerator::cube()),
+            .cpuData = assetManager.getCPUGeometry("cube"),
+            .shader = assetManager.loadShader("textured"),
+            .texture = assetManager.loadTexture(texturePath, GL_LINEAR)
+        }
+    );
+
+    logger::info("Gate visual entity created at ({}, {}, {}) using LookAt orientation", pos.x, pos.y, pos.z);
+
+    return gate;
+}
+
 //Create Entity and add PhysxTransform and Renderable Components
 Entity RenderingSystem::createSphereEntity(const std::string& texturePath)
 {
@@ -449,6 +495,15 @@ void RenderingSystem::render()
             if (modelRenderable.modelLoader && modelRenderable.shader) {
                 modelRenderable.shader->use();
 
+                // --- COMPUTE NEW MATRIX WITH OFFSET FOR SNOWMOBILES ---
+                glm::vec3 offsetInWorldSpace = transform.rot * modelRenderable.visualOffsetPos;
+
+                glm::mat4 correctedModelMatrix =
+                    glm::translate(glm::mat4(1.0f), transform.pos + offsetInWorldSpace)
+                    * glm::toMat4(transform.rot)
+                    * glm::scale(glm::mat4(1.0f), transform.scale);
+                // ------------------------------------------
+
                 // Set up view and projection matrices
                 glUniformMatrix4fv(
                     glGetUniformLocation(*modelRenderable.shader, "view"),
@@ -463,7 +518,7 @@ void RenderingSystem::render()
                 // Set model matrix using the entity's transform
                 glUniformMatrix4fv(
                     glGetUniformLocation(*modelRenderable.shader, "model"),
-                    1, GL_FALSE, &modelMatrix[0][0]
+                    1, GL_FALSE, &correctedModelMatrix[0][0]
                 );
 
                 // Set lighting uniforms for the model shader
