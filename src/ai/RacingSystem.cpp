@@ -266,9 +266,10 @@ void RacingSystem::restart() {
 
         // 2. Compute Start position
         float spread = startGate.width * 0.5f;
+        float laneSafetyFactor = 0.7f;
         float offsetMultiplier = (totalEntities > 1)
-            ? (float)index / (totalEntities - 1) - 0.5f
-            : 0.0f;
+            ? ((float)index / (totalEntities - 1) - 0.5f) * laneSafetyFactor
+            : 0.0f; //15%, 50% and 85%
 
         racer.targetPercLane = offsetMultiplier + 0.5f;
         logger::info("targetperlane: {0}", racer.targetPercLane);
