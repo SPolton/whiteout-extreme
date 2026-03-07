@@ -30,6 +30,7 @@ void RacingSystem::update(float deltaTime)
     for (auto const& entity : mEntities) {
         auto& racer = gCoordinator.GetComponent<Racer>(entity);
         auto& racerTransf = gCoordinator.GetComponent<PhysxTransform>(entity);
+        auto& racerVehicle = gCoordinator.GetComponent<VehicleComponent>(entity);
 
         if (!racer.targetGate) {
             racer.raceCompletion = 1.0f;
@@ -46,6 +47,13 @@ void RacingSystem::update(float deltaTime)
         if(!racer.engulfed) checkRacerEngulfment(racer, racerTransf);
         if (racer.engulfed) {
             continue;
+        }
+
+        auto verticalVelocity = racerVehicle.instance->getRigidActor()->is<physx::PxRigidBody>()->getLinearVelocity().y;
+        if (verticalVelocity < -25.0f) {
+            racer.engulfed = true;
+            continue;
+            logger::warn("Racer #{} fell off the cliff!", racer.currentRank);
         }
         
         float distTarget = getDistanceToGateLine(racerTransf.pos, *racer.targetGate);

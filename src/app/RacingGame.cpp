@@ -125,6 +125,7 @@ RacingGame::RacingGame()
     );
     {
         Signature signature;
+        signature.set(gCoordinator.GetComponentType<VehicleComponent>());
         signature.set(gCoordinator.GetComponentType<Racer>());
         signature.set(gCoordinator.GetComponentType<PhysxTransform>());
         gCoordinator.SetSystemSignature<RacingSystem>(signature);
