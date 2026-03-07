@@ -326,6 +326,9 @@ void RacingGame::run()
 
         // check for entering game
         if (actionButtons == MenuAction::StartGame || actionButtons == MenuAction::ResumeGame) {
+            if (actionButtons == MenuAction::StartGame) {
+                racingSystem->restart();
+            }
             // play in game music
             audioManager->resumeChannel(inGameMusicChannelID);
             gameState = GameState::InGame;

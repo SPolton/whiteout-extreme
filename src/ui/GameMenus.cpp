@@ -59,6 +59,11 @@ MenuAction GameMenus::pollInputs() {
                 audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
                 return MenuAction::ResumeGame;
             }
+            else if (gameState == GameState::GameOver) {
+                // play UI button clicked sound
+                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                return MenuAction::GoToMainMenu;
+            }
         }
         // B button to go back from pause to main menu
         else if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_B)) {
@@ -98,6 +103,11 @@ MenuAction GameMenus::pollInputs() {
             return MenuAction::StartGame;
         }
         else if (gameState == GameState::Pause) {
+            // play UI button clicked sound
+            audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+            return MenuAction::GoToMainMenu;
+        }
+        else if (gameState == GameState::GameOver) {
             // play UI button clicked sound
             audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
             return MenuAction::GoToMainMenu;
