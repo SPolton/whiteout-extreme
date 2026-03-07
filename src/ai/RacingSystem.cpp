@@ -133,7 +133,7 @@ void RacingSystem::update(float deltaTime)
         else {
             // 1. Compute progression in current lane
             float segmentLen = avalanche->gate->prevGate->laneLength;
-            float lengthOnSegment = 5.0f + glm::length(avalanchePos - avalanche->gate->prevGate->position);
+            float lengthOnSegment = 10.0f + glm::length(avalanchePos - avalanche->gate->prevGate->position);
             avalanche->raceCompletion = (avalanche->gate->prevGate->raceLength + lengthOnSegment) / totalRaceLength;
             logger::error("avalanche race completion at {}", avalanche->raceCompletion);
 

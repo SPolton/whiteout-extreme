@@ -135,7 +135,7 @@ void Avalanche::adaptSpeed(float distanceToLastRacer, float deltaTime, float fir
         logger::warn("3 force engulfing: first racer completion at{}", firstRacerCompletion);
     }
     // Purchases the last racer
-    else if (distanceToLastRacer > 9.f) {
+    else if (distanceToLastRacer > 14.f) {
         float logFactor = std::log(distanceToLastRacer + 1.0f);
         mSpeed = mBaseSpeed + (logFactor * 12.0f); // 12.0f arbitrary factor to adjust if desired
         logger::error("1 out of range: distance to last racer at {}", distanceToLastRacer);
