@@ -11,6 +11,7 @@ Survival Racing Game
 - **CMake 3.20+**
 - **Visual Studio 2022** (recommended) or compatible C++20 compiler
 - **PhysX SDK 5.6.1** (Omniverse PhysX 107.3)
+- **FMOD Engine 2.03.12**
 
 ### Building the Project
 
@@ -56,6 +57,15 @@ Follow these steps to set up NVIDIA PhysX for physics simulation:
     physx/bin/win.x86_64.vc143.mt/checked/
     ```
 
+### Setting Up FMOD
+
+Follow these steps to set up FMOD for audio integration:
+
+1. Download [FMOD Engine 2.x](https://www.fmod.com/download#fmodengine) (Requires free account).
+2. Run the `exe` to install
+3. Find the FMOD install location and navigate to the `api` folder.
+4. Copy the `api` folder and place in the `libraries/fmod/api` directory of this project.
+
 ### Dependencies
 
 Most dependencies are automatically fetched by CMake:
@@ -65,6 +75,7 @@ Most dependencies are automatically fetched by CMake:
 - **Freetype 2.14.1** - Font rendering library (fetched automatically)
 - **ImGui 1.92.5** - UI library (fetched automatically)
 - **PhysX 5.6.1** - Physics engine (manual setup required)
+- **FMOD Engine 2.03.12** - Audio engine (manual setup required)
 
 ### Contributing
 
