@@ -72,5 +72,5 @@ private:
     int engineChannelID;
     bool enginePlaying = false;
     // avalanche range
-    float maxAudibleDistance = 200.f;
+    float maxAudibleDistance = 300.f;
 };

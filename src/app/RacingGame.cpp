@@ -365,38 +365,17 @@ void RacingGame::run()
             }
 
             // get the positions of the avalanche and the player
-            glm::vec3 avalanchePos = gCoordinator.GetComponent<PhysxTransform>(avalancheEntity).pos;
+            glm::vec3 avalanchePos = gCoordinator.GetComponent<PhysxTransform>(AvalancheEntity).pos;
             glm::vec3 playerPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
             // calculate the distance between them
             float distance = glm::length(avalanchePos - playerPos);
 
             // use that distance against the maxAudible distance. multiply by a quiet value so that it increases in sound
-            float volumeInDB = std::clamp(distance / maxAudibleDistance, 0.0f, 1.0f) * -15.f; // need to clamp value between 0 and 1 to act as a percentage
-            // set volume of avalanche based on distance
-            audioManager->setChannelVolume(avalancheChannelID, volumeInDB);
+            float distanceRatio = std::clamp(distance / (maxAudibleDistance), 0.0f, 1.0f);
+            float volumeInDB = distanceRatio * -60.0f; //-60db is standard silence
+            float masterVolumeOffset = -5.0f;
+            volumeInDB += masterVolumeOffset;
 
-            // get velocity of the vehicle
-            float speed = glm::length(gCoordinator.GetComponent<RigidBody>(playerVehicleEntity).linearVelocity);
-
-            // if speed is more than 1, that means vehicle is moving, play the engine sound
-            if (speed > 1.0f && !enginePlaying) {
-                engineChannelID = audioManager->playSounds("assets/audio/snowmobiles-4-trimmed.mp3", { 0,0,0 }, -15.0f);
-                enginePlaying = true;
-            }
-            else if (speed <= 1.0f && enginePlaying) {
-                // otherwise vehicle is not considered moving, pause the channel that plays the engine sound
-                audioManager->pauseChannel(engineChannelID);
-                enginePlaying = false;
-            }
-
-            // get the positions of the avalanche and the player
-            glm::vec3 avalanchePos = gCoordinator.GetComponent<PhysxTransform>(avalancheEntity).pos;
-            glm::vec3 playerPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
-            // calculate the distance between them
-            float distance = glm::length(avalanchePos - playerPos);
-
-            // use that distance against the maxAudible distance. multiply by a quiet value so that it increases in sound
-            float volumeInDB = std::clamp(distance / maxAudibleDistance, 0.0f, 1.0f) * -15.f; // need to clamp value between 0 and 1 to act as a percentage
             // set volume of avalanche based on distance
             audioManager->setChannelVolume(avalancheChannelID, volumeInDB);
 
