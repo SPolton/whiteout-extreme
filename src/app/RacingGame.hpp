@@ -52,6 +52,7 @@ private:
     GameState gameState = GameState::MainMenu;
 
     //Entity playerVehicleEntity;
+    Entity GroundPlane = 0;
     Entity MapModel = 0;
     Entity Skybox = 0;
     Entity Waypoint = 0;

@@ -49,7 +49,7 @@ void AISystem::update(float deltaTime)
 
         // 4. Movement and Braking Logic
         float currentSpeed = aiVehicle.speed();
-        float maxThrottle = 0.7f; // On autorise le 100% pour les relances
+        float maxThrottle = 0.7f; 
         float angleDeg = glm::degrees(angle);
 
         if (aiVehicle.forwardGearDesired) {
@@ -81,7 +81,7 @@ void AISystem::update(float deltaTime)
 
         if (aiVehicle.forwardGearDesired) {
             // Racing Forward:
-            // If angle > 50°
+            // If angle > 50 
             if (angle > glm::radians(70.f)) {
                 // FLAG1: Sharp turn or orientation error
 
@@ -98,7 +98,7 @@ void AISystem::update(float deltaTime)
                     aiVehicle.brake = glm::clamp(angle * 0.6f, 0.3f, 0.8f);
                 }
             }
-            // If angle <= 50°
+            // If angle <= 50
             else {
                 // FLAG2: Straight line / Correct orientation
                 aiVehicle.brake = 0.0f;

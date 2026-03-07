@@ -166,32 +166,8 @@ RacingGame::RacingGame()
     logger::info("Created Skybox entity");
 
     // Create infinite ground plane with repeating snow texture
-    Entity groundPlane = renderingSystem->createGroundPlaneEntity("assets/textures/snowball.png", 0);
+    GroundPlane = renderingSystem->createGroundPlaneEntity("assets/textures/snowball.png", 0);
     logger::info("Created ground plane entity");
-
-    /*
-    // Note:
-    // The createSphereEntity() method calls:
-    //      - gCoordinator.AddComponent(sphere,PhysxTransform{...});
-    //      - gCoordinator.AddComponent(sphere,Renderable{...});
-    // Same components signature as RenderingSystem, so will be added to that system's entity list.
-
-    // Create Earth sphere entity
-    Earth = renderingSystem->createSphereEntity("assets/textures/2k_earth_daymap.jpg");
-    logger::info("Created Earth sphere entity");
-    
-    // Create Mars sphere entity
-    Mars = renderingSystem->createSphereEntity("assets/textures/2k_mars.jpg");
-    logger::info("Created Mars sphere entity");
-    
-    // Create Woody model entity (separate from Earth and Mars)
-    WoodyModel = renderingSystem->createModelEntity("assets/obj/woody.obj");
-    logger::info("Created Woody model entity");
-    
-    // Create Backpack model entity to test shading maps
-    BackpackModel = renderingSystem->createModelEntity("assets/obj/backpack/backpack.obj");
-    logger::info("Created Backpack model entity");
-    */
 
     // Create Map model entity
     MapModel = renderingSystem->createModelEntity("assets/obj/map/map.obj");
@@ -258,31 +234,6 @@ RacingGame::RacingGame()
 
     racingSystem->init(Avalanche);
     logger::info("Loaded gates and avalanche for the race");
-
-    /*
-    // Position Earth at the origin
-    gCoordinator.GetComponent<PhysxTransform>(Earth).pos = glm::vec3(0.0f, 0.0f, 0.0f);
-    gCoordinator.GetComponent<PhysxTransform>(Earth).scale = glm::vec3(1.0f);
-    // Earth keeps the default earth texture
-    
-    // Position Mars to the side
-    gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(1.3f, 0.7f, 0.7f); // Move Mars slightly
-    gCoordinator.GetComponent<PhysxTransform>(Mars).scale = glm::vec3(0.4f); // Scale down Mars
-    gCoordinator.GetComponent<PhysxTransform>(Mars).rot = glm::angleAxis(glm::radians(23.5f), glm::vec3(0.f, 0.f, 1.f)); // Tilt Mars
-    
-    // Position Woody model on the other side
-    if (WoodyModel != 0) { // Check if model was successfully created
-        gCoordinator.GetComponent<PhysxTransform>(WoodyModel).pos = glm::vec3(-3.0f, 0.0f, -2.0f);
-        gCoordinator.GetComponent<PhysxTransform>(WoodyModel).scale = glm::vec3(0.01f); // Scale down (This OBJ model is large)
-        // Model uses its own embedded textures
-    }
-    
-    // Position Backpack model to test shading maps
-    if (BackpackModel != 0) { // Check if model was successfully created
-        gCoordinator.GetComponent<PhysxTransform>(BackpackModel).pos = glm::vec3(3.0f, 0.0f, -10.0f);
-        // Model will use its material/texture maps from the .mtl file
-    }
-    */
 
     ///---- END OF ECS SETUP ----///
 
@@ -485,7 +436,7 @@ void RacingGame::run()
             // --- Input Controls Info (Top Right) ---
             float controlX = centerX * 1.4f;
             glm::vec3 controlsColor{ 0.35f, 0.55f, 0.10f };
-            float contolsSize{ 0.55 };
+            float contolsSize{ 0.55f };
             float controlsOffset{28.f};
             float offset{ 0.f };
             textSystem->renderText("CONTROLS", { controlX, topY, 0.75f }, { 0.55f, 0.8f, 0.15f });

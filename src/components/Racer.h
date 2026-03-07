@@ -53,8 +53,6 @@ struct Racer {
         if (!targetGate || !lastGate) return (lastGate) ? lastGate->position : glm::vec3(0.0f);
 
         // 1. Start from current pos on lane
-        float remainingInLane = lastGate->laneLength - lengthOnLane;
-    
         const Gate* currentIter = lastGate;
         float distToOffset = lengthOnLane + lookAheadDistance;
 

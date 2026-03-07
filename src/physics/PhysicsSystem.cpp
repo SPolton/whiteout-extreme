@@ -368,7 +368,7 @@ RigidBody PhysicsSystem::createRigidBodyFromMesh(Entity entity)
     indices.reserve(totalIndices);
     
     for (const auto& mesh : meshes) {
-        unsigned int indexOffset = vertices.size();
+        size_t indexOffset = vertices.size();
 
         // Add vertices with scale applied
         for (const auto& vertex : mesh.vertices) {
@@ -381,7 +381,7 @@ RigidBody PhysicsSystem::createRigidBodyFromMesh(Entity entity)
 
         // Add indices with offset
         for (unsigned int idx : mesh.indices) {
-            indices.push_back(indexOffset + idx);
+            indices.push_back(static_cast<unsigned int>(indexOffset) + idx);
         }
     }
 
@@ -389,11 +389,11 @@ RigidBody PhysicsSystem::createRigidBodyFromMesh(Entity entity)
 
     // Create PhysX triangle mesh
     PxTriangleMeshDesc meshDesc;
-    meshDesc.points.count = vertices.size();
+    meshDesc.points.count = static_cast<PxU32>(vertices.size());
     meshDesc.points.stride = sizeof(PxVec3);
     meshDesc.points.data = vertices.data();
 
-    meshDesc.triangles.count = indices.size() / 3;
+    meshDesc.triangles.count = static_cast<PxU32>(indices.size() / 3);
     meshDesc.triangles.stride = 3 * sizeof(PxU32);
     meshDesc.triangles.data = indices.data();
 

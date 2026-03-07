@@ -52,8 +52,8 @@ void RacingSystem::update(float deltaTime)
         auto verticalVelocity = racerVehicle.instance->getRigidActor()->is<physx::PxRigidBody>()->getLinearVelocity().y;
         if (verticalVelocity < -25.0f) {
             racer.engulfed = true;
-            continue;
             logger::warn("Racer #{} fell off the cliff!", racer.currentRank);
+            continue;
         }
         
         float distTarget = getDistanceToGateLine(racerTransf.pos, *racer.targetGate);
@@ -114,7 +114,7 @@ void RacingSystem::update(float deltaTime)
         glm::vec3 lastPosFlat{ avalanche->gate->prevGate->position.x, 0.0f, avalanche->gate->prevGate->position.z };
 
         float dotTarget = glm::dot(targetPosFlat - avPosFlat, avalanche->gate->direction);
-        float dotLast = glm::dot(lastPosFlat - avPosFlat, avalanche->gate->prevGate->direction);
+        //float dotLast = glm::dot(lastPosFlat - avPosFlat, avalanche->gate->prevGate->direction);
 
         // A. FORWARD : checks if avalanche reached next gate
         if (dotTarget < 0.0f) {
@@ -168,17 +168,11 @@ void RacingSystem::update(float deltaTime)
         float percentageToEngulfLastStandingRacer = NStandingRacers == 1? 1.0f:
             1.0f - 1.0f / ((NEngulfedRacers+1) * 2);
 
-        auto& lastRacerVehicle = gCoordinator.GetComponent<VehicleComponent>(lastRacerEntity);
         float firstRacerCompletion = gCoordinator.GetComponent<Racer>(firstRacerEntity).raceCompletion;
 
-        //auto& lastRacerTransf = gCoordinator.GetComponent<PhysxTransform>(lastRacerEntity);
-        //float distanceToLastRacer = glm::length(lastRacerTransf.pos - avalanchePos);
         auto& lastRacer = gCoordinator.GetComponent<Racer>(lastRacerEntity);
 
-        //float percentagePerUnit = this->totalRaceLength / 100.f;
         float distanceToLastRacer = (lastRacer.raceCompletion - avalanche->raceCompletion) * this->totalRaceLength; //* 100.f * percentagePerUnit;
-        //float avalancheRaceLength = avalanche->raceCompletion * 100.f * percentagePerUnit;
-        //float distanceToLastRacer = lastRacerRaceLength - avalancheRaceLength;
         //logger::info("distanceToLastRacer: {}", distanceToLastRacer);
 
         avalanche->adaptSpeed(distanceToLastRacer, deltaTime, firstRacerCompletion, percentageToEngulfLastStandingRacer);
@@ -187,7 +181,7 @@ void RacingSystem::update(float deltaTime)
 
 
 int RacingSystem::numberOfRacers() {
-    return leaderboard.size();
+    return static_cast<int>(leaderboard.size());
 }
 
 
@@ -252,7 +246,7 @@ void RacingSystem::restart() {
     auto& nextGate = gates.at(1);
 
     int index = 0;
-    int totalEntities = mEntities.size();
+    size_t totalEntities = mEntities.size();
 
     for (auto const& entity : mEntities) {
         auto& racer = gCoordinator.GetComponent<Racer>(entity);
@@ -408,8 +402,8 @@ void RacingSystem::checkRacerEngulfment(Racer& racer, PhysxTransform& racerTrans
     }
 }
 
-void RacingSystem::init(std::shared_ptr<Avalanche> avalanche) {
-    this->avalanche = avalanche;
+void RacingSystem::init(std::shared_ptr<Avalanche> avalanchePtr) {
+    this->avalanche = avalanchePtr;
     initGatesFromPoints();
     this->restart();
 }
