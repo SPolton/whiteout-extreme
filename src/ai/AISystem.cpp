@@ -46,6 +46,35 @@ void AISystem::update(float deltaTime)
         float steerDirection = (crossResult.y > 0.0f) ? 1.0f : -1.0f;
         aiVehicle.steer = glm::clamp(angle * steerDirection * 2.0f, -1.0f, 1.0f);
 
+
+        // 4. Movement and Braking Logic
+        float currentSpeed = aiVehicle.speed();
+        float maxThrottle = 0.7f; // On autorise le 100% pour les relances
+        float angleDeg = glm::degrees(angle);
+
+        if (aiVehicle.forwardGearDesired) {
+            if (angleDeg > 60.f) {
+                if (currentSpeed < 5.0f) { 
+                    aiVehicle.throttle = maxThrottle;
+                    aiVehicle.brake = 0.0f;
+                }
+                else {
+                    aiVehicle.throttle = 0.2f;
+                    aiVehicle.brake = 0.5f;
+                }
+            }
+            else if (angleDeg > 20.f) {
+                aiVehicle.brake = 0.0f;
+                float throttleFactor = glm::clamp(1.0f - (angleDeg / 60.0f), 0.4f, 1.0f);
+                aiVehicle.throttle = maxThrottle * throttleFactor;
+            }
+            else {
+                aiVehicle.brake = 0.0f;
+                aiVehicle.throttle = maxThrottle;
+            }
+        }
+
+        /*
         // 4. Movement and Braking Logic
         float currentSpeed = aiVehicle.speed();
         float maxThrottle = 0.7f;
@@ -53,7 +82,7 @@ void AISystem::update(float deltaTime)
         if (aiVehicle.forwardGearDesired) {
             // Racing Forward:
             // If angle > 50°
-            if (angle > glm::radians(50.f)) {
+            if (angle > glm::radians(70.f)) {
                 // FLAG1: Sharp turn or orientation error
 
                 if (currentSpeed < 1.5f) {
@@ -76,7 +105,7 @@ void AISystem::update(float deltaTime)
                 float speedFactor = 1.0f - glm::clamp(angle, 0.0f, 0.5f);
                 aiVehicle.throttle = maxThrottle * speedFactor;
             }
-        }
+        }*/
 
         // 5. Gear State Synchronization (Ensure PhysX gear matches intent)
         if (!aiVehicle.hasGearDesired()) {
