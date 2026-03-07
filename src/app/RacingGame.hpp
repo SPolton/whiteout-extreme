@@ -17,6 +17,7 @@
 
 #include <iostream>
 #include <memory>
+#include <format>
 
 class RacingGame {
 public:

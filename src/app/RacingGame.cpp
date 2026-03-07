@@ -432,19 +432,20 @@ void RacingGame::run()
             // --- Debug & System Info ---
             textSystem->renderText(
                 "Rendered Frames: " + std::to_string(gameTime.frameCount),
-                { marginX, topY - 50.f, 0.75f }, { 0.2f, 0.5f, 0.8f });
+                { marginX, topY - 20.f, 0.40f }, { 0.2f, 0.5f, 0.8f });
 
             textSystem->renderText(
                 "Physics Frames: " + std::to_string(gameTime.physicsFrameCount),
-                { marginX, topY - 100.f, 0.75f }, { 0.5f, 0.2f, 0.8f });
+                { marginX, topY - 40.f, 0.40f }, { 0.5f, 0.2f, 0.8f });
 
             textSystem->renderText(
                 "Game FPS: " + std::to_string(static_cast<int>(1.0f / gameTime.fpsF())),
-                { marginX, topY - 150.f, 00.75f }, { 0.8f, 0.8f, 0.2f });
+                { marginX, topY - 75.f, 0.75f }, { 0.9f, 0.9f, 0.4f });
 
             // --- Leaderboard Section ---
             float lbYStart = topY - 250.f;
-            textSystem->renderText("LEADERBOARD", { marginX, lbYStart, 0.85f }, { 0.35f, 0.25f, 0.5f });
+            textSystem->renderText("LEADERBOARD :", { marginX + 2.0f, lbYStart - 2.0f, 0.85f }, { 1.f, 1.f, 1.f });
+            textSystem->renderText("LEADERBOARD :", { marginX, lbYStart, 0.85f }, { 0.15f, 0.7f, 0.6f });
 
             for (size_t i = 0; i < racingSystem->leaderboard.size(); ++i) {
                 Entity e = racingSystem->leaderboard[i];
@@ -452,8 +453,7 @@ void RacingGame::run()
                 auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(e);
                 
                 // Color: Gold for Player (ID 0), White/Grey for AI
-                glm::vec3 color = racer.engulfed? glm::vec3(0.8f, 0.25f, 0.15f): (vehicle.playerID == 0) ? glm::vec3(1.0f, 0.8f, 0.0f) : glm::vec3(0.1f, 0.3f, 1.0f);
-
+                glm::vec3 color = racer.engulfed? glm::vec3(0.8f, 0.25f, 0.15f): (vehicle.playerID == 0) ? glm::vec3(1.0f, 0.8f, 0.0f) : glm::vec3(0.2f, 0.7f, 0.8f);
                 std::string name = (vehicle.playerID == 0) ? "PLAYER" : "AI_" + std::to_string(e);
                 std::string entry = std::to_string(i + 1) + ". " + name + (racer.engulfed? " X engulfed" : "") + ", at " + std::to_string(static_cast<int>(racer.raceCompletion * 100)) + "%";
 
@@ -465,19 +465,31 @@ void RacingGame::run()
                 textSystem->renderText(entry, { textX, textY, scale }, color);
             }
 
-            // --- Crosshair / Center UI ---
+            // -- Snowball throw --
             float centerX = screenHeight / 2.0f;
             float centerY = screenHeight / 2.0f;
+
+            float snowballX = centerX * 1.0f;
+            float snowballY = 100.f;
+            float snowBallCoolDownPlayer = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).snowBallCooldown;
+            textSystem->renderText("SNOWBALL" + (snowBallCoolDownPlayer > 0.f ? std::format(": {:.1f}", snowBallCoolDownPlayer) : " READY !"), {snowballX + 2.f, snowballY - 2.f, 1.0f}, {1.0f, 1.0f, 1.0f});
+            textSystem->renderText("SNOWBALL" + (snowBallCoolDownPlayer > 0.f ? std::format(": {:.1f}", snowBallCoolDownPlayer) : " READY !"), { snowballX, snowballY, 1.0f }, { 1.0f, 0.35f, 0.0f });
+
+            // --- Crosshair / Center UI ---
             textSystem->renderText("+", { centerX - 5.f, centerY - 5.f, 0.75f }, { 1.f, 1.f, 1.f });
 
             // --- Input Controls Info (Top Right) ---
-            float controlX = centerX * 1.2f;
-            textSystem->renderText("CONTROLS", { controlX, topY, 0.75f }, { 1.f, 1.f, 1.f });
-            textSystem->renderText("Drive: RT-LT / W-S", { controlX, topY - 50.f, 0.65f }, { 0.0f, 0.9f, 0.95f });
-            textSystem->renderText("Steer: L-Stick / A-D", { controlX, topY - 100.f, 0.65f }, { 0.0f, 0.9f, 0.95f });
-            textSystem->renderText("Boost: Y-Btn / SHIFT", { controlX, topY - 150.f, 0.65f }, { 0.0f, 0.9f, 0.95f });
-            textSystem->renderText("Shoot: X-Btn / SPACE", { controlX, topY - 200.f, 0.65f }, { 0.0f, 0.9f, 0.95f });
-            textSystem->renderText("Pause: Start / P", { controlX, topY - 250.f, 0.65f }, { 0.0f, 0.9f, 0.95f });
+            float controlX = centerX * 1.4f;
+            glm::vec3 controlsColor{ 0.35f, 0.55f, 0.10f };
+            float contolsSize{ 0.55 };
+            float controlsOffset{28.f};
+            float offset{ 0.f };
+            textSystem->renderText("CONTROLS", { controlX, topY, 0.75f }, { 0.55f, 0.8f, 0.15f });
+            textSystem->renderText("Drive: RT-LT / W-S", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
+            textSystem->renderText("Steer: L-Stick / A-D", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
+            textSystem->renderText("Boost: Y-Btn / SHIFT", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
+            textSystem->renderText("Shoot: X-Btn / SPACE", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
+            textSystem->renderText("Pause: Start / P", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
             
             textSystem->endText();
             this->endFrame();
