@@ -44,7 +44,7 @@ void VehicleControlSystem::update(float deltaTime)
                 isGrounded = (abs(velocity.y) < 2.0f);
             }
 
-            if (upVector.y < -0.1f && isGrounded) {
+            if (upVector.y < 0.6f && isGrounded) {
                 vehicle.flipTimer += deltaTime;
 
                 if (vehicle.flipTimer >= 0.5f) {
