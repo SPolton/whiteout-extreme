@@ -1,5 +1,6 @@
 #pragma once
 
+#include "components/Racer.h"
 #include "components/Transform.h"
 #include "ecs/Types.hpp"
 
@@ -28,20 +29,27 @@ public:
     Avalanche(const ConstructData& data);
 
     // Update avalanche position and state
-    void update(float deltaTime, const std::vector<glm::vec3>& playerPositions);
-
+    //void update(float deltaTime, float distanceToLastPlayer, const std::vector<glm::vec3>& playerPositions);
+    void stepPhysics(float deltaTime);
+    //void updatePhysicsGeometry();
     // Set a new direction for the avalanche (will update physics rotation)
     void setDirection(const glm::vec3& newDirection);
+    void setOrientation(const glm::vec3& lookAtTarget, float deltaTime);
+    void adaptSpeed(float distanceToLastPlayer, float deltaTime, float firstRacerCompletion, float percentageToEngulfLastStandingRacer);
+
+    Gate* gate; //next gate to be reached by the avalanche
+
 
     // Get list of engulfed players (as indices into the playerPositions array)
-    const std::vector<size_t>& getEngulfedPlayerIndices() const { return mEngulfedPlayerIndices; }
-    bool isPlayerEngulfed(size_t playerIndex) const;
-    bool areAllPlayersEngulfed(size_t totalPlayers) const;
+    //const std::vector<size_t>& getEngulfedPlayerIndices() const { return mEngulfedPlayerIndices; }
+    //bool isPlayerEngulfed(size_t playerIndex) const;
+    //bool areAllPlayersEngulfed(size_t totalPlayers) const;
 
     // State
     glm::vec3 mPosition;
     glm::vec3 mSize;
     glm::vec3 mDirection;
+    glm::quat mRotation = glm::quat(1, 0, 0, 0);
     float mSpeed = 1.f;
     float mBaseSpeed;
     float mMaxSpeed;
@@ -52,16 +60,17 @@ public:
     physx::PxShape* mPhysicsShape = nullptr;
 
     // Gameplay - store indices instead of Entity IDs
-    std::vector<size_t> mEngulfedPlayerIndices;
+    //std::vector<size_t> mEngulfedPlayerIndices;
+
+    float mCloseProximityTimer = 0.0f;
+    float raceCompletion = 0.0f;
 
 private:
     void initPhysicsActor(const ConstructData& data);
-    void updatePosition(float deltaTime);
-    void checkPlayerCollisions(const std::vector<glm::vec3>& playerPositions);
-    void updateRubberbanding(const std::vector<glm::vec3>& playerPositions);
-
+    //void checkPlayerCollisions(const std::vector<glm::vec3>& playerPositions);
+    //void updateRubberbanding(const std::vector<glm::vec3>& playerPositions);
+    
     // Constants
-    static constexpr float engulfThreshold = 3.0f;  // Distance to engulf player
-    static constexpr float autoEngulfTime = 5.0f;   // Seconds before auto-engulf
-    static constexpr float catchUpSpeedMultiplier = 1.5f;  // Speed increase when catching
+    const float mDeathThresholdTime = 5.f;
+    const float mSafeDistance = 15.0f;
 };

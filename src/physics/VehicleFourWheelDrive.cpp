@@ -97,7 +97,7 @@ using namespace physx::vehicle2;
 using namespace snippetvehicle;
 
 //The vehicle with engine drivetrain
-EngineDriveVehicle gVehicle;
+EngineDriveVehicle mVehicle;
 
 //Commands are issued to the vehicle in a pre-choreographed sequence.
 struct Command
@@ -148,7 +148,7 @@ VehicleFourWheelDrive::VehicleFourWheelDrive(ConstructData info)
 
     // Assuming physX and ground plane are initialized elsewhere
     initMaterialFrictionTable(info);
-    if (!initVehicles(info)) {
+    if (!initVehicle(info)) {
         logger::error("Failed to initialize VehicleFourWheelDrive.");
         throw std::runtime_error("VehicleFourWheelDrive initialization failed.");
     }
@@ -172,18 +172,18 @@ void VehicleFourWheelDrive::initMaterialFrictionTable(ConstructData info)
     logger::info("Material friction table initialized with {} entries.", mNbPhysXMaterialFrictions);
 }
 
-bool VehicleFourWheelDrive::initVehicles(ConstructData info)
+bool VehicleFourWheelDrive::initVehicle(ConstructData info)
 {
 	//Load the params from json or set directly.
-	readBaseParamsFromJsonFile(mVehicleDataPath, "Base.json", gVehicle.mBaseParams);
-	setPhysXIntegrationParams(gVehicle.mBaseParams.axleDescription,
+	readBaseParamsFromJsonFile(mVehicleDataPath, "Base.json", mVehicle.mBaseParams);
+	setPhysXIntegrationParams(mVehicle.mBaseParams.axleDescription,
 		mPhysXMaterialFrictions, mNbPhysXMaterialFrictions, mPhysXDefaultMaterialFriction,
-		gVehicle.mPhysXParams);
+		mVehicle.mPhysXParams);
 	readEngineDrivetrainParamsFromJsonFile(mVehicleDataPath, "EngineDrive.json", 
-		gVehicle.mEngineDriveParams);
+		mVehicle.mEngineDriveParams);
 
 	//Set the states to default.
-	if (!gVehicle.initialize(*info.physics, PxCookingParams(PxTolerancesScale()), *info.material, EngineDriveVehicle::eDIFFTYPE_FOURWHEELDRIVE))
+	if (!mVehicle.initialize(*info.physics, PxCookingParams(PxTolerancesScale()), *info.material, EngineDriveVehicle::eDIFFTYPE_FOURWHEELDRIVE))
 	{
         logger::error("EngineDriveVehicle initialization failed.");
 		return false;
@@ -191,24 +191,24 @@ bool VehicleFourWheelDrive::initVehicles(ConstructData info)
 
 	//Apply a start pose to the physx actor and add it to the physx scene.
 	PxTransform pose(PxVec3(0.000000000f, -0.0500000119f, -10.59399998f), PxQuat(PxIdentity));
-	gVehicle.setUpActor(*info.scene, pose, info.vehicleName);
+	mVehicle.setUpActor(*info.scene, pose, info.vehicleName);
 
 	//Set the vehicle in 1st gear.
-	gVehicle.mEngineDriveState.gearboxState.currentGear = gVehicle.mEngineDriveParams.gearBoxParams.neutralGear + 1;
-	gVehicle.mEngineDriveState.gearboxState.targetGear = gVehicle.mEngineDriveParams.gearBoxParams.neutralGear + 1;
+	mVehicle.mEngineDriveState.gearboxState.currentGear = mVehicle.mEngineDriveParams.gearBoxParams.neutralGear + 1;
+	mVehicle.mEngineDriveState.gearboxState.targetGear = mVehicle.mEngineDriveParams.gearBoxParams.neutralGear + 1;
 
 	//Set the vehicle to use the automatic gearbox.
-	gVehicle.mTransmissionCommandState.targetGear = PxVehicleEngineDriveTransmissionCommandState::eAUTOMATIC_GEAR;
+	mVehicle.mTransmissionCommandState.targetGear = PxVehicleEngineDriveTransmissionCommandState::eAUTOMATIC_GEAR;
 
     // Collision filtering for the vehicle
     PxFilterData vehicleFilter(COLLISION_FLAG_CHASSIS, COLLISION_FLAG_CHASSIS_AGAINST, 0, 0);
 
     // Loop through each shape and set the query and simulation flags.
     // This is required for collision detection with other objects.
-    PxU32 shapes = gVehicle.mPhysXState.physxActor.rigidBody->getNbShapes();
+    PxU32 shapes = mVehicle.mPhysXState.physxActor.rigidBody->getNbShapes();
     for (PxU32 i = 0; i < shapes; i++) {
         PxShape* shape = NULL;
-        gVehicle.mPhysXState.physxActor.rigidBody->getShapes(&shape, 1, i);
+        mVehicle.mPhysXState.physxActor.rigidBody->getShapes(&shape, 1, i);
 
         // Add filter to our shader
         shape -> setSimulationFilterData(vehicleFilter);
@@ -239,25 +239,25 @@ bool VehicleFourWheelDrive::initVehicles(ConstructData info)
 
 void VehicleFourWheelDrive::cleanupVehicles()
 {
-	gVehicle.destroy();
+	mVehicle.destroy();
     logger::info("VehicleFourWheelDrive cleaned up successfully.");
 }
 
 void VehicleFourWheelDrive::stepPhysics(float deltaTime)
 {
-    gVehicle.mCommandState.brakes[0] = mCurrentBrake;
-    gVehicle.mCommandState.nbBrakes = 1;
-    gVehicle.mCommandState.throttle = mCurrentThrottle;
-    gVehicle.mCommandState.steer = mCurrentSteer;
+    mVehicle.mCommandState.brakes[0] = mCurrentBrake;
+    mVehicle.mCommandState.nbBrakes = 1;
+    mVehicle.mCommandState.throttle = mCurrentThrottle;
+    mVehicle.mCommandState.steer = mCurrentSteer;
 
 	//Forward integrate the vehicle by a single timestep.
 	//Apply substepping at low forward speed to improve simulation fidelity.
-	const PxVec3 linVel = gVehicle.mPhysXState.physxActor.rigidBody->getLinearVelocity();
-	const PxVec3 forwardDir = gVehicle.mPhysXState.physxActor.rigidBody->getGlobalPose().q.getBasisVector2();
+	const PxVec3 linVel = mVehicle.mPhysXState.physxActor.rigidBody->getLinearVelocity();
+	const PxVec3 forwardDir = mVehicle.mPhysXState.physxActor.rigidBody->getGlobalPose().q.getBasisVector2();
 	const PxReal forwardSpeed = linVel.dot(forwardDir);
 	const PxU8 nbSubsteps = (forwardSpeed < 5.0f ? 3 : 1);
-	gVehicle.mComponentSequence.setSubsteps(gVehicle.mComponentSequenceSubstepGroupHandle, nbSubsteps);
-	gVehicle.step(deltaTime, mVehicleSimulationContext);
+	mVehicle.mComponentSequence.setSubsteps(mVehicle.mComponentSequenceSubstepGroupHandle, nbSubsteps);
+	mVehicle.step(deltaTime, mVehicleSimulationContext);
 
     //Assume physx scene is stepped elsewhere 
 	//Forward integrate the phsyx scene by a single timestep.
@@ -267,6 +267,6 @@ void VehicleFourWheelDrive::stepPhysics(float deltaTime)
 
 physx::PxRigidActor* VehicleFourWheelDrive::getRigidActor()
 {
-	return gVehicle.mPhysXState.physxActor.rigidBody;
+	return mVehicle.mPhysXState.physxActor.rigidBody;
 }
 

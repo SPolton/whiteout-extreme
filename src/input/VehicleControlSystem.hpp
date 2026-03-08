@@ -6,7 +6,7 @@
 #include "ecs/Coordinator.hpp"
 #include "core/RenderingSystem.hpp"
 #include "physics/PhysicsSystem.hpp"
-#include "audio/AudioEngine.h";
+#include "audio/AudioEngine.h"
 
 class VehicleControlSystem : public System {
 public:
