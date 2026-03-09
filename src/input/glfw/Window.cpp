@@ -111,6 +111,9 @@ Window::Window(
 	}
 	glfwMakeContextCurrent(window.get());
 
+	// Enable VSync to prevent screen tearing
+	// glfwSwapInterval(1);
+
 	// initialize OpenGL extensions for the current context (this window)
 	if (!gladLoadGL()) {
 		throw std::runtime_error("Failed to initialize GLAD");
