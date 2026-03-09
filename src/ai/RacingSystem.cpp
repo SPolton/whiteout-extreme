@@ -324,7 +324,7 @@ void RacingSystem::restart() {
     avalanche->gate->prevGate = &gates.at(0);
     glm::vec3 spawnPos = gates.at(0).position - (gates.at(0).direction * 150.0f);
     avalanche->mPosition = spawnPos;
-    logger::error("x {}, y {}, z {}", spawnPos.x, spawnPos.y, spawnPos.z);
+    logger::warn("Avalanche reset with position: x {}, y {}, z {}", spawnPos.x, spawnPos.y, spawnPos.z);
 
     // Immediate Physic Reset
     if (avalanche->mPhysicsActor) {
