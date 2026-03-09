@@ -357,20 +357,19 @@ void RacingGame::run()
             if (inputManager->isKeyPressedOnce(GLFW_KEY_ESCAPE))
                 glfwSetWindowShouldClose(window->getGLFWwindow(), true);
 
-            // Process F key input to toggle camera, and IJKLUO to move the free camera
-            renderingSystem->update(gameTime.fpsF());
-
-            // Update values and sync imgui parameters
-            this->updateImGui();
-
-
-            // If entity exists, update camera target to follow the player vehicle
-            // We don't assume anymore that it's in the first position of the entity list, so we directly access it by its Entity ID
+            // If entity exists, update camera target to follow the player vehicle BEFORE rendering
+            // This prevents 1-frame lag that causes ghosting/phasing artifacts
             if (gCoordinator.HasComponent<PhysxTransform>(playerVehicleEntity)) {
                 glm::vec3 targetPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
                 targetPos.y += 2.f;
                 renderingSystem->updateCameraTarget(targetPos);
             }
+
+            // Process F key input to toggle camera, and IJKLUO to move the free camera
+            renderingSystem->update(gameTime.fpsF());
+
+            // Update values and sync imgui parameters
+            this->updateImGui();
 
             // Must be called after renderer update, but before text rendering
             // auto width = renderingSystem->getWindowWidth();
