@@ -23,6 +23,16 @@ map_Kd ../../textures/track/cliff02_BaseColor.jpg
 map_Ns ../../textures/track/cliff02_Roughness.jpg
 map_Bump -bm 1.000000 ../../textures/track/cliff02_Normal.jpg
 
+newmtl Wood
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd ../../textures/track/light_wood.png
+
 newmtl bark
 Ns 250.000000
 Ka 1.000000 1.000000 1.000000
@@ -52,3 +62,13 @@ Ni 1.500000
 d 1.000000
 illum 2
 map_Kd ../../textures/track/snow.jpg
+
+newmtl wood
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd ../../textures/track/light_wood.png

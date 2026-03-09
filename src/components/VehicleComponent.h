@@ -41,4 +41,7 @@ struct VehicleComponent {
 
     // Snowball cooldown
     float snowBallCooldown = 0.0f;
+
+    // Vehicle flip timer
+    float flipTimer = 0.0f;
 };

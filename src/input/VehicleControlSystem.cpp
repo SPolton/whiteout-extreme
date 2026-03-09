@@ -31,6 +31,40 @@ void VehicleControlSystem::update(float deltaTime)
 
         if (vehicle.snowBallCooldown > 0.f) vehicle.snowBallCooldown -= deltaTime;
 
+        // Check if vehicle is flipped and needs to be reset
+        if (gCoordinator.HasComponent<RigidBody>(entity)) {
+            auto& rb = gCoordinator.GetComponent<RigidBody>(entity);
+
+            physx::PxTransform pose = rb.actor->getGlobalPose();
+            physx::PxVec3 upVector = pose.q.rotate(physx::PxVec3(0, 1, 0));
+
+            bool isGrounded = false;
+            if (auto* dynamicActor = rb.actor->is<physx::PxRigidDynamic>()) {
+                physx::PxVec3 velocity = dynamicActor->getLinearVelocity();
+                isGrounded = (abs(velocity.y) < 2.0f);
+            }
+
+            if (upVector.y < 0.6f && isGrounded) {
+                vehicle.flipTimer += deltaTime;
+
+                if (vehicle.flipTimer >= 0.5f) {
+                    physx::PxQuat uprightRotation = physx::PxQuat(physx::PxIdentity);
+                    physx::PxTransform newPose(pose.p + physx::PxVec3(0, 3, 0), uprightRotation);
+                    rb.actor->setGlobalPose(newPose);
+
+                    if (auto* dynamicActor = rb.actor->is<physx::PxRigidDynamic>()) {
+                        dynamicActor->setLinearVelocity(physx::PxVec3(0, 0, 0));
+                        dynamicActor->setAngularVelocity(physx::PxVec3(0, 0, 0));
+                    }
+
+                    vehicle.flipTimer = 0.0f;
+                }
+            }
+            else {
+                vehicle.flipTimer = 0.0f;
+            }
+        }
+
         if(vehicle.playerID == 0) {
             vehicle.throttle = currentThrottle;
             vehicle.brake = currentBrake;
