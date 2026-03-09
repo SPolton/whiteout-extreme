@@ -70,14 +70,18 @@ void VehicleControlSystem::update(float deltaTime)
             vehicle.brake = currentBrake;
             vehicle.steer = currentSteer;
 
-            if (vehicle.instance) {
-                vehicle.instance->setInputs(
-                    vehicle.throttle,
-                    vehicle.brake,
-                    vehicle.steer
-                );
+            if (!vehicle.hasGearDesired()) {
+                if (vehicle.speed() < 1.f) {
+                    vehicle.setGearDesired();
+                }
             }
         }
+
+        vehicle.instance->setInputs(
+            vehicle.throttle,
+            vehicle.brake,
+            vehicle.steer
+        );
         //vehicle.instance->stepPhysics(deltaTime);
     }
 }
@@ -192,28 +196,48 @@ void VehicleControlSystem::processKeyboardInput()
 
 void VehicleControlSystem::accelerate()
 {
-    logger::info("Accelerating...");
+    //logger::info("Accelerating...");
     // apply transformation here to move car forward
-    currentThrottle = 0.7f; // full throttle
+
+    auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity);
+
+    vehicle.forwardGearDesired = true;
+
+    if (vehicle.hasGearDesired()) {
+        currentThrottle = 0.7f;
+    }
+    else {
+        currentBrake = 1.0f;
+    }
 }
 
 void VehicleControlSystem::brake()
 {
-    logger::info("Braking...");
+    //logger::info("Braking...");
     // apply transformation here to slow car down
-    currentBrake = 1.0f; // full brake
+
+    auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity);
+
+    vehicle.forwardGearDesired = false;
+
+    if (vehicle.hasGearDesired()) {
+        currentThrottle = 0.7f;
+    }
+    else {
+        currentBrake = 1.0f;
+    }
 }
 
 void VehicleControlSystem::steerRight()
 {
-    logger::info("Steer Right...");
+    //logger::info("Steer Right...");
     // apply transformation here to steer the car to the right
     currentSteer = -1.0f; // full right steer
 }
 
 void VehicleControlSystem::steerLeft()
 {
-    logger::info("Steer Left...");
+    //logger::info("Steer Left...");
     // apply transformation here steer the car to the left
     currentSteer = 1.0f; // full left steer 
 }
@@ -223,7 +247,7 @@ void VehicleControlSystem::steerLeft()
 
 void VehicleControlSystem::boost()
 {
-    logger::info("Activate Boost...");
+    //logger::info("Activate Boost...");
     // apply transformation here accelerate car even faster due to boost.
     // probably need a CD for this?
     currentThrottle = 1.f; // full throttle
@@ -231,11 +255,19 @@ void VehicleControlSystem::boost()
 
 void VehicleControlSystem::throwSnowball()
 {
+    auto& vehicleComponent = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity);
+    if (vehicleComponent.snowBallCooldown > 0.f) return;
+
+    auto& vehicleTransform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
+    std::cout << "{" << vehicleTransform.pos.x << ", "
+        << vehicleTransform.pos.y << ", "
+        << vehicleTransform.pos.z << "}" << std::endl;
+
     // 1. Safety Check: Ensure the player entity is valid
     if (!gCoordinator.HasComponent<VehicleComponent>(playerVehicleEntity)) return;
 
     //  ...and that the snow ball cool down is finished
-    auto& vehicleComponent = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity);
+    // auto& vehicleComponent = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity);
     if (vehicleComponent.snowBallCooldown > 0.f) return;
 
     // ...and that the current camera is the TurnTable one
@@ -243,10 +275,10 @@ void VehicleControlSystem::throwSnowball()
 
     // play sound of throwing snowball
     audioManager->playSounds("assets/audio/snowball-hit-01.mp3", { 0,0,0 }, -1.0f);
-    logger::info("Throwing snowball...");
+    //logger::info("Throwing snowball...");
 
     // 2. Retrieve Player Transform
-    auto& vehicleTransform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
+    // auto& vehicleTransform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
 
     // Calculate the Forward direction based on the vehicle's current rotation
     // In many coordinate systems, (0, 0, 1) is the local forward axis
@@ -264,7 +296,7 @@ void VehicleControlSystem::throwSnowball()
     ballTrans.rot = vehicleTransform.rot; // Align snowball orientation with the car
 
     // 4. Setup Physics
-    float snowballRadius = 0.2f;
+    float snowballRadius = 0.5f;
     ballTrans.scale = glm::vec3(snowballRadius);
 
     // Create the RigidBody and add it to the ECS
@@ -273,7 +305,7 @@ void VehicleControlSystem::throwSnowball()
     // 5. Apply Initial Velocity
     physx::PxRigidDynamic* dynamicActor = gCoordinator.GetComponent<RigidBody>(snowball).actor->is<physx::PxRigidDynamic>();
     if (dynamicActor) {
-        float launchSpeed = 30.f; // Meters per second
+        float launchSpeed = 90.f; // Meters per second
         glm::vec3 velocity = forward * launchSpeed;
 
         // Enable CCD (Continuous Collision Detection)
@@ -281,9 +313,9 @@ void VehicleControlSystem::throwSnowball()
 
         // Pass the velocity vector to PhysX
         dynamicActor->setLinearVelocity(physx::PxVec3(velocity.x, velocity.y, velocity.z));
-        dynamicActor->setMass(dynamicActor->getMass() * 15);
+        dynamicActor->setMass(dynamicActor->getMass() * 25);
     }
-    vehicleComponent.snowBallCooldown = 0.5f;
+    vehicleComponent.snowBallCooldown = 3.0f;
 }
 
 // load basic vehicle sounds

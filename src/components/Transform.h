@@ -18,4 +18,12 @@ struct PhysxTransform {
     glm::vec3 forward() const { return rot * glm::vec3(0, 0, 1); }
     glm::vec3 right() const { return rot * glm::vec3(1, 0, 0); }
     glm::vec3 up() const { return rot * glm::vec3(0, 1, 0); }
+
+    glm::vec3 getForwardVector() const {
+        return rot * glm::vec3(0.0f, 0.0f, 1.0f);
+    }
+
+    glm::vec3 getRightVector() const {
+        return rot * glm::vec3(1.0f, 0.0f, 0.0f);
+    }
 };

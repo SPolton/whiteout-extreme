@@ -3,6 +3,9 @@
 #include "PxPhysicsAPI.h"
 #include "objects/PhysicsObject.hpp"
 #include "vehiclecommon/SnippetVehicleHelpers.h"
+#include "vehiclecommon/enginedrivetrain/EngineDrivetrain.h"
+
+using namespace snippetvehicle;
 
 class VehicleFourWheelDrive : public PhysicsObject {
 public:
@@ -29,10 +32,17 @@ public:
         mCurrentSteer = steer;
     }
 
+    physx::vehicle2::PxVehicleDirectDriveTransmissionCommandState::Enum setTargetGear(physx::vehicle2::PxVehicleDirectDriveTransmissionCommandState::Enum state) {
+        mVehicle.mTransmissionCommandState.targetGear = state;
+        return state;
+    }
+
 private:
+    EngineDriveVehicle mVehicle;
+
     void initMaterialFrictionTable(ConstructData info);
 
-    bool initVehicles(ConstructData info);
+    bool initVehicle(ConstructData info);
     void cleanupVehicles();
 
     //The path to the vehicle json files to be loaded.

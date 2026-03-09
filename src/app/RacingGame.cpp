@@ -18,6 +18,8 @@
 //ECS global coordinator
 Coordinator gCoordinator;
 Entity playerVehicleEntity;
+Entity aiVehicleEntity1;
+Entity aiVehicleEntity2;
 
 RacingGame::RacingGame()
 {
@@ -58,6 +60,8 @@ RacingGame::RacingGame()
     gCoordinator.RegisterComponent<RigidBody>();
     gCoordinator.RegisterComponent<VehicleComponent>();
     gCoordinator.RegisterComponent<AvalancheComponent>();
+    gCoordinator.RegisterComponent<Racer>();
+    gCoordinator.RegisterComponent<AI>();
 
     // 2.Create Systems and Set Signatures
     // RENDERING SYSTEM: Requires Transform AND <Renderable OR ModelRenderable>
@@ -99,9 +103,9 @@ RacingGame::RacingGame()
         gCoordinator.SetSystemSignature<PhysicsSystem>(signature);
     }
 
-    physicsSystem->spawnBoxPyramid(10, 0.5f, renderingSystem->getCubeRenderable("assets/textures/carbon_fiber.jpg"));
+    // physicsSystem->spawnBoxPyramid(10, 0.5f, renderingSystem->getCubeRenderable("assets/textures/carbon_fiber.jpg"));
 
-    // VEHICLE CONTROL SYSTEM
+    // VEHICLE CONTROL SYSTEM : Requires VehicleComponent (which itself contains a pointer to the PhysX vehicle instance, so we can update it based on input)
      vehicleControlSystem = gCoordinator.RegisterSystem<VehicleControlSystem>(
         inputManager,
         audioManager,
@@ -114,31 +118,56 @@ RacingGame::RacingGame()
         gCoordinator.SetSystemSignature<VehicleControlSystem>(signature);
     }
 
+    // RACING SYSTEM: Requires Transform AND Racer
+    racingSystem = gCoordinator.RegisterSystem<RacingSystem>(
+        gCoordinator.GetSystem<RenderingSystem>(),
+        gCoordinator.GetSystem<PhysicsSystem>()
+    );
+    {
+        Signature signature;
+        signature.set(gCoordinator.GetComponentType<VehicleComponent>());
+        signature.set(gCoordinator.GetComponentType<Racer>());
+        signature.set(gCoordinator.GetComponentType<PhysxTransform>());
+        gCoordinator.SetSystemSignature<RacingSystem>(signature);
+    }
+
+
+    // AI SYSTEM: Requires Transform AND VehicleComponent AND Racer AND AI
+    aiSystem = gCoordinator.RegisterSystem<AISystem>(
+        gCoordinator.GetSystem<RenderingSystem>(),
+        gCoordinator.GetSystem<PhysicsSystem>()
+    );
+    {
+        Signature signature;
+        signature.set(gCoordinator.GetComponentType<AI>());
+        signature.set(gCoordinator.GetComponentType<Racer>());
+        signature.set(gCoordinator.GetComponentType<VehicleComponent>());
+        signature.set(gCoordinator.GetComponentType<PhysxTransform>());
+        gCoordinator.SetSystemSignature<AISystem>(signature);
+    }
+
     // 3.Create Entities and add Components to them:
+
+    // Create the player vehicle entity with physics components
+    //physx::PxVec3 spawnPos(-730.0f, 670.4f, -400.0f);
+    aiVehicleEntity1 = physicsSystem->createVehicleEntity("VehicleAI1", physx::PxVec3(20.f, 0.f, 0.f));
+    gCoordinator.GetComponent<VehicleComponent>(aiVehicleEntity1).playerID = 1;
+
+    aiVehicleEntity2 = physicsSystem->createVehicleEntity("VehicleAI2", physx::PxVec3(30.f, 0.f, 0.f));
+    gCoordinator.GetComponent<VehicleComponent>(aiVehicleEntity2).playerID = 2;
+
+    playerVehicleEntity = physicsSystem->createVehicleEntity("VehiclePlayer1", physx::PxVec3(10.0f, 0.f, 0.f));
+    gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).playerID = 0;
+
     
     // Create Skybox first (if texture is available)
     Skybox = renderingSystem->createSkyboxEntity("assets/textures/sky/snow_landscape.hdr");
+    gCoordinator.GetComponent<PhysxTransform>(Skybox).scale = glm::vec3(3.f);
     logger::info("Created Skybox entity");
 
     // Create infinite ground plane with repeating snow texture
-    Entity groundPlane = renderingSystem->createGroundPlaneEntity("assets/textures/snowball.png", 0);
+    GroundPlane = renderingSystem->createGroundPlaneEntity("assets/textures/snowball.png", 0);
     logger::info("Created ground plane entity");
-
-    // Create Earth sphere entity
-    Earth = renderingSystem->createSphereEntity("assets/textures/2k_earth_daymap.jpg");
-    logger::info("Created Earth sphere entity");
-    
-    // Create Mars sphere entity
-    Mars = renderingSystem->createSphereEntity("assets/textures/2k_mars.jpg");
-    logger::info("Created Mars sphere entity");
-    
-    // Create Woody model entity (separate from Earth and Mars)
-    WoodyModel = renderingSystem->createModelEntity("assets/obj/woody.obj");
-    logger::info("Created Woody model entity");
-    
-    // Create Backpack model entity to test shading maps
-    BackpackModel = renderingSystem->createModelEntity("assets/obj/backpack/backpack.obj");
-    logger::info("Created Backpack model entity");
 
     // Create Map model entity
     MapModel = renderingSystem->createModelEntity("assets/obj/map/map.obj");
@@ -156,63 +185,55 @@ RacingGame::RacingGame()
     );
 
     logger::info("Created Map model entity with collision");
-
-    // Note:
-    // The createSphereEntity() method calls:
-    //      - gCoordinator.AddComponent(sphere,PhysxTransform{...});
-    //      - gCoordinator.AddComponent(sphere,Renderable{...});
-    // Same components signature as RenderingSystem, so will be added to that system's entity list.
-
-    // Create the player vehicle entity with physics components
-    playerVehicleEntity = physicsSystem->createVehicleEntity();
-    gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).playerID = 0;
-
-    // Load snowmobile model for the player vehicle
+    // Load snowmobile model for the player and AI vehicles
     Entity snowmobileVisual = renderingSystem->createModelEntity("assets/obj/snowmobile/snowmobile.obj");
     auto& snowmobileRenderable = gCoordinator.GetComponent<ModelRenderable>(snowmobileVisual);
+    snowmobileRenderable.visualOffsetPos = glm::vec3(0.0f, 0.0f, 1.5f);
     gCoordinator.AddComponent(playerVehicleEntity, snowmobileRenderable);
+    gCoordinator.AddComponent(aiVehicleEntity1, snowmobileRenderable);
+    gCoordinator.AddComponent(aiVehicleEntity2, snowmobileRenderable);
     gCoordinator.DestroyEntity(snowmobileVisual);
 
     // Fix rotation and scale
     auto& vehicleTransform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
     vehicleTransform.rot = glm::angleAxis(glm::radians(0.0f), glm::vec3(0.f, 1.f, 0.f));
-    vehicleTransform.scale = glm::vec3(2.0f);  // Doubled the vehicle size
+    vehicleTransform.scale = glm::vec3(1.5f);  // Doubled the vehicle size
 
     logger::info("Loaded snowmobile model for player vehicle");
+
+    auto& aiVehicleTransform = gCoordinator.GetComponent<PhysxTransform>(aiVehicleEntity1);
+    aiVehicleTransform.rot = glm::angleAxis(glm::radians(0.0f), glm::vec3(0.f, 1.f, 0.f));
+    aiVehicleTransform.scale = glm::vec3(1.5f);  // Uniform scale instead of stretched box scale
+
+    auto& aiVehicleTransform2 = gCoordinator.GetComponent<PhysxTransform>(aiVehicleEntity2);
+    aiVehicleTransform2.rot = glm::angleAxis(glm::radians(0.0f), glm::vec3(0.f, 1.f, 0.f));
+    aiVehicleTransform2.scale = glm::vec3(1.5f);  // Uniform scale instead of stretched box scale
+
+    logger::info("Loaded snowmobile models for ai vehicles");
+
+    gCoordinator.AddComponent(playerVehicleEntity, Racer{});
+
+    gCoordinator.AddComponent(aiVehicleEntity1, Racer{});
+    gCoordinator.AddComponent(aiVehicleEntity1, AI{});
+
+    gCoordinator.AddComponent(aiVehicleEntity2, Racer{});
+    gCoordinator.AddComponent(aiVehicleEntity2, AI{});
 
     // 4.You can modify Component Data for entities
     
     // Create the avalanche entity (appears far behind the starting position)
-    avalancheEntity = physicsSystem->createAvalancheEntity(glm::vec3(0.f, 15.f, -200.f), 15.0f);
+    AvalancheEntity = physicsSystem->createAvalancheEntity(glm::vec3(0.f, 15.f, -200.f), 15.0f);
     
     // Add rendering to the avalanche
     auto avCubeRender = renderingSystem->getCubeRenderable("assets/textures/snowball.png");
     avCubeRender.hasRollingTexture = true;
-    gCoordinator.AddComponent(avalancheEntity, avCubeRender);
+    gCoordinator.AddComponent(AvalancheEntity, avCubeRender);
     logger::info("Avalanche entity created");
 
-    // Position Earth at the origin
-    gCoordinator.GetComponent<PhysxTransform>(Earth).pos = glm::vec3(0.0f, 0.0f, 0.0f);
-    gCoordinator.GetComponent<PhysxTransform>(Earth).scale = glm::vec3(1.0f);
-    // Earth keeps the default earth texture
-    
-    // Position Mars to the side
-    gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(1.3f, 0.7f, 0.7f); // Move Mars slightly
-    gCoordinator.GetComponent<PhysxTransform>(Mars).scale = glm::vec3(0.4f); // Scale down Mars
-    gCoordinator.GetComponent<PhysxTransform>(Mars).rot = glm::angleAxis(glm::radians(23.5f), glm::vec3(0.f, 0.f, 1.f)); // Tilt Mars
-    
-    // Position Woody model on the other side
-    if (WoodyModel != 0) { // Check if model was successfully created
-        gCoordinator.GetComponent<PhysxTransform>(WoodyModel).pos = glm::vec3(-3.0f, 0.0f, -2.0f);
-        gCoordinator.GetComponent<PhysxTransform>(WoodyModel).scale = glm::vec3(0.01f); // Scale down (This OBJ model is large)
-        // Model uses its own embedded textures
-    }
-    
-    // Position Backpack model to test shading maps
-    if (BackpackModel != 0) { // Check if model was successfully created
-        gCoordinator.GetComponent<PhysxTransform>(BackpackModel).pos = glm::vec3(3.0f, 0.0f, -10.0f);
-        // Model will use its material/texture maps from the .mtl file
-    }
+    auto& Avalanche = gCoordinator.GetComponent<AvalancheComponent>(AvalancheEntity).instance;
+
+    racingSystem->init(Avalanche);
+    logger::info("Loaded gates and avalanche for the race");
 
     ///---- END OF ECS SETUP ----///
 
@@ -242,8 +263,6 @@ RacingGame::RacingGame()
 /// Main game loop
 void RacingGame::run()
 {
-    bool addedRigidBodyToMars = false;
-    bool MarsIsBack = false;
 
     while (!window->shouldClose())
     {
@@ -258,6 +277,9 @@ void RacingGame::run()
 
         // check for entering game
         if (actionButtons == MenuAction::StartGame || actionButtons == MenuAction::ResumeGame) {
+            if (actionButtons == MenuAction::StartGame) {
+                racingSystem->restart();
+            }
             // play in game music
             audioManager->resumeChannel(inGameMusicChannelID);
             gameState = GameState::InGame;
@@ -275,34 +297,6 @@ void RacingGame::run()
 
             gameTime.update();
 
-            // 5. You can also add/remove components at runtime to change entity behavior
-            // After 20 seconds, add a RigidBody component to sphere2 (Mars) to make it fall
-            if (gameTime.currentTime >= 15.0 && !addedRigidBodyToMars) {
-                gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(5.f, 10.f, 1.f);
-                gCoordinator.GetComponent<PhysxTransform>(Mars).scale = glm::vec3(1.f);
-
-            gCoordinator.AddComponent(
-                Mars,
-                physicsSystem->createRigidBodyFromSphere(Mars)
-            ); // This will add the Mars entity to the PhysicsSystem's entity list and it will start falling due to gravity
-            addedRigidBodyToMars = true;
-            logger::info("Added RigidBody component to Entity Mars at t = {} seconds", gameTime.tF());
-            }
-
-            if(addedRigidBodyToMars && !MarsIsBack) {
-                // Check if Mars position is close enough to Earth
-                glm::vec3 earthPos = gCoordinator.GetComponent<PhysxTransform>(Earth).pos;
-                glm::vec3 marsPos = gCoordinator.GetComponent<PhysxTransform>(Mars).pos;
-                float distance = glm::length(earthPos - marsPos);
-                if (distance < 2.5f) { // If Mars is close enough to Earth
-                    MarsIsBack = true;
-                    gCoordinator.GetComponent<PhysxTransform>(Mars).pos = glm::vec3(1.3f, 0.7f, -0.7f); // Move Mars slightly
-                    gCoordinator.GetComponent<PhysxTransform>(Mars).scale = glm::vec3(0.4f); // Scale down Mars
-                    gCoordinator.GetComponent<PhysxTransform>(Mars).rot = glm::angleAxis(glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f)); // Rotate Mars
-                    gCoordinator.RemoveComponent<RigidBody>(Mars); // Remove physics from Mars
-                }
-            }
-
             // Vehicle control system Loop - process player inputs and update vehicle state before physics simulation
             //vehicleControlSystem->update(gameTime.dtF());
 
@@ -317,16 +311,26 @@ void RacingGame::run()
                 physicsSystem->update(gameTime.dtF());
                 gameTime.physicsUpdate();
                 physicsSteps++;
+
+                racingSystem->update(gameTime.dtF());
+                if (racingSystem->raceFinished) {
+                    gameState = GameState::GameOver;
+                }
+                aiSystem->update(gameTime.dtF());
             }
 
             // get the positions of the avalanche and the player
-            glm::vec3 avalanchePos = gCoordinator.GetComponent<PhysxTransform>(avalancheEntity).pos;
+            glm::vec3 avalanchePos = gCoordinator.GetComponent<PhysxTransform>(AvalancheEntity).pos;
             glm::vec3 playerPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
             // calculate the distance between them
             float distance = glm::length(avalanchePos - playerPos);
 
             // use that distance against the maxAudible distance. multiply by a quiet value so that it increases in sound
-            float volumeInDB = std::clamp(distance / maxAudibleDistance, 0.0f, 1.0f) * -15.f; // need to clamp value between 0 and 1 to act as a percentage
+            float distanceRatio = std::clamp(distance / (maxAudibleDistance), 0.0f, 1.0f);
+            float volumeInDB = distanceRatio * -60.0f; //-60db is standard silence
+            float masterVolumeOffset = -5.0f;
+            volumeInDB += masterVolumeOffset;
+
             // set volume of avalanche based on distance
             audioManager->setChannelVolume(avalancheChannelID, volumeInDB);
 
@@ -347,30 +351,6 @@ void RacingGame::run()
             // Discard excess time when running slow to prevent spiral of death
             if (physicsSteps >= maxPhysicsSteps) {
                 gameTime.discardExcessTime();
-            }
-
-            // Check if all players are engulfed by avalanche
-            for (auto const& entity : physicsSystem->mEntities) {
-                if (gCoordinator.HasComponent<AvalancheComponent>(entity)) {
-                    auto& avalancheComp = gCoordinator.GetComponent<AvalancheComponent>(entity);
-                    
-                    if (avalancheComp.instance) {
-                        // Count total number of players
-                        size_t totalPlayers = 0;
-                        for (auto const& playerEntity : physicsSystem->mEntities) {
-                            if (gCoordinator.HasComponent<VehicleComponent>(playerEntity)) {
-                                totalPlayers++;
-                            }
-                        }
-                        
-                        // Check if all players are engulfed
-                        if (avalancheComp.instance->areAllPlayersEngulfed(totalPlayers)) {
-                            logger::warn("All {} player(s) engulfed by avalanche! Game Over!", totalPlayers);
-                            gameState = GameState::GameOver;
-                            break;
-                        }
-                    }
-                }
             }
 
             // Process Escape key input to close window
@@ -398,63 +378,75 @@ void RacingGame::run()
             // textSystem->setProjection(width, height);
 
             textSystem->beginText();
-
             textSystem->loadFont("arial.ttf", 48);
 
             float marginX = 30.f;
-            float topY = static_cast<float>(1440) - 50.f;
+            float screenHeight = 1440.f;
+            float topY = screenHeight - 50.f;
 
-            textSystem->renderText("Hello!",
-                { marginX, topY, 1.f }, { 0.5f, 0.8f, 0.2f });
-
+            // --- Debug & System Info ---
             textSystem->renderText(
                 "Rendered Frames: " + std::to_string(gameTime.frameCount),
-                { marginX, topY - 50.f, 0.75f }, { 0.2f, 0.5f, 0.8f });
+                { marginX, topY - 20.f, 0.40f }, { 0.2f, 0.5f, 0.8f });
 
             textSystem->renderText(
                 "Physics Frames: " + std::to_string(gameTime.physicsFrameCount),
-                { marginX, topY - 100.f, 0.75f }, { 0.5f, 0.2f, 0.8f });
+                { marginX, topY - 40.f, 0.40f }, { 0.5f, 0.2f, 0.8f });
 
             textSystem->renderText(
                 "Game FPS: " + std::to_string(static_cast<int>(1.0f / gameTime.fpsF())),
-                { marginX, topY - 150.f, 00.75f }, { 0.8f, 0.8f, 0.2f });
+                { marginX, topY - 75.f, 0.75f }, { 0.9f, 0.9f, 0.4f });
 
-            float centerX = static_cast<float>(1440) / 2.0f;
-            float centerY = static_cast<float>(1440) / 2.0f;
+            // --- Leaderboard Section ---
+            float lbYStart = topY - 250.f;
+            textSystem->renderText("LEADERBOARD :", { marginX + 2.0f, lbYStart - 2.0f, 0.85f }, { 1.f, 1.f, 1.f });
+            textSystem->renderText("LEADERBOARD :", { marginX, lbYStart, 0.85f }, { 0.15f, 0.7f, 0.6f });
+
+            for (size_t i = 0; i < racingSystem->leaderboard.size(); ++i) {
+                Entity e = racingSystem->leaderboard[i];
+                auto& racer = gCoordinator.GetComponent<Racer>(e);
+                auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(e);
+                
+                // Color: Gold for Player (ID 0), White/Grey for AI
+                glm::vec3 color = racer.engulfed? glm::vec3(0.8f, 0.25f, 0.15f): (vehicle.playerID == 0) ? glm::vec3(1.0f, 0.8f, 0.0f) : glm::vec3(0.2f, 0.7f, 0.8f);
+                std::string name = (vehicle.playerID == 0) ? "PLAYER" : "AI_" + std::to_string(e);
+                std::string entry = std::to_string(i + 1) + ". " + name + (racer.engulfed? " X engulfed" : "") + ", at " + std::to_string(static_cast<int>(racer.raceCompletion * 100)) + "%";
+
+                float textX = marginX;
+                float textY = lbYStart - 50.f - (i * 50.f);
+                float scale = 0.75f;
+
+                textSystem->renderText(entry, { textX + 2.0f, textY - 2.0f, scale }, { 0.0f, 0.0f, 0.0f });
+                textSystem->renderText(entry, { textX, textY, scale }, color);
+            }
+
+            // -- Snowball throw --
+            float centerX = screenHeight / 2.0f;
+            float centerY = screenHeight / 2.0f;
+
+            float snowballX = centerX * 1.0f;
+            float snowballY = 100.f;
+            float snowBallCoolDownPlayer = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).snowBallCooldown;
+            textSystem->renderText("SNOWBALL" + (snowBallCoolDownPlayer > 0.f ? std::format(": {:.1f}", snowBallCoolDownPlayer) : " READY !"), {snowballX + 2.f, snowballY - 2.f, 1.0f}, {1.0f, 1.0f, 1.0f});
+            textSystem->renderText("SNOWBALL" + (snowBallCoolDownPlayer > 0.f ? std::format(": {:.1f}", snowBallCoolDownPlayer) : " READY !"), { snowballX, snowballY, 1.0f }, { 1.0f, 0.35f, 0.0f });
+
+            // --- Crosshair / Center UI ---
             textSystem->renderText("+", { centerX - 5.f, centerY - 5.f, 0.75f }, { 1.f, 1.f, 1.f });
 
-            textSystem->renderText(
-                "Move: Left Joystick / WASD",
-                { centerX * 1.2f, topY - 50.f, 0.7f }, { 0.0f, 0.90f, 0.95f });
-            textSystem->renderText(
-                "Boost: Y button / SHIFT",
-                { centerX * 1.2f, topY - 100.f, 0.7f }, { 0.0f, 0.90f, 0.95f });
-            textSystem->renderText(
-                "Snowball: X button / SPACE",
-                { centerX * 1.2f, topY - 150.f, 0.7f }, { 0.0f, 0.90f, 0.95f });
-            textSystem->renderText(
-                "Pause: Start button / P",
-                { centerX * 1.2f, topY - 200.f, 0.7f }, { 0.0f, 0.90f, 0.95f });
-
-            if(MarsIsBack) {
-            textSystem->renderText(
-                "BRAVO ! Mars has reached Earth",
-                { centerX * 0.15f, centerY * 0.4f - 50.f, 0.6f }, { 1.f, 0.35f, 0.15f });
-            } else if (addedRigidBodyToMars){
-            textSystem->renderText(
-                "Mars is gone. Don't Panic !",
-                { centerX * 0.15f, centerY * 0.4f, 0.6f }, { 1.f, 0.35f, 0.15f });
-            textSystem->renderText(
-                "MISSION: Bring Mars back to Earth",
-                { centerX * 0.15f, centerY * 0.4f - 50.f, 0.6f }, { 1.f, 0.35f, 0.15f });
-            textSystem->renderText(
-                "TIP: Nudge Mars back to Earth using snowballs",
-                { centerX * 0.15f, centerY * 0.4f - 100.f, 0.6f }, { 1.f, 0.8f, 0.2f });
-            }
+            // --- Input Controls Info (Top Right) ---
+            float controlX = centerX * 1.4f;
+            glm::vec3 controlsColor{ 0.35f, 0.55f, 0.10f };
+            float contolsSize{ 0.55f };
+            float controlsOffset{28.f};
+            float offset{ 0.f };
+            textSystem->renderText("CONTROLS", { controlX, topY, 0.75f }, { 0.55f, 0.8f, 0.15f });
+            textSystem->renderText("Drive: RT-LT / W-S", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
+            textSystem->renderText("Steer: L-Stick / A-D", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
+            textSystem->renderText("Boost: Y-Btn / SHIFT", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
+            textSystem->renderText("Shoot: X-Btn / SPACE", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
+            textSystem->renderText("Pause: Start / P", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
             
             textSystem->endText();
-
-            // Must be called last
             this->endFrame();
         }
         else if (gameState == GameState::MainMenu) {
@@ -463,6 +455,7 @@ void RacingGame::run()
 
             // if "Start" is pressed, go in the game
             if (actionButtons == MenuAction::StartGame || actionCursor == MenuAction::StartGame) {
+                racingSystem->restart();
                 gameState = GameState::InGame;
             }
 
@@ -501,7 +494,9 @@ void RacingGame::run()
         }
         else if (gameState == GameState::GameOver) {
             // render UI for race finished, take note of the action taken
-            MenuAction actionCursor = menus->renderGameOver();
+            auto& playerRacer = gCoordinator.GetComponent<Racer>(playerVehicleEntity);
+            int rank = playerRacer.currentRank;
+            MenuAction actionCursor = menus->renderGameOver(rank, playerRacer.engulfed);
 
             // if "Return to main menu" is pressed, return to the main menu
             if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
