@@ -194,29 +194,26 @@ Entity RenderingSystem::createPlaneEntity(const std::string& texturePath, const 
     return plane;
 }
 
-Entity RenderingSystem::createGateEntity(const std::string& texturePath, const render::GateConfig& config)
+Entity RenderingSystem::createBoxEntity(const std::string& texturePath, const render::BoxConfig& config)
 {
-    Entity gate = gCoordinator.CreateEntity();
-
-    glm::quat rotation = math::transform::quatFromDirection(config.direction);
+    Entity box = gCoordinator.CreateEntity();
 
     gCoordinator.AddComponent(
-        gate,
+        box,
         PhysxTransform{
             config.position,
-            rotation,
-            glm::vec3(config.width, 0.1f, 0.1f)
+            config.rotation,
+            config.scale
         }
     );
 
     gCoordinator.AddComponent(
-        gate,
+        box,
         getCubeRenderable(texturePath)
     );
 
-    logger::info("Gate visual entity created at ({}, {}, {})", config.position.x, config.position.y, config.position.z);
-
-    return gate;
+    logger::info("Box entity created at ({}, {}, {})", config.position.x, config.position.y, config.position.z);
+    return box;
 }
 
 Entity RenderingSystem::createSphereEntity(const std::string& texturePath, const SphereConfig& config)

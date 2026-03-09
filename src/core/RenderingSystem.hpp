@@ -37,12 +37,13 @@ void cleanup();
     void update(float deltaTime);
 
     // Flexible entity creation methods
+    Entity createBoxEntity(const std::string& texturePath, const render::BoxConfig& config = {});
     Entity createSphereEntity(const std::string& texturePath, const render::SphereConfig& config = {});
     Entity createPlaneEntity(const std::string& texturePath, const render::PlaneConfig& config = {});
     Entity createModelEntity(const std::string& modelPath, const render::ModelConfig& config = {});
-    Entity createGateEntity(const std::string& texturePath, const render::GateConfig& config = {});
 
     Renderable getCubeRenderable(const std::string& texturePath);
+
     void updateCameraTarget(const glm::vec3& position);
     glm::vec3 getCameraForward() const;
     bool isTurnTableCamera() { return activeCamera == turntableCamera.get();};
