@@ -360,7 +360,12 @@ void RacingGame::run()
             // If entity exists, update camera target to follow the player vehicle BEFORE rendering
             // This prevents 1-frame lag that causes ghosting/phasing artifacts
             if (gCoordinator.HasComponent<PhysxTransform>(playerVehicleEntity)) {
-                glm::vec3 targetPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
+                auto& transform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
+                auto& modelRenderable = gCoordinator.GetComponent<ModelRenderable>(playerVehicleEntity);
+                
+                // Target the visual center, not the physics origin
+                glm::vec3 visualOffset = transform.rot * modelRenderable.visualOffsetPos;
+                glm::vec3 targetPos = transform.pos + visualOffset;
                 targetPos.y += 2.f;
                 renderingSystem->updateCameraTarget(targetPos);
             }
