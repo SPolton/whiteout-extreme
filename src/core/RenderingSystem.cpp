@@ -198,9 +198,7 @@ Entity RenderingSystem::createGateEntity(const std::string& texturePath, const r
 {
     Entity gate = gCoordinator.CreateEntity();
 
-    // Calculate rotation: conjugate of lookAt so the gate faces along 'direction' in world space.
-    glm::mat4 lookAtMatrix = glm::lookAt(glm::vec3(0.0f), config.direction, glm::vec3(0.f, 1.f, 0.f));
-    glm::quat rotation = glm::conjugate(glm::quat_cast(lookAtMatrix));
+    glm::quat rotation = math::transform::quatFromDirection(config.direction);
 
     gCoordinator.AddComponent(
         gate,

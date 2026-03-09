@@ -1,8 +1,10 @@
 #pragma once
 
+#include <algorithm>  // For std::shuffle
 #include <random>
 #include <glm/glm.hpp>
-#include <algorithm>  // For std::shuffle
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 namespace math {
     template<typename T>
@@ -48,5 +50,16 @@ namespace math::transform {
     glm::mat4 TranslationToMatrix(glm::vec3 const & translation);
     glm::mat4 RotationToMatrix(glm::vec3 const & eulerAngles);
     glm::mat4 ScaleToMatrix(glm::vec3 const & scale);
+
+    // Returns a world-space quaternion that orients an object so its
+    // forward axis aligns with `direction`.
+    [[nodiscard]] inline glm::quat quatFromDirection(
+        const glm::vec3& direction,
+        const glm::vec3& up = UpVec3)
+    {
+        // glm::lookAt() produces a VIEW matrix (world→camera)
+        // conjugate (invert) it to get the equivalent object to world rotation
+        return glm::conjugate(glm::quat_cast(glm::lookAt(glm::vec3(0.f), direction, up)));
+    }
 
 } // namespace math::transform
