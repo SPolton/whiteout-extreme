@@ -194,53 +194,33 @@ Entity RenderingSystem::createPlaneEntity(const std::string& texturePath, const 
     return plane;
 }
 
-Entity RenderingSystem::createGateEntity(const glm::vec3& pos, const glm::vec3& direction, float width, const std::string& texturePath)
+Entity RenderingSystem::createGateEntity(const std::string& texturePath, const render::GateConfig& config)
 {
     Entity gate = gCoordinator.CreateEntity();
 
-    // 1. Calculate Rotation using LookAt
-    // We create a view matrix looking from the origin (0,0,0) towards our direction.
-    // The 'direction' vector represents where the gate's Z-axis (Forward) should point.
-    glm::vec3 up(0.f, 1.f, 0.f);
-
-    // LookAt creates a VIEW matrix. To get the WORLD orientation of the object,
-    // we take the inverse (or conjugate for quaternions) of the lookAt rotation.
-    glm::mat4 lookAtMatrix = glm::lookAt(glm::vec3(0.0f), direction, up);
-
-    // Convert the rotation part of the LookAt matrix to a quaternion.
-    // We conjugate because LookAt defines how the world rotates around the camera,
-    // whereas we want to define how the gate rotates in the world.
+    // Calculate rotation: conjugate of lookAt so the gate faces along 'direction' in world space.
+    glm::mat4 lookAtMatrix = glm::lookAt(glm::vec3(0.0f), config.direction, glm::vec3(0.f, 1.f, 0.f));
     glm::quat rotation = glm::conjugate(glm::quat_cast(lookAtMatrix));
 
-    // 2. Add PhysxTransform Component
-    // Scale X by width to create the "line" across the track.
-    // Y and Z are kept thin to represent a ground strip.
     gCoordinator.AddComponent(
         gate,
         PhysxTransform{
-            pos,
+            config.position,
             rotation,
-            glm::vec3(width, 0.1f, 0.1f)
+            glm::vec3(config.width, 0.1f, 0.1f)
         }
     );
 
-    // 3. Add Renderable Component
     gCoordinator.AddComponent(
         gate,
-        Renderable{
-            .geometry = assetManager.loadGeometry("cube", ShapeGenerator::cube()),
-            .cpuData = assetManager.getCPUGeometry("cube"),
-            .shader = assetManager.loadShader("textured"),
-            .texture = assetManager.loadTexture(texturePath, GL_LINEAR)
-        }
+        getCubeRenderable(texturePath)
     );
 
-    logger::info("Gate visual entity created at ({}, {}, {}) using LookAt orientation", pos.x, pos.y, pos.z);
+    logger::info("Gate visual entity created at ({}, {}, {})", config.position.x, config.position.y, config.position.z);
 
     return gate;
 }
 
-//Create Entity and add PhysxTransform and Renderable Components
 Entity RenderingSystem::createSphereEntity(const std::string& texturePath, const SphereConfig& config)
 {
     Entity sphere = gCoordinator.CreateEntity();

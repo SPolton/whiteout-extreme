@@ -40,7 +40,7 @@ void cleanup();
     Entity createSphereEntity(const std::string& texturePath, const render::SphereConfig& config = {});
     Entity createPlaneEntity(const std::string& texturePath, const render::PlaneConfig& config = {});
     Entity createModelEntity(const std::string& modelPath, const render::ModelConfig& config = {});
-    Entity createGateEntity(const glm::vec3& pos, const glm::vec3& direction, float width, const std::string& texturePath);
+    Entity createGateEntity(const std::string& texturePath, const render::GateConfig& config = {});
 
     Renderable getCubeRenderable(const std::string& texturePath);
     void updateCameraTarget(const glm::vec3& position);

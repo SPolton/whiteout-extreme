@@ -447,7 +447,8 @@ void RacingSystem::initGatesFromPoints() {
         gate.right = glm::normalize(glm::cross(gate.direction, upVec));
 
         std::string tex = (i == 0 || i == gates.size() - 1) ? "assets/textures/2k_mars.jpg" : "assets/textures/carbon_fiber.jpg";
-        renderingSystem->createGateEntity(gate.position, gate.direction, gate.width, tex);
+        render::GateConfig config{ gate.position, gate.direction, gate.width };
+        renderingSystem->createGateEntity(tex, config);
     }
 }
 
@@ -481,7 +482,8 @@ void RacingSystem::initGatesOld() {
         gate.right = glm::normalize(glm::cross(gate.direction, upVec));
 
         std::string tex = (i == 0 || i == gatesOld.size() - 1) ? "assets/textures/2k_mars.jpg" : "assets/textures/carbon_fiber.jpg";
-        renderingSystem->createGateEntity(gate.position, gate.direction, gate.width, tex);
+        render::GateConfig config{ gate.position, gate.direction, gate.width };
+        renderingSystem->createGateEntity(tex, config);
     }
 }
 */

@@ -32,4 +32,11 @@ struct ModelConfig {
     glm::vec3 scale = { 1.0f, 1.0f, 1.0f };
 };
 
+struct GateConfig {
+    glm::vec3 position = { 0.0f, 0.0f, 0.0f };
+    glm::vec3 direction = { 0.0f, 0.0f, 1.0f };
+    float width = 1.0f;
+    GLenum textureFilterMode = GL_LINEAR;
+};
+
 } // namespace render
