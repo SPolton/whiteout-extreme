@@ -161,12 +161,21 @@ RacingGame::RacingGame()
 
     
     // Create Skybox first (if texture is available)
-    Skybox = renderingSystem->createSkyboxEntity("assets/textures/sky/snow_landscape.hdr");
+    render::SphereConfig skyboxConfig;
+    skyboxConfig.radius = 100.0f;
+    skyboxConfig.slices = 32;
+    skyboxConfig.stacks = 32;
+    skyboxConfig.isSkybox = true;
+    Skybox = renderingSystem->createSphereEntity("assets/textures/sky/snow_landscape.hdr", skyboxConfig);
     gCoordinator.GetComponent<PhysxTransform>(Skybox).scale = glm::vec3(3.f);
     logger::info("Created Skybox entity");
 
     // Create infinite ground plane with repeating snow texture
-    GroundPlane = renderingSystem->createGroundPlaneEntity("assets/textures/snowball.png", 0);
+    render::PlaneConfig planeConfig;
+    planeConfig.isInfinite = true;
+    planeConfig.uvRepeat = 500.0f;
+    planeConfig.textureWrapMode = GL_REPEAT;
+    GroundPlane = renderingSystem->createPlaneEntity("assets/textures/snowball.png", planeConfig);
     logger::info("Created ground plane entity");
 
     // Create Map model entity

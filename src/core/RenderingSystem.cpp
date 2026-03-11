@@ -6,9 +6,9 @@
 #include "components/Transform.h"
 #include "components/VehicleComponent.h"
 
-#include <iostream>
-#include <cmath>
 #include <glm/gtc/type_ptr.hpp>
+
+using namespace render;
 
 RenderingSystem::RenderingSystem(
     std::shared_ptr<InputManager> inputManager)
@@ -92,8 +92,6 @@ void RenderingSystem::processCameraInput(float deltaTime)
                 turntableCamera->adjustPhi(-ry * deltaTime * this->camSpeed * sensitivity);
             }
         }
-        // TurnTableCamera uses right-click drag
-        
     }
 
     // Always update cursor position tracking
@@ -129,28 +127,6 @@ bool RenderingSystem::init()
         return false;
     }
 
-    // Create common geometry through AssetManager
-    CPU_Geometry sphereCPU = ShapeGenerator::sphere(1, 16, 16);
-    assetManager.loadGeometry("sphere", sphereCPU);
-    logger::info("Sphere geometry initialized");
-
-    CPU_Geometry cubeCPU = ShapeGenerator::cube();
-    assetManager.loadGeometry("cube", cubeCPU);
-    logger::info("Cube geometry initialized");
-
-    CPU_Geometry skyboxCPU = ShapeGenerator::sphere(100.0f, 32, 32);
-    assetManager.loadGeometry("skybox", skyboxCPU);
-    logger::info("Skybox geometry initialized");
-
-    CPU_Geometry planeCPU = ShapeGenerator::plane(1.0f);
-    assetManager.loadGeometry("plane", planeCPU);
-    logger::info("Plane geometry initialized");
-
-    // Create infinite ground plane with repeating texture (10000 units, 500 UV repeats)
-    CPU_Geometry infinitePlaneCPU = ShapeGenerator::infinitePlane(10000.0f, 500.0f);
-    assetManager.loadGeometry("infinite_plane", infinitePlaneCPU);
-    logger::info("Infinite plane geometry initialized");
-
     // Create object tracking transform for camera (vehicle tracking)
     targetTransform = std::make_unique<SceneTransform>();
     targetTransform->setPosition(glm::vec3(0.f, 0.f, 0.f));
@@ -179,191 +155,120 @@ Renderable RenderingSystem::getCubeRenderable(const std::string& texturePath)
     };
 }
 
-Entity RenderingSystem::createSkyboxEntity(const std::string& texturePath)
+Entity RenderingSystem::createPlaneEntity(const std::string& texturePath, const PlaneConfig& config)
 {
-    // Create skybox entity
-    Entity skybox = gCoordinator.CreateEntity();
+    Entity plane = gCoordinator.CreateEntity();
 
     gCoordinator.AddComponent(
-        skybox,
+        plane,
         PhysxTransform{
-            glm::vec3(0.f, 0.f, 0.f),
-            glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
-            glm::vec3(1.f)
+            config.position,
+            config.rotation,
+            config.scale
         }
     );
 
-    gCoordinator.AddComponent(
-        skybox,
-        Renderable{
-            .geometry = assetManager.loadGeometry("skybox", ShapeGenerator::sphere(100.0f, 32, 32)),
-            .cpuData = assetManager.getCPUGeometry("skybox"),
-            .shader = assetManager.loadShader("textured"),
-            .texture = assetManager.loadTexture(texturePath, GL_LINEAR),
-            .isSkybox = true
-        }
-    );
-
-    logger::info("Skybox entity created");
-
-    return skybox;
-}
-
-Entity RenderingSystem::createGroundPlaneEntity(const std::string& texturePath, float size)
-{
-    Entity groundPlane = gCoordinator.CreateEntity();
-
-    bool isInfinite = (size <= 0.0f);
+    std::string geomKey;
+    CPU_Geometry planeCPU;
     
-    if (isInfinite) {
-        // Create infinite ground plane with repeating texture
-        const float infiniteSize = 10000.0f;
-        const float uvRepeat = 500.0f;
-        
-        gCoordinator.AddComponent(
-            groundPlane,
-            PhysxTransform{
-                glm::vec3(0.f, 0.f, 0.f),  // Centered at origin
-                glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
-                glm::vec3(1.f, 1.f, 1.f)  // No scaling needed since geometry is already large
-            }
-        );
-
-        gCoordinator.AddComponent(
-            groundPlane,
-            Renderable{
-                .geometry = assetManager.loadGeometry("infinite_plane", ShapeGenerator::infinitePlane(infiniteSize, uvRepeat)),
-                .cpuData = assetManager.getCPUGeometry("infinite_plane"),
-                .shader = assetManager.loadShader("textured"),
-                .texture = assetManager.loadTexture(texturePath, GL_LINEAR, GL_REPEAT)  // Use GL_REPEAT for tiling
-            }
-        );
-
-        logger::info("Infinite ground plane entity created with repeating texture");
-    }
-    else {
-        // Create normal sized plane
-        gCoordinator.AddComponent(
-            groundPlane,
-            PhysxTransform{
-                glm::vec3(0.f, 0.f, 0.f),  // Centered at origin
-                glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
-                glm::vec3(size, 1.f, size)  // Scale plane to requested size
-            }
-        );
-
-        gCoordinator.AddComponent(
-            groundPlane,
-            Renderable{
-                .geometry = assetManager.loadGeometry("plane", ShapeGenerator::plane(1.0f)),
-                .cpuData = assetManager.getCPUGeometry("plane"),
-                .shader = assetManager.loadShader("textured"),
-                .texture = assetManager.loadTexture(texturePath, GL_LINEAR, GL_CLAMP_TO_EDGE)  // Clamp for normal plane
-            }
-        );
-
-        logger::info("Ground plane entity created with size: {}", size);
+    if (config.isInfinite) {
+        geomKey = "infinite_plane";
+        planeCPU = ShapeGenerator::infinitePlane(config.infinitePlaneSize, config.uvRepeat);
+        logger::info("Infinite plane entity created with UV repeat: {}", config.uvRepeat);
+    } else {
+        geomKey = "plane";
+        planeCPU = ShapeGenerator::plane(config.size);
+        logger::info("Plane entity created with size: {}", config.size);
     }
 
-    return groundPlane;
-}
-
-Entity RenderingSystem::createGateEntity(const glm::vec3& pos, const glm::vec3& direction, float width, const std::string& texturePath)
-{
-    Entity gate = gCoordinator.CreateEntity();
-
-    // 1. Calculate Rotation using LookAt
-    // We create a view matrix looking from the origin (0,0,0) towards our direction.
-    // The 'direction' vector represents where the gate's Z-axis (Forward) should point.
-    glm::vec3 up(0.f, 1.f, 0.f);
-
-    // LookAt creates a VIEW matrix. To get the WORLD orientation of the object,
-    // we take the inverse (or conjugate for quaternions) of the lookAt rotation.
-    glm::mat4 lookAtMatrix = glm::lookAt(glm::vec3(0.0f), direction, up);
-
-    // Convert the rotation part of the LookAt matrix to a quaternion.
-    // We conjugate because LookAt defines how the world rotates around the camera,
-    // whereas we want to define how the gate rotates in the world.
-    glm::quat rotation = glm::conjugate(glm::quat_cast(lookAtMatrix));
-
-    // 2. Add PhysxTransform Component
-    // Scale X by width to create the "line" across the track.
-    // Y and Z are kept thin to represent a ground strip.
     gCoordinator.AddComponent(
-        gate,
-        PhysxTransform{
-            pos,
-            rotation,
-            glm::vec3(width, 0.1f, 0.1f)
-        }
-    );
-
-    // 3. Add Renderable Component
-    gCoordinator.AddComponent(
-        gate,
+        plane,
         Renderable{
-            .geometry = assetManager.loadGeometry("cube", ShapeGenerator::cube()),
-            .cpuData = assetManager.getCPUGeometry("cube"),
+            .geometry = assetManager.loadGeometry(geomKey, planeCPU),
+            .cpuData = assetManager.getCPUGeometry(geomKey),
             .shader = assetManager.loadShader("textured"),
-            .texture = assetManager.loadTexture(texturePath, GL_LINEAR)
+            .texture = assetManager.loadTexture(texturePath, config.textureFilterMode, config.textureWrapMode)
         }
     );
 
-    logger::info("Gate visual entity created at ({}, {}, {}) using LookAt orientation", pos.x, pos.y, pos.z);
-
-    return gate;
+    return plane;
 }
 
-//Create Entity and add PhysxTransform and Renderable Components
-Entity RenderingSystem::createSphereEntity(const std::string& texturePath)
+Entity RenderingSystem::createBoxEntity(const std::string& texturePath, const render::BoxConfig& config)
 {
-    // Create sphere entity
+    Entity box = gCoordinator.CreateEntity();
+
+    gCoordinator.AddComponent(
+        box,
+        PhysxTransform{
+            config.position,
+            config.rotation,
+            config.scale
+        }
+    );
+
+    gCoordinator.AddComponent(
+        box,
+        getCubeRenderable(texturePath)
+    );
+
+    logger::info("Box entity created at ({}, {}, {})", config.position.x, config.position.y, config.position.z);
+    return box;
+}
+
+Entity RenderingSystem::createSphereEntity(const std::string& texturePath, const SphereConfig& config)
+{
     Entity sphere = gCoordinator.CreateEntity();
 
     gCoordinator.AddComponent(
         sphere,
         PhysxTransform{
-            glm::vec3(0.f, 0.f, 0.f),
-            glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
-            glm::vec3(1.f)
+            config.position,
+            config.rotation,
+            config.scale
         }
     );
 
+    // Generate geometry key based on config
+    std::string geomKey = config.isSkybox ? "skybox" : "sphere";
+    
+    // Create geometry with specified parameters
+    CPU_Geometry sphereCPU = ShapeGenerator::sphere(config.radius, config.slices, config.stacks);
+    
     gCoordinator.AddComponent(
         sphere,
         Renderable{
-            assetManager.loadGeometry("sphere", ShapeGenerator::sphere(1, 16, 16)),
-            assetManager.getCPUGeometry("sphere"),
-            assetManager.loadShader("textured"),
-            assetManager.loadTexture(texturePath, GL_LINEAR)
+            .geometry = assetManager.loadGeometry(geomKey, sphereCPU),
+            .cpuData = assetManager.getCPUGeometry(geomKey),
+            .shader = assetManager.loadShader("textured"),
+            .texture = assetManager.loadTexture(texturePath, config.textureFilterMode, config.textureWrapMode),
+            .isSkybox = config.isSkybox
         }
     );
 
-    logger::info("Sphere entity created with texture: {}", texturePath);
+    logger::info("Sphere entity created (radius={}, skybox={}) with texture: {}", 
+                 config.radius, config.isSkybox, texturePath);
 
     return sphere;
 }
 
-Entity RenderingSystem::createModelEntity(const std::string& modelPath)
+Entity RenderingSystem::createModelEntity(const std::string& modelPath, const ModelConfig& config)
 {
-    // Create model entity
     Entity model = gCoordinator.CreateEntity();
 
     gCoordinator.AddComponent(
         model,
         PhysxTransform{
-            glm::vec3(0.f, 0.f, 0.f),
-            glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
-            glm::vec3(1.f)
+            config.position,
+            config.rotation,
+            config.scale
         }
     );
 
-    // Create a new ModelLoader for this entity
     try {
         auto modelLoader = std::make_shared<ModelLoader>(modelPath, false);
         logger::info("Model loaded successfully: {} with {} meshes", modelPath, modelLoader->getMeshCount());
         
-        // Add ModelRenderable component with the model loader and shader
         gCoordinator.AddComponent(
             model,
             ModelRenderable{modelLoader, assetManager.loadShader("model")}
@@ -371,8 +276,6 @@ Entity RenderingSystem::createModelEntity(const std::string& modelPath)
     }
     catch (const std::exception& e) {
         logger::error("Failed to load model {}: {}", modelPath, e.what());
-        // Clean up the entity if model loading failed
-        gCoordinator.DestroyEntity(model);
         throw;
     }
 
@@ -383,11 +286,7 @@ Entity RenderingSystem::createModelEntity(const std::string& modelPath)
 
 void RenderingSystem::render()
 {
-    // Clear buffers
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    //auto& camTransform = gCoordinator.GetComponent<PhysxTransform>(cameraEntity);
-    //auto& camComp = gCoordinator.GetComponent<CameraComponent>(cameraEntity);
 
     glm::mat4 view = activeCamera->getViewMatrix();
     glm::mat4 projection = getProjectionMatrix();
@@ -608,7 +507,6 @@ void RenderingSystem::update(float deltaTime)
         }
     }
     
-    // Render the rotating sphere (demo)
     render();
 }
 

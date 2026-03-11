@@ -1,5 +1,6 @@
 #include "RacingSystem.hpp"
 #include "utils/logger.h"
+#include "utils/math.hpp"
 #include <glm/gtx/projection.hpp>
 
 #include <GLFW/glfw3.h>
@@ -447,7 +448,11 @@ void RacingSystem::initGatesFromPoints() {
         gate.right = glm::normalize(glm::cross(gate.direction, upVec));
 
         std::string tex = (i == 0 || i == gates.size() - 1) ? "assets/textures/2k_mars.jpg" : "assets/textures/carbon_fiber.jpg";
-        renderingSystem->createGateEntity(gate.position, gate.direction, gate.width, tex);
+        renderingSystem->createBoxEntity(tex, render::BoxConfig{
+            gate.position,
+            math::transform::quatFromDirection(gate.direction, upVec),
+            glm::vec3(gate.width, 0.1f, 0.1f)
+        });
     }
 }
 
@@ -481,7 +486,11 @@ void RacingSystem::initGatesOld() {
         gate.right = glm::normalize(glm::cross(gate.direction, upVec));
 
         std::string tex = (i == 0 || i == gatesOld.size() - 1) ? "assets/textures/2k_mars.jpg" : "assets/textures/carbon_fiber.jpg";
-        renderingSystem->createGateEntity(gate.position, gate.direction, gate.width, tex);
+        renderingSystem->createBoxEntity(tex, render::BoxConfig{
+            gate.position,
+            math::transform::quatFromDirection(gate.direction, upVec),
+            glm::vec3(gate.width, 0.1f, 0.1f)
+        });
     }
 }
 */
