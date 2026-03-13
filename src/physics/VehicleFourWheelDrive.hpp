@@ -4,7 +4,6 @@
 #include "objects/PhysicsObject.hpp"
 #include "vehiclecommon/SnippetVehicleHelpers.h"
 #include "vehiclecommon/enginedrivetrain/EngineDrivetrain.h"
-#include "vehiclecommon/directdrivetrain/DirectDrivetrain.h"
 
 using namespace snippetvehicle;
 
@@ -34,16 +33,14 @@ public:
     }
 
     physx::vehicle2::PxVehicleDirectDriveTransmissionCommandState::Enum setTargetGear(physx::vehicle2::PxVehicleDirectDriveTransmissionCommandState::Enum state) {
-        //mVehicle.mTransmissionCommandState.targetGear = state;
+        mVehicle.mTransmissionCommandState.targetGear = state;
         return state;
     }
 
-    //EngineDriveVehicle& getVehicleData() { return mVehicle; }
-    DirectDriveVehicle& getVehicleData() { return mVehicle; }
+    EngineDriveVehicle& getVehicleData() { return mVehicle; }
 
 private:
-    //EngineDriveVehicle mVehicle;
-    DirectDriveVehicle mVehicle;
+    EngineDriveVehicle mVehicle;
 
     void initMaterialFrictionTable(ConstructData info);
 

@@ -393,6 +393,7 @@ void RacingGame::run()
             // textSystem->setProjection(width, height);
 
             textSystem->beginText();
+            /*
             textSystem->loadFont("arial.ttf", 48);
 
             float marginX = 30.f;
@@ -460,9 +461,10 @@ void RacingGame::run()
             textSystem->renderText("Boost: Y-Btn / SHIFT", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
             textSystem->renderText("Shoot: X-Btn / SPACE", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
             textSystem->renderText("Pause: Start / P", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
-            
-            textSystem->endText();
+            */
+            textSystem->endText(); 
             this->endFrame();
+            
         }
         else if (gameState == GameState::MainMenu) {
             // render UI for main menu, take note of the action taken

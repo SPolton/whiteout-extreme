@@ -7,8 +7,7 @@
 
 struct VehicleDefaultParams {
     snippetvehicle::BaseVehicleParams base;
-    snippetvehicle::DirectDrivetrainParams engine;
-    //snippetvehicle::EngineDrivetrainParams engine;
+    snippetvehicle::EngineDrivetrainParams engine;
     bool isSet = false;
 };
 
@@ -39,8 +38,8 @@ public:
     bool showDebugWindow = true;
     bool showSettingsWindow = true;
 
-    void setVehicle(VehicleFourWheelDrive* v); 
-    
+    void setVehicle(VehicleFourWheelDrive* v);
+
 protected:
     VehicleFourWheelDrive* vehicle = nullptr;
     VehicleDefaultParams defaultParams;

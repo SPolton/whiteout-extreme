@@ -1,5 +1,5 @@
 
-/*
+
 {
     "ThrottleCommandResponseParams": 
 	{
@@ -13,13 +13,4 @@
 			{"Throttle": 1.00, "ResponseCurve": [[1.0,1.00], [20.0, 1.00], [60.0, 0.0]]}			
 		]
     }
-}
-*/
-
-
-{
-  "directDriveThrottleResponseParams": {
-    "maxResponse": 5000.0,
-    "wheelResponseMultipliers": [ 1.0, 1.0, 1.0, 1.0 ]
-  }
 }
