@@ -85,7 +85,9 @@
 
 #include "VehicleFourWheelDrive.hpp"
 #include "vehiclecommon/enginedrivetrain/EngineDrivetrain.h"
+#include "vehiclecommon/directdrivetrain/DirectDrivetrain.h"
 #include "vehiclecommon/serialization/BaseSerialization.h"
+#include "vehiclecommon/serialization/DirectDrivetrainSerialization.h"
 #include "vehiclecommon/serialization/EngineDrivetrainSerialization.h"
 
 #include "common/Flags.hpp"
@@ -97,7 +99,8 @@ using namespace physx::vehicle2;
 using namespace snippetvehicle;
 
 //The vehicle with engine drivetrain
-EngineDriveVehicle mVehicle;
+//EngineDriveVehicle mVehicle;
+DirectDriveVehicle mVehicle;
 
 //Commands are issued to the vehicle in a pre-choreographed sequence.
 struct Command
@@ -138,6 +141,7 @@ VehicleFourWheelDrive::VehicleFourWheelDrive(ConstructData info)
         throw std::runtime_error("BaseVehicleParams JSON read failed.");
     }
 
+    /*
     //Check that we can read from the json file before continuing.
     EngineDrivetrainParams engineDrivetrainParams;
     if (!readEngineDrivetrainParamsFromJsonFile(mVehicleDataPath, "EngineDrive.json",
@@ -145,6 +149,7 @@ VehicleFourWheelDrive::VehicleFourWheelDrive(ConstructData info)
         logger::error("Failed to read EngineDrivetrainParams from JSON file.");
         throw std::runtime_error("EngineDrivetrainParams JSON read failed.");
     }
+    */
 
     // Assuming physX and ground plane are initialized elsewhere
     initMaterialFrictionTable(info);
@@ -179,11 +184,14 @@ bool VehicleFourWheelDrive::initVehicle(ConstructData info)
 	setPhysXIntegrationParams(mVehicle.mBaseParams.axleDescription,
 		mPhysXMaterialFrictions, mNbPhysXMaterialFrictions, mPhysXDefaultMaterialFriction,
 		mVehicle.mPhysXParams);
-	readEngineDrivetrainParamsFromJsonFile(mVehicleDataPath, "EngineDrive.json", 
-		mVehicle.mEngineDriveParams);
+    readDirectDrivetrainParamsFromJsonFile(mVehicleDataPath, "DirectDrive.json",
+        mVehicle.mBaseParams.axleDescription,
+        mVehicle.mDirectDriveParams);
+    //readEngineDrivetrainParamsFromJsonFile(mVehicleDataPath, "EngineDrive.json", 
+	//	mVehicle.mEngineDriveParams);
 
 	//Set the states to default.
-	if (!mVehicle.initialize(*info.physics, PxCookingParams(PxTolerancesScale()), *info.material, EngineDriveVehicle::eDIFFTYPE_FOURWHEELDRIVE))
+	if (!mVehicle.initialize(*info.physics, PxCookingParams(PxTolerancesScale()), *info.material)) //, EngineDriveVehicle::eDIFFTYPE_FOURWHEELDRIVE))
 	{
         logger::error("EngineDriveVehicle initialization failed.");
 		return false;
@@ -193,12 +201,14 @@ bool VehicleFourWheelDrive::initVehicle(ConstructData info)
 	PxTransform pose(PxVec3(0.000000000f, -0.0500000119f, -10.59399998f), PxQuat(PxIdentity));
 	mVehicle.setUpActor(*info.scene, pose, info.vehicleName);
 
+    /*
 	//Set the vehicle in 1st gear.
 	mVehicle.mEngineDriveState.gearboxState.currentGear = mVehicle.mEngineDriveParams.gearBoxParams.neutralGear + 1;
 	mVehicle.mEngineDriveState.gearboxState.targetGear = mVehicle.mEngineDriveParams.gearBoxParams.neutralGear + 1;
 
 	//Set the vehicle to use the automatic gearbox.
 	mVehicle.mTransmissionCommandState.targetGear = PxVehicleEngineDriveTransmissionCommandState::eAUTOMATIC_GEAR;
+    */
 
     // Collision filtering for the vehicle
     PxFilterData vehicleFilter(COLLISION_FLAG_CHASSIS, COLLISION_FLAG_CHASSIS_AGAINST, 0, 0);
@@ -233,7 +243,8 @@ bool VehicleFourWheelDrive::initVehicle(ConstructData info)
 	mVehicleSimulationContext.physxScene = info.scene;
 	mVehicleSimulationContext.physxActorUpdateMode = PxVehiclePhysXActorUpdateMode::eAPPLY_ACCELERATION;
 
-    logger::info("VehicleFourWheelDrive initialized successfully.");
+    logger::info("VehicleFourWheelDrive (Direct Drive) initialized successfully.");
+    //logger::info("VehicleFourWheelDrive initialized successfully.");
 	return true;
 }
 
@@ -247,7 +258,7 @@ void VehicleFourWheelDrive::stepPhysics(float deltaTime)
 {
     mVehicle.mCommandState.brakes[0] = mCurrentBrake;
     mVehicle.mCommandState.nbBrakes = 1;
-    mVehicle.mCommandState.throttle = mCurrentThrottle;
+    mVehicle.mCommandState.throttle = -mCurrentThrottle;
     mVehicle.mCommandState.steer = mCurrentSteer;
 
 	//Forward integrate the vehicle by a single timestep.

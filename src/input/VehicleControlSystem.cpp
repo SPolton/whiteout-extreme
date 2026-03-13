@@ -196,6 +196,19 @@ void VehicleControlSystem::processKeyboardInput()
 
 void VehicleControlSystem::accelerate()
 {
+    currentThrottle = 1.0f;
+    currentBrake = 0.0f;
+}
+
+void VehicleControlSystem::brake()
+{
+    currentThrottle = 0.0f;
+    currentBrake = 1.0f;
+}
+
+/*
+void VehicleControlSystem::accelerate()
+{
     //logger::info("Accelerating...");
     // apply transformation here to move car forward
 
@@ -204,7 +217,8 @@ void VehicleControlSystem::accelerate()
     vehicle.forwardGearDesired = true;
 
     if (vehicle.hasGearDesired()) {
-        currentThrottle = 0.7f;
+        currentThrottle = 1.0f;
+        //currentThrottle = 0.7f;
     }
     else {
         currentBrake = 1.0f;
@@ -221,12 +235,13 @@ void VehicleControlSystem::brake()
     vehicle.forwardGearDesired = false;
 
     if (vehicle.hasGearDesired()) {
-        currentThrottle = 0.7f;
+        currentThrottle = 1.0f;
     }
     else {
         currentBrake = 1.0f;
     }
 }
+*/
 
 void VehicleControlSystem::steerRight()
 {

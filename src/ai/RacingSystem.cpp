@@ -338,7 +338,7 @@ void RacingSystem::restart() {
     avalanche->mBaseSpeed = 5.0f;
     avalanche->mCloseProximityTimer = 0.0f;
     avalanche->raceCompletion = 0.0f;
-    avalanche->mIsActive = true;
+    avalanche->mIsActive = false;
 
     logger::info("Race Restarted: {} vehicles on grid", leaderboard.size());
 }

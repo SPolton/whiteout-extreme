@@ -3,6 +3,14 @@
 #include <imgui.h>
 #include <glm/glm.hpp>
 #include "core/scene/CameraStats.hpp"
+#include "physics/VehicleFourWheelDrive.hpp"
+
+struct VehicleDefaultParams {
+    snippetvehicle::BaseVehicleParams base;
+    snippetvehicle::DirectDrivetrainParams engine;
+    //snippetvehicle::EngineDrivetrainParams engine;
+    bool isSet = false;
+};
 
 // Handles ImGui panel rendering and settings for RenderingSystem
 // Separates UI logic from rendering logic
@@ -31,12 +39,18 @@ public:
     bool showDebugWindow = true;
     bool showSettingsWindow = true;
 
+    void setVehicle(VehicleFourWheelDrive* v); 
+    
 protected:
+    VehicleFourWheelDrive* vehicle = nullptr;
+    VehicleDefaultParams defaultParams;
+
     // Individual panel sections
     void renderDebugInfo();
     void renderRenderSettings();
     void renderCameraInfo();
     void renderControls();
+    void renderVehiclePhysx();
 
 private:
     glm::vec3 backgroundColor;

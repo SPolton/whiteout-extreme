@@ -221,6 +221,8 @@ RacingGame::RacingGame()
     logger::info("Loaded snowmobile models for ai vehicles");
 
     gCoordinator.AddComponent(playerVehicleEntity, Racer{});
+    auto& playerVehicle = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).instance;
+    imguiPanel->setVehicle(playerVehicle);
 
     gCoordinator.AddComponent(aiVehicleEntity1, Racer{});
     gCoordinator.AddComponent(aiVehicleEntity1, AI{});
