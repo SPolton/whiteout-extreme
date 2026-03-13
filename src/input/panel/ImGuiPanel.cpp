@@ -118,7 +118,6 @@ void ImGuiPanel::renderVehiclePhysx() {
             ImGui::EndTooltip();
         }
         };
-
     if (ImGui::CollapsingHeader("Vehicle Physx Tuning - EXHAUSTIVE", ImGuiTreeNodeFlags_DefaultOpen)) {
 
         // --- ACTIONS ---
@@ -127,15 +126,90 @@ void ImGuiPanel::renderVehiclePhysx() {
             current.mEngineDriveParams = defaultParams.engine;
         }
         ImGui::SameLine();
-        if (ImGui::Button("Export to Console")) {
-            printf("\n--- PHYSX EXPORT ---\nMaxOmega: %f\nPeakTorque: %f\nMass: %f\n",
-                current.mEngineDriveParams.engineParams.maxOmega,
-                current.mEngineDriveParams.engineParams.peakTorque,
-                current.mBaseParams.rigidBodyParams.mass);
+
+        if (ImGui::Button("Export All Params to Console")) {
+            printf("\n====================================================");
+            printf("\n   VEHICLE PHYSICS EXPORT - CURRENT CONFIG        ");
+            printf("\n====================================================\n");
+
+            // 1. ENGINE & GEARBOX
+            printf("[ENGINE & GEARBOX]\n");
+            printf("  MaxOmega:     %.3f (Redline: %.0f RPM)\n", current.mEngineDriveParams.engineParams.maxOmega, current.mEngineDriveParams.engineParams.maxOmega * (60.0f / 6.28318f));
+            printf("  PeakTorque:   %.1f Nm\n", current.mEngineDriveParams.engineParams.peakTorque);
+            printf("  FinalRatio:   %.2f\n", current.mEngineDriveParams.gearBoxParams.finalRatio);
+            printf("  SwitchTime:   %.3f s\n\n", current.mEngineDriveParams.gearBoxParams.switchTime);
+
+            // 2. TRANSMISSION
+            printf("[TRANSMISSION & DIFFS]\n");
+            auto& diff = current.mEngineDriveParams.fourWheelDifferentialParams;
+            printf("  Torque Split (F/R): %.2f / %.2f\n", diff.torqueRatios[0] * 2.0f, diff.torqueRatios[2] * 2.0f);
+            printf("  Rear Bias (LSD):    %.2f\n", diff.rearBias);
+            printf("  Center Bias:        %.2f\n", diff.centerBias);
+            printf("  Diff Rate:          %.2f\n\n", diff.rate);
+
+            // 3. BRAKE & STEERING
+            printf("[BRAKING & STEERING]\n");
+            printf("  Max Brake Torque:   %.1f Nm\n", current.mBaseParams.brakeResponseParams[0].maxResponse);
+            printf("  Max Steer Angle:    %.2f rad (%.1f deg)\n\n", current.mBaseParams.steerResponseParams.maxResponse, current.mBaseParams.steerResponseParams.maxResponse * (180.0f / 3.14159f));
+
+            // 4. CHASSIS
+            printf("[CHASSIS & PHYSICS]\n");
+            printf("  Mass:               %.1f kg\n", current.mBaseParams.rigidBodyParams.mass);
+            printf("  Inertia (MOI):      X:%.1f Y:%.1f Z:%.1f\n", current.mBaseParams.rigidBodyParams.moi.x, current.mBaseParams.rigidBodyParams.moi.y, current.mBaseParams.rigidBodyParams.moi.z);
+            auto* actor = vehicle->getRigidActor()->is<physx::PxRigidDynamic>();
+            if (actor) {
+                physx::PxVec3 p = actor->getCMassLocalPose().p;
+                printf("  COM Offset:         X:%.2f Y:%.2f Z:%.2f\n\n", p.x, p.y, p.z);
+            }
+
+            // 5 & 6. INDIVIDUAL WHEELS (0-3)
+            for (int i = 0; i < 4; i++) {
+                printf("[WHEEL %d - %s]\n", i, (i < 2 ? "FRONT" : "REAR"));
+
+                // Wheel Geometry
+                printf("  Wheel Radius:       %.2f m\n", current.mBaseParams.wheelParams[i].radius);
+                printf("  Wheel Mass:         %.1f kg\n", current.mBaseParams.wheelParams[i].mass);
+                printf("  Wheel Damping:      %.2f\n", current.mBaseParams.wheelParams[i].dampingRate);
+
+                // Tire Force Params
+                auto& t = current.mBaseParams.tireForceParams[i];
+                printf("  LongStiff:          %.0f\n", t.longStiff);
+                printf("  LatStiff Peak:      %.0f\n", t.latStiffY);
+                printf("  CamberStiff:        %.0f\n", t.camberStiff);
+                printf("  Friction Points:    [0]:%.2f, [1]:(Slip:%.2f, Val:%.2f), [2]:(Slip:%.2f, Val:%.2f)\n",
+                    t.frictionVsSlip[0][1],
+                    t.frictionVsSlip[1][0], t.frictionVsSlip[1][1],
+                    t.frictionVsSlip[2][0], t.frictionVsSlip[2][1]);
+                printf("  Load Filter:        Min(L:%.2f, M:%.2f) Max(L:%.2f, M:%.2f)\n",
+                    t.loadFilter[0][0], t.loadFilter[0][1],
+                    t.loadFilter[1][0], t.loadFilter[1][1]);
+
+                // Suspension Params
+                printf("  Susp. Travel:       %.2f m\n", current.mBaseParams.suspensionParams[i].suspensionTravelDist);
+                printf("  Spring Stiffness:   %.0f\n", current.mBaseParams.suspensionForceParams[i].stiffness);
+                printf("  Spring Damping:     %.0f\n", current.mBaseParams.suspensionForceParams[i].damping);
+                printf("  Sprung Mass:        %.1f kg\n\n", current.mBaseParams.suspensionForceParams[i].sprungMass);
+            }
+
+            printf("====================================================\n\n");
+        }
+
+        if (ImGui::Button("Reset to Mountain Top")) {
+            physx::PxTransform targetPose(physx::PxVec3(-730.0f, 670.4f, -400.0f), physx::PxQuat(physx::PxIdentity));
+            auto* actor = vehicle->getRigidActor()->is<physx::PxRigidDynamic>();
+            if (actor) {
+                actor->setGlobalPose(targetPose);
+                actor->setLinearVelocity(physx::PxVec3(0, 0, 0));
+                actor->setAngularVelocity(physx::PxVec3(0, 0, 0));
+                current.mBaseState.rigidBodyState.linearVelocity = physx::PxVec3(0, 0, 0);
+                current.mBaseState.rigidBodyState.angularVelocity = physx::PxVec3(0, 0, 0);
+                current.mEngineDriveState.engineState.rotationSpeed = 0.0f;
+                current.mEngineDriveState.gearboxState.currentGear = 1;
+            }
         }
         ImGui::SameLine();
-        if (ImGui::Button("Reset to Spawn")) {
-            physx::PxTransform targetPose(physx::PxVec3(-730.0f, 670.4f, -400.0f), physx::PxQuat(physx::PxIdentity));
+        if (ImGui::Button("Reset to Origin")) {
+            physx::PxTransform targetPose(physx::PxVec3(0.0f, 10.0f, 0.0f), physx::PxQuat(physx::PxIdentity));
             auto* actor = vehicle->getRigidActor()->is<physx::PxRigidDynamic>();
             if (actor) {
                 actor->setGlobalPose(targetPose);
@@ -208,15 +282,15 @@ void ImGuiPanel::renderVehiclePhysx() {
                 }
 
                 if (ImGui::IsItemHovered()) {
-                    ImGui::SetTooltip("Abaisser le Y (milieu) pour éviter que la voiture ne se retourne.");
+                    ImGui::SetTooltip("Lower Y (middle) to avoid car turning on itself.");
                 }
             }
             ImGui::TreePop();
         }
 
+        // Indices et Helpers
         std::vector<int> frontIndices = { 0, 1 };
         std::vector<int> rearIndices = { 2, 3 };
-
         auto ApplyToGroup = [&](const std::vector<int>& indices, auto modifier) {
             for (int i : indices) modifier(i);
             };
@@ -224,35 +298,41 @@ void ImGuiPanel::renderVehiclePhysx() {
         // --- FRONT TUNING (Axle 0) ---
         if (ImGui::TreeNodeEx("FRONT TUNING (Wheels & Suspension)", ImGuiTreeNodeFlags_DefaultOpen)) {
 
-            // --- Front Wheels & Tires ---
+            // Wheels & Tires
             ImGui::SeparatorText("Front Wheels & Tires");
-            static float fRadius = current.mBaseParams.wheelParams[0].radius;
-            if (ImGui::SliderFloat("Front Radius", &fRadius, 0.1f, 1.0f, "%.2f m")) {
-                ApplyToGroup(frontIndices, [&](int i) { current.mBaseParams.wheelParams[i].radius = fRadius; });
+            if (ImGui::SliderFloat("Front Radius", &current.mBaseParams.wheelParams[0].radius, 0.1f, 1.0f, "%.2f m")) {
+                ApplyToGroup(frontIndices, [&](int i) { current.mBaseParams.wheelParams[i].radius = current.mBaseParams.wheelParams[0].radius; });
+            }
+            if (ImGui::SliderFloat("Front Wheel Mass", &current.mBaseParams.wheelParams[0].mass, 1.0f, 100.0f, "%.1f kg")) {
+                ApplyToGroup(frontIndices, [&](int i) { current.mBaseParams.wheelParams[i].mass = current.mBaseParams.wheelParams[0].mass; });
+            }
+            if (ImGui::SliderFloat("Front Rotation Damping", &current.mBaseParams.wheelParams[0].dampingRate, 0.0f, 5.0f, "%.2f")) {
+                ApplyToGroup(frontIndices, [&](int i) { current.mBaseParams.wheelParams[i].dampingRate = current.mBaseParams.wheelParams[0].dampingRate; });
             }
 
-            static float fWheelMass = current.mBaseParams.wheelParams[0].mass;
-            if (ImGui::SliderFloat("Front Wheel Mass", &fWheelMass, 1.0f, 100.0f, "%.1f kg")) {
-                ApplyToGroup(frontIndices, [&](int i) { current.mBaseParams.wheelParams[i].mass = fWheelMass; });
-            }
-
+            ImGui::Spacing();
             ImGui::SliderFloat("Front LongStiff", &current.mBaseParams.tireForceParams[0].longStiff, 0.0f, 5000000.0f, "%.0f");
             ImGui::SliderFloat("Front LatStiff Peak", &current.mBaseParams.tireForceParams[0].latStiffY, 0.0f, 5000000.0f, "%.0f");
             ImGui::SliderFloat("Front CamberStiff", &current.mBaseParams.tireForceParams[0].camberStiff, 0.0f, 500000.0f, "%.0f");
 
+            ImGui::SeparatorText("Front Grip & Load");
+            ImGui::SliderFloat("Front Base Friction", &current.mBaseParams.tireForceParams[0].frictionVsSlip[0][1], 0.0f, 2.0f, "%.2f");
+            ImGui::DragFloat2("Front Max Friction Point", current.mBaseParams.tireForceParams[0].frictionVsSlip[1], 0.01f, 0.0f, 2.0f);
+            ImGui::DragFloat2("Front Max Load Filter", current.mBaseParams.tireForceParams[0].loadFilter[1], 0.01f, 0.0f, 5.0f);
+
+            // Sync Tire Params Front
             ApplyToGroup(frontIndices, [&](int i) {
                 current.mBaseParams.tireForceParams[i].longStiff = current.mBaseParams.tireForceParams[0].longStiff;
                 current.mBaseParams.tireForceParams[i].latStiffY = current.mBaseParams.tireForceParams[0].latStiffY;
                 current.mBaseParams.tireForceParams[i].camberStiff = current.mBaseParams.tireForceParams[0].camberStiff;
-                });
-
-            ImGui::DragFloat2("Front Max Friction Point", current.mBaseParams.tireForceParams[0].frictionVsSlip[1], 0.01f, 0.0f, 2.0f);
-            ApplyToGroup(frontIndices, [&](int i) {
+                current.mBaseParams.tireForceParams[i].frictionVsSlip[0][1] = current.mBaseParams.tireForceParams[0].frictionVsSlip[0][1];
                 current.mBaseParams.tireForceParams[i].frictionVsSlip[1][0] = current.mBaseParams.tireForceParams[0].frictionVsSlip[1][0];
                 current.mBaseParams.tireForceParams[i].frictionVsSlip[1][1] = current.mBaseParams.tireForceParams[0].frictionVsSlip[1][1];
+                current.mBaseParams.tireForceParams[i].loadFilter[1][0] = current.mBaseParams.tireForceParams[0].loadFilter[1][0];
+                current.mBaseParams.tireForceParams[i].loadFilter[1][1] = current.mBaseParams.tireForceParams[0].loadFilter[1][1];
                 });
 
-            // --- Front Suspension ---
+            // Suspension
             ImGui::SeparatorText("Front Suspension");
             ImGui::SliderFloat("Front Travel", &current.mBaseParams.suspensionParams[0].suspensionTravelDist, 0.01f, 1.5f, "%.2f m");
             ImGui::SliderFloat("Front Stiffness", &current.mBaseParams.suspensionForceParams[0].stiffness, 0.0f, 1000000.0f);
@@ -265,7 +345,6 @@ void ImGuiPanel::renderVehiclePhysx() {
                 current.mBaseParams.suspensionForceParams[i].damping = current.mBaseParams.suspensionForceParams[0].damping;
                 current.mBaseParams.suspensionForceParams[i].sprungMass = current.mBaseParams.suspensionForceParams[0].sprungMass;
                 });
-
             ImGui::TreePop();
         }
 
@@ -274,35 +353,41 @@ void ImGuiPanel::renderVehiclePhysx() {
         // --- REAR TUNING (Axle 1) ---
         if (ImGui::TreeNodeEx("REAR TUNING (Wheels & Suspension)", ImGuiTreeNodeFlags_DefaultOpen)) {
 
-            // --- Rear Wheels & Tires ---
+            // Wheels & Tires
             ImGui::SeparatorText("Rear Wheels & Tires");
-            static float rRadius = current.mBaseParams.wheelParams[2].radius;
-            if (ImGui::SliderFloat("Rear Radius", &rRadius, 0.1f, 1.0f, "%.2f m")) {
-                ApplyToGroup(rearIndices, [&](int i) { current.mBaseParams.wheelParams[i].radius = rRadius; });
+            if (ImGui::SliderFloat("Rear Radius", &current.mBaseParams.wheelParams[2].radius, 0.1f, 1.0f, "%.2f m")) {
+                ApplyToGroup(rearIndices, [&](int i) { current.mBaseParams.wheelParams[i].radius = current.mBaseParams.wheelParams[2].radius; });
+            }
+            if (ImGui::SliderFloat("Rear Wheel Mass", &current.mBaseParams.wheelParams[2].mass, 1.0f, 100.0f, "%.1f kg")) {
+                ApplyToGroup(rearIndices, [&](int i) { current.mBaseParams.wheelParams[i].mass = current.mBaseParams.wheelParams[2].mass; });
+            }
+            if (ImGui::SliderFloat("Rear Rotation Damping", &current.mBaseParams.wheelParams[2].dampingRate, 0.0f, 5.0f, "%.2f")) {
+                ApplyToGroup(rearIndices, [&](int i) { current.mBaseParams.wheelParams[i].dampingRate = current.mBaseParams.wheelParams[2].dampingRate; });
             }
 
-            static float rWheelMass = current.mBaseParams.wheelParams[2].mass;
-            if (ImGui::SliderFloat("Rear Wheel Mass", &rWheelMass, 1.0f, 100.0f, "%.1f kg")) {
-                ApplyToGroup(rearIndices, [&](int i) { current.mBaseParams.wheelParams[i].mass = rWheelMass; });
-            }
-
+            ImGui::Spacing();
             ImGui::SliderFloat("Rear LongStiff", &current.mBaseParams.tireForceParams[2].longStiff, 0.0f, 5000000.0f, "%.0f");
             ImGui::SliderFloat("Rear LatStiff Peak", &current.mBaseParams.tireForceParams[2].latStiffY, 0.0f, 5000000.0f, "%.0f");
             ImGui::SliderFloat("Rear CamberStiff", &current.mBaseParams.tireForceParams[2].camberStiff, 0.0f, 500000.0f, "%.0f");
 
+            ImGui::SeparatorText("Rear Grip & Load");
+            ImGui::SliderFloat("Rear Base Friction", &current.mBaseParams.tireForceParams[2].frictionVsSlip[0][1], 0.0f, 2.0f, "%.2f");
+            ImGui::DragFloat2("Rear Max Friction Point", current.mBaseParams.tireForceParams[2].frictionVsSlip[1], 0.01f, 0.0f, 2.0f);
+            ImGui::DragFloat2("Rear Max Load Filter", current.mBaseParams.tireForceParams[2].loadFilter[1], 0.01f, 0.0f, 5.0f);
+
+            // Sync Tire Params Rear
             ApplyToGroup(rearIndices, [&](int i) {
                 current.mBaseParams.tireForceParams[i].longStiff = current.mBaseParams.tireForceParams[2].longStiff;
                 current.mBaseParams.tireForceParams[i].latStiffY = current.mBaseParams.tireForceParams[2].latStiffY;
                 current.mBaseParams.tireForceParams[i].camberStiff = current.mBaseParams.tireForceParams[2].camberStiff;
-                });
-
-            ImGui::DragFloat2("Rear Max Friction Point", current.mBaseParams.tireForceParams[2].frictionVsSlip[1], 0.01f, 0.0f, 2.0f);
-            ApplyToGroup(rearIndices, [&](int i) {
+                current.mBaseParams.tireForceParams[i].frictionVsSlip[0][1] = current.mBaseParams.tireForceParams[2].frictionVsSlip[0][1];
                 current.mBaseParams.tireForceParams[i].frictionVsSlip[1][0] = current.mBaseParams.tireForceParams[2].frictionVsSlip[1][0];
                 current.mBaseParams.tireForceParams[i].frictionVsSlip[1][1] = current.mBaseParams.tireForceParams[2].frictionVsSlip[1][1];
+                current.mBaseParams.tireForceParams[i].loadFilter[1][0] = current.mBaseParams.tireForceParams[2].loadFilter[1][0];
+                current.mBaseParams.tireForceParams[i].loadFilter[1][1] = current.mBaseParams.tireForceParams[2].loadFilter[1][1];
                 });
 
-            // --- Rear Suspension ---
+            // Suspension
             ImGui::SeparatorText("Rear Suspension");
             ImGui::SliderFloat("Rear Travel", &current.mBaseParams.suspensionParams[2].suspensionTravelDist, 0.01f, 1.5f, "%.2f m");
             ImGui::SliderFloat("Rear Stiffness", &current.mBaseParams.suspensionForceParams[2].stiffness, 0.0f, 1000000.0f);
@@ -315,7 +400,6 @@ void ImGuiPanel::renderVehiclePhysx() {
                 current.mBaseParams.suspensionForceParams[i].damping = current.mBaseParams.suspensionForceParams[2].damping;
                 current.mBaseParams.suspensionForceParams[i].sprungMass = current.mBaseParams.suspensionForceParams[2].sprungMass;
                 });
-
             ImGui::TreePop();
         }
 
@@ -325,6 +409,19 @@ void ImGuiPanel::renderVehiclePhysx() {
         ImGui::Text("Velocity: %.1f km/h", speedKmh);
         ImGui::ProgressBar(speedKmh / 300.0f, ImVec2(-1, 15), "");
         ImGui::Text("RPM: %.0f", current.mEngineDriveState.engineState.rotationSpeed * (60.0f / 6.28318f));
+
+        float rpm = current.mEngineDriveState.engineState.rotationSpeed * (60.0f / 6.28318f);
+        float redline = current.mEngineDriveParams.engineParams.maxOmega * (60.0f / 6.28318f);
+        float rpmRatio = rpm / redline;
+
+        // Changement de couleur dynamique
+        ImVec4 color = ImVec4(0.0f, 1.0f, 0.0f, 1.0f); // Vert
+        if (rpmRatio > 0.7f) color = ImVec4(1.0f, 0.6f, 0.0f, 1.0f); // Orange à 70%
+        if (rpmRatio > 0.9f) color = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); // Rouge à 90%
+
+        ImGui::PushStyleColor(ImGuiCol_PlotHistogram, color);
+        ImGui::ProgressBar(rpmRatio, ImVec2(-1, 25), "ENGINE RPM");
+        ImGui::PopStyleColor();
     }
 }
 
