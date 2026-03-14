@@ -79,5 +79,7 @@ private:
 	static void cursorPosMetaCallback(GLFWwindow* window, double xpos, double ypos);
 	static void scrollMetaCallback(GLFWwindow* window, double xoffset, double yoffset);
 	static void windowSizeMetaCallback(GLFWwindow* window, int width, int height);
+    static void charMetaCallback(GLFWwindow* window, unsigned int codepoint);
+
 };
 

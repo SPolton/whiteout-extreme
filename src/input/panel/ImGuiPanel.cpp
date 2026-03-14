@@ -1,4 +1,8 @@
 #include "ImGuiPanel.hpp"
+#include <filesystem>
+#include <iostream>
+#include <set>
+#include <vector>
 
 const glm::vec3 defaultBackgroundColor(0.47f, 0.82f, 1.0f);
 
@@ -105,6 +109,37 @@ void ImGuiPanel::setVehicle(VehicleFourWheelDrive* v) {
     }
 }
 
+std::vector<std::string> GetAvailableConfigs(const std::string& directory) {
+    std::set<std::string> baseConfigs;
+    std::set<std::string> engineConfigs;
+    std::vector<std::string> validConfigs;
+
+    if (!std::filesystem::exists(directory)) return validConfigs;
+
+    for (const auto& entry : std::filesystem::directory_iterator(directory)) {
+        std::string filename = entry.path().filename().string();
+
+        // Look for file suffixes
+        size_t basePos = filename.find("-Base.json");
+        size_t enginePos = filename.find("-EngineDrive.json");
+
+        if (basePos != std::string::npos) {
+            baseConfigs.insert(filename.substr(0, basePos));
+        }
+        else if (enginePos != std::string::npos) {
+            engineConfigs.insert(filename.substr(0, enginePos));
+        }
+    }
+
+    // Only keep names that have BOTH files
+    for (const auto& name : baseConfigs) {
+        if (engineConfigs.find(name) != engineConfigs.end()) {
+            validConfigs.push_back(name);
+        }
+    }
+    return validConfigs;
+}
+
 void ImGuiPanel::renderVehiclePhysx() {
     if (!vehicle) return;
     auto& current = vehicle->getVehicleData();
@@ -119,15 +154,56 @@ void ImGuiPanel::renderVehiclePhysx() {
         }
         };
     if (ImGui::CollapsingHeader("Vehicle Physx Tuning - EXHAUSTIVE", ImGuiTreeNodeFlags_DefaultOpen)) {
-
+        ImGui::SeparatorText("Configurations Management");
         // --- ACTIONS ---
+        /*
         if (ImGui::Button("Reset Defaults")) {
             current.mBaseParams = defaultParams.base;
             current.mEngineDriveParams = defaultParams.engine;
+
+            auto* actor = vehicle->getRigidActor()->is<physx::PxRigidDynamic>();
+            if (actor) {
+                actor->setMass(current.mBaseParams.rigidBodyParams.mass);
+                actor->setMassSpaceInertiaTensor(current.mBaseParams.rigidBodyParams.moi);
+                actor->wakeUp();
+            }
+
+            printf("Vehicle parameters reset to defaults and actor woken up.\n");
+        }
+        */
+        if (ImGui::Button("Reset Default Parameters")) {
+            const char* path = "../../../assets/vehicledata";
+            // We assume your "original" files are named Base.json and EngineDrive.json
+            // Or you can change these names to "Default-Base.json", etc.
+            const char* defaultBase = "Base.json";
+            const char* defaultEngine = "EngineDrive.json";
+
+            bool l1 = readBaseParamsFromJsonFile(path, defaultBase, current.mBaseParams);
+            bool l2 = readEngineDrivetrainParamsFromJsonFile(path, defaultEngine, current.mEngineDriveParams);
+
+            if (l1 && l2) {
+                auto* actor = vehicle->getRigidActor()->is<physx::PxRigidDynamic>();
+                if (actor) {
+                    // 1. Re-apply Physical Properties
+                    actor->setMass(current.mBaseParams.rigidBodyParams.mass);
+                    actor->setMassSpaceInertiaTensor(current.mBaseParams.rigidBodyParams.moi);
+
+                    // 2. Clear velocities to prevent the vehicle from flying away if mass changed drastically
+                    actor->setLinearVelocity(physx::PxVec3(0, 0, 0));
+                    actor->setAngularVelocity(physx::PxVec3(0, 0, 0));
+
+                    // 3. Force Wake Up
+                    actor->wakeUp();
+                }
+                printf("Brute Force Reset: Reloaded %s and %s successfully.\n", defaultBase, defaultEngine);
+            }
+            else {
+                printf("Brute Force Reset FAILED: Could not find %s or %s in %s\n", defaultBase, defaultEngine, path);
+            }
         }
         ImGui::SameLine();
 
-        if (ImGui::Button("Export All Params to Console")) {
+        if (ImGui::Button("Export Params to Console")) {
             printf("\n====================================================");
             printf("\n   VEHICLE PHYSICS EXPORT - CURRENT CONFIG        ");
             printf("\n====================================================\n");
@@ -190,11 +266,79 @@ void ImGuiPanel::renderVehiclePhysx() {
                 printf("  Spring Damping:     %.0f\n", current.mBaseParams.suspensionForceParams[i].damping);
                 printf("  Sprung Mass:        %.1f kg\n\n", current.mBaseParams.suspensionForceParams[i].sprungMass);
             }
-
             printf("====================================================\n\n");
         }
 
-        if (ImGui::Button("Reset to Mountain Top")) {
+        // --- FILE SYSTEM STORAGE ---
+        static char configName[64] = "MySnowmobileConfig";
+        const char* configDir = "../../../assets/vehicledata";
+
+        // 1. Dropdown Menu (Combo Box)
+        static std::vector<std::string> availableConfigs;
+        static int selectedConfigIdx = -1;
+
+        if (ImGui::BeginCombo("Existing Configs", (selectedConfigIdx == -1) ? "Select a config..." : availableConfigs[selectedConfigIdx].c_str())) {
+            // Refresh list when opening the combo
+            availableConfigs = GetAvailableConfigs(configDir);
+
+            for (int n = 0; n < (int)availableConfigs.size(); n++) {
+                const bool is_selected = (selectedConfigIdx == n);
+                if (ImGui::Selectable(availableConfigs[n].c_str(), is_selected)) {
+                    selectedConfigIdx = n;
+                    // Auto-fill the text input with the selected name
+                    strncpy(configName, availableConfigs[n].c_str(), sizeof(configName));
+                }
+                if (is_selected) ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+
+        // 2. Manual Name Input
+        ImGui::SetNextItemWidth(300.0f);
+        ImGui::InputText("Config Name", configName, IM_ARRAYSIZE(configName));
+        HelpMarker("Name used for saving/loading. Matches files: 'Name-Base.json' & 'Name-EngineDrive.json'");
+
+        // 3. Action Buttons
+        if (ImGui::Button("Save JSON Config")) {
+            // Ensure directory exists
+            std::filesystem::create_directories(configDir);
+
+            std::string baseFile = std::string(configName) + "-Base.json";
+            std::string engineFile = std::string(configName) + "-EngineDrive.json";
+
+            if (writeBaseParamsToJsonFile(configDir, baseFile.c_str(), current.mBaseParams) &&
+                writeEngineDrivetrainParamsToJsonFile(configDir, engineFile.c_str(), current.mEngineDriveParams)) {
+                printf("SUCCESS: Config '%s' saved to disk.\n", configName);
+                selectedConfigIdx = -1; // Reset selection to force refresh
+            }
+        }
+
+        ImGui::SameLine();
+
+        if (ImGui::Button("Load JSON Config")) {
+            std::string baseFile = std::string(configName) + "-Base.json";
+            std::string engineFile = std::string(configName) + "-EngineDrive.json";
+
+            if (readBaseParamsFromJsonFile(configDir, baseFile.c_str(), current.mBaseParams) &&
+                readEngineDrivetrainParamsFromJsonFile(configDir, engineFile.c_str(), current.mEngineDriveParams)) {
+
+                // PHYSICS RESET: Apply changes to the actor immediately
+                auto* actor = vehicle->getRigidActor()->is<physx::PxRigidDynamic>();
+                if (actor) {
+                    actor->setMass(current.mBaseParams.rigidBodyParams.mass);
+                    actor->setMassSpaceInertiaTensor(current.mBaseParams.rigidBodyParams.moi);
+                    actor->wakeUp(); // Forces PhysX to recalculate with new values
+                }
+                printf("SUCCESS: Config '%s' loaded and applied to physics actor!\n", configName);
+            }
+            else {
+                printf("ERROR: Files for '%s' were not found in %s\n", configName, configDir);
+            }
+        }
+
+        ImGui::SeparatorText("Reset Vehicle Position");
+
+        if (ImGui::Button("To Mountain Top")) {
             physx::PxTransform targetPose(physx::PxVec3(-730.0f, 670.4f, -400.0f), physx::PxQuat(physx::PxIdentity));
             auto* actor = vehicle->getRigidActor()->is<physx::PxRigidDynamic>();
             if (actor) {
@@ -208,7 +352,7 @@ void ImGuiPanel::renderVehiclePhysx() {
             }
         }
         ImGui::SameLine();
-        if (ImGui::Button("Reset to Origin")) {
+        if (ImGui::Button("To Origin")) {
             physx::PxTransform targetPose(physx::PxVec3(0.0f, 10.0f, 0.0f), physx::PxQuat(physx::PxIdentity));
             auto* actor = vehicle->getRigidActor()->is<physx::PxRigidDynamic>();
             if (actor) {
