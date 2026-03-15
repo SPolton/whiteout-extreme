@@ -1,7 +1,6 @@
 #pragma once
 
 #include "BaseCamera.hpp"
-#include "CameraStats.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -44,7 +43,6 @@ public:
 
     void adjustRadius(float /*deltaRadius*/) override {};  // Not used for FreeCamera, but required by interface
 
-    CameraStats getStats() override;
     std::string toString() const override;
 
     // Getters for camera attributes

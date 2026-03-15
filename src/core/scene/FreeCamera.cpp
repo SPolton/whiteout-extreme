@@ -1,4 +1,5 @@
 #include "FreeCamera.hpp"
+#include "utils/logger.h"
 
 #include <algorithm>
 
@@ -83,18 +84,6 @@ glm::vec3 FreeCamera::getPosition()
     return _position;
 }
 
-CameraStats FreeCamera::getStats()
-{
-    CameraStats stats;
-    stats.position = _position;
-    stats.target = _position + _front;  // Looking at point in front
-    stats.distance = 0.0f;  // Not applicable for free camera
-    stats.fov = _fov;
-    stats.yaw = glm::degrees(_yaw);      // Convert to degrees for display
-    stats.pitch = glm::degrees(_pitch);  // Convert to degrees for display
-    stats.aspect = 1.0f;  // Will be set by rendering system
-    return stats;
-}
 
 std::string FreeCamera::toString() const
 {

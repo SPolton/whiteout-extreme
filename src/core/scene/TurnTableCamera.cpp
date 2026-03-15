@@ -102,16 +102,6 @@ void TurnTableCamera::adjustRadius(float const deltaRadius)
     }
 }
 
-CameraStats TurnTableCamera::getStats()
-{
-    CameraStats stats = CameraStats(_position, _targetPosition);
-    stats.distance = _distance;
-    stats.fov = glm::degrees(_fov);
-    stats.scale = _scale;
-    stats.yaw = glm::degrees(_theta);
-    stats.pitch = glm::degrees(_phi);
-    return stats;
-}
 
 std::string TurnTableCamera::toString() const
 {

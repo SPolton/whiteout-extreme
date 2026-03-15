@@ -1,6 +1,5 @@
 #pragma once
 
-#include "CameraStats.hpp"
 #include <glm/glm.hpp>
 #include <string>
 
@@ -22,7 +21,6 @@ public:
     float getScale() const { return _scale; }
     float getRadius() const { return _radius; }
 
-    virtual CameraStats getStats() = 0;
     virtual std::string toString() const;
 
 protected:

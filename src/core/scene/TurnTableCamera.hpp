@@ -4,7 +4,6 @@
 
 #include "BaseCamera.hpp"
 #include "Transform.hpp"
-#include "CameraStats.hpp"
 
 class TurnTableCamera : public BaseCamera {
 public:
@@ -40,7 +39,6 @@ public:
     [[nodiscard]]
     glm::vec3 getPosition() override;
 
-    CameraStats getStats() override;
     std::string toString() const override;
 
 private:
