@@ -7,21 +7,21 @@ BaseCamera::BaseCamera()
 }
 
 BaseCamera::BaseCamera(float fov)
-    : _fov(fov)
-    , _up(0.0f, 1.0f, 0.0f)
-    , _position(0.0f, 0.0f, 1.0f)
-    , _isDirty(true)
+    : mFov(fov)
+    , mUp(0.0f, 1.0f, 0.0f)
+    , mPosition(0.0f, 0.0f, 1.0f)
+    , mIsDirty(true)
 {
 }
 
 void BaseCamera::adjustFOV(float deltaFOV)
 {
     // deltaFOV is in degrees for user convenience, convert to radians
-    float const newFOV = std::clamp(_fov + glm::radians(deltaFOV), glm::radians(1.0f), glm::radians(180.0f));
-    if (newFOV != _fov)
+    float const newFOV = std::clamp(mFov + glm::radians(deltaFOV), glm::radians(1.0f), glm::radians(180.0f));
+    if (newFOV != mFov)
     {
-        _fov = newFOV;
-        _isDirty = true;
+        mFov = newFOV;
+        mIsDirty = true;
     }
 }
 
@@ -45,8 +45,8 @@ glm::vec3 BaseCamera::right()
 void BaseCamera::setFOV(float fov)
 {
     // fov parameter is in degrees for user convenience, convert to radians for storage
-    _fov = std::clamp(glm::radians(fov), glm::radians(1.0f), glm::radians(180.0f));
-    _isDirty = true;
+    mFov = std::clamp(glm::radians(fov), glm::radians(1.0f), glm::radians(180.0f));
+    mIsDirty = true;
 }
 
 std::string BaseCamera::toString() const

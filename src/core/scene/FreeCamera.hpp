@@ -43,29 +43,29 @@ public:
     std::string toString() const override;
 
     // Getters for camera attributes
-    [[nodiscard]] float getYaw() const { return _yaw; }
-    [[nodiscard]] float getPitch() const { return _pitch; }
-    [[nodiscard]] float getMovementSpeed() const { return _movementSpeed; }
-    [[nodiscard]] float getMouseSensitivity() const { return _mouseSensitivity; }
+    [[nodiscard]] float getYaw() const { return mYaw; }
+    [[nodiscard]] float getPitch() const { return mPitch; }
+    [[nodiscard]] float getMovementSpeed() const { return mMovementSpeed; }
+    [[nodiscard]] float getMouseSensitivity() const { return mMouseSensitivity; }
     
     // Setters for camera attributes
-    void setMovementSpeed(float speed) { _movementSpeed = speed; }
-    void setMouseSensitivity(float sensitivity) { _mouseSensitivity = sensitivity; }
+    void setMovementSpeed(float speed) { mMovementSpeed = speed; }
+    void setMouseSensitivity(float sensitivity) { mMouseSensitivity = sensitivity; }
 
 private:
     // Camera attributes
-    glm::vec3 _front;
-    glm::vec3 _right;
-    glm::vec3 _worldUp;
+    glm::vec3 mFront;
+    glm::vec3 mRight;
+    glm::vec3 mWorldUp;
 
     // Euler angles
-    float _yaw;
-    float _pitch;
+    float mYaw;
+    float mPitch;
 
     // Camera options
-    float _movementSpeed;
-    float _mouseSensitivity;
-    bool _constrainPitch;
+    float mMovementSpeed;
+    float mMouseSensitivity;
+    bool mConstrainPitch;
 
     // Helper function to recalculate camera vectors from updated Euler angles
     void updateCameraVectors();

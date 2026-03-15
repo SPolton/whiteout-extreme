@@ -10,95 +10,95 @@ TurnTableCamera::TurnTableCamera()
 {
 }
 
-TurnTableCamera::TurnTableCamera(Params const &params)
-    : TurnTableCamera(fallbackTarget, params)
+TurnTableCamera::TurnTableCamera(Params const& params)
+    : TurnTableCamera(mFallbackTarget, params)
 {
 }
 
-TurnTableCamera::TurnTableCamera(SceneTransform & target)
+TurnTableCamera::TurnTableCamera(SceneTransform& target)
     : TurnTableCamera(target, Params{})
 {
 }
 
-TurnTableCamera::TurnTableCamera(SceneTransform & target, Params const &params)
+TurnTableCamera::TurnTableCamera(SceneTransform& target, Params const& params)
     : BaseCamera()
 {
-    _target = &target;
+    mTarget = &target;
 
-    _distance = params.defaultDistance;
-    _minDistance = params.minDistance;
-    _maxDistance = params.maxDistance;
+    mDistance = params.defaultDistance;
+    mMinDistance = params.minDistance;
+    mMaxDistance = params.maxDistance;
 }
 
-void TurnTableCamera::setTarget(SceneTransform &target)
+void TurnTableCamera::setTarget(SceneTransform& target)
 {
-    _target = &target;
-    _isDirty = true;
+    mTarget = &target;
+    mIsDirty = true;
 }
 
 glm::mat4 TurnTableCamera::getViewMatrix()
 {
     updateViewMatrix();
-    return _viewMatrix;
+    return mViewMatrix;
 }
 
 glm::vec3 TurnTableCamera::getPosition()
 {
     updateViewMatrix();
-    return _position;
+    return mPosition;
 }
 
 void TurnTableCamera::updateViewMatrix()
 {
-    if (_isDirty == true || _targetPosition != _target->getWorldPosition())
+    if (mIsDirty || mTargetPosition != mTarget->getWorldPosition())
     {
-        _isDirty = false;
+        mIsDirty = false;
 
-        auto const hRot = glm::rotate(glm::mat4(1.0f), _theta, _up);
-        auto const vRot = glm::rotate(glm::mat4(1.0f), _phi, math::transform::RightVec3);
+        auto const hRot = glm::rotate(glm::mat4(1.0f), mTheta, mUp);
+        auto const vRot = glm::rotate(glm::mat4(1.0f), mPhi, math::transform::RightVec3);
 
-        _position = glm::vec3(hRot * vRot * glm::vec4{math::transform::ForwardVec3, 0.0f}) * _distance;
+        mPosition = glm::vec3(hRot * vRot * glm::vec4{math::transform::ForwardVec3, 0.0f}) * mDistance;
 
         // Center the camera around the target
-        _targetPosition = _target->getWorldPosition();
-        _position += _targetPosition;
+        mTargetPosition = mTarget->getWorldPosition();
+        mPosition += mTargetPosition;
 
-        _viewMatrix = glm::lookAt(_position, _target->getWorldPosition(), math::transform::UpVec3);
+        mViewMatrix = glm::lookAt(mPosition, mTarget->getWorldPosition(), math::transform::UpVec3);
     }
 }
 
 void TurnTableCamera::adjustTheta(float const deltaTheta)
 {
-    auto newTheta = _theta + deltaTheta;
-    // auto newTheta = std::fmod(_theta + deltaTheta, 2*M_PI);
-    if (newTheta != _theta)
+    auto newTheta = mTheta + deltaTheta;
+    // auto newTheta = std::fmod(mTheta + deltaTheta, 2*M_PI);
+    if (newTheta != mTheta)
     {
-        _theta = newTheta;
-        _isDirty = true;
+        mTheta = newTheta;
+        mIsDirty = true;
     }
 }
 
 void TurnTableCamera::adjustPhi(float const deltaPhi)
 {
     float const newPhi = std::clamp(
-        _phi + deltaPhi,
+        mPhi + deltaPhi,
         -glm::pi<float>() * 0.49f,
         glm::pi<float>() * 0.49f
     );
-    if (newPhi != _phi)
+    if (newPhi != mPhi)
     {
-        _isDirty = true;
-        _phi = newPhi;
+        mIsDirty = true;
+        mPhi = newPhi;
     }
 }
 
 void TurnTableCamera::adjustRadius(float const deltaRadius)
 {
-    float const newDistance =  std::clamp(_distance + deltaRadius, _minDistance, _maxDistance);
-    if (newDistance != _distance)
+    float const newDistance = std::clamp(mDistance + deltaRadius, mMinDistance, mMaxDistance);
+    if (newDistance != mDistance)
     {
-        _isDirty = true;
-        _distance = newDistance;
+        mIsDirty = true;
+        mDistance = newDistance;
     }
 }
 
@@ -111,9 +111,9 @@ std::string TurnTableCamera::toString() const
         "Target: ({:.1f}, {:.1f}, {:.1f})\n"
         "Dist: {:.2f}  FOV: {:.1f}\n"
         "Yaw: {:.1f}  Pitch: {:.1f}",
-        _position.x, _position.y, _position.z,
-        _targetPosition.x, _targetPosition.y, _targetPosition.z,
-        _distance, glm::degrees(_fov),
-        glm::degrees(_theta), glm::degrees(_phi)
+        mPosition.x, mPosition.y, mPosition.z,
+        mTargetPosition.x, mTargetPosition.y, mTargetPosition.z,
+        mDistance, glm::degrees(mFov),
+        glm::degrees(mTheta), glm::degrees(mPhi)
     );
 }

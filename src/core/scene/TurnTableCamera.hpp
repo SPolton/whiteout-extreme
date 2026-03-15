@@ -21,13 +21,13 @@ public:
 
     // Angles are in radians. Dummy target is set at (0,0,0)
     explicit TurnTableCamera();
-    explicit TurnTableCamera(Params const &params);
+    explicit TurnTableCamera(Params const& params);
 
     // Angles are in radians
-    explicit TurnTableCamera(SceneTransform & target);
-    explicit TurnTableCamera(SceneTransform & target, const Params &params);
+    explicit TurnTableCamera(SceneTransform& target);
+    explicit TurnTableCamera(SceneTransform& target, Params const& params);
 
-    void setTarget(SceneTransform & target);
+    void setTarget(SceneTransform& target);
 
     void adjustTheta(float deltaTheta);
     void adjustPhi(float deltaPhi);
@@ -45,16 +45,16 @@ private:
 
     void updateViewMatrix();
 
-    SceneTransform * _target;
+    SceneTransform* mTarget;
 
-    float _distance{};
-    float _minDistance{};
-    float _maxDistance{};
-    float _theta = 0.0f;
-    float _phi = 0.0f;
+    float mDistance{};
+    float mMinDistance{};
+    float mMaxDistance{};
+    float mTheta = 0.0f;
+    float mPhi = 0.0f;
 
-    glm::mat4 _viewMatrix {};
-    glm::vec3 _targetPosition {};
+    glm::mat4 mViewMatrix {};
+    glm::vec3 mTargetPosition {};
 
-    SceneTransform fallbackTarget;
+    SceneTransform mFallbackTarget;
 };
