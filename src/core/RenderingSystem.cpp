@@ -366,7 +366,7 @@ void RenderingSystem::render()
             if (!renderable.cpuData->indices.empty()) {
                 glDrawElements(
                     GL_TRIANGLES,
-                    renderable.cpuData->indices.size(),
+                    static_cast<GLsizei>(renderable.cpuData->indices.size()),
                     GL_UNSIGNED_INT,
                     nullptr
                 );
@@ -375,7 +375,7 @@ void RenderingSystem::render()
                 glDrawArrays(
                     GL_TRIANGLES,
                     0,
-                    renderable.cpuData->positions.size()
+                    static_cast<GLsizei>(renderable.cpuData->positions.size())
                 );
             }
 
