@@ -112,3 +112,18 @@ CameraStats TurnTableCamera::getStats()
     stats.pitch = glm::degrees(_phi);
     return stats;
 }
+
+std::string TurnTableCamera::toString() const
+{
+    return fmt::format(
+        "Orbit Camera\n"
+        "Pos: ({:.1f}, {:.1f}, {:.1f})\n"
+        "Target: ({:.1f}, {:.1f}, {:.1f})\n"
+        "Dist: {:.2f}  FOV: {:.1f}\n"
+        "Yaw: {:.1f}  Pitch: {:.1f}",
+        _position.x, _position.y, _position.z,
+        _targetPosition.x, _targetPosition.y, _targetPosition.z,
+        _distance, glm::degrees(_fov),
+        glm::degrees(_theta), glm::degrees(_phi)
+    );
+}

@@ -96,6 +96,19 @@ CameraStats FreeCamera::getStats()
     return stats;
 }
 
+std::string FreeCamera::toString() const
+{
+    return fmt::format(
+        "Free Camera\n"
+        "Pos: ({:.1f}, {:.1f}, {:.1f})\n"
+        "FOV: {:.1f}  Speed: {:.1f}\n"
+        "Yaw: {:.1f}  Pitch: {:.1f}",
+        _position.x, _position.y, _position.z,
+        glm::degrees(_fov), _movementSpeed,
+        glm::degrees(_yaw), glm::degrees(_pitch)
+    );
+}
+
 void FreeCamera::updateCameraVectors()
 {
     // Calculate the new Front vector from Euler angles (already in radians)

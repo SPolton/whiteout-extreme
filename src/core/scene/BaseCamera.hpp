@@ -2,6 +2,7 @@
 
 #include "CameraStats.hpp"
 #include <glm/glm.hpp>
+#include <string>
 
 class BaseCamera {
 public:
@@ -22,6 +23,7 @@ public:
     float getRadius() const { return _radius; }
 
     virtual CameraStats getStats() = 0;
+    virtual std::string toString() const;
 
 protected:
     BaseCamera();

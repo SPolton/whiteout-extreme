@@ -68,3 +68,8 @@ void BaseCamera::setRadius(float distance)
     _radius = std::clamp(distance, 0.1f, 1000.0f);
     _isDirty = true;
 }
+
+std::string BaseCamera::toString() const
+{
+    return "Base Camera";
+}

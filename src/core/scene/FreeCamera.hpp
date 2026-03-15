@@ -45,6 +45,7 @@ public:
     void adjustRadius(float /*deltaRadius*/) override {};  // Not used for FreeCamera, but required by interface
 
     CameraStats getStats() override;
+    std::string toString() const override;
 
     // Getters for camera attributes
     [[nodiscard]] float getYaw() const { return _yaw; }

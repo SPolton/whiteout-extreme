@@ -41,6 +41,7 @@ public:
     glm::vec3 getPosition() override;
 
     CameraStats getStats() override;
+    std::string toString() const override;
 
 private:
 
