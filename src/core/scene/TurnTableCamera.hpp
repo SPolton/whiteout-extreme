@@ -50,6 +50,8 @@ private:
     float _distance{};
     float _minDistance{};
     float _maxDistance{};
+    float _theta = 0.0f;
+    float _phi = 0.0f;
 
     glm::mat4 _viewMatrix {};
     glm::vec3 _targetPosition {};

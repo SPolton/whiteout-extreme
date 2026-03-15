@@ -10,7 +10,7 @@ FreeCamera::FreeCamera()
 
 // Convert degrees to radians for internal storage
 FreeCamera::FreeCamera(Params const& params)
-    : BaseCamera(glm::radians(45.0f), 1.0f)
+    : BaseCamera(glm::radians(45.0f))
     , _front(0.0f, 0.0f, -1.0f)
     , _worldUp(params.initialWorldUp)
     , _yaw(glm::radians(params.initialYaw))
