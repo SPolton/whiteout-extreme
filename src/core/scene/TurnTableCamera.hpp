@@ -42,9 +42,6 @@ public:
 
     CameraStats getStats() override;
 
-    glm::mat4 viewMatrix();
-    glm::vec3 position();
-
 private:
 
     void updateViewMatrix();

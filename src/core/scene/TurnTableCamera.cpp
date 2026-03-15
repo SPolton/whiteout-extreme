@@ -39,21 +39,11 @@ void TurnTableCamera::setTarget(SceneTransform &target)
 
 glm::mat4 TurnTableCamera::getViewMatrix()
 {
-    return viewMatrix();
-}
-
-glm::vec3 TurnTableCamera::getPosition()
-{
-    return position();
-}
-
-glm::mat4 TurnTableCamera::viewMatrix()
-{
     updateViewMatrix();
     return _viewMatrix;
 }
 
-glm::vec3 TurnTableCamera::position()
+glm::vec3 TurnTableCamera::getPosition()
 {
     updateViewMatrix();
     return _position;
