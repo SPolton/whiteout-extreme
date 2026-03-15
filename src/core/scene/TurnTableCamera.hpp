@@ -54,4 +54,6 @@ private:
 
     glm::mat4 _viewMatrix {};
     glm::vec3 _targetPosition {};
+
+    SceneTransform fallbackTarget;
 };

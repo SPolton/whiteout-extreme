@@ -11,9 +11,8 @@ TurnTableCamera::TurnTableCamera()
 }
 
 TurnTableCamera::TurnTableCamera(Params const &params)
-    : TurnTableCamera(*new SceneTransform(), params)
+    : TurnTableCamera(fallbackTarget, params)
 {
-    _target->setPosition({0,0,0});
 }
 
 TurnTableCamera::TurnTableCamera(SceneTransform & target)
