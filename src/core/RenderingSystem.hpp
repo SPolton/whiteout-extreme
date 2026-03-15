@@ -47,7 +47,7 @@ void cleanup();
     void updateCameraTarget(const glm::vec3& position);
     glm::vec3 getCameraForward() const;
     bool isTurnTableCamera() { return activeCamera == turntableCamera.get();};
-    CameraStats getActiveCameraStats() { return activeCamera->getStats(); };
+    std::string getActiveCameraInfo() const { return activeCamera->toString(); };
 
     // Parameters changed by Imgui in the syncImgui method of RacingGame
     float camSpeed = 1.0f;
