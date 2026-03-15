@@ -19,17 +19,14 @@ public:
     glm::vec3 up() { return mUp; }
 
     virtual void adjustFov(float deltaFov);
-    virtual void adjustRadius(float deltaRadius);
-
     float fov() const { return mFov; }
+    void fov(float fov);
 
     virtual std::string toString() const;
 
 protected:
     BaseCamera();
     explicit BaseCamera(float fov);
-
-    void fov(float fov);
 
     float mFov = glm::radians(120.0f);  // FOV stored in radians
 

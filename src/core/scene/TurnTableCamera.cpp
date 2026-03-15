@@ -92,9 +92,9 @@ void TurnTableCamera::adjustPhi(float const deltaPhi)
     }
 }
 
-void TurnTableCamera::adjustRadius(float const deltaRadius)
+void TurnTableCamera::adjustDistance(float const deltaDistance)
 {
-    float const newDistance = std::clamp(mDistance + deltaRadius, mMinDistance, mMaxDistance);
+    float const newDistance = std::clamp(mDistance + deltaDistance, mMinDistance, mMaxDistance);
     if (newDistance != mDistance)
     {
         mIsDirty = true;

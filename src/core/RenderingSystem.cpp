@@ -512,8 +512,15 @@ void RenderingSystem::update(float deltaTime)
 
 void RenderingSystem::onMouseWheelChange(double xOffset, double yOffset)
 {
+    (void)xOffset;
     float scroll = -static_cast<float>(yOffset) * this->camZoomSpeed * 0.016f;
-    activeCamera->adjustRadius(scroll);
+
+    if (activeCamera == freeCamera.get()) {
+        freeCamera->adjustFov(scroll);
+    }
+    else if (activeCamera == turntableCamera.get()) {
+        turntableCamera->adjustDistance(scroll);
+    }
 }
 
 void RenderingSystem::toggleCamera()

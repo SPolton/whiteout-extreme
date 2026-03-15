@@ -31,7 +31,7 @@ public:
 
     void adjustTheta(float deltaTheta);
     void adjustPhi(float deltaPhi);
-    void adjustRadius(float deltaRadius) override;
+    void adjustDistance(float deltaDistance);
 
     [[nodiscard]]
     glm::mat4 viewMatrix() override;

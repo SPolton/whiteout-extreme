@@ -38,8 +38,6 @@ public:
     [[nodiscard]]
     glm::mat4 viewMatrix() override;
 
-    void adjustRadius(float /*deltaRadius*/) override {};  // Not used for FreeCamera, but required by interface
-
     std::string toString() const override;
 
     [[nodiscard]] float yaw() const { return mYaw; }

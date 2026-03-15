@@ -25,11 +25,6 @@ void BaseCamera::adjustFov(float deltaFov)
     }
 }
 
-void BaseCamera::adjustRadius(float deltaRadius)
-{
-    (void)deltaRadius;
-}
-
 glm::vec3 BaseCamera::forward()
 {
     glm::mat4 const view = viewMatrix();
