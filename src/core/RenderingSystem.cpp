@@ -132,10 +132,11 @@ bool RenderingSystem::init()
     targetTransform->setPosition(glm::vec3(0.f, 0.f, 0.f));
 
     // Create cameras
+    racingCamera = std::make_unique<RacingCamera>();
     turntableCamera = std::make_unique<TurnTableCamera>(*targetTransform);
     turntableCamera->adjustTheta(glm::radians(180.f));
     freeCamera = std::make_unique<FreeCamera>();
-    activeCamera = turntableCamera.get();  // Non-owning raw pointer to turntable camera
+    activeCamera = racingCamera.get();  // Non-owning raw pointer to camera
     
     logger::info("Camera initialized");
 
@@ -447,6 +448,10 @@ glm::mat4 RenderingSystem::getProjectionMatrix() const
 
 void RenderingSystem::update(float deltaTime)
 {
+    if (deltaTime > 0.0f) {
+        lastFrameDeltaTime = deltaTime;
+    }
+
     processInput(deltaTime);
 
     // center skybox on camera
@@ -478,21 +483,30 @@ void RenderingSystem::onMouseWheelChange(double xOffset, double yOffset)
 
 void RenderingSystem::toggleCamera()
 {
-    if (activeCamera == turntableCamera.get())
+    if (activeCamera == freeCamera.get())
     {
-        activeCamera = freeCamera.get();
-        logger::info("Switched to FreeCamera (FPS-style)");
+        activeCamera = racingCamera.get();
+        logger::info("Switched to RacingCamera");
     }
-    else
+    else if (activeCamera == racingCamera.get())
     {
         activeCamera = turntableCamera.get();
         logger::info("Switched to TurnTableCamera (Orbit)");
     }
+    else
+    {
+        activeCamera = freeCamera.get();
+        logger::info("Switched to FreeCamera");
+    }
 }
 
-void RenderingSystem::updateCameraTarget(const glm::vec3& position)
+void RenderingSystem::updateCameraTarget(const glm::vec3& position, const glm::vec3& forward, float speedMs)
 {
     if (targetTransform) {
         targetTransform->setPosition(position);
+    }
+
+    if (racingCamera) {
+        racingCamera->update(lastFrameDeltaTime, position, forward, speedMs);
     }
 }

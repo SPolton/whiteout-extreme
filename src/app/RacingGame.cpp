@@ -413,7 +413,9 @@ void RacingGame::run()
                 glm::vec3 visualOffset = transform.rot * modelRenderable.visualOffsetPos;
                 glm::vec3 targetPos = transform.pos + visualOffset;
                 targetPos.y += 2.f;
-                renderingSystem->updateCameraTarget(targetPos);
+
+                glm::vec3 targetForward = transform.forward();
+                renderingSystem->updateCameraTarget(targetPos, targetForward, speed);
             }
 
             // Process F key input to toggle camera, and IJKLUO to move the free camera
