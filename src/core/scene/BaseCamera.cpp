@@ -30,6 +30,18 @@ void BaseCamera::adjustRadius(float deltaRadius)
     (void)deltaRadius;
 }
 
+glm::vec3 BaseCamera::forward()
+{
+    glm::mat4 const view = getViewMatrix();
+    return glm::normalize(-glm::vec3(view[0][2], view[1][2], view[2][2]));
+}
+
+glm::vec3 BaseCamera::right()
+{
+    glm::mat4 const view = getViewMatrix();
+    return glm::normalize(glm::vec3(view[0][0], view[1][0], view[2][0]));
+}
+
 void BaseCamera::setFOV(float fov)
 {
     // fov parameter is in degrees for user convenience, convert to radians for storage

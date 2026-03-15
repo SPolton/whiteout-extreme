@@ -536,9 +536,3 @@ void RenderingSystem::updateCameraTarget(const glm::vec3& position)
         targetTransform->setPosition(position);
     }
 }
-
-glm::vec3 RenderingSystem::getCameraForward() const
-{
-    auto view = activeCamera->getViewMatrix();
-    return -glm::vec3(view[0][2], view[1][2], view[2][2]);
-}

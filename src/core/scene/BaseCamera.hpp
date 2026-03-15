@@ -13,6 +13,11 @@ public:
     [[nodiscard]]
     virtual glm::vec3 getPosition() { return _position; };
 
+    // From the view matrix
+    glm::vec3 forward();
+    glm::vec3 right();
+    glm::vec3 up() { return _up; };
+
     virtual void adjustFOV(float deltaFOV);
     virtual void adjustRadius(float deltaRadius);
 
