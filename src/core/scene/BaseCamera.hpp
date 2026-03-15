@@ -8,20 +8,20 @@ public:
     virtual ~BaseCamera() = default;
 
     [[nodiscard]]
-    virtual glm::mat4 getViewMatrix() = 0;
+    virtual glm::mat4 viewMatrix() = 0;
 
     [[nodiscard]]
-    virtual glm::vec3 getPosition() { return mPosition; }
+    virtual glm::vec3 position() { return mPosition; }
 
     // From the view matrix
     glm::vec3 forward();
     glm::vec3 right();
     glm::vec3 up() { return mUp; }
 
-    virtual void adjustFOV(float deltaFOV);
+    virtual void adjustFov(float deltaFov);
     virtual void adjustRadius(float deltaRadius);
 
-    float getFOV() const { return mFov; }
+    float fov() const { return mFov; }
 
     virtual std::string toString() const;
 
@@ -29,7 +29,7 @@ protected:
     BaseCamera();
     explicit BaseCamera(float fov);
 
-    void setFOV(float fov);
+    void fov(float fov);
 
     float mFov = glm::radians(120.0f);  // FOV stored in radians
 

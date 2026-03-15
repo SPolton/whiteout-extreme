@@ -36,21 +36,19 @@ public:
 
     // BaseCamera interface
     [[nodiscard]]
-    glm::mat4 getViewMatrix() override;
+    glm::mat4 viewMatrix() override;
 
     void adjustRadius(float /*deltaRadius*/) override {};  // Not used for FreeCamera, but required by interface
 
     std::string toString() const override;
 
-    // Getters for camera attributes
-    [[nodiscard]] float getYaw() const { return mYaw; }
-    [[nodiscard]] float getPitch() const { return mPitch; }
-    [[nodiscard]] float getMovementSpeed() const { return mMovementSpeed; }
-    [[nodiscard]] float getMouseSensitivity() const { return mMouseSensitivity; }
-    
-    // Setters for camera attributes
-    void setMovementSpeed(float speed) { mMovementSpeed = speed; }
-    void setMouseSensitivity(float sensitivity) { mMouseSensitivity = sensitivity; }
+    [[nodiscard]] float yaw() const { return mYaw; }
+    [[nodiscard]] float pitch() const { return mPitch; }
+    [[nodiscard]] float movementSpeed() const { return mMovementSpeed; }
+    [[nodiscard]] float mouseSensitivity() const { return mMouseSensitivity; }
+
+    void movementSpeed(float speed) { mMovementSpeed = speed; }
+    void mouseSensitivity(float sensitivity) { mMouseSensitivity = sensitivity; }
 
 private:
     // Camera attributes

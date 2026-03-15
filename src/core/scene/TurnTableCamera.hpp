@@ -27,23 +27,23 @@ public:
     explicit TurnTableCamera(SceneTransform& target);
     explicit TurnTableCamera(SceneTransform& target, Params const& params);
 
-    void setTarget(SceneTransform& target);
+    void target(SceneTransform& target);
 
     void adjustTheta(float deltaTheta);
     void adjustPhi(float deltaPhi);
     void adjustRadius(float deltaRadius) override;
 
     [[nodiscard]]
-    glm::mat4 getViewMatrix() override;
+    glm::mat4 viewMatrix() override;
 
     [[nodiscard]]
-    glm::vec3 getPosition() override;
+    glm::vec3 position() override;
 
     std::string toString() const override;
 
 private:
 
-    void updateViewMatrix();
+    void updateView();
 
     SceneTransform* mTarget;
 

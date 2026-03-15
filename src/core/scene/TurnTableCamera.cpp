@@ -30,25 +30,25 @@ TurnTableCamera::TurnTableCamera(SceneTransform& target, Params const& params)
     mMaxDistance = params.maxDistance;
 }
 
-void TurnTableCamera::setTarget(SceneTransform& target)
+void TurnTableCamera::target(SceneTransform& target)
 {
     mTarget = &target;
     mIsDirty = true;
 }
 
-glm::mat4 TurnTableCamera::getViewMatrix()
+glm::mat4 TurnTableCamera::viewMatrix()
 {
-    updateViewMatrix();
+    updateView();
     return mViewMatrix;
 }
 
-glm::vec3 TurnTableCamera::getPosition()
+glm::vec3 TurnTableCamera::position()
 {
-    updateViewMatrix();
+    updateView();
     return mPosition;
 }
 
-void TurnTableCamera::updateViewMatrix()
+void TurnTableCamera::updateView()
 {
     if (mIsDirty || mTargetPosition != mTarget->getWorldPosition())
     {
