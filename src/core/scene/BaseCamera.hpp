@@ -11,7 +11,7 @@ public:
     virtual glm::mat4 getViewMatrix() = 0;
 
     [[nodiscard]]
-    virtual glm::vec3 getPosition() = 0;
+    virtual glm::vec3 getPosition() { return _position; };
 
     virtual void adjustFOV(float deltaFOV);
     virtual void adjustRadius(float deltaRadius);

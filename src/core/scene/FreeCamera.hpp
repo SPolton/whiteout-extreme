@@ -38,9 +38,6 @@ public:
     [[nodiscard]]
     glm::mat4 getViewMatrix() override;
 
-    [[nodiscard]]
-    glm::vec3 getPosition() override;
-
     void adjustRadius(float /*deltaRadius*/) override {};  // Not used for FreeCamera, but required by interface
 
     std::string toString() const override;

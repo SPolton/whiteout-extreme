@@ -79,12 +79,6 @@ glm::mat4 FreeCamera::getViewMatrix()
     return glm::lookAt(_position, _position + _front, _up);
 }
 
-glm::vec3 FreeCamera::getPosition()
-{
-    return _position;
-}
-
-
 std::string FreeCamera::toString() const
 {
     return fmt::format(
