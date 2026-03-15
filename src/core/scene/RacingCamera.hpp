@@ -7,8 +7,11 @@ class RacingCamera : public BaseCamera {
 public:
     explicit RacingCamera() = default;
 
-    // Called each frame with the tracked vehicle state.
-    void update(float dt, glm::vec3 targetPos, glm::vec3 targetForward, float speedMs);
+    // Store the latest tracked vehicle state
+    void updateTarget(glm::vec3 targetPos, glm::vec3 targetForward, float speedMs);
+
+    // Advance spring and FOV once per render frame
+    void update(float dt);
 
     [[nodiscard]]
     glm::mat4 viewMatrix() override;
@@ -35,6 +38,11 @@ private:
     float mLookAheadDist = 5.f;  // To anticipate frame motion and turns
     float mBaseFovDeg = 60.f;    // Base field of view in degrees
     float mFovGain = 1.25f;      // How much FOV widens with speed (deg per m/s)
+
+    glm::vec3 mTargetPos{};
+    glm::vec3 mTargetForward{ 0.0f, 0.0f, 1.0f };
+    float mTargetSpeedMs = 0.0f;
+    bool mHasTarget = false;
 
     float mSmoothedSpeed = 0.f;  // Low-pass filtered speed for smooth FOV changes
     bool mInitialized = false;

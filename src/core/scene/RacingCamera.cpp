@@ -5,20 +5,30 @@
 // The core math is equivalent to this article for a force-at-rest spring system
 // https://phramebuffer.wordpress.com/third-person-camera-with-spring-system/
 
-void RacingCamera::update(float dt, glm::vec3 targetPos, glm::vec3 targetForward, float speedMs)
+void RacingCamera::updateTarget(glm::vec3 targetPos, glm::vec3 targetForward, float speedMs)
 {
+    mTargetPos = targetPos;
+    mTargetForward = targetForward;
+    mTargetSpeedMs = speedMs;
+    mHasTarget = true;
+}
+
+void RacingCamera::update(float dt)
+{
+    if (!mHasTarget) return;
+
     // Use a safe fallback if input forward is near-zero to avoid NaNs during normalize().
-    glm::vec3 forward = glm::length(targetForward) > 0.0001f
-        ? glm::normalize(targetForward)
+    glm::vec3 forward = glm::length(mTargetForward) > 0.0001f
+        ? glm::normalize(mTargetForward)
         : glm::vec3(0.0f, 0.0f, 1.0f);
 
     // Desired chase anchor in world space: behind the target by arm length, above by arm height.
-    glm::vec3 const idealPos = targetPos - forward * mArmLength + mUp * mArmHeight;
+    glm::vec3 const idealPos = mTargetPos - forward * mArmLength + mUp * mArmHeight;
 
     if (!mInitialized) {
         mSpringPos = idealPos;
         mSpringVel = glm::vec3(0.0f);
-        mSmoothedSpeed = glm::max(speedMs, 0.0f);
+        mSmoothedSpeed = glm::max(mTargetSpeedMs, 0.0f);
         mInitialized = true;
     }
 
@@ -38,7 +48,7 @@ void RacingCamera::update(float dt, glm::vec3 targetPos, glm::vec3 targetForward
         // Exponential smoothing that is framerate independent.
         // alpha = 1-exp(-lambda*dt) approximates a 1st-order low-pass filter.
         float const alpha = 1.0f - std::exp(-8.0f * dt);
-        mSmoothedSpeed = glm::mix(mSmoothedSpeed, glm::max(speedMs, 0.0f), alpha);
+        mSmoothedSpeed = glm::mix(mSmoothedSpeed, glm::max(mTargetSpeedMs, 0.0f), alpha);
     }
 
     // Speed-reactive FOV with hard comfort clamps.
@@ -46,7 +56,7 @@ void RacingCamera::update(float dt, glm::vec3 targetPos, glm::vec3 targetForward
     fov(targetFovDeg);
 
     // Look a bit ahead of the vehicle so framing anticipates turns.
-    mLookAt = targetPos + forward * mLookAheadDist;
+    mLookAt = mTargetPos + forward * mLookAheadDist;
     mPosition = mSpringPos;
 }
 

@@ -452,6 +452,10 @@ void RenderingSystem::update(float deltaTime)
         lastFrameDeltaTime = deltaTime;
     }
 
+    if (racingCamera) {
+        racingCamera->update(lastFrameDeltaTime);
+    }
+
     processInput(deltaTime);
 
     // center skybox on camera
@@ -507,6 +511,6 @@ void RenderingSystem::updateCameraTarget(const glm::vec3& position, const glm::v
     }
 
     if (racingCamera) {
-        racingCamera->update(lastFrameDeltaTime, position, forward, speedMs);
+        racingCamera->updateTarget(position, forward, speedMs);
     }
 }
