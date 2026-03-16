@@ -5,6 +5,18 @@
 // The core math is equivalent to this article for a force-at-rest spring system
 // https://phramebuffer.wordpress.com/third-person-camera-with-spring-system/
 
+void RacingCamera::init(glm::vec3 const& idealOffset)
+{
+    if (mInitialized) return;
+
+    mSpringOffset = idealOffset;
+    mSpringVel = glm::vec3(0.0f);
+    mSmoothedSpeed = glm::max(mTargetSpeedMs, 0.0f);
+    mFovFilteredSpeed = mSmoothedSpeed;
+    mSpringPos = mTargetPos + mSpringOffset;
+    mInitialized = true;
+}
+
 void RacingCamera::updateTarget(glm::vec3 targetPos, glm::vec3 targetForward, float speedMs)
 {
     mTargetPos = targetPos;
@@ -26,13 +38,7 @@ void RacingCamera::update(float dt)
     // Smoothing the offset instead of the camera position avoids visible translation lag.
     glm::vec3 const idealOffset = -forward * mArmLength + mUp * mArmHeight;
 
-    if (!mInitialized) {
-        mSpringOffset = idealOffset;
-        mSpringVel = glm::vec3(0.0f);
-        mSmoothedSpeed = glm::max(mTargetSpeedMs, 0.0f);
-        mSpringPos = mTargetPos + mSpringOffset;
-        mInitialized = true;
-    }
+    init(idealOffset);
 
     if (dt > 0.0f) {
         // Convert damping ratio to a damping coefficient so tuning remains stable as ks changes.
@@ -40,7 +46,7 @@ void RacingCamera::update(float dt)
         float const kd = mDampingRatio * 2.0f * glm::sqrt(mStiffness);
 
         // Spring-damper force (unit mass): F = ks*(x_target - x) - kd*v.
-        // We treat mass as 1, so acceleration = force.
+        // Treat mass as 1, so acceleration = force.
         glm::vec3 const force = mStiffness * (idealOffset - mSpringOffset) - kd * mSpringVel;
 
         // Semi-implicit Euler integration: update velocity, then position.
@@ -49,8 +55,8 @@ void RacingCamera::update(float dt)
 
         // Exponential smoothing that is framerate independent.
         // alpha = 1-exp(-lambda*dt) approximates a 1st-order low-pass filter.
-        float const alpha = 1.0f - std::exp(-8.0f * dt);
-        mSmoothedSpeed = glm::mix(mSmoothedSpeed, glm::max(mTargetSpeedMs, 0.0f), alpha);
+        float const speedAlpha = 1.0f - std::exp(-8.0f * dt);
+        mSmoothedSpeed = glm::mix(mSmoothedSpeed, glm::max(mTargetSpeedMs, 0.0f), speedAlpha);
     }
 
     // Speed-reactive FOV with hard comfort clamps.
