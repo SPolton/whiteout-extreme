@@ -125,9 +125,11 @@ std::string RacingCamera::toString() const
         "Racing Camera\n"
         "Pos: ({:.1f}, {:.1f}, {:.1f})\n"
         "LookAt: ({:.1f}, {:.1f}, {:.1f})\n"
-        "FOV: {:.1f}  Damping ratio: {:.2f}",
+        "FOV: {:.1f}  Speed: {:.1f} m/s ({:.1f} m/s)\n"
+        "Damping ratio: {:.2f}  Arm: {:.1f}m / {:.1f}m",
         mSpringPos.x, mSpringPos.y, mSpringPos.z,
         mLookAt.x, mLookAt.y, mLookAt.z,
-        glm::degrees(mFov), mDampingRatio
+        glm::degrees(mFov), mTargetSpeedMs, mFovFilteredSpeed,
+        mDampingRatio, mArmLength, mArmHeight
     );
 }
