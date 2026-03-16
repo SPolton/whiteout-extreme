@@ -22,13 +22,15 @@ void RacingCamera::update(float dt)
         ? glm::normalize(mTargetForward)
         : glm::vec3(0.0f, 0.0f, 1.0f);
 
-    // Desired chase anchor in world space: behind the target by arm length, above by arm height.
-    glm::vec3 const idealPos = mTargetPos - forward * mArmLength + mUp * mArmHeight;
+    // Desired chase offset relative to the current vehicle position.
+    // Smoothing the offset instead of the camera position avoids visible translation lag.
+    glm::vec3 const idealOffset = -forward * mArmLength + mUp * mArmHeight;
 
     if (!mInitialized) {
-        mSpringPos = idealPos;
+        mSpringOffset = idealOffset;
         mSpringVel = glm::vec3(0.0f);
         mSmoothedSpeed = glm::max(mTargetSpeedMs, 0.0f);
+        mSpringPos = mTargetPos + mSpringOffset;
         mInitialized = true;
     }
 
@@ -39,11 +41,11 @@ void RacingCamera::update(float dt)
 
         // Spring-damper force (unit mass): F = ks*(x_target - x) - kd*v.
         // We treat mass as 1, so acceleration = force.
-        glm::vec3 const force = mStiffness * (idealPos - mSpringPos) - kd * mSpringVel;
+        glm::vec3 const force = mStiffness * (idealOffset - mSpringOffset) - kd * mSpringVel;
 
         // Semi-implicit Euler integration: update velocity, then position.
         mSpringVel += force * dt;
-        mSpringPos += mSpringVel * dt;
+        mSpringOffset += mSpringVel * dt;
 
         // Exponential smoothing that is framerate independent.
         // alpha = 1-exp(-lambda*dt) approximates a 1st-order low-pass filter.
@@ -54,6 +56,8 @@ void RacingCamera::update(float dt)
     // Speed-reactive FOV with hard comfort clamps.
     float const targetFovDeg = glm::clamp(mBaseFovDeg + mFovGain * mSmoothedSpeed, 45.0f, 110.0f);
     fov(targetFovDeg);
+
+    mSpringPos = mTargetPos + mSpringOffset;
 
     // Look a bit ahead of the vehicle so framing anticipates turns.
     mLookAt = mTargetPos + forward * mLookAheadDist;

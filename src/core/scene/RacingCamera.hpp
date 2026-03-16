@@ -23,10 +23,11 @@ public:
 
 private:
     glm::vec3 mLookAt = glm::vec3(0.0f, 0.0f, 0.0f);
-    glm::vec3 mSpringPos{};  // Current camera position
-    glm::vec3 mSpringVel{};  // Velocity for smoothing
+    glm::vec3 mSpringPos{};       // Final camera world position
+    glm::vec3 mSpringOffset{};    // Smoothed offset from the target
+    glm::vec3 mSpringVel{};       // Velocity of the offset spring
 
-    float mArmLength = 5.0f;    // Ideal distance behind the target
+    float mArmLength = 7.0f;    // Ideal distance behind the target
     float mArmHeight = 2.5f;    // Ideal height above the target
     float mStiffness = 20.0f;   // Spring strength (ks); higher = snappier follow
 
