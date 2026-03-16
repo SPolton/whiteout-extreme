@@ -42,6 +42,7 @@ private:
     float currentThrottle = 0.0f;
     float currentBrake = 0.0f;
     float currentSteer = 0.0f;
+    bool currentForwardGearDesired = true;
 
     void resetInputs() {
         currentThrottle = 0.0f;

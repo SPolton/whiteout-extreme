@@ -267,6 +267,12 @@ physx::PxRigidActor* VehicleFourWheelDrive::getRigidActor()
 	return mVehicle.mPhysXState.physxActor.rigidBody;
 }
 
+void VehicleFourWheelDrive::setAnalogControls(float throttle, float brake, float steer)
+{
+    mCurrentThrottle = throttle;
+    mCurrentBrake = brake;
+    mCurrentSteer = steer;
+}
 
 void VehicleFourWheelDrive::applyDriveCommand(float throttle, float brake, float steer, bool forwardGearDesired)
 {
@@ -282,7 +288,7 @@ void VehicleFourWheelDrive::applyDriveCommand(float throttle, float brake, float
         }
     }
 
-    setInputs(throttle, brake, steer);
+    setAnalogControls(throttle, brake, steer);
 }
 
 void VehicleFourWheelDrive::syncDesiredGear()

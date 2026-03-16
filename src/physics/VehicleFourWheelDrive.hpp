@@ -25,6 +25,7 @@ public:
 
     void stepPhysics(float deltaTime);
 
+    void setAnalogControls(float throttle, float brake, float steer);
     void applyDriveCommand(float throttle, float brake, float steer, bool forwardGearDesired);
 
     void syncDesiredGear();
