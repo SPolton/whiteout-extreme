@@ -174,7 +174,7 @@ Entity PhysicsSystem::createVehicleEntity(const char* name, physx::PxVec3 spawnP
         .material = mMaterial
     };
 
-    auto* newVehicleSystem = new VehicleFourWheelDrive(vehicleData);
+    auto vehicleInstance = std::make_shared<VehicleFourWheelDrive>(vehicleData);
 
     Entity vehicleEntity = gCoordinator.CreateEntity();
 
@@ -185,14 +185,14 @@ Entity PhysicsSystem::createVehicleEntity(const char* name, physx::PxVec3 spawnP
         });
 
     // RigidBody (using the chassis actor from the vehicle)
-    gCoordinator.AddComponent(vehicleEntity, RigidBody{ newVehicleSystem->getRigidActor() });
+    gCoordinator.AddComponent(vehicleEntity, RigidBody{ vehicleInstance->getRigidActor() });
 
     // Set the actual PhysX actor position to match
     PxTransform pxTransform(spawnPos);
-    newVehicleSystem->getRigidActor()->setGlobalPose(pxTransform);
+    vehicleInstance->getRigidActor()->setGlobalPose(pxTransform);
 
     // VehicleComponent (store the vehicle instance for later updates and access)
-    gCoordinator.AddComponent(vehicleEntity, VehicleComponent{ .instance = newVehicleSystem });
+    gCoordinator.AddComponent(vehicleEntity, VehicleComponent{ .instance = vehicleInstance });
 
     logger::info("Vehicle entity created with ID: {}", vehicleEntity);
 
