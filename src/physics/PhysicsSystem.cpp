@@ -16,14 +16,6 @@ PhysicsSystem::PhysicsSystem()
 
 PhysicsSystem::~PhysicsSystem()
 {
-    // Clean up vehicle system first
-    /*
-    if (mVehicleSystem) {
-        delete mVehicleSystem;
-        mVehicleSystem = nullptr;
-    }
-    */
-    //cleanupGroundPlane();
     cleanupPhysX();
 }
 
@@ -180,7 +172,6 @@ void PhysicsSystem::update(float deltaTime)
 
 Entity PhysicsSystem::createVehicleEntity(const char* name, physx::PxVec3 spawnPos)
 {
-    // Create the Player Vehicle Entity
     VehicleFourWheelDrive::ConstructData vehicleData{
         .vehicleName = name,
         .vehicleDataPath = "assets/vehicledata",
@@ -190,18 +181,14 @@ Entity PhysicsSystem::createVehicleEntity(const char* name, physx::PxVec3 spawnP
         .material = mMaterial
     };
 
-    // Create the vehicle instance
     auto* newVehicleSystem = new VehicleFourWheelDrive(vehicleData);
 
-    // 1. Create a new entity for the vehicle
     Entity vehicleEntity = gCoordinator.CreateEntity();
 
-    // 2. Add necessary components to the vehicle entity
-    // Transform
     gCoordinator.AddComponent(vehicleEntity, PhysxTransform{
-        glm::vec3(spawnPos.x, spawnPos.y, spawnPos.z),                // Position
-        glm::quat(1.f, 0.f, 0.f, 0.f),           // Identity rotation
-        glm::vec3(1.65f, 1.4f, 3.75f)            // Scale
+        glm::vec3(spawnPos.x, spawnPos.y, spawnPos.z),
+        glm::quat(1.f, 0.f, 0.f, 0.f),
+        glm::vec3(1.65f, 1.4f, 3.75f)
         });
 
     // RigidBody (using the chassis actor from the vehicle)
