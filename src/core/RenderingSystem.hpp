@@ -10,7 +10,7 @@
 #include "core/scene/FreeCamera.hpp"
 #include "core/scene/Transform.hpp"
 
-#include "components/Entity.h"
+#include "components/Model.h"
 #include "components/Renderable.h"
 
 #include "ecs/Coordinator.hpp"
@@ -56,9 +56,6 @@ void cleanup();
     // Parameters window dimension resized on callback
     int vWidth;
     int vHeight;
-
-    // For rendering physics entities
-    void renderEntities(const std::vector<EntityPx>& entityList);
 
     void onMouseWheelChange(double xOffset, double yOffset);
     bool init();
