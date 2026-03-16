@@ -448,12 +448,11 @@ glm::mat4 RenderingSystem::getProjectionMatrix() const
 
 void RenderingSystem::update(float deltaTime)
 {
-    if (deltaTime > 0.0f) {
-        lastFrameDeltaTime = deltaTime;
+    if (freeCamera) {
+        freeCamera->movementSpeed(camSpeed * 10.f);
     }
-
     if (racingCamera) {
-        racingCamera->update(lastFrameDeltaTime);
+        racingCamera->update(deltaTime);
     }
 
     processInput(deltaTime);

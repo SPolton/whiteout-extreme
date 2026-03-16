@@ -71,7 +71,7 @@ void ImGuiPanel::renderCameraInfo()
         
         ImGui::Separator();
         ImGui::SliderFloat("Camera Speed", &camSpeed, 1.0f, 10.0f);
-        ImGui::SliderFloat("Zoom Speed", &camZoomSpeed, 0.1f, 20.0f);
+        ImGui::SliderFloat("Zoom Speed", &camZoomSpeed, 1.0f, 100.0f);
     }
 }
 
