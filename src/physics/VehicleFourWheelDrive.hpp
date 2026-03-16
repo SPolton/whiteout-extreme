@@ -35,20 +35,7 @@ public:
 
     // Override from PhysicsObject
     physx::PxRigidActor* getRigidActor() override;
-
-    void setInputs(float throttle, float brake, float steer) {
-        mCurrentThrottle = throttle;
-        mCurrentBrake = brake;
-        mCurrentSteer = steer;
-    }
-
-    physx::vehicle2::PxVehicleDirectDriveTransmissionCommandState::Enum setTargetGear(physx::vehicle2::PxVehicleDirectDriveTransmissionCommandState::Enum state) {
-        mVehicle.mTransmissionCommandState.targetGear = state;
-        return state;
-    }
-
     EngineDriveVehicle& getVehicleData() { return mVehicle; }
-
 private:
     EngineDriveVehicle mVehicle;
 
@@ -79,4 +66,7 @@ private:
         physx::vehicle2::PxVehicleDirectDriveTransmissionCommandState::eFORWARD
     };
 
+    physx::vehicle2::PxVehicleDirectDriveTransmissionCommandState::Enum setTargetGear(
+        physx::vehicle2::PxVehicleDirectDriveTransmissionCommandState::Enum state
+    );
 };

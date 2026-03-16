@@ -311,3 +311,10 @@ float VehicleFourWheelDrive::speed() const
 {
     return mVehicle.mPhysXState.physxActor.rigidBody->getLinearVelocity().magnitude();
 }
+
+PxVehicleDirectDriveTransmissionCommandState::Enum VehicleFourWheelDrive::setTargetGear(
+    PxVehicleDirectDriveTransmissionCommandState::Enum state)
+{
+    mVehicle.mTransmissionCommandState.targetGear = state;
+    return state;
+}
