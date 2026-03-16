@@ -267,3 +267,41 @@ physx::PxRigidActor* VehicleFourWheelDrive::getRigidActor()
 	return mVehicle.mPhysXState.physxActor.rigidBody;
 }
 
+
+void VehicleFourWheelDrive::applyDriveCommand(float throttle, float brake, float steer, bool forwardGearDesired)
+{
+    mForwardGearDesired = forwardGearDesired;
+
+    if (!hasDesiredGear()) {
+        if (speed() < 1.0f) {
+            syncDesiredGear();
+        }
+        else {
+            throttle = 0.0f;
+            brake = 1.0f;
+        }
+    }
+
+    setInputs(throttle, brake, steer);
+}
+
+void VehicleFourWheelDrive::syncDesiredGear()
+{
+    mGearState = setTargetGear(
+        mForwardGearDesired
+            ? PxVehicleDirectDriveTransmissionCommandState::eFORWARD
+            : PxVehicleDirectDriveTransmissionCommandState::eREVERSE
+    );
+}
+
+bool VehicleFourWheelDrive::hasDesiredGear() const
+{
+    return mForwardGearDesired
+        ? mGearState == PxVehicleDirectDriveTransmissionCommandState::eFORWARD
+        : mGearState == PxVehicleDirectDriveTransmissionCommandState::eREVERSE;
+}
+
+float VehicleFourWheelDrive::speed() const
+{
+    return mVehicle.mPhysXState.physxActor.rigidBody->getLinearVelocity().magnitude();
+}

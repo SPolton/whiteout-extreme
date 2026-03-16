@@ -25,6 +25,13 @@ public:
 
     void stepPhysics(float deltaTime);
 
+    void applyDriveCommand(float throttle, float brake, float steer, bool forwardGearDesired);
+
+    void syncDesiredGear();
+    bool hasDesiredGear() const;
+    bool forwardGearDesired() const { return mForwardGearDesired; }
+    float speed() const;
+
     // Override from PhysicsObject
     physx::PxRigidActor* getRigidActor() override;
 
@@ -65,4 +72,10 @@ private:
     float mCurrentThrottle = 0.f;
     float mCurrentBrake = 0.f;
     float mCurrentSteer = 0.f;
+    bool mForwardGearDesired = true;
+
+    physx::vehicle2::PxVehicleDirectDriveTransmissionCommandState::Enum mGearState{
+        physx::vehicle2::PxVehicleDirectDriveTransmissionCommandState::eFORWARD
+    };
+
 };
