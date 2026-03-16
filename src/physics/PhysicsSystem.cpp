@@ -121,13 +121,6 @@ void PhysicsSystem::cleanupGroundPlane()
     logger::info("Ground plane cleaned up successfully.");
 }
 
-PxVec3 PhysicsSystem::getPos(int i)
-{
-    // get position
-    PxVec3 position = rigidDynamicList[i]->getGlobalPose().p;
-    return position;
-}
-
 void PhysicsSystem::update(float deltaTime)
 {
     // PRE-SIMULATION PHASE: Update physics-related components before stepping the simulation
