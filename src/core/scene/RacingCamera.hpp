@@ -37,7 +37,7 @@ private:
     float mDampingRatio = 0.9f;
     float mLookAheadDist = 5.f;  // To anticipate frame motion and turns
     float mBaseFovDeg = 60.f;    // Base field of view in degrees
-    float mFovGain = 1.25f;      // How much FOV widens with speed (deg per m/s)
+    float mFovGain = 0.0f;       // How much FOV widens with speed (deg per m/s)
 
     glm::vec3 mTargetPos{};
     glm::vec3 mTargetForward{ 0.0f, 0.0f, 1.0f };
