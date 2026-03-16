@@ -8,13 +8,15 @@
 void RacingCamera::init(glm::vec3 const& idealOffset)
 {
     if (mInitialized) return;
+    mInitialized = true;
 
     mSpringOffset = idealOffset;
     mSpringVel = glm::vec3(0.0f);
-    mSmoothedSpeed = glm::max(mTargetSpeedMs, 0.0f);
-    mFovFilteredSpeed = mSmoothedSpeed;
     mSpringPos = mTargetPos + mSpringOffset;
-    mInitialized = true;
+
+    mFovFilteredSpeed = glm::max(mTargetSpeedMs, 0.0f);
+    mCurrentFovDeg = targetFovDegrees();
+    fov(mCurrentFovDeg);
 }
 
 void RacingCamera::updateTarget(glm::vec3 targetPos, glm::vec3 targetForward, float speedMs)
@@ -52,16 +54,9 @@ void RacingCamera::update(float dt)
         // Semi-implicit Euler integration: update velocity, then position.
         mSpringVel += force * dt;
         mSpringOffset += mSpringVel * dt;
-
-        // Exponential smoothing that is framerate independent.
-        // alpha = 1-exp(-lambda*dt) approximates a 1st-order low-pass filter.
-        float const speedAlpha = 1.0f - std::exp(-8.0f * dt);
-        mSmoothedSpeed = glm::mix(mSmoothedSpeed, glm::max(mTargetSpeedMs, 0.0f), speedAlpha);
     }
 
-    // Speed-reactive FOV with hard comfort clamps.
-    float const targetFovDeg = glm::clamp(mBaseFovDeg + mFovGain * mSmoothedSpeed, 45.0f, 110.0f);
-    fov(targetFovDeg);
+    updateFov(dt);
 
     mSpringPos = mTargetPos + mSpringOffset;
 
@@ -70,8 +65,52 @@ void RacingCamera::update(float dt)
     mPosition = mSpringPos;
 }
 
+void RacingCamera::updateFov(float dt)
+{
+    if (dt <= 0.0f) {
+        mCurrentFovDeg = targetFovDegrees();
+        fov(mCurrentFovDeg);
+        return;
+    }
+
+    // Exponential (1st-order IIR) low-pass filter on speed, framerate-independent:
+    //   alpha = 1 - e^(-lambda * dt)
+    // alpha->0 means very slow tracking; alpha->1 means instant.
+    // Separate lambdas for rises vs falls let acceleration widen FOV faster
+    // than deceleration narrows it, which feels more natural.
+    float const targetSpeed = glm::max(mTargetSpeedMs, 0.0f);
+    float const lambda = targetSpeed >= mFovFilteredSpeed ? mFovRiseLambda : mFovFallLambda;
+    float const speedAlpha = 1.0f - std::exp(-glm::max(lambda, 0.01f) * dt);
+    mFovFilteredSpeed = glm::mix(mFovFilteredSpeed, targetSpeed, speedAlpha);
+
+    // Clamp the per-frame FOV delta to mMaxFovStepFrame degrees.
+    // This is a hard ceiling: no matter how large the filtered-speed jump,
+    // the visible FOV can never change by more than that many degrees in one frame.
+    float const targetFovDeg = targetFovDegrees();
+    float const maxStep = glm::max(mMaxFovStepFrame, 0.01f);
+    float const delta = glm::clamp(targetFovDeg - mCurrentFovDeg, -maxStep, maxStep);
+    mCurrentFovDeg += delta;
+
+    fov(mCurrentFovDeg);
+}
+
+float RacingCamera::targetFovDegrees() const
+{
+    // Normalise filtered speed into [0, 1] where 1 = mFovSpeedAtMax.
+    float speedNorm = glm::clamp(mFovFilteredSpeed / glm::max(mFovSpeedAtMax, 0.001f), 0.0f, 1.0f);
+
+    // Smoothstep: f(t) = t^2 (3 - 2t)
+    // Produces an S-curve with zero derivative at t=0 and t=1, so the FOV
+    // eases in gently at low speed and plateaus softly near mFovSpeedAtMax.
+    speedNorm = speedNorm * speedNorm * (3.0f - 2.0f * speedNorm);
+
+    // Linear blend: FOV = base + (max - base) * smoothstep(speed)
+    return glm::mix(mMinFovDeg, mMaxFovDeg, speedNorm);
+}
+
 glm::mat4 RacingCamera::viewMatrix()
 {
+    // The lookAt target is the vehicle position plus a look-ahead in the forward direction.
     return glm::lookAt(mSpringPos, mLookAt, mUp);
 }
 

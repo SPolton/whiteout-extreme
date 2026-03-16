@@ -38,12 +38,18 @@ private:
     // zeta < 1 = underdamped (slight bounce).
     // zeta > 1 = overdamped (sluggish).
     float mDampingRatio = 0.9f;
-    float mSmoothedSpeed = 0.f;  // Low-pass filtered speed for smooth FOV changes
     float mLookAheadDist = 5.f;  // To anticipate frame motion and turns
 
-    float mBaseFovDeg = 60.f;    // Base field of view in degrees
-    float mFovGain = 0.0f;       // How much FOV widens with speed (deg per m/s)
-    float mFovFilteredSpeed{};   // Low-pass filtered speed for FOV calculation
+    float mCurrentFovDeg{};      // Current FOV in degrees used by the rate limiter
+    float mMinFovDeg = 50.f;     // Base field of view in degrees
+    float mMaxFovDeg = 120.f;    // Upper FOV bound at high speed
+    float mFovSpeedAtMax = 25.f; // Speed (m/s) that maps to max FOV
+    float mFovRiseLambda = 2.0f; // Speed increase response for FOV
+    float mFovFallLambda = 0.5f; // Speed decrease response for FOV
+    float mMaxFovStepFrame = 2.0f; // Hard cap on FOV change per frame (degrees)
+    float mFovFilteredSpeed{};   // Single source of truth for filtered speed
 
     void init(glm::vec3 const& idealOffset);
+    void updateFov(float dt);
+    float targetFovDegrees() const;
 };
