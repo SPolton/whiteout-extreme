@@ -5,6 +5,10 @@
 // Follow camera tuned for racing: spring-smoothed position + speed-reactive FOV.
 class RacingCamera : public BaseCamera {
 public:
+    bool isSpringEnabled = true; // Apply spring forces for smooth follow
+    bool isDragEnabled = true;   // Apply spring drag (damping)
+    bool isFovEnabled = true;    // Adjust FOV based on speed
+
     explicit RacingCamera() = default;
 
     // Store the latest tracked vehicle state

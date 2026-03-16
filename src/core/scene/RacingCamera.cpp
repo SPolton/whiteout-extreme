@@ -42,10 +42,15 @@ void RacingCamera::update(float dt)
 
     init(idealOffset);
 
-    if (dt > 0.0f) {
+    if (!isSpringEnabled) {
+        // Drag disabled means no spring simulation: lock to ideal offset immediately.
+        mSpringOffset = idealOffset;
+        mSpringVel = glm::vec3(0.0f);
+    }
+    else if (dt > 0.0f) {
         // Convert damping ratio to a damping coefficient so tuning remains stable as ks changes.
         // kd = zeta * 2*sqrt(ks) where zeta=1 is critical damping.
-        float const kd = mDampingRatio * 2.0f * glm::sqrt(mStiffness);
+        float const kd = isDragEnabled ? (mDampingRatio * 2.0f * glm::sqrt(mStiffness)) : 0.0f;
 
         // Spring-damper force (unit mass): F = ks*(x_target - x) - kd*v.
         // Treat mass as 1, so acceleration = force.
@@ -67,6 +72,8 @@ void RacingCamera::update(float dt)
 
 void RacingCamera::updateFov(float dt)
 {
+    if (!isFovEnabled) return;
+
     if (dt <= 0.0f) {
         mCurrentFovDeg = targetFovDegrees();
         fov(mCurrentFovDeg);
