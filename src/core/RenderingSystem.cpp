@@ -498,6 +498,7 @@ void RenderingSystem::toggleCamera()
     }
     else
     {
+        freeCamera->position(activeCamera->position());
         activeCamera = freeCamera.get();
         logger::info("Switched to FreeCamera");
     }
