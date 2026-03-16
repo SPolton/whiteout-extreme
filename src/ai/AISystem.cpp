@@ -26,6 +26,9 @@ void AISystem::update(float deltaTime)
         auto& aiRacer = gCoordinator.GetComponent<Racer>(entity);
         auto& aiTransf = gCoordinator.GetComponent<PhysxTransform>(entity);
         auto& aiVehicle = gCoordinator.GetComponent<VehicleComponent>(entity);
+        if (!aiVehicle.instance) {
+            continue;
+        }
 
         if (!aiRacer.targetGate) continue;
 
