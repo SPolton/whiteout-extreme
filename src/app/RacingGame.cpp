@@ -32,7 +32,7 @@ RacingGame::RacingGame()
     audioManager = std::make_shared<AudioEngine>();
 
     inputManager = std::make_shared<InputManager>();
-    window = std::make_shared<Window>(inputManager, 1200, 800, "Whiteout Extreme");
+    window = std::make_shared<Window>(inputManager, 1080, 720, "Whiteout Extreme");
     window->makeContextCurrent();
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
