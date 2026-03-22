@@ -34,6 +34,8 @@ public:
     void processKeyboard(Movement direction, float deltaTime);
     void processMouseMovement(float xOffset, float yOffset);
 
+    void position(glm::vec3 newPosition);
+
     // BaseCamera interface
     [[nodiscard]]
     glm::mat4 viewMatrix() override;

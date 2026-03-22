@@ -73,6 +73,12 @@ void FreeCamera::processMouseMovement(float xOffset, float yOffset)
     mIsDirty = true;
 }
 
+void FreeCamera::position(glm::vec3 newPosition)
+{
+    mPosition = newPosition;
+    mIsDirty = true;
+}
+
 glm::mat4 FreeCamera::viewMatrix()
 {
     // Returns the view matrix calculated using Euler angles and LookAt matrix
