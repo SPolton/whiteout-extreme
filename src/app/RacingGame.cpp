@@ -267,6 +267,11 @@ RacingGame::RacingGame()
     // call functions that will load sounds this component will use
     menus->loadMenuSounds();
     vehicleControlSystem->loadVehicleSounds();
+
+    // play ai racer sounds
+    audioManager->loadSound("assets/audio/snowmobiles-1-trimmed.wav", false, true, true);
+    aiEngineChannelID1 = audioManager->playSounds("assets/audio/snowmobiles-1-trimmed.wav", { 0,0,0 }, -15.0f);
+    aiEngineChannelID2 = audioManager->playSounds("assets/audio/snowmobiles-1-trimmed.wav", { 0,0,0 }, -15.0f);
 }
 
 /// Main game loop
@@ -356,6 +361,30 @@ void RacingGame::run()
                 audioManager->pauseChannel(engineChannelID);
                 enginePlaying = false;
             }
+
+            //  resume ai channels when in game
+            audioManager->resumeChannel(aiEngineChannelID1);
+            audioManager->resumeChannel(aiEngineChannelID2);
+
+            // get positions of AI
+            glm::vec3 aiRacer1Pos = gCoordinator.GetComponent<PhysxTransform>(aiVehicleEntity1).pos;
+            glm::vec3 aiRacer2Pos = gCoordinator.GetComponent<PhysxTransform>(aiVehicleEntity2).pos;
+
+            // calculate the distance between ai and player
+            float distanceAi1 = glm::length(aiRacer1Pos - playerPos);
+            float distanceAi2 = glm::length(aiRacer2Pos - playerPos);
+            // use that distance against the maxAudible distance. multiply by a quiet value so that it increases in sound
+            float distanceRatio1 = std::clamp(distanceAi1 / (maxAudibleDistance), 0.0f, 1.0f);
+            float distanceRatio2 = std::clamp(distanceAi2 / (maxAudibleDistance), 0.0f, 1.0f);
+            float volumeInDB1 = distanceRatio1 * -60.0f;
+            float volumeInDB2 = distanceRatio2 * -60.0f;
+            volumeInDB1 += masterVolumeOffset;
+            volumeInDB2 += masterVolumeOffset;
+
+            // set volume of ai engine noises based on distance to player
+            audioManager->setChannelVolume(aiEngineChannelID1, volumeInDB1);
+            audioManager->setChannelVolume(aiEngineChannelID2, volumeInDB2);
+
         
             // Discard excess time when running slow to prevent spiral of death
             if (physicsSteps >= maxPhysicsSteps) {
@@ -478,6 +507,10 @@ void RacingGame::run()
             audioManager->resumeChannel(musicChannelID);
             // pause avalanche sounds in menus
             audioManager->pauseChannel(avalancheChannelID);
+            // no engine sounds in main menu
+            audioManager->pauseChannel(engineChannelID);
+            audioManager->pauseChannel(aiEngineChannelID1);
+            audioManager->pauseChannel(aiEngineChannelID2);
 
             // swap buffer
             this->endFrame();
@@ -501,6 +534,10 @@ void RacingGame::run()
             audioManager->resumeChannel(musicChannelID);
             // pause avalanche sounds in menus
             audioManager->pauseChannel(avalancheChannelID);
+            // no engine sounds in main menu
+            audioManager->pauseChannel(engineChannelID);
+            audioManager->pauseChannel(aiEngineChannelID1);
+            audioManager->pauseChannel(aiEngineChannelID2);
 
             // swap buffer
             this->endFrame();
@@ -520,6 +557,10 @@ void RacingGame::run()
             audioManager->pauseChannel(inGameMusicChannelID);
             // pause avalanche sounds in menus
             audioManager->pauseChannel(avalancheChannelID);
+            // no engine sounds in main menu
+            audioManager->pauseChannel(engineChannelID);
+            audioManager->pauseChannel(aiEngineChannelID1);
+            audioManager->pauseChannel(aiEngineChannelID2);
 
             // swap buffer
             this->endFrame();
@@ -545,16 +586,15 @@ void RacingGame::updateImGui() {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
-    // Update camera stats for UI
-    imguiPanel->cameraStats = renderingSystem->getActiveCameraStats();
-    imguiPanel->cameraStats.aspect = static_cast<float>(window->getWidth()) / static_cast<float>(window->getHeight());
+    // Update camera info for UI
+    imguiPanel->cameraInfo = renderingSystem->getActiveCameraInfo();
+    imguiPanel->aspectRatio = window->getAspectRatio();
 
     // Update UI
     imguiWrapper->beginFrame();
     imguiPanel->update();
     imguiWrapper->renderFPS();
     this->syncImgui();
-    imguiPanel->cameraStats = renderingSystem->getActiveCameraStats();
     imguiWrapper->endFrame();
 };
 

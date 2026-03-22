@@ -1,7 +1,6 @@
 #pragma once
 
 #include "BaseCamera.hpp"
-#include "CameraStats.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -37,39 +36,32 @@ public:
 
     // BaseCamera interface
     [[nodiscard]]
-    glm::mat4 getViewMatrix() override;
+    glm::mat4 viewMatrix() override;
 
-    [[nodiscard]]
-    glm::vec3 getPosition() override;
+    std::string toString() const override;
 
-    void adjustRadius(float /*deltaRadius*/) override {};  // Not used for FreeCamera, but required by interface
+    [[nodiscard]] float yaw() const { return mYaw; }
+    [[nodiscard]] float pitch() const { return mPitch; }
+    [[nodiscard]] float movementSpeed() const { return mMovementSpeed; }
+    [[nodiscard]] float mouseSensitivity() const { return mMouseSensitivity; }
 
-    CameraStats getStats() override;
-
-    // Getters for camera attributes
-    [[nodiscard]] float getYaw() const { return _yaw; }
-    [[nodiscard]] float getPitch() const { return _pitch; }
-    [[nodiscard]] float getMovementSpeed() const { return _movementSpeed; }
-    [[nodiscard]] float getMouseSensitivity() const { return _mouseSensitivity; }
-    
-    // Setters for camera attributes
-    void setMovementSpeed(float speed) { _movementSpeed = speed; }
-    void setMouseSensitivity(float sensitivity) { _mouseSensitivity = sensitivity; }
+    void movementSpeed(float speed) { mMovementSpeed = speed; }
+    void mouseSensitivity(float sensitivity) { mMouseSensitivity = sensitivity; }
 
 private:
     // Camera attributes
-    glm::vec3 _front;
-    glm::vec3 _right;
-    glm::vec3 _worldUp;
+    glm::vec3 mFront;
+    glm::vec3 mRight;
+    glm::vec3 mWorldUp;
 
     // Euler angles
-    float _yaw;
-    float _pitch;
+    float mYaw;
+    float mPitch;
 
     // Camera options
-    float _movementSpeed;
-    float _mouseSensitivity;
-    bool _constrainPitch;
+    float mMovementSpeed;
+    float mMouseSensitivity;
+    bool mConstrainPitch;
 
     // Helper function to recalculate camera vectors from updated Euler angles
     void updateCameraVectors();
