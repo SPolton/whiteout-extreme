@@ -274,6 +274,14 @@ RacingGame::RacingGame()
     aiEngineChannelID2 = audioManager->playSounds("assets/audio/snowmobiles-1-trimmed.wav", { 0,0,0 }, -15.0f);
 }
 
+RacingGame::~RacingGame()
+{
+    logger::info("Shutting down systems...");
+    
+    // shut down audio engine
+    audioManager->shutdown();
+}
+
 /// Main game loop
 void RacingGame::run()
 {
@@ -566,9 +574,6 @@ void RacingGame::run()
             this->endFrame();
         }
     }
-    logger::info("Shutting down systems...");
-    // shut down audio engine
-    audioManager->shutdown();
 }
 
 void RacingGame::updateImGui() {
