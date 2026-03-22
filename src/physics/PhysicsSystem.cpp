@@ -75,6 +75,17 @@ void PhysicsSystem::initPhysX()
 
 void PhysicsSystem::cleanupPhysX()
 {
+    // Clean up all vehicles before PhysX Foundation is released
+    for (auto const& entity : mEntities) {
+        if (gCoordinator.HasComponent<VehicleComponent>(entity)) {
+            auto& vehicleComp = gCoordinator.GetComponent<VehicleComponent>(entity);
+            if (vehicleComp.instance) {
+                // Force destruction of the PhysX vehicle objects now
+                vehicleComp.instance.reset();
+            }
+        }
+    }
+
     vehicle2::PxCloseVehicleExtension();
 
     PX_RELEASE(mMaterial);
