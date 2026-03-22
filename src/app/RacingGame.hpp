@@ -31,6 +31,8 @@ private:
     void syncImgui();
     void endFrame();
 
+    void updateMenuAudioState();
+
     GameTime gameTime;
 
     std::shared_ptr<InputManager> inputManager;

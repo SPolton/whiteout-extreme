@@ -511,16 +511,7 @@ void RacingGame::run()
                 gameState = GameState::InGame;
             }
 
-            // if NOT in game, don't play in-game music
-            audioManager->pauseChannel(inGameMusicChannelID);
-            // if on main menu, play lobby music
-            audioManager->resumeChannel(musicChannelID);
-            // pause avalanche sounds in menus
-            audioManager->pauseChannel(avalancheChannelID);
-            // no engine sounds in main menu
-            audioManager->pauseChannel(engineChannelID);
-            audioManager->pauseChannel(aiEngineChannelID1);
-            audioManager->pauseChannel(aiEngineChannelID2);
+            this->updateMenuAudioState();
 
             // swap buffer
             this->endFrame();
@@ -538,16 +529,7 @@ void RacingGame::run()
                 gameState = GameState::MainMenu;
             }
 
-            // if NOT in game, don't play in-game music
-            audioManager->pauseChannel(inGameMusicChannelID);
-            // if on pause menu, play lobby music
-            audioManager->resumeChannel(musicChannelID);
-            // pause avalanche sounds in menus
-            audioManager->pauseChannel(avalancheChannelID);
-            // no engine sounds in main menu
-            audioManager->pauseChannel(engineChannelID);
-            audioManager->pauseChannel(aiEngineChannelID1);
-            audioManager->pauseChannel(aiEngineChannelID2);
+            this->updateMenuAudioState();
 
             // swap buffer
             this->endFrame();
@@ -563,19 +545,26 @@ void RacingGame::run()
                 gameState = GameState::MainMenu;
             }
 
-            // if NOT in game, don't play in-game music
-            audioManager->pauseChannel(inGameMusicChannelID);
-            // pause avalanche sounds in menus
-            audioManager->pauseChannel(avalancheChannelID);
-            // no engine sounds in main menu
-            audioManager->pauseChannel(engineChannelID);
-            audioManager->pauseChannel(aiEngineChannelID1);
-            audioManager->pauseChannel(aiEngineChannelID2);
+            this->updateMenuAudioState();
 
             // swap buffer
             this->endFrame();
         }
     }
+}
+
+void RacingGame::updateMenuAudioState()
+{
+    // if NOT in game, don't play in-game music
+    audioManager->pauseChannel(inGameMusicChannelID);
+    // if on menu, play lobby music
+    audioManager->resumeChannel(musicChannelID);
+    // pause avalanche sounds in menus
+    audioManager->pauseChannel(avalancheChannelID);
+    // no engine sounds in menus
+    audioManager->pauseChannel(engineChannelID);
+    audioManager->pauseChannel(aiEngineChannelID1);
+    audioManager->pauseChannel(aiEngineChannelID2);
 }
 
 void RacingGame::updateImGui() {
