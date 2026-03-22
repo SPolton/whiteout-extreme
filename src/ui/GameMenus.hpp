@@ -5,6 +5,12 @@
 #include "input/glfw/InputManager.hpp"
 #include "audio/AudioEngine.h"
 
+#include "core/assets/AssetManager.hpp"
+#include "core/assets/Texture.hpp"
+#include "core/buffer/Geometry.hpp"
+#include "core/render/ShaderProgram.hpp"
+#include "core/scene/Transform.hpp"
+
 // types of actions to take
 enum class MenuAction {
     None,
@@ -15,7 +21,7 @@ enum class MenuAction {
 
 class GameMenus {
 public:
-    GameMenus(Text* textSystem, InputManager* inputManager, AudioEngine* audioManager, GameState& gameState);
+    GameMenus(Text* textSystem, InputManager* inputManager, AudioEngine* audioManager, Window* window, GameState& gameState);
 
     // returns the action taken
     MenuAction renderMainMenu();
@@ -29,12 +35,22 @@ public:
     // load sounds to use on menus
     void loadMenuSounds();
 
+    // load textures and shader program
+    void init();
+
 private:
+    // Textures
+    AssetManager& assetManager = AssetManager::getInstance();
+    std::shared_ptr<Texture> logoTexture;
+    std::shared_ptr<ShaderProgram> shader;
+
     // pointers to read input
     Text* textSystem;
     InputManager* inputManager;
     // pointer to call audio engine
     AudioEngine* audioManager;
+    // pointer to window
+    Window* window;
 
     // get game state
     GameState& gameState;
@@ -45,4 +61,12 @@ private:
     * 1 = controller
     */
     int inputSystem = 0;
+
+    // get some window properties to use
+    // default we use 1080 x 720
+    float defaultWindowWidth = 1080.f;
+    float defaultWindowHeight = 720.f;
+
+    // used to display image textures
+    CPU_Geometry quad;
 };

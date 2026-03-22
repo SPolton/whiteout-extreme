@@ -33,6 +33,8 @@ public:
 	}
 
     void Update(CPU_Geometry const& data);
+    // for loading pictures in menu screens, only need index position and uv
+    void Update2D(CPU_Geometry const& data);
 
 private:
     // note: due to how OpenGL works, vao needs to be

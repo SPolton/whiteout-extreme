@@ -1,8 +1,9 @@
 #include "GameMenus.hpp"
 #include "app/GameState.hpp"
+#include <gtc/type_ptr.hpp>
 
-GameMenus::GameMenus(Text* textSystem, InputManager* inputManager, AudioEngine* audioManager, GameState& gameState)
-    : textSystem(textSystem), inputManager(inputManager), audioManager(audioManager), gameState(gameState)
+GameMenus::GameMenus(Text* textSystem, InputManager* inputManager, AudioEngine* audioManager, Window* window, GameState& gameState)
+    : textSystem(textSystem), inputManager(inputManager), audioManager(audioManager), window(window), gameState(gameState)
 {
 }
 
@@ -26,6 +27,53 @@ void GameMenus::loadMenuSounds()
     audioManager->loadSound("assets/audio/game-start.mp3", false, false, false);
     // load sound for pressing menu buttons
     audioManager->loadSound("assets/audio/menu-button.mp3", false, false, false);
+}
+
+void GameMenus::init()
+{
+    // load the basic shader that only requires the following info: index positions and uvs
+    try
+    {
+        shader = assetManager.loadShader("basic");
+        logger::info("Basic shader loaded successfully");
+    }
+    catch (const std::exception& e)
+    {
+        logger::error("Failed to load basic shader: {0}", e.what());
+    }
+
+    // pre-load the texture for the logo
+    try
+    {
+        logoTexture = assetManager.loadTexture("assets/ui/WhiteoutExtreme.png");
+        logger::info("Logo texture loaded successfully");
+    }
+    catch (const std::exception& e)
+    {
+        logger::error("Failed to load logo texture: {0}", e.what());
+    }
+
+    // set the position of the quad of the logo
+    quad.positions = {
+        // Triangle 1
+        {-1.f, -1.f, 0.f},
+        { 1.f, -1.f, 0.f},
+        { 1.f,  1.f, 0.f},
+        // Triangle 2
+        {-1.f, -1.f, 0.f},
+        { 1.f,  1.f, 0.f},
+        {-1.f,  1.f, 0.f},
+    };
+    quad.uvs = {
+        // Triangle 1
+        {0.f, 0.f},
+        {1.f, 0.f},
+        {1.f, 1.f},
+        // Triangle 2
+        {0.f, 0.f},
+        {1.f, 1.f},
+        {0.f, 1.f},
+    };
 }
 
 MenuAction GameMenus::pollInputs() {
@@ -131,7 +179,35 @@ MenuAction GameMenus::renderMainMenu()
 
     textSystem->loadFont("LuckiestGuy-Regular.ttf", 120);
 
-    textSystem->renderText("Whiteout Extreme", { 300.f, 1100.f, 0.75f }, { 0.f, 0.f, 0.55f });
+    // create vao to draw menu logo
+    GPU_Geometry gpuQuad;
+    gpuQuad.Update2D(quad); // update it with our basic quad info
+
+    shader->use();
+
+    // bind texture
+    glActiveTexture(GL_TEXTURE0);
+    logoTexture->bind();
+    glUniform1i(glGetUniformLocation(*shader, "sample"), 0);
+
+    // translations
+    float translateY = 0.25f;
+
+    // static model to pass to shader, renders png as is
+    glm::mat4 model = glm::mat4(
+        1.f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.f, 0.0f, 0.0f,
+        0.f, 0.0f, 1.f, 0.0f,
+        0.0f, translateY, 0.f, 1.0f
+    );
+
+    glUniformMatrix4fv(glGetUniformLocation(*shader, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+    // bind vao
+    gpuQuad.bind();
+
+    // draw quad
+    glDrawArrays(GL_TRIANGLES, 0, 6);
 
     // default color for the "Start" button
     glm::vec3 defaultColor = { 0.f, 0.f, 0.6f };

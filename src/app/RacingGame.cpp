@@ -250,7 +250,8 @@ RacingGame::RacingGame()
 
     textSystem->setProjection(1440.0f, 1440.0f);
 
-    menus = std::make_unique<GameMenus>(textSystem.get(), inputManager.get(), audioManager.get(), gameState);
+    menus = std::make_unique<GameMenus>(textSystem.get(), inputManager.get(), audioManager.get(), window.get(), gameState);
+    menus->init();
 
    // intiailize audio engine
     audioManager->init();
