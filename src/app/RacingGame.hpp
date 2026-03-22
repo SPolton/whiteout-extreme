@@ -22,6 +22,7 @@
 class RacingGame {
 public:
     RacingGame();
+    ~RacingGame();
 
     void run();
 

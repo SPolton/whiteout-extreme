@@ -26,6 +26,9 @@ void AISystem::update(float deltaTime)
         auto& aiRacer = gCoordinator.GetComponent<Racer>(entity);
         auto& aiTransf = gCoordinator.GetComponent<PhysxTransform>(entity);
         auto& aiVehicle = gCoordinator.GetComponent<VehicleComponent>(entity);
+        if (!aiVehicle.instance) {
+            continue;
+        }
 
         if (!aiRacer.targetGate) continue;
 
@@ -73,39 +76,6 @@ void AISystem::update(float deltaTime)
                 aiVehicle.throttle = maxThrottle;
             }
         }
-
-        /*
-        // 4. Movement and Braking Logic
-        float currentSpeed = aiVehicle.speed();
-        float maxThrottle = 0.7f;
-
-        if (aiVehicle.forwardGearDesired) {
-            // Racing Forward:
-            // If angle > 50 
-            if (angle > glm::radians(70.f)) {
-                // FLAG1: Sharp turn or orientation error
-
-                if (currentSpeed < 1.5f) {
-                    // DEBLOCKING LOGIC: We are too slow to turn properly.
-                    // Force throttle to 100% of max and release brakes to "kick" the car 
-                    // and allow the wheels to rotate the chassis.
-                    aiVehicle.throttle = maxThrottle;
-                    aiVehicle.brake = 0.0f;
-                }
-                else {
-                    // Standard Braking: We have enough speed, so we slow down to tighten the radius
-                    aiVehicle.throttle = 0.1f;
-                    aiVehicle.brake = glm::clamp(angle * 0.6f, 0.3f, 0.8f);
-                }
-            }
-            // If angle <= 50
-            else {
-                // FLAG2: Straight line / Correct orientation
-                aiVehicle.brake = 0.0f;
-                float speedFactor = 1.0f - glm::clamp(angle, 0.0f, 0.5f);
-                aiVehicle.throttle = maxThrottle * speedFactor;
-            }
-        }*/
 
         // 5. Gear State Synchronization (Ensure PhysX gear matches intent)
         if (!aiVehicle.hasGearDesired()) {

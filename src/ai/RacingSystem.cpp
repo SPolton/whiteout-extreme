@@ -50,6 +50,10 @@ void RacingSystem::update(float deltaTime)
             continue;
         }
 
+        if (!racerVehicle.instance) {
+            continue;
+        }
+
         auto verticalVelocity = racerVehicle.instance->getRigidActor()->is<physx::PxRigidBody>()->getLinearVelocity().y;
         if (verticalVelocity < -25.0f) {
             racer.engulfed = true;
@@ -294,6 +298,10 @@ void RacingSystem::restart() {
         // 2. PhysX synchronization
         if (gCoordinator.HasComponent<VehicleComponent>(entity)) {
             auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(entity);
+            if (!vehicle.instance) {
+                index++;
+                continue;
+            }
 
             // Reset position, orientation and velocity
             physx::PxRigidActor* actor = vehicle.instance->getRigidActor();

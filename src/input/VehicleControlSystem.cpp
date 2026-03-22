@@ -28,6 +28,9 @@ void VehicleControlSystem::update(float deltaTime)
 
     for (auto const& entity : mEntities) {
         auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(entity);
+        if (!vehicle.instance) {
+            continue;
+        }
 
         if (vehicle.snowBallCooldown > 0.f) vehicle.snowBallCooldown -= deltaTime;
 
