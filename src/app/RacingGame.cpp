@@ -342,56 +342,12 @@ void RacingGame::run()
             }
 
             // get the positions of the avalanche and the player
-            glm::vec3 avalanchePos = gCoordinator.GetComponent<PhysxTransform>(AvalancheEntity).pos;
             glm::vec3 playerPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
-            // calculate the distance between them
-            float distance = glm::length(avalanchePos - playerPos);
-
-            // use that distance against the maxAudible distance. multiply by a quiet value so that it increases in sound
-            float distanceRatio = std::clamp(distance / (maxAudibleDistance), 0.0f, 1.0f);
-            float volumeInDB = distanceRatio * -60.0f; //-60db is standard silence
-            float masterVolumeOffset = -5.0f;
-            volumeInDB += masterVolumeOffset;
-
-            // set volume of avalanche based on distance
-            audioManager->setChannelVolume(avalancheChannelID, volumeInDB);
-
             // get velocity of the vehicle
             float speed = glm::length(gCoordinator.GetComponent<RigidBody>(playerVehicleEntity).linearVelocity);
 
-            // if speed is more than 1, that means vehicle is moving, play the engine sound
-            if (speed > 1.0f && !enginePlaying) {
-                engineChannelID = audioManager->playSounds("assets/audio/snowmobiles-4-trimmed.mp3", { 0,0,0 }, -15.0f);
-                enginePlaying = true;
-            }
-            else if (speed <= 1.0f && enginePlaying) {
-                // otherwise vehicle is not considered moving, pause the channel that plays the engine sound
-                audioManager->pauseChannel(engineChannelID);
-                enginePlaying = false;
-            }
-
-            //  resume ai channels when in game
-            audioManager->resumeChannel(aiEngineChannelID1);
-            audioManager->resumeChannel(aiEngineChannelID2);
-
-            // get positions of AI
-            glm::vec3 aiRacer1Pos = gCoordinator.GetComponent<PhysxTransform>(aiVehicleEntity1).pos;
-            glm::vec3 aiRacer2Pos = gCoordinator.GetComponent<PhysxTransform>(aiVehicleEntity2).pos;
-
-            // calculate the distance between ai and player
-            float distanceAi1 = glm::length(aiRacer1Pos - playerPos);
-            float distanceAi2 = glm::length(aiRacer2Pos - playerPos);
-            // use that distance against the maxAudible distance. multiply by a quiet value so that it increases in sound
-            float distanceRatio1 = std::clamp(distanceAi1 / (maxAudibleDistance), 0.0f, 1.0f);
-            float distanceRatio2 = std::clamp(distanceAi2 / (maxAudibleDistance), 0.0f, 1.0f);
-            float volumeInDB1 = distanceRatio1 * -60.0f;
-            float volumeInDB2 = distanceRatio2 * -60.0f;
-            volumeInDB1 += masterVolumeOffset;
-            volumeInDB2 += masterVolumeOffset;
-
-            // set volume of ai engine noises based on distance to player
-            audioManager->setChannelVolume(aiEngineChannelID1, volumeInDB1);
-            audioManager->setChannelVolume(aiEngineChannelID2, volumeInDB2);
+            // Update all in-game audio (avalanche distance, engine speed gating, AI sounds)
+            this->updateInGameAudioState(speed);
 
         
             // Discard excess time when running slow to prevent spiral of death
@@ -565,6 +521,49 @@ void RacingGame::updateMenuAudioState()
     audioManager->pauseChannel(engineChannelID);
     audioManager->pauseChannel(aiEngineChannelID1);
     audioManager->pauseChannel(aiEngineChannelID2);
+}
+
+void RacingGame::updateInGameAudioState(float playerSpeed)
+{
+    // Avalanche distance-based volume
+    glm::vec3 avalanchePos = gCoordinator.GetComponent<PhysxTransform>(AvalancheEntity).pos;
+    glm::vec3 playerPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
+    float distance = glm::length(avalanchePos - playerPos);
+
+    float distanceRatio = std::clamp(distance / maxAudibleDistance, 0.0f, 1.0f);
+    float volumeInDB = distanceRatio * -60.0f;
+    float masterVolumeOffset = -5.0f;
+    volumeInDB += masterVolumeOffset;
+    audioManager->setChannelVolume(avalancheChannelID, volumeInDB);
+
+    // Player engine sound speed gating
+    if (playerSpeed > 1.0f && !enginePlaying) {
+        engineChannelID = audioManager->playSounds("assets/audio/snowmobiles-4-trimmed.mp3", { 0,0,0 }, -15.0f);
+        enginePlaying = true;
+    }
+    else if (playerSpeed <= 1.0f && enginePlaying) {
+        audioManager->pauseChannel(engineChannelID);
+        enginePlaying = false;
+    }
+
+    // Resume AI engine channels
+    audioManager->resumeChannel(aiEngineChannelID1);
+    audioManager->resumeChannel(aiEngineChannelID2);
+
+    // AI distance-based volume
+    glm::vec3 aiRacer1Pos = gCoordinator.GetComponent<PhysxTransform>(aiVehicleEntity1).pos;
+    glm::vec3 aiRacer2Pos = gCoordinator.GetComponent<PhysxTransform>(aiVehicleEntity2).pos;
+
+    float distanceAi1 = glm::length(aiRacer1Pos - playerPos);
+    float distanceAi2 = glm::length(aiRacer2Pos - playerPos);
+
+    float distanceRatio1 = std::clamp(distanceAi1 / maxAudibleDistance, 0.0f, 1.0f);
+    float distanceRatio2 = std::clamp(distanceAi2 / maxAudibleDistance, 0.0f, 1.0f);
+    float volumeInDB1 = distanceRatio1 * -60.0f + masterVolumeOffset;
+    float volumeInDB2 = distanceRatio2 * -60.0f + masterVolumeOffset;
+
+    audioManager->setChannelVolume(aiEngineChannelID1, volumeInDB1);
+    audioManager->setChannelVolume(aiEngineChannelID2, volumeInDB2);
 }
 
 void RacingGame::updateImGui() {
