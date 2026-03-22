@@ -4,7 +4,6 @@
 
 #include "BaseCamera.hpp"
 #include "Transform.hpp"
-#include "CameraStats.hpp"
 
 class TurnTableCamera : public BaseCamera {
 public:
@@ -22,39 +21,40 @@ public:
 
     // Angles are in radians. Dummy target is set at (0,0,0)
     explicit TurnTableCamera();
-    explicit TurnTableCamera(Params const &params);
+    explicit TurnTableCamera(Params const& params);
 
     // Angles are in radians
-    explicit TurnTableCamera(SceneTransform & target);
-    explicit TurnTableCamera(SceneTransform & target, const Params &params);
+    explicit TurnTableCamera(SceneTransform& target);
+    explicit TurnTableCamera(SceneTransform& target, Params const& params);
 
-    void setTarget(SceneTransform & target);
+    void target(SceneTransform& target);
 
     void adjustTheta(float deltaTheta);
     void adjustPhi(float deltaPhi);
-    void adjustRadius(float deltaRadius) override;
+    void adjustDistance(float deltaDistance);
 
     [[nodiscard]]
-    glm::mat4 getViewMatrix() override;
+    glm::mat4 viewMatrix() override;
 
     [[nodiscard]]
-    glm::vec3 getPosition() override;
+    glm::vec3 position() override;
 
-    CameraStats getStats() override;
-
-    glm::mat4 viewMatrix();
-    glm::vec3 position();
+    std::string toString() const override;
 
 private:
 
-    void updateViewMatrix();
+    void updateView();
 
-    SceneTransform * _target;
+    SceneTransform* mTarget;
 
-    float _distance{};
-    float _minDistance{};
-    float _maxDistance{};
+    float mDistance{};
+    float mMinDistance{};
+    float mMaxDistance{};
+    float mTheta = 0.0f;
+    float mPhi = 0.0f;
 
-    glm::mat4 _viewMatrix {};
-    glm::vec3 _targetPosition {};
+    glm::mat4 mViewMatrix {};
+    glm::vec3 mTargetPosition {};
+
+    SceneTransform mFallbackTarget;
 };

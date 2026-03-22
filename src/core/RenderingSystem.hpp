@@ -45,9 +45,10 @@ void cleanup();
     Renderable getCubeRenderable(const std::string& texturePath);
 
     void updateCameraTarget(const glm::vec3& position);
-    glm::vec3 getCameraForward() const;
-    bool isTurnTableCamera() { return activeCamera == turntableCamera.get();};
-    CameraStats getActiveCameraStats() { return activeCamera->getStats(); };
+    glm::vec3 getCameraForward() const { return activeCamera->forward(); };
+    glm::vec3 getCameraRight() const { return activeCamera->right(); };
+    bool isTurnTableCamera() { return activeCamera == turntableCamera.get(); };
+    std::string getActiveCameraInfo() const { return activeCamera->toString(); };
 
     // Parameters changed by Imgui in the syncImgui method of RacingGame
     float camSpeed = 1.0f;

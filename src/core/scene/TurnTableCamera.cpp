@@ -10,116 +10,110 @@ TurnTableCamera::TurnTableCamera()
 {
 }
 
-TurnTableCamera::TurnTableCamera(Params const &params)
-    : TurnTableCamera(*new SceneTransform(), params)
+TurnTableCamera::TurnTableCamera(Params const& params)
+    : TurnTableCamera(mFallbackTarget, params)
 {
-    _target->setPosition({0,0,0});
 }
 
-TurnTableCamera::TurnTableCamera(SceneTransform & target)
+TurnTableCamera::TurnTableCamera(SceneTransform& target)
     : TurnTableCamera(target, Params{})
 {
 }
 
-TurnTableCamera::TurnTableCamera(SceneTransform & target, Params const &params)
+TurnTableCamera::TurnTableCamera(SceneTransform& target, Params const& params)
     : BaseCamera()
 {
-    _target = &target;
+    mTarget = &target;
 
-    _distance = params.defaultDistance;
-    _minDistance = params.minDistance;
-    _maxDistance = params.maxDistance;
+    mDistance = params.defaultDistance;
+    mMinDistance = params.minDistance;
+    mMaxDistance = params.maxDistance;
 }
 
-void TurnTableCamera::setTarget(SceneTransform &target)
+void TurnTableCamera::target(SceneTransform& target)
 {
-    _target = &target;
-    _isDirty = true;
-}
-
-glm::mat4 TurnTableCamera::getViewMatrix()
-{
-    return viewMatrix();
-}
-
-glm::vec3 TurnTableCamera::getPosition()
-{
-    return position();
+    mTarget = &target;
+    mIsDirty = true;
 }
 
 glm::mat4 TurnTableCamera::viewMatrix()
 {
-    updateViewMatrix();
-    return _viewMatrix;
+    updateView();
+    return mViewMatrix;
 }
 
 glm::vec3 TurnTableCamera::position()
 {
-    updateViewMatrix();
-    return _position;
+    updateView();
+    return mPosition;
 }
 
-void TurnTableCamera::updateViewMatrix()
+void TurnTableCamera::updateView()
 {
-    if (_isDirty == true || _targetPosition != _target->getWorldPosition())
+    if (mIsDirty || mTargetPosition != mTarget->getWorldPosition())
     {
-        _isDirty = false;
+        mIsDirty = false;
 
-        auto const hRot = glm::rotate(glm::mat4(1.0f), _theta, _up);
-        auto const vRot = glm::rotate(glm::mat4(1.0f), _phi, math::transform::RightVec3);
+        auto const hRot = glm::rotate(glm::mat4(1.0f), mTheta, mUp);
+        auto const vRot = glm::rotate(glm::mat4(1.0f), mPhi, math::transform::RightVec3);
 
-        _position = glm::vec3(hRot * vRot * glm::vec4{math::transform::ForwardVec3, 0.0f}) * _distance;
+        mPosition = glm::vec3(hRot * vRot * glm::vec4{math::transform::ForwardVec3, 0.0f}) * mDistance;
 
         // Center the camera around the target
-        _targetPosition = _target->getWorldPosition();
-        _position += _targetPosition;
+        mTargetPosition = mTarget->getWorldPosition();
+        mPosition += mTargetPosition;
 
-        _viewMatrix = glm::lookAt(_position, _target->getWorldPosition(), math::transform::UpVec3);
+        mViewMatrix = glm::lookAt(mPosition, mTarget->getWorldPosition(), math::transform::UpVec3);
     }
 }
 
 void TurnTableCamera::adjustTheta(float const deltaTheta)
 {
-    auto newTheta = _theta + deltaTheta;
-    // auto newTheta = std::fmod(_theta + deltaTheta, 2*M_PI);
-    if (newTheta != _theta)
+    auto newTheta = mTheta + deltaTheta;
+    // auto newTheta = std::fmod(mTheta + deltaTheta, 2*M_PI);
+    if (newTheta != mTheta)
     {
-        _theta = newTheta;
-        _isDirty = true;
+        mTheta = newTheta;
+        mIsDirty = true;
     }
 }
 
 void TurnTableCamera::adjustPhi(float const deltaPhi)
 {
     float const newPhi = std::clamp(
-        _phi + deltaPhi,
+        mPhi + deltaPhi,
         -glm::pi<float>() * 0.49f,
         glm::pi<float>() * 0.49f
     );
-    if (newPhi != _phi)
+    if (newPhi != mPhi)
     {
-        _isDirty = true;
-        _phi = newPhi;
+        mIsDirty = true;
+        mPhi = newPhi;
     }
 }
 
-void TurnTableCamera::adjustRadius(float const deltaRadius)
+void TurnTableCamera::adjustDistance(float const deltaDistance)
 {
-    float const newDistance =  std::clamp(_distance + deltaRadius, _minDistance, _maxDistance);
-    if (newDistance != _distance)
+    float const newDistance = std::clamp(mDistance + deltaDistance, mMinDistance, mMaxDistance);
+    if (newDistance != mDistance)
     {
-        _isDirty = true;
-        _distance = newDistance;
+        mIsDirty = true;
+        mDistance = newDistance;
     }
 }
 
-CameraStats TurnTableCamera::getStats()
+
+std::string TurnTableCamera::toString() const
 {
-    CameraStats stats = CameraStats(_position, _targetPosition);
-    stats.distance = _distance;
-    stats.fov = glm::degrees(_fov);
-    stats.scale = _scale;
-    stats.yaw = glm::degrees(_theta);
-    stats.pitch = glm::degrees(_phi);
-    return stats;
+    return fmt::format(
+        "Orbit Camera\n"
+        "Pos: ({:.1f}, {:.1f}, {:.1f})\n"
+        "Target: ({:.1f}, {:.1f}, {:.1f})\n"
+        "Dist: {:.2f}  FOV: {:.1f}\n"
+        "Yaw: {:.1f}  Pitch: {:.1f}",
+        mPosition.x, mPosition.y, mPosition.z,
+        mTargetPosition.x, mTargetPosition.y, mTargetPosition.z,
+        mDistance, glm::degrees(mFov),
+        glm::degrees(mTheta), glm::degrees(mPhi)
+    );
 }

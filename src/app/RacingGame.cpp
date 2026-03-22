@@ -545,16 +545,15 @@ void RacingGame::updateImGui() {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
-    // Update camera stats for UI
-    imguiPanel->cameraStats = renderingSystem->getActiveCameraStats();
-    imguiPanel->cameraStats.aspect = static_cast<float>(window->getWidth()) / static_cast<float>(window->getHeight());
+    // Update camera info for UI
+    imguiPanel->cameraInfo = renderingSystem->getActiveCameraInfo();
+    imguiPanel->aspectRatio = window->getAspectRatio();
 
     // Update UI
     imguiWrapper->beginFrame();
     imguiPanel->update();
     imguiWrapper->renderFPS();
     this->syncImgui();
-    imguiPanel->cameraStats = renderingSystem->getActiveCameraStats();
     imguiWrapper->endFrame();
 };
 

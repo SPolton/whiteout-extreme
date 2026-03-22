@@ -288,7 +288,7 @@ void RenderingSystem::render()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glm::mat4 view = activeCamera->getViewMatrix();
+    glm::mat4 view = activeCamera->viewMatrix();
     glm::mat4 projection = getProjectionMatrix();
 
     // Iterate through all entities that the RenderingSystem tracks
@@ -366,7 +366,7 @@ void RenderingSystem::render()
             if (!renderable.cpuData->indices.empty()) {
                 glDrawElements(
                     GL_TRIANGLES,
-                    renderable.cpuData->indices.size(),
+                    static_cast<GLsizei>(renderable.cpuData->indices.size()),
                     GL_UNSIGNED_INT,
                     nullptr
                 );
@@ -375,7 +375,7 @@ void RenderingSystem::render()
                 glDrawArrays(
                     GL_TRIANGLES,
                     0,
-                    renderable.cpuData->positions.size()
+                    static_cast<GLsizei>(renderable.cpuData->positions.size())
                 );
             }
 
@@ -423,7 +423,7 @@ void RenderingSystem::render()
                 // Set lighting uniforms for the model shader
                 glm::vec3 lightPos(0.0f, 20.0f, 0.0f);
                 glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
-                glm::vec3 viewPos = activeCamera->getPosition();
+                glm::vec3 viewPos = activeCamera->position();
                 
                 glUniform3fv(glGetUniformLocation(*modelRenderable.shader, "lightPos"), 1, &lightPos[0]);
                 glUniform3fv(glGetUniformLocation(*modelRenderable.shader, "lightColor"), 1, &lightColor[0]);
@@ -451,7 +451,7 @@ void RenderingSystem::renderEntities(const std::vector<EntityPx>& entityList)
     glUniformMatrix4fv(glGetUniformLocation(*shader, "projection"), 1, GL_FALSE, &projection[0][0]);
     
     // Get view matrix from active camera (transforms world coords to camera/view space)
-    glm::mat4 view = activeCamera->getViewMatrix();
+    glm::mat4 view = activeCamera->viewMatrix();
     glUniformMatrix4fv(glGetUniformLocation(*shader, "view"), 1, GL_FALSE, &view[0][0]);
     
     // Bind cube geometry once
@@ -489,7 +489,7 @@ glm::mat4 RenderingSystem::getProjectionMatrix() const
     
     // Perspective projection for active camera
     // FOV is already in radians, no conversion needed
-    return glm::perspective(activeCamera->getFOV(), aspectRatio, 0.1f, 5000.0f);
+    return glm::perspective(activeCamera->fov(), aspectRatio, 0.1f, 5000.0f);
 }
 
 void RenderingSystem::update(float deltaTime)
@@ -502,7 +502,7 @@ void RenderingSystem::update(float deltaTime)
             auto& renderable = gCoordinator.GetComponent<Renderable>(entity);
             if (renderable.isSkybox) {
                 auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
-                transform.pos = activeCamera->getPosition();
+                transform.pos = activeCamera->position();
             }
         }
     }
@@ -512,8 +512,15 @@ void RenderingSystem::update(float deltaTime)
 
 void RenderingSystem::onMouseWheelChange(double xOffset, double yOffset)
 {
+    (void)xOffset;
     float scroll = -static_cast<float>(yOffset) * this->camZoomSpeed * 0.016f;
-    activeCamera->adjustRadius(scroll);
+
+    if (activeCamera == freeCamera.get()) {
+        freeCamera->adjustFov(scroll);
+    }
+    else if (activeCamera == turntableCamera.get()) {
+        turntableCamera->adjustDistance(scroll);
+    }
 }
 
 void RenderingSystem::toggleCamera()
@@ -535,10 +542,4 @@ void RenderingSystem::updateCameraTarget(const glm::vec3& position)
     if (targetTransform) {
         targetTransform->setPosition(position);
     }
-}
-
-glm::vec3 RenderingSystem::getCameraForward() const
-{
-    auto view = activeCamera->getViewMatrix();
-    return -glm::vec3(view[0][2], view[1][2], view[2][2]);
 }

@@ -2,7 +2,7 @@
 
 #include <imgui.h>
 #include <glm/glm.hpp>
-#include "core/scene/CameraStats.hpp"
+#include <string>
 
 // Handles ImGui panel rendering and settings for RenderingSystem
 // Separates UI logic from rendering logic
@@ -14,8 +14,9 @@ public:
     void update();
 
     // For simplicity, expose settings directly (no getters)
-    // Camera stats (set by rendering system)
-    CameraStats cameraStats;
+    // Camera info string (set by rendering system)
+    std::string cameraInfo;
+    float aspectRatio = 1.0f;
 
     // Rendering settings
     glm::vec3 getBackgroundColor() const { return backgroundColor; }
