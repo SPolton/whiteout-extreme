@@ -295,15 +295,7 @@ void RacingGame::run()
 
         // keep taking inputs in case pause menu is called
         MenuAction actionButtons = menus->pollInputs();
-
-        // Handle state transitions from menu input
-        if (actionButtons == MenuAction::StartGame || actionButtons == MenuAction::ResumeGame) {
-            if (actionButtons == MenuAction::StartGame) {
-                racingSystem->restart();
-            }
-            audioManager->resumeChannel(inGameMusicChannelID);
-            gameState = GameState::InGame;
-        }
+        handleMenuActions(actionButtons);
 
         // Dispatch to appropriate state handler
         if (gameState == GameState::InGame) {
@@ -349,6 +341,17 @@ void RacingGame::run()
 
             finishMenuFrame();
         }
+    }
+}
+
+void RacingGame::handleMenuActions(MenuAction actionButtons)
+{
+    if (actionButtons == MenuAction::StartGame || actionButtons == MenuAction::ResumeGame) {
+        if (actionButtons == MenuAction::StartGame) {
+            racingSystem->restart();
+        }
+        audioManager->resumeChannel(inGameMusicChannelID);
+        gameState = GameState::InGame;
     }
 }
 

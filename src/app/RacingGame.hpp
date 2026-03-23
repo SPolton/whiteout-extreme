@@ -28,6 +28,7 @@ public:
 
 private:
     void updateInGame();
+    void handleMenuActions(MenuAction actionButtons);
 
     void updateImGui();
     void syncImgui();
