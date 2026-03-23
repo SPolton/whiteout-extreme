@@ -30,18 +30,7 @@ RacingGame::RacingGame()
         return;
     }
 
-    ///---- Imgui Wrapper and Panel ----/// 
-    imguiWrapper = std::make_unique<ImGuiWrapper>();
-    if (!imguiWrapper->init(window->getGLFWwindow())) {
-        logger::error("ImGui Init Failed");
-    }
-    imguiPanel = std::make_unique<ImGuiPanel>();
-    logger::info("ImGui initialized");
-
-    #ifdef NDEBUG
-        imguiPanel->showDebugWindow = false;
-        imguiPanel->showSettingsWindow = false;
-    #endif
+    initImGui();
 
     ///---- START OF ECS SETUP ----///
     // 0.Global ECS Coordinator Initialization
@@ -381,6 +370,17 @@ bool RacingGame::initPlatformAndWindow()
 
 void RacingGame::initImGui()
 {
+    imguiWrapper = std::make_unique<ImGuiWrapper>();
+    if (!imguiWrapper->init(window->getGLFWwindow())) {
+        logger::error("ImGui Init Failed");
+    }
+    imguiPanel = std::make_unique<ImGuiPanel>();
+    logger::info("ImGui initialized");
+
+#ifdef NDEBUG
+    imguiPanel->showDebugWindow = false;
+    imguiPanel->showSettingsWindow = false;
+#endif
 }
 
 void RacingGame::initEcsAndSystems()
