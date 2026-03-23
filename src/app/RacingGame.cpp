@@ -291,12 +291,12 @@ void RacingGame::run()
 
         // Keep checking for controller inputs and if menu actions are triggered
         menus->checkInputSystem();
-        menus->pollInputs();
+        MenuAction actionButtons = menus->pollInputs();
 
         if (gameState == GameState::InGame) {
             updateInGame();
         } else {
-            updateInMenu();
+            updateInMenu(actionButtons);
         }
 
         endFrame();
@@ -339,9 +339,8 @@ void RacingGame::updateInGame()
     renderInGameHUD();
 }
 
-void RacingGame::updateInMenu()
+void RacingGame::updateInMenu(MenuAction actionButtons)
 {
-    MenuAction actionButtons = menus->pollInputs();
     handleMenuActions(actionButtons);
 
     if (gameState == GameState::MainMenu) {
