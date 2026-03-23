@@ -33,38 +33,8 @@ RacingGame::RacingGame()
     initImGui();
     initEcsAndSystems();
     createWorldEntities();
-
-    textSystem = std::make_unique<Text>();
-
-    textSystem->setProjection(1440.0f, 1440.0f);
-
-    menus = std::make_unique<GameMenus>(textSystem.get(), inputManager.get(), audioManager.get(), window.get(), gameState);
-    menus->init();
-
-   // intiailize audio engine
-    audioManager->init();
-    // load the main menu game music
-    audioManager->loadSound("assets/audio/game-music-loop-12.mp3", false, true, true);
-    musicChannelID = audioManager->playSounds("assets/audio/game-music-loop-12.mp3", { 0,0,0 }, -8.0f);
-    // load the in-game music
-    audioManager->loadSound("assets/audio/in-game-music.mp3", false, true, true);
-    inGameMusicChannelID = audioManager->playSounds("assets/audio/in-game-music.mp3", { 0,0,0 }, -15.0f);
-    // load avalanche sound
-    audioManager->loadSound("assets/audio/rock-avalanche-2.wav", false, true, true);
-    avalancheChannelID = audioManager->playSounds("assets/audio/rock-avalanche-2.wav", { 0,0,0 }, -20.0f);
-
-    // call functions that will load sounds this component will use
-    menus->loadMenuSounds();
-    vehicleControlSystem->loadVehicleSounds();
-
-    // play ai racer sounds
-    audioManager->loadSound("assets/audio/snowmobiles-1-trimmed.wav", false, true, true);
-    aiEngineChannelID1 = audioManager->playSounds("assets/audio/snowmobiles-1-trimmed.wav", { 0,0,0 }, -20.0f);
-    aiEngineChannelID2 = audioManager->playSounds("assets/audio/snowmobiles-1-trimmed.wav", { 0,0,0 }, -20.0f);
-
-    // boost sounds
-    audioManager->loadSound("assets/audio/apex-vent.mp3", false, false, false);
-    audioManager->loadSound("assets/audio/overheat.mp3", false, false, false);
+    initUiSystems();
+    initAudio();
 }
 
 RacingGame::~RacingGame()
@@ -375,10 +345,38 @@ void RacingGame::createWorldEntities()
 
 void RacingGame::initUiSystems()
 {
+    textSystem = std::make_unique<Text>();
+    textSystem->setProjection(1440.0f, 1440.0f);
+
+    menus = std::make_unique<GameMenus>(textSystem.get(), inputManager.get(), audioManager.get(), window.get(), gameState);
+    menus->init();
 }
 
 void RacingGame::initAudio()
 {
+    audioManager->init();
+    // load the main menu game music
+    audioManager->loadSound("assets/audio/game-music-loop-12.mp3", false, true, true);
+    musicChannelID = audioManager->playSounds("assets/audio/game-music-loop-12.mp3", { 0,0,0 }, -8.0f);
+    // load the in-game music
+    audioManager->loadSound("assets/audio/in-game-music.mp3", false, true, true);
+    inGameMusicChannelID = audioManager->playSounds("assets/audio/in-game-music.mp3", { 0,0,0 }, -15.0f);
+    // load avalanche sound
+    audioManager->loadSound("assets/audio/rock-avalanche-2.wav", false, true, true);
+    avalancheChannelID = audioManager->playSounds("assets/audio/rock-avalanche-2.wav", { 0,0,0 }, -20.0f);
+
+    // call functions that will load sounds this component will use
+    menus->loadMenuSounds();
+    vehicleControlSystem->loadVehicleSounds();
+
+    // play ai racer sounds
+    audioManager->loadSound("assets/audio/snowmobiles-1-trimmed.wav", false, true, true);
+    aiEngineChannelID1 = audioManager->playSounds("assets/audio/snowmobiles-1-trimmed.wav", { 0,0,0 }, -20.0f);
+    aiEngineChannelID2 = audioManager->playSounds("assets/audio/snowmobiles-1-trimmed.wav", { 0,0,0 }, -20.0f);
+
+    // boost sounds
+    audioManager->loadSound("assets/audio/apex-vent.mp3", false, false, false);
+    audioManager->loadSound("assets/audio/overheat.mp3", false, false, false);
 }
 
 /// ----- Public methods ----- ///
