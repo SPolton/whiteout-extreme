@@ -307,7 +307,7 @@ void RacingGame::run()
 
         // Dispatch to appropriate state handler
         if (gameState == GameState::InGame) {
-            this->updateInGame();
+            updateInGame();
         }
         else if (gameState == GameState::MainMenu) {
             // render UI for main menu, take note of the action taken
@@ -319,7 +319,7 @@ void RacingGame::run()
                 gameState = GameState::InGame;
             }
 
-            this->finishMenuFrame();
+            finishMenuFrame();
         }
         else if (gameState == GameState::Pause) {
             // render UI for pause menu, take note of the action taken
@@ -334,7 +334,7 @@ void RacingGame::run()
                 gameState = GameState::MainMenu;
             }
 
-            this->finishMenuFrame();
+            finishMenuFrame();
         }
         else if (gameState == GameState::GameOver) {
             // render UI for race finished, take note of the action taken
@@ -347,7 +347,7 @@ void RacingGame::run()
                 gameState = GameState::MainMenu;
             }
 
-            this->finishMenuFrame();
+            finishMenuFrame();
         }
     }
 }
@@ -363,14 +363,14 @@ void RacingGame::updateInGame()
     gameTime.update();
 
     // Run fixed-step physics and game systems
-    this->updatePhysicsAndGameplayLoop();
+    updatePhysicsAndGameplayLoop();
 
     // Get player state for audio and camera updates
     glm::vec3 playerPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
     float speed = glm::length(gCoordinator.GetComponent<RigidBody>(playerVehicleEntity).linearVelocity);
 
     // Update spatial audio (avalanche distance, engine speed gating, AI sounds)
-    this->updateInGameAudioState(speed);
+    updateInGameAudioState(speed);
 
     // Check for quit input
     if (inputManager->isKeyPressedOnce(GLFW_KEY_ESCAPE)) {
@@ -378,19 +378,19 @@ void RacingGame::updateInGame()
     }
 
     // Update camera to follow player
-    this->updateInGameCameraTarget(speed);
+    updateInGameCameraTarget(speed);
 
     // Render scene and UI
     renderingSystem->update(gameTime.fpsF());
-    this->updateImGui();
-    this->renderInGameHUD();
-    this->endFrame();
+    updateImGui();
+    renderInGameHUD();
+    endFrame();
 }
 
 void RacingGame::finishMenuFrame()
 {
-    this->updateMenuAudioState();
-    this->endFrame();
+    updateMenuAudioState();
+    endFrame();
 }
 
 void RacingGame::updateMenuAudioState()
@@ -603,7 +603,7 @@ void RacingGame::updateImGui() {
     imguiWrapper->beginFrame();
     imguiPanel->update();
     imguiWrapper->renderFPS();
-    this->syncImgui();
+    syncImgui();
     imguiWrapper->endFrame();
 };
 
