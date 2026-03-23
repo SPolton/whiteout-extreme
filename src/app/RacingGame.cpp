@@ -250,6 +250,14 @@ RacingGame::RacingGame()
     auto avCubeRender = renderingSystem->getCubeRenderable("assets/textures/snowball.png");
     avCubeRender.hasRollingTexture = true;
     gCoordinator.AddComponent(AvalancheEntity, avCubeRender);
+    gCoordinator.AddComponent(AvalancheEntity, SnowEmitter{
+        .enabled = true,
+        .preset = SnowEmitterPreset::AvalancheFront,
+        .spawnRate = 250.0f,
+        .particleLifetimeSec = 1.2f,
+        .particleSize = 5.0f,
+        .localOffset = glm::vec3(0.0f, 1.0f, 20.0f)
+    });
     logger::info("Avalanche entity created");
 
     auto& Avalanche = gCoordinator.GetComponent<AvalancheComponent>(AvalancheEntity).instance;
@@ -812,6 +820,16 @@ void RacingGame::syncImgui() {
     renderingSystem->camSpeed = imguiPanel->camSpeed;
     renderingSystem->camZoomSpeed = imguiPanel->camZoomSpeed;
     //renderingSystem->wireframeMode = imguiPanel->showWireframe;
+
+    // Sync particles enabled state
+    gCoordinator.GetComponent<SnowEmitter>(AvalancheEntity).enabled = imguiPanel->isParticlesEnabled;
+
+    // Debug: Toggle particles
+    if (inputManager->isKeyPressedOnce(GLFW_KEY_V)) {
+        imguiPanel->isParticlesEnabled = !imguiPanel->isParticlesEnabled;
+        gCoordinator.GetComponent<SnowEmitter>(AvalancheEntity).enabled = imguiPanel->isParticlesEnabled;
+        logger::info("Particles debug toggle: {}", imguiPanel->isParticlesEnabled ? "ON" : "OFF");
+    }
 }
 
 void RacingGame::endFrame() {
