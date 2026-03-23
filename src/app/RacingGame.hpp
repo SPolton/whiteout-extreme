@@ -71,15 +71,15 @@ private:
 
     // sound
     std::shared_ptr<AudioEngine> audioManager;
-    int musicChannelID;
-    int inGameMusicChannelID;
-    int avalancheChannelID;
+    int musicChannelID = -1;
+    int inGameMusicChannelID = -1;
+    int avalancheChannelID = -1;
     // keep track of engine sound playing state
-    int engineChannelID;
+    int engineChannelID = -1;
     bool enginePlaying = false;
     // avalanche range
     float maxAudibleDistance = 300.f;
     // ai engine
-    int aiEngineChannelID1;
-    int aiEngineChannelID2;
+    int aiEngineChannelID1 = -1;
+    int aiEngineChannelID2 = -1;
 };
