@@ -359,6 +359,8 @@ void RacingGame::updateInGame()
     // Update camera to follow player
     updateInGameCameraTarget(playerVelocity);
 
+    renderingSystem->setSnowFrame(snowVfxSystem->snowFrame());
+
     // Render scene and UI
     renderingSystem->update(gameTime.dtF());
     updateImGui();

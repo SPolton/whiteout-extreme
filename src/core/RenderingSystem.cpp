@@ -518,3 +518,8 @@ void RenderingSystem::updateCameraTarget(const glm::vec3& position, const glm::v
         racingCamera->updateTarget(position, forward, velocity);
     }
 }
+
+void RenderingSystem::setSnowFrame(const SnowFrame& frame)
+{
+    snowRenderer.submitSnowFrame(frame);
+}
