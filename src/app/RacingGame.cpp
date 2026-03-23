@@ -184,7 +184,7 @@ RacingGame::RacingGame()
         gCoordinator.SetSystemSignature<SnowBallisticSystem>(signature2);
     }
 
-    // 3.Create Entities and add Components to them:
+    // ===== Constructor Phase: createWorldEntities =====
 
     // Create the player vehicle entity with physics components
     //physx::PxVec3 spawnPos(-730.0f, 670.4f, -400.0f);
@@ -368,6 +368,34 @@ RacingGame::~RacingGame()
     // shut down audio engine
     audioManager->shutdown();
 }
+
+// ----- Initialization ----- //
+
+void RacingGame::initPlatformAndWindow()
+{
+}
+
+void RacingGame::initImGui()
+{
+}
+
+void RacingGame::initEcsAndSystems()
+{
+}
+
+void RacingGame::createWorldEntities()
+{
+}
+
+void RacingGame::initUiSystems()
+{
+}
+
+void RacingGame::initAudio()
+{
+}
+
+/// ----- Public methods ----- ///
 
 /// Main game loop
 void RacingGame::run()

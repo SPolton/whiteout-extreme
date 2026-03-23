@@ -29,6 +29,14 @@ public:
     void run();
 
 private:
+    // Constructor phase
+    void initPlatformAndWindow();
+    void initImGui();
+    void initEcsAndSystems();
+    void createWorldEntities();
+    void initUiSystems();
+    void initAudio();
+
     // State handlers
     void updateInGame();
     void updateInMenu(MenuAction actionButtons);
