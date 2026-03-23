@@ -90,8 +90,8 @@ void SnowVfxSystem::spawnParticles(float deltaTime)
             const float jitterX = std::sin(seed * 1.17f) * 0.25f;
             const float jitterZ = std::cos(seed * 0.73f) * 0.25f;
 
-            particle.position = transform.pos + emitter.localOffset + glm::vec3(jitterX, 0.0f, jitterZ);
-            particle.velocity = glm::vec3(jitterX, 1.5f, jitterZ);
+            particle.position = transform.pos + (transform.rot * emitter.localOffset) + glm::vec3(jitterX, 0.0f, jitterZ);
+            particle.velocity = transform.rot * glm::vec3(jitterX, 1.5f, jitterZ);
             particle.lifeSec = emitter.particleLifetimeSec;
             particle.size = std::max(emitter.particleSize, 0.05f);
         }
