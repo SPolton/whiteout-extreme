@@ -285,7 +285,6 @@ RacingGame::~RacingGame()
 /// Main game loop
 void RacingGame::run()
 {
-
     while (!window->shouldClose())
     {
         // update audio
@@ -297,59 +296,18 @@ void RacingGame::run()
         // keep taking inputs in case pause menu is called
         MenuAction actionButtons = menus->pollInputs();
 
-        // check for entering game
+        // Handle state transitions from menu input
         if (actionButtons == MenuAction::StartGame || actionButtons == MenuAction::ResumeGame) {
             if (actionButtons == MenuAction::StartGame) {
                 racingSystem->restart();
             }
-            // play in game music
             audioManager->resumeChannel(inGameMusicChannelID);
             gameState = GameState::InGame;
         }
 
-        // if in game
+        // Dispatch to appropriate state handler
         if (gameState == GameState::InGame) {
-
-            // if in game, don't play lobby music
-            audioManager->pauseChannel(musicChannelID);
-            // play in-game music
-            audioManager->resumeChannel(inGameMusicChannelID);
-            // play avalanche sounds
-            audioManager->resumeChannel(avalancheChannelID);
-
-            gameTime.update();
-
-            // Vehicle control system Loop - process player inputs and update vehicle state before physics simulation
-            //vehicleControlSystem->update(gameTime.dtF());
-
-            this->updatePhysicsAndGameplayLoop();
-
-            // get the positions of the avalanche and the player
-            glm::vec3 playerPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
-            // get velocity of the vehicle
-            float speed = glm::length(gCoordinator.GetComponent<RigidBody>(playerVehicleEntity).linearVelocity);
-
-            // Update all in-game audio (avalanche distance, engine speed gating, AI sounds)
-            this->updateInGameAudioState(speed);
-
-            // Process Escape key input to close window
-            if (inputManager->isKeyPressedOnce(GLFW_KEY_ESCAPE))
-                glfwSetWindowShouldClose(window->getGLFWwindow(), true);
-
-            this->updateInGameCameraTarget(speed);
-
-            // Process F key input to toggle camera, and IJKLUO to move the free camera
-            renderingSystem->update(gameTime.fpsF());
-
-            // Update values and sync imgui parameters
-            this->updateImGui();
-
-            // Must be called after renderer update, but before text rendering
-            // auto width = renderingSystem->getWindowWidth();
-            // auto height = renderingSystem->getWindowHeight();
-            // textSystem->setProjection(width, height);
-            this->renderInGameHUD();
-            this->endFrame();
+            this->updateInGame();
         }
         else if (gameState == GameState::MainMenu) {
             // render UI for main menu, take note of the action taken
@@ -392,6 +350,41 @@ void RacingGame::run()
             this->finishMenuFrame();
         }
     }
+}
+
+void RacingGame::updateInGame()
+{
+    // Setup in-game audio channels
+    audioManager->pauseChannel(musicChannelID);
+    audioManager->resumeChannel(inGameMusicChannelID);
+    audioManager->resumeChannel(avalancheChannelID);
+
+    // Update gameplay timing
+    gameTime.update();
+
+    // Run fixed-step physics and game systems
+    this->updatePhysicsAndGameplayLoop();
+
+    // Get player state for audio and camera updates
+    glm::vec3 playerPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
+    float speed = glm::length(gCoordinator.GetComponent<RigidBody>(playerVehicleEntity).linearVelocity);
+
+    // Update spatial audio (avalanche distance, engine speed gating, AI sounds)
+    this->updateInGameAudioState(speed);
+
+    // Check for quit input
+    if (inputManager->isKeyPressedOnce(GLFW_KEY_ESCAPE)) {
+        glfwSetWindowShouldClose(window->getGLFWwindow(), true);
+    }
+
+    // Update camera to follow player
+    this->updateInGameCameraTarget(speed);
+
+    // Render scene and UI
+    renderingSystem->update(gameTime.fpsF());
+    this->updateImGui();
+    this->renderInGameHUD();
+    this->endFrame();
 }
 
 void RacingGame::finishMenuFrame()

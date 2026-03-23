@@ -27,6 +27,8 @@ public:
     void run();
 
 private:
+    void updateInGame();
+
     void updateImGui();
     void syncImgui();
     void endFrame();
