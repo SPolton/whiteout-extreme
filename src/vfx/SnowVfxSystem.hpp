@@ -21,6 +21,7 @@ public:
 
 private:
     static constexpr std::size_t kMaxParticles = 4096;
+    static constexpr int kMaxSpawnPerEmitterPerStep = 128;
 
     std::vector<SnowParticle> particles;
     std::unordered_map<Entity, float> emitterSpawnAccumulator;
@@ -30,6 +31,7 @@ private:
     SnowFrame currentSnowFrame;
 
     std::size_t firstUnusedParticle();
+    void cleanupEmitterAccumulators();
     void spawnParticles(float deltaTime);
     void updateParticles(float deltaTime);
     void rebuildSnowFrame();

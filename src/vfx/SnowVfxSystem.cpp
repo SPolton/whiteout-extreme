@@ -23,6 +23,7 @@ void SnowVfxSystem::update(float deltaTime)
         return;
     }
 
+    cleanupEmitterAccumulators();
     spawnParticles(deltaTime);
     updateParticles(deltaTime);
     rebuildSnowFrame();
@@ -64,6 +65,25 @@ std::size_t SnowVfxSystem::firstUnusedParticle()
     return 0;
 }
 
+void SnowVfxSystem::cleanupEmitterAccumulators()
+{
+    std::unordered_set<Entity> activeEmitters;
+    activeEmitters.reserve(mEntities.size());
+
+    for (const Entity entity : mEntities) {
+        activeEmitters.insert(entity);
+    }
+
+    for (auto it = emitterSpawnAccumulator.begin(); it != emitterSpawnAccumulator.end();) {
+        if (!activeEmitters.contains(it->first)) {
+            it = emitterSpawnAccumulator.erase(it);
+            continue;
+        }
+
+        ++it;
+    }
+}
+
 void SnowVfxSystem::spawnParticles(float deltaTime)
 {
     for (auto const& entity : mEntities) {
@@ -81,6 +101,12 @@ void SnowVfxSystem::spawnParticles(float deltaTime)
         if (spawnCount <= 0) {
             continue;
         }
+
+        if (spawnCount > kMaxSpawnPerEmitterPerStep) {
+            spawnCount = kMaxSpawnPerEmitterPerStep;
+            accumulator = 0.0f;
+        }
+
         accumulator -= static_cast<float>(spawnCount);
 
         for (int i = 0; i < spawnCount; ++i) {
