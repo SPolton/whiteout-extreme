@@ -322,24 +322,7 @@ void RacingGame::run()
             // Vehicle control system Loop - process player inputs and update vehicle state before physics simulation
             //vehicleControlSystem->update(gameTime.dtF());
 
-            // Physics System Loop, adaptive based on performance
-            int maxPhysicsSteps = gameTime.maxPhysicsSteps();
-            int physicsSteps = 0;
-            while (gameTime.accumulator >= gameTime.dt && physicsSteps < maxPhysicsSteps) {
-                if (gameTime.frameCount < static_cast<unsigned>(300) && gameTime.physicsFrameCount > static_cast<unsigned>(maxPhysicsSteps)) {
-                    break; // Skip the first frames to avoid slow startup
-                }
-                vehicleControlSystem->update(gameTime.dtF());
-                physicsSystem->update(gameTime.dtF());
-                gameTime.physicsUpdate();
-                physicsSteps++;
-
-                racingSystem->update(gameTime.dtF());
-                if (racingSystem->raceFinished) {
-                    gameState = GameState::GameOver;
-                }
-                aiSystem->update(gameTime.dtF());
-            }
+            this->updatePhysicsAndGameplayLoop();
 
             // get the positions of the avalanche and the player
             glm::vec3 playerPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
@@ -348,12 +331,6 @@ void RacingGame::run()
 
             // Update all in-game audio (avalanche distance, engine speed gating, AI sounds)
             this->updateInGameAudioState(speed);
-
-        
-            // Discard excess time when running slow to prevent spiral of death
-            if (physicsSteps >= maxPhysicsSteps) {
-                gameTime.discardExcessTime();
-            }
 
             // Process Escape key input to close window
             if (inputManager->isKeyPressedOnce(GLFW_KEY_ESCAPE))
@@ -570,6 +547,36 @@ void RacingGame::updateInGameAudioState(float playerSpeed)
 
     audioManager->setChannelVolume(aiEngineChannelID1, volumeInDB1);
     audioManager->setChannelVolume(aiEngineChannelID2, volumeInDB2);
+}
+
+void RacingGame::updatePhysicsAndGameplayLoop()
+{
+    // Physics System Loop, adaptive based on performance.
+    int maxPhysicsSteps = gameTime.maxPhysicsSteps();
+    int physicsSteps = 0;
+
+    while (gameTime.accumulator >= gameTime.dt && physicsSteps < maxPhysicsSteps) {
+        if (gameTime.frameCount < static_cast<unsigned>(300) && gameTime.physicsFrameCount > static_cast<unsigned>(maxPhysicsSteps)) {
+            break; // Skip the first frames to avoid slow startup.
+        }
+
+        vehicleControlSystem->update(gameTime.dtF());
+        physicsSystem->update(gameTime.dtF());
+        gameTime.physicsUpdate();
+        physicsSteps++;
+
+        racingSystem->update(gameTime.dtF());
+        if (racingSystem->raceFinished) {
+            gameState = GameState::GameOver;
+        }
+
+        aiSystem->update(gameTime.dtF());
+    }
+
+    // Discard excess time when running slow to prevent spiral of death.
+    if (physicsSteps >= maxPhysicsSteps) {
+        gameTime.discardExcessTime();
+    }
 }
 
 void RacingGame::updateImGui() {

@@ -33,6 +33,7 @@ private:
 
     void updateMenuAudioState();
     void updateInGameAudioState(float playerSpeed);
+    void updatePhysicsAndGameplayLoop();
 
     GameTime gameTime;
 
