@@ -31,134 +31,7 @@ RacingGame::RacingGame()
     }
 
     initImGui();
-
-    ///---- START OF ECS SETUP ----///
-    // 0.Global ECS Coordinator Initialization
-    gCoordinator.Init();
-
-    // 1.Register Components
-    //gCoordinator.RegisterComponent<CameraComponent>();
-    gCoordinator.RegisterComponent<Renderable>();
-    gCoordinator.RegisterComponent<ModelRenderable>();
-    gCoordinator.RegisterComponent<PhysxTransform>();
-    gCoordinator.RegisterComponent<RigidBody>();
-    gCoordinator.RegisterComponent<VehicleComponent>();
-    gCoordinator.RegisterComponent<AvalancheComponent>();
-    gCoordinator.RegisterComponent<Racer>();
-    gCoordinator.RegisterComponent<AI>();
-    gCoordinator.RegisterComponent<SnowEmitter>();
-    gCoordinator.RegisterComponent<SnowEmitterGridBox>();
-    gCoordinator.RegisterComponent<SnowCannon>();
-    gCoordinator.RegisterComponent<SnowBall>();
-
-    // 2.Create Systems and Set Signatures
-    // RENDERING SYSTEM: Requires Transform AND <Renderable OR ModelRenderable>
-    renderingSystem = gCoordinator.RegisterSystem<RenderingSystem>(inputManager);
-    {
-        Signature signature1;
-        signature1.set(gCoordinator.GetComponentType<PhysxTransform>());
-        signature1.set(gCoordinator.GetComponentType<Renderable>());
-        gCoordinator.SetSystemSignature<RenderingSystem>(signature1);
-
-        Signature signature2;
-        signature2.set(gCoordinator.GetComponentType<PhysxTransform>());
-        signature2.set(gCoordinator.GetComponentType<ModelRenderable>());
-        gCoordinator.SetSystemSignature<RenderingSystem>(signature2);
-    }
-
-    renderingSystem->vWidth = window->getWidth();
-    renderingSystem->vHeight = window->getHeight();
-
-    window->setCallbacks(inputManager);
-    inputManager->setResizeCallback([this](int w, int h) {
-        glViewport(0, 0, w, h);
-        renderingSystem->vWidth = w;
-        renderingSystem->vHeight = h;
-        logger::info("Window resized to {}x{}", w, h);
-        });
-
-    inputManager->setMouseWheelCallback([this](double w, double h) {
-        renderingSystem->onMouseWheelChange(w, h);
-        });
-
-
-    // PHYSICS SYSTEM : Requires Transform AND RigidBody
-     physicsSystem = gCoordinator.RegisterSystem<PhysicsSystem>();
-    {
-        Signature signature;
-        signature.set(gCoordinator.GetComponentType<PhysxTransform>());
-        signature.set(gCoordinator.GetComponentType<RigidBody>());
-        gCoordinator.SetSystemSignature<PhysicsSystem>(signature);
-    }
-
-    // physicsSystem->spawnBoxPyramid(10, 0.5f, renderingSystem->getCubeRenderable("assets/textures/carbon_fiber.jpg"));
-
-    // VEHICLE CONTROL SYSTEM : Requires VehicleComponent (which itself contains a pointer to the PhysX vehicle instance, so we can update it based on input)
-     vehicleControlSystem = gCoordinator.RegisterSystem<VehicleControlSystem>(
-        inputManager,
-        audioManager,
-        gCoordinator.GetSystem<RenderingSystem>(),
-        gCoordinator.GetSystem<PhysicsSystem>()
-    );
-    {
-        Signature signature;
-        signature.set(gCoordinator.GetComponentType<VehicleComponent>());
-        gCoordinator.SetSystemSignature<VehicleControlSystem>(signature);
-    }
-
-    // RACING SYSTEM: Requires Transform AND Racer
-    racingSystem = gCoordinator.RegisterSystem<RacingSystem>(
-        gCoordinator.GetSystem<RenderingSystem>(),
-        gCoordinator.GetSystem<PhysicsSystem>()
-    );
-    {
-        Signature signature;
-        signature.set(gCoordinator.GetComponentType<VehicleComponent>());
-        signature.set(gCoordinator.GetComponentType<Racer>());
-        signature.set(gCoordinator.GetComponentType<PhysxTransform>());
-        gCoordinator.SetSystemSignature<RacingSystem>(signature);
-    }
-
-
-    // AI SYSTEM: Requires Transform AND VehicleComponent AND Racer AND AI
-    aiSystem = gCoordinator.RegisterSystem<AISystem>(
-        gCoordinator.GetSystem<RenderingSystem>(),
-        gCoordinator.GetSystem<PhysicsSystem>()
-    );
-    {
-        Signature signature;
-        signature.set(gCoordinator.GetComponentType<AI>());
-        signature.set(gCoordinator.GetComponentType<Racer>());
-        signature.set(gCoordinator.GetComponentType<VehicleComponent>());
-        signature.set(gCoordinator.GetComponentType<PhysxTransform>());
-        gCoordinator.SetSystemSignature<AISystem>(signature);
-    }
-
-    // SNOW VFX SYSTEM: Requires Transform AND SnowEmitter
-    snowVfxSystem = gCoordinator.RegisterSystem<SnowVfxSystem>();
-    {
-        Signature signature;
-        signature.set(gCoordinator.GetComponentType<PhysxTransform>());
-        signature.set(gCoordinator.GetComponentType<SnowEmitter>());
-        gCoordinator.SetSystemSignature<SnowVfxSystem>(signature);
-    }
-
-    // SNOW BALLISTC SYSTEM: Requires Transform AND either SnowCannon OR SnowBallComponent
-    snowBallisticSystem = gCoordinator.RegisterSystem<SnowBallisticSystem>(
-        audioManager,
-        gCoordinator.GetSystem<RenderingSystem>(),
-        gCoordinator.GetSystem<VehicleControlSystem>());
-    {
-        Signature signature1;
-        signature1.set(gCoordinator.GetComponentType<PhysxTransform>());
-        signature1.set(gCoordinator.GetComponentType<SnowCannon>());
-        gCoordinator.SetSystemSignature<SnowBallisticSystem>(signature1);
-
-        Signature signature2;
-        signature2.set(gCoordinator.GetComponentType<PhysxTransform>());
-        signature2.set(gCoordinator.GetComponentType<SnowBall>());
-        gCoordinator.SetSystemSignature<SnowBallisticSystem>(signature2);
-    }
+    initEcsAndSystems();
 
     // ===== Constructor Phase: createWorldEntities =====
 
@@ -385,6 +258,133 @@ void RacingGame::initImGui()
 
 void RacingGame::initEcsAndSystems()
 {
+    // 0. Global ECS Coordinator Initialization
+    gCoordinator.Init();
+
+    // 1. Register Components
+    //gCoordinator.RegisterComponent<CameraComponent>();
+    gCoordinator.RegisterComponent<Renderable>();
+    gCoordinator.RegisterComponent<ModelRenderable>();
+    gCoordinator.RegisterComponent<PhysxTransform>();
+    gCoordinator.RegisterComponent<RigidBody>();
+    gCoordinator.RegisterComponent<VehicleComponent>();
+    gCoordinator.RegisterComponent<AvalancheComponent>();
+    gCoordinator.RegisterComponent<Racer>();
+    gCoordinator.RegisterComponent<AI>();
+    gCoordinator.RegisterComponent<SnowEmitter>();
+    gCoordinator.RegisterComponent<SnowEmitterGridBox>();
+    gCoordinator.RegisterComponent<SnowCannon>();
+    gCoordinator.RegisterComponent<SnowBall>();
+
+    // 2. Create Systems and Set Signatures
+    // RENDERING SYSTEM: Requires Transform AND <Renderable OR ModelRenderable>
+    renderingSystem = gCoordinator.RegisterSystem<RenderingSystem>(inputManager);
+    {
+        Signature signature1;
+        signature1.set(gCoordinator.GetComponentType<PhysxTransform>());
+        signature1.set(gCoordinator.GetComponentType<Renderable>());
+        gCoordinator.SetSystemSignature<RenderingSystem>(signature1);
+
+        Signature signature2;
+        signature2.set(gCoordinator.GetComponentType<PhysxTransform>());
+        signature2.set(gCoordinator.GetComponentType<ModelRenderable>());
+        gCoordinator.SetSystemSignature<RenderingSystem>(signature2);
+    }
+
+    renderingSystem->vWidth = window->getWidth();
+    renderingSystem->vHeight = window->getHeight();
+
+    window->setCallbacks(inputManager);
+    inputManager->setResizeCallback([this](int w, int h) {
+        glViewport(0, 0, w, h);
+        renderingSystem->vWidth = w;
+        renderingSystem->vHeight = h;
+        logger::info("Window resized to {}x{}", w, h);
+        });
+
+    inputManager->setMouseWheelCallback([this](double w, double h) {
+        renderingSystem->onMouseWheelChange(w, h);
+        });
+
+
+    // PHYSICS SYSTEM : Requires Transform AND RigidBody
+     physicsSystem = gCoordinator.RegisterSystem<PhysicsSystem>();
+    {
+        Signature signature;
+        signature.set(gCoordinator.GetComponentType<PhysxTransform>());
+        signature.set(gCoordinator.GetComponentType<RigidBody>());
+        gCoordinator.SetSystemSignature<PhysicsSystem>(signature);
+    }
+
+    // physicsSystem->spawnBoxPyramid(10, 0.5f, renderingSystem->getCubeRenderable("assets/textures/carbon_fiber.jpg"));
+
+    // VEHICLE CONTROL SYSTEM : Requires VehicleComponent (which itself contains a pointer to the PhysX vehicle instance, so we can update it based on input)
+     vehicleControlSystem = gCoordinator.RegisterSystem<VehicleControlSystem>(
+        inputManager,
+        audioManager,
+        gCoordinator.GetSystem<RenderingSystem>(),
+        gCoordinator.GetSystem<PhysicsSystem>()
+    );
+    {
+        Signature signature;
+        signature.set(gCoordinator.GetComponentType<VehicleComponent>());
+        gCoordinator.SetSystemSignature<VehicleControlSystem>(signature);
+    }
+
+    // RACING SYSTEM: Requires Transform AND Racer
+    racingSystem = gCoordinator.RegisterSystem<RacingSystem>(
+        gCoordinator.GetSystem<RenderingSystem>(),
+        gCoordinator.GetSystem<PhysicsSystem>()
+    );
+    {
+        Signature signature;
+        signature.set(gCoordinator.GetComponentType<VehicleComponent>());
+        signature.set(gCoordinator.GetComponentType<Racer>());
+        signature.set(gCoordinator.GetComponentType<PhysxTransform>());
+        gCoordinator.SetSystemSignature<RacingSystem>(signature);
+    }
+
+
+    // AI SYSTEM: Requires Transform AND VehicleComponent AND Racer AND AI
+    aiSystem = gCoordinator.RegisterSystem<AISystem>(
+        gCoordinator.GetSystem<RenderingSystem>(),
+        gCoordinator.GetSystem<PhysicsSystem>()
+    );
+    {
+        Signature signature;
+        signature.set(gCoordinator.GetComponentType<AI>());
+        signature.set(gCoordinator.GetComponentType<Racer>());
+        signature.set(gCoordinator.GetComponentType<VehicleComponent>());
+        signature.set(gCoordinator.GetComponentType<PhysxTransform>());
+        gCoordinator.SetSystemSignature<AISystem>(signature);
+    }
+
+    // SNOW VFX SYSTEM: Requires Transform AND SnowEmitter
+    snowVfxSystem = gCoordinator.RegisterSystem<SnowVfxSystem>();
+    {
+        Signature signature;
+        signature.set(gCoordinator.GetComponentType<PhysxTransform>());
+        signature.set(gCoordinator.GetComponentType<SnowEmitter>());
+        gCoordinator.SetSystemSignature<SnowVfxSystem>(signature);
+    }
+
+    // SNOW BALLISTC SYSTEM: Requires Transform AND either SnowCannon OR SnowBallComponent
+    snowBallisticSystem = gCoordinator.RegisterSystem<SnowBallisticSystem>(
+        audioManager,
+        gCoordinator.GetSystem<RenderingSystem>(),
+        gCoordinator.GetSystem<VehicleControlSystem>());
+    {
+        Signature signature1;
+        signature1.set(gCoordinator.GetComponentType<PhysxTransform>());
+        signature1.set(gCoordinator.GetComponentType<SnowCannon>());
+        gCoordinator.SetSystemSignature<SnowBallisticSystem>(signature1);
+
+        Signature signature2;
+        signature2.set(gCoordinator.GetComponentType<PhysxTransform>());
+        signature2.set(gCoordinator.GetComponentType<SnowBall>());
+        gCoordinator.SetSystemSignature<SnowBallisticSystem>(signature2);
+    }
+
 }
 
 void RacingGame::createWorldEntities()
