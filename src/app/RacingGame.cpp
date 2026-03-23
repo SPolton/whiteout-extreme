@@ -5,6 +5,7 @@
 #include "components/Model.h"
 #include "components/Physics.hpp"
 #include "components/Renderable.h"
+#include "components/SnowEmitter.h"
 #include "components/Transform.h"
 #include "components/VehicleComponent.h"
 #include "ecs/Coordinator.hpp"
@@ -62,6 +63,7 @@ RacingGame::RacingGame()
     gCoordinator.RegisterComponent<AvalancheComponent>();
     gCoordinator.RegisterComponent<Racer>();
     gCoordinator.RegisterComponent<AI>();
+    gCoordinator.RegisterComponent<SnowEmitter>();
 
     // 2.Create Systems and Set Signatures
     // RENDERING SYSTEM: Requires Transform AND <Renderable OR ModelRenderable>
@@ -144,6 +146,15 @@ RacingGame::RacingGame()
         signature.set(gCoordinator.GetComponentType<VehicleComponent>());
         signature.set(gCoordinator.GetComponentType<PhysxTransform>());
         gCoordinator.SetSystemSignature<AISystem>(signature);
+    }
+
+    // SNOW VFX SYSTEM: Requires Transform AND SnowEmitter
+    snowVfxSystem = gCoordinator.RegisterSystem<SnowVfxSystem>();
+    {
+        Signature signature;
+        signature.set(gCoordinator.GetComponentType<PhysxTransform>());
+        signature.set(gCoordinator.GetComponentType<SnowEmitter>());
+        gCoordinator.SetSystemSignature<SnowVfxSystem>(signature);
     }
 
     // 3.Create Entities and add Components to them:
@@ -467,6 +478,7 @@ void RacingGame::updatePhysicsAndGameplayLoop()
     while (gameTime.accF() >= gameTime.dtF() && physicsSteps < gameTime.maxPhysicsSteps()) {
         vehicleControlSystem->update(gameTime.dtF());
         aiSystem->update(gameTime.dtF());
+        snowVfxSystem->update(gameTime.dtF());
 
         physicsSystem->update(gameTime.dtF());
         gameTime.physicsUpdate();
