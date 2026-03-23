@@ -35,6 +35,7 @@ private:
     void updateInGameAudioState(float playerSpeed);
     void updatePhysicsAndGameplayLoop();
     void renderInGameHUD();
+    void updateInGameCameraTarget(float playerSpeed);
 
     GameTime gameTime;
 

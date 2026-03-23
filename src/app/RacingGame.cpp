@@ -336,20 +336,7 @@ void RacingGame::run()
             if (inputManager->isKeyPressedOnce(GLFW_KEY_ESCAPE))
                 glfwSetWindowShouldClose(window->getGLFWwindow(), true);
 
-            // If entity exists, update camera target to follow the player vehicle BEFORE rendering
-            // This prevents 1-frame lag that causes ghosting/phasing artifacts
-            if (gCoordinator.HasComponent<PhysxTransform>(playerVehicleEntity)) {
-                auto& transform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
-                auto& modelRenderable = gCoordinator.GetComponent<ModelRenderable>(playerVehicleEntity);
-                
-                // Target the visual center, not the physics origin
-                glm::vec3 visualOffset = transform.rot * modelRenderable.visualOffsetPos;
-                glm::vec3 targetPos = transform.pos + visualOffset;
-                targetPos.y += 2.f;
-
-                glm::vec3 targetForward = transform.forward();
-                renderingSystem->updateCameraTarget(targetPos, targetForward, speed);
-            }
+            this->updateInGameCameraTarget(speed);
 
             // Process F key input to toggle camera, and IJKLUO to move the free camera
             renderingSystem->update(gameTime.fpsF());
@@ -581,6 +568,26 @@ void RacingGame::renderInGameHUD()
     textSystem->renderText("Pause: Start / P", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
 
     textSystem->endText();
+}
+
+void RacingGame::updateInGameCameraTarget(float playerSpeed)
+{
+    // If entity exists, update camera target to follow the player vehicle BEFORE rendering.
+    // This prevents 1-frame lag that causes ghosting/phasing artifacts.
+    if (!gCoordinator.HasComponent<PhysxTransform>(playerVehicleEntity)) {
+        return;
+    }
+
+    auto& transform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
+    auto& modelRenderable = gCoordinator.GetComponent<ModelRenderable>(playerVehicleEntity);
+
+    // Target the visual center, not the physics origin.
+    glm::vec3 visualOffset = transform.rot * modelRenderable.visualOffsetPos;
+    glm::vec3 targetPos = transform.pos + visualOffset;
+    targetPos.y += 2.f;
+
+    glm::vec3 targetForward = transform.forward();
+    renderingSystem->updateCameraTarget(targetPos, targetForward, playerSpeed);
 }
 
 void RacingGame::updateImGui() {
