@@ -303,6 +303,42 @@ void RacingGame::run()
     }
 }
 
+// ----- State handlers ----- //
+
+void RacingGame::updateInGame()
+{
+    // Setup in-game audio channels
+    audioManager->pauseChannel(musicChannelID);
+    audioManager->resumeChannel(inGameMusicChannelID);
+    audioManager->resumeChannel(avalancheChannelID);
+
+    // Update gameplay timing
+    gameTime.update();
+
+    // Run fixed-step physics and game systems
+    updatePhysicsAndGameplayLoop();
+
+    // Get player state for audio and camera updates
+    glm::vec3 playerPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
+    float speed = glm::length(gCoordinator.GetComponent<RigidBody>(playerVehicleEntity).linearVelocity);
+
+    // Update spatial audio (avalanche distance, engine speed gating, AI sounds)
+    updateInGameAudioState(speed);
+
+    // Check for quit input
+    if (inputManager->isKeyPressedOnce(GLFW_KEY_ESCAPE)) {
+        glfwSetWindowShouldClose(window->getGLFWwindow(), true);
+    }
+
+    // Update camera to follow player
+    updateInGameCameraTarget(speed);
+
+    // Render scene and UI
+    renderingSystem->update(gameTime.fpsF());
+    updateImGui();
+    renderInGameHUD();
+}
+
 void RacingGame::updateInMenu()
 {
     MenuAction actionButtons = menus->pollInputs();
@@ -367,52 +403,36 @@ void RacingGame::updateGameOverMenu(MenuAction actionButtons)
     updateMenuAudioState();
 }
 
-void RacingGame::updateInGame()
+// ----- Gameplay helpers ----- //
+
+void RacingGame::updatePhysicsAndGameplayLoop()
 {
-    // Setup in-game audio channels
-    audioManager->pauseChannel(musicChannelID);
-    audioManager->resumeChannel(inGameMusicChannelID);
-    audioManager->resumeChannel(avalancheChannelID);
+    // Physics System Loop, adaptive based on performance.
+    int maxPhysicsSteps = gameTime.maxPhysicsSteps();
+    int physicsSteps = 0;
 
-    // Update gameplay timing
-    gameTime.update();
+    while (gameTime.accumulator >= gameTime.dt && physicsSteps < maxPhysicsSteps) {
+        if (gameTime.frameCount < static_cast<unsigned>(300) && gameTime.physicsFrameCount > static_cast<unsigned>(maxPhysicsSteps)) {
+            break; // Skip the first frames to avoid slow startup.
+        }
 
-    // Run fixed-step physics and game systems
-    updatePhysicsAndGameplayLoop();
+        vehicleControlSystem->update(gameTime.dtF());
+        physicsSystem->update(gameTime.dtF());
+        gameTime.physicsUpdate();
+        physicsSteps++;
 
-    // Get player state for audio and camera updates
-    glm::vec3 playerPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
-    float speed = glm::length(gCoordinator.GetComponent<RigidBody>(playerVehicleEntity).linearVelocity);
+        racingSystem->update(gameTime.dtF());
+        if (racingSystem->raceFinished) {
+            gameState = GameState::GameOver;
+        }
 
-    // Update spatial audio (avalanche distance, engine speed gating, AI sounds)
-    updateInGameAudioState(speed);
-
-    // Check for quit input
-    if (inputManager->isKeyPressedOnce(GLFW_KEY_ESCAPE)) {
-        glfwSetWindowShouldClose(window->getGLFWwindow(), true);
+        aiSystem->update(gameTime.dtF());
     }
 
-    // Update camera to follow player
-    updateInGameCameraTarget(speed);
-
-    // Render scene and UI
-    renderingSystem->update(gameTime.fpsF());
-    updateImGui();
-    renderInGameHUD();
-}
-
-void RacingGame::updateMenuAudioState()
-{
-    // if NOT in game, don't play in-game music
-    audioManager->pauseChannel(inGameMusicChannelID);
-    // if on menu, play lobby music
-    audioManager->resumeChannel(musicChannelID);
-    // pause avalanche sounds in menus
-    audioManager->pauseChannel(avalancheChannelID);
-    // no engine sounds in menus
-    audioManager->pauseChannel(engineChannelID);
-    audioManager->pauseChannel(aiEngineChannelID1);
-    audioManager->pauseChannel(aiEngineChannelID2);
+    // Discard excess time when running slow to prevent spiral of death.
+    if (physicsSteps >= maxPhysicsSteps) {
+        gameTime.discardExcessTime();
+    }
 }
 
 void RacingGame::updateInGameAudioState(float playerSpeed)
@@ -464,34 +484,24 @@ void RacingGame::updateInGameAudioState(float playerSpeed)
     audioManager->setChannelVolume(aiEngineChannelID2, volumeInDB2);
 }
 
-void RacingGame::updatePhysicsAndGameplayLoop()
+void RacingGame::updateInGameCameraTarget(float playerSpeed)
 {
-    // Physics System Loop, adaptive based on performance.
-    int maxPhysicsSteps = gameTime.maxPhysicsSteps();
-    int physicsSteps = 0;
-
-    while (gameTime.accumulator >= gameTime.dt && physicsSteps < maxPhysicsSteps) {
-        if (gameTime.frameCount < static_cast<unsigned>(300) && gameTime.physicsFrameCount > static_cast<unsigned>(maxPhysicsSteps)) {
-            break; // Skip the first frames to avoid slow startup.
-        }
-
-        vehicleControlSystem->update(gameTime.dtF());
-        physicsSystem->update(gameTime.dtF());
-        gameTime.physicsUpdate();
-        physicsSteps++;
-
-        racingSystem->update(gameTime.dtF());
-        if (racingSystem->raceFinished) {
-            gameState = GameState::GameOver;
-        }
-
-        aiSystem->update(gameTime.dtF());
+    // If entity exists, update camera target to follow the player vehicle BEFORE rendering.
+    // This prevents 1-frame lag that causes ghosting/phasing artifacts.
+    if (!gCoordinator.HasComponent<PhysxTransform>(playerVehicleEntity)) {
+        return;
     }
 
-    // Discard excess time when running slow to prevent spiral of death.
-    if (physicsSteps >= maxPhysicsSteps) {
-        gameTime.discardExcessTime();
-    }
+    auto& transform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
+    auto& modelRenderable = gCoordinator.GetComponent<ModelRenderable>(playerVehicleEntity);
+
+    // Target the visual center, not the physics origin.
+    glm::vec3 visualOffset = transform.rot * modelRenderable.visualOffsetPos;
+    glm::vec3 targetPos = transform.pos + visualOffset;
+    targetPos.y += 2.f;
+
+    glm::vec3 targetForward = transform.forward();
+    renderingSystem->updateCameraTarget(targetPos, targetForward, playerSpeed);
 }
 
 void RacingGame::renderInGameHUD()
@@ -568,24 +578,20 @@ void RacingGame::renderInGameHUD()
     textSystem->endText();
 }
 
-void RacingGame::updateInGameCameraTarget(float playerSpeed)
+// ----- UI and utility helpers ----- //
+
+void RacingGame::updateMenuAudioState()
 {
-    // If entity exists, update camera target to follow the player vehicle BEFORE rendering.
-    // This prevents 1-frame lag that causes ghosting/phasing artifacts.
-    if (!gCoordinator.HasComponent<PhysxTransform>(playerVehicleEntity)) {
-        return;
-    }
-
-    auto& transform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
-    auto& modelRenderable = gCoordinator.GetComponent<ModelRenderable>(playerVehicleEntity);
-
-    // Target the visual center, not the physics origin.
-    glm::vec3 visualOffset = transform.rot * modelRenderable.visualOffsetPos;
-    glm::vec3 targetPos = transform.pos + visualOffset;
-    targetPos.y += 2.f;
-
-    glm::vec3 targetForward = transform.forward();
-    renderingSystem->updateCameraTarget(targetPos, targetForward, playerSpeed);
+    // if NOT in game, don't play in-game music
+    audioManager->pauseChannel(inGameMusicChannelID);
+    // if on menu, play lobby music
+    audioManager->resumeChannel(musicChannelID);
+    // pause avalanche sounds in menus
+    audioManager->pauseChannel(avalancheChannelID);
+    // no engine sounds in menus
+    audioManager->pauseChannel(engineChannelID);
+    audioManager->pauseChannel(aiEngineChannelID1);
+    audioManager->pauseChannel(aiEngineChannelID2);
 }
 
 void RacingGame::updateImGui() {

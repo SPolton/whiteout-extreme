@@ -27,6 +27,7 @@ public:
     void run();
 
 private:
+    // State handlers
     void updateInGame();
     void updateInMenu();
     void handleMenuActions(MenuAction actionButtons);
@@ -34,15 +35,17 @@ private:
     void updatePauseMenu(MenuAction actionButtons);
     void updateGameOverMenu(MenuAction actionButtons);
 
+    // Gameplay
+    void updatePhysicsAndGameplayLoop();
+    void updateInGameAudioState(float playerSpeed);
+    void updateInGameCameraTarget(float playerSpeed);
+    void renderInGameHUD();
+
+    // UI and utility
+    void updateMenuAudioState();
     void updateImGui();
     void syncImgui();
     void endFrame();
-
-    void updateMenuAudioState();
-    void updateInGameAudioState(float playerSpeed);
-    void updatePhysicsAndGameplayLoop();
-    void renderInGameHUD();
-    void updateInGameCameraTarget(float playerSpeed);
 
     GameTime gameTime;
 
