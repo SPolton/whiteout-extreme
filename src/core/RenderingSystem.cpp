@@ -292,6 +292,8 @@ void RenderingSystem::render()
     glm::mat4 view = activeCamera->viewMatrix();
     glm::mat4 projection = getProjectionMatrix();
 
+    snowRenderer.beginFrame();
+
     // Iterate through all entities that the RenderingSystem tracks
     // (entities with Transform component)
     for (auto const& entity : mEntities)
@@ -435,6 +437,8 @@ void RenderingSystem::render()
             }
         }
     }
+
+    snowRenderer.render(view, projection);
 }
 
 glm::mat4 RenderingSystem::getProjectionMatrix() const

@@ -5,6 +5,7 @@
 #include "core/assets/Texture.hpp"
 #include "core/buffer/Geometry.hpp"
 #include "core/render/ShaderProgram.hpp"
+#include "core/render/SnowRenderer.hpp"
 #include "core/render/ShapeConfig.hpp"
 #include "core/scene/TurnTableCamera.hpp"
 #include "core/scene/FreeCamera.hpp"
@@ -63,6 +64,7 @@ void cleanup();
 
 private:
     AssetManager& assetManager = AssetManager::getInstance();
+    SnowRenderer snowRenderer;
 
     std::unique_ptr<FreeCamera> freeCamera;
     std::unique_ptr<RacingCamera> racingCamera;
