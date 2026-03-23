@@ -51,9 +51,9 @@ void PhysicsSystem::initPhysX()
     sceneDesc.cpuDispatcher = mDispatcher;
     sceneDesc.filterShader = snippetvehicle::VehicleFilterShader;
 
-    // Create a new Callback
-    mContactReportCallback = new ContactReportCallback();
-    sceneDesc.simulationEventCallback = mContactReportCallback; // Assign it to our scene
+    // Create callback with RAII
+    mContactReportCallback = std::make_unique<ContactReportCallback>();
+    sceneDesc.simulationEventCallback = mContactReportCallback.get();
 
     mScene = mPhysics->createScene(sceneDesc);
 
@@ -88,8 +88,11 @@ void PhysicsSystem::cleanupPhysX()
 
     vehicle2::PxCloseVehicleExtension();
 
+    cleanupGroundPlane();
+
     PX_RELEASE(mMaterial);
     PX_RELEASE(mScene);
+    mContactReportCallback.reset();
     PX_RELEASE(mDispatcher);
     PX_RELEASE(mPhysics);
     if (mPvd)
@@ -128,8 +131,11 @@ void PhysicsSystem::initGroundPlane()
 
 void PhysicsSystem::cleanupGroundPlane()
 {
-    mGroundPlane->release();
-    logger::info("Ground plane cleaned up successfully.");
+    if (mGroundPlane)
+    {
+        mGroundPlane->release();
+        mGroundPlane = NULL;
+    }
 }
 
 void PhysicsSystem::update(float deltaTime)
