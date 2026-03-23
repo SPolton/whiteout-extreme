@@ -8,8 +8,8 @@ struct GameTime {
     const double dt = 1.0 / 60.0; // simulate at 60fps
     double currentTime = glfwGetTime();
     double accumulator = 0.0;
-    unsigned int frameCount = 0;
-    unsigned int physicsFrameCount = 0;
+    size_t frameCount = 0;
+    size_t physicsFrameCount = 0;
     double fps = 0.0;
 
     // convenience getters for float values
@@ -45,7 +45,7 @@ struct GameTime {
     }
 
     // Calculate max physics steps based on frame time to prevent spiral of death
-    int maxPhysicsSteps() const {
+    size_t maxPhysicsSteps() const {
         // If frame time (fps) is greater than dt, game is running slow
         // Limit physics updates to reduce load
         if (fps > dt * 2.0) {

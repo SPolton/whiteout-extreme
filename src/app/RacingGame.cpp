@@ -407,11 +407,11 @@ void RacingGame::updateGameOverMenu(MenuAction actionButtons)
 void RacingGame::updatePhysicsAndGameplayLoop()
 {
     // Physics System Loop, adaptive based on performance.
-    int maxPhysicsSteps = gameTime.maxPhysicsSteps();
-    int physicsSteps = 0;
+    size_t maxPhysicsSteps = gameTime.maxPhysicsSteps();
+    size_t physicsSteps = 0;
 
     while (gameTime.accumulator >= gameTime.dt && physicsSteps < maxPhysicsSteps) {
-        if (gameTime.frameCount < static_cast<unsigned>(300) && gameTime.physicsFrameCount > static_cast<unsigned>(maxPhysicsSteps)) {
+        if (gameTime.frameCount < 300 && gameTime.physicsFrameCount > maxPhysicsSteps) {
             break; // Skip the first frames to avoid slow startup.
         }
 
