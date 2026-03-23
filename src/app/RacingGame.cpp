@@ -32,150 +32,7 @@ RacingGame::RacingGame()
 
     initImGui();
     initEcsAndSystems();
-
-    // ===== Constructor Phase: createWorldEntities =====
-
-    // Create the player vehicle entity with physics components
-    //physx::PxVec3 spawnPos(-730.0f, 670.4f, -400.0f);
-    aiVehicleEntity1 = physicsSystem->createVehicleEntity("VehicleAI1", physx::PxVec3(20.f, 0.f, 0.f));
-    gCoordinator.GetComponent<VehicleComponent>(aiVehicleEntity1).playerID = 1;
-
-    aiVehicleEntity2 = physicsSystem->createVehicleEntity("VehicleAI2", physx::PxVec3(30.f, 0.f, 0.f));
-    gCoordinator.GetComponent<VehicleComponent>(aiVehicleEntity2).playerID = 2;
-
-    playerVehicleEntity = physicsSystem->createVehicleEntity("VehiclePlayer1", physx::PxVec3(10.0f, 0.f, 0.f));
-    gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).playerID = 0;
-
-    
-    // Create Skybox first (if texture is available)
-    render::SphereConfig skyboxConfig;
-    skyboxConfig.radius = 100.0f;
-    skyboxConfig.slices = 32;
-    skyboxConfig.stacks = 32;
-    skyboxConfig.isSkybox = true;
-    Skybox = renderingSystem->createSphereEntity("assets/textures/sky/snow_landscape.hdr", skyboxConfig);
-    gCoordinator.GetComponent<PhysxTransform>(Skybox).scale = glm::vec3(3.f);
-    logger::info("Created Skybox entity");
-
-    // Create infinite ground plane with repeating snow texture
-    render::PlaneConfig planeConfig;
-    planeConfig.isInfinite = true;
-    planeConfig.uvRepeat = 500.0f;
-    planeConfig.textureWrapMode = GL_REPEAT;
-    GroundPlane = renderingSystem->createPlaneEntity("assets/textures/snowball.png", planeConfig);
-    logger::info("Created ground plane entity");
-
-    // Create Map model entity
-    MapModel = renderingSystem->createModelEntity("assets/obj/map/map.obj");
-
-    // Adjust scale and position
-    auto& mapTransform = gCoordinator.GetComponent<PhysxTransform>(MapModel);
-    mapTransform.scale = glm::vec3(0.2f);
-    mapTransform.pos = glm::vec3(0.f, -3.f, -50.f);
-    mapTransform.rot = glm::vec3(0.f, 45.f, 0.f);
-
-    // Add physics collision to the map entity
-    gCoordinator.AddComponent(
-        MapModel,
-        physicsSystem->createRigidBodyFromMesh(MapModel)
-    );
-
-    logger::info("Created Map model entity with collision");
-
-    // Load snowmobile parts for player & AI vehicle visuals
-    setupSnowmobileVisuals(playerVehicleEntity);
-    logger::info("Loaded snowmobile model for player vehicle");
-
-    setupSnowmobileVisuals(aiVehicleEntity1);
-    setupSnowmobileVisuals(aiVehicleEntity2);
-    logger::info("Loaded snowmobile models for ai vehicles");
-
-    /*
-    auto& aiVehicleTransform = gCoordinator.GetComponent<PhysxTransform>(aiVehicleEntity1);
-    aiVehicleTransform.rot = glm::angleAxis(glm::radians(0.0f), glm::vec3(0.f, 1.f, 0.f));
-    aiVehicleTransform.scale = glm::vec3(1.5f);  // Uniform scale instead of stretched box scale
-
-    auto& aiVehicleTransform2 = gCoordinator.GetComponent<PhysxTransform>(aiVehicleEntity2);
-    aiVehicleTransform2.rot = glm::angleAxis(glm::radians(0.0f), glm::vec3(0.f, 1.f, 0.f));
-    aiVehicleTransform2.scale = glm::vec3(1.5f);  // Uniform scale instead of stretched box scale
-
-    */
-
-    gCoordinator.AddComponent(playerVehicleEntity, Racer{});
-    auto& playerVehicle = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).instance;
-    imguiPanel->setVehicle(playerVehicle);
-
-    gCoordinator.AddComponent(aiVehicleEntity1, Racer{});
-    gCoordinator.AddComponent(aiVehicleEntity1, AI{});
-
-    gCoordinator.AddComponent(aiVehicleEntity2, Racer{});
-    gCoordinator.AddComponent(aiVehicleEntity2, AI{});
-
-    // add particle emmitter to player vehicle to act as nitro
-    SnowEmitter nitroPreset = {
-        .enabled = false,
-        .preset = SnowEmitterPreset::Nitro,
-        .spawnRate = 150.0f,
-        .particleLifetimeSec = 0.175f,
-        .particleSize = 1.2f,
-        .color = glm::vec3(1.0f, 0.5f, 0.0f), // bright orange
-    };
-
-    // need two emitters because we have two exhaust positions
-    SnowEmitterGridBox boostGridPreset = {
-        .enabled = true,
-        .localBoxSize = glm::vec3(3.4f, 0.1f, 0.1f),
-        .gridResolution = glm::ivec3(2, 1, 1),
-        .localOffset = glm::vec3(0.0f, 0.6f, -2.5f),
-        .pattern = SnowEmitterGridPattern::All
-    };
-
-    gCoordinator.AddComponent(playerVehicleEntity, nitroPreset);
-    gCoordinator.AddComponent(playerVehicleEntity, boostGridPreset);
-    gCoordinator.AddComponent(aiVehicleEntity1, nitroPreset);
-    gCoordinator.AddComponent(aiVehicleEntity1, boostGridPreset);
-    gCoordinator.AddComponent(aiVehicleEntity2, nitroPreset);
-    gCoordinator.AddComponent(aiVehicleEntity2, boostGridPreset);
-
-    // 4.You can modify Component Data for entities
-    
-    // Create the avalanche entity (appears far behind the starting position)
-    AvalancheEntity = physicsSystem->createAvalancheEntity(glm::vec3(0.f, 15.f, -200.f), 15.0f);
-    
-    // Add rendering to the avalanche
-    auto avCubeRender = renderingSystem->getCubeRenderable("assets/textures/snowball.png");
-    avCubeRender.hasRollingTexture = true;
-    gCoordinator.AddComponent(AvalancheEntity, avCubeRender);
-
-    auto& avalancheInstance = gCoordinator.GetComponent<AvalancheComponent>(AvalancheEntity).instance;
-    const glm::vec3 avalancheSize = avalancheInstance ? avalancheInstance->mSize : glm::vec3(120.0f, 5.0f, 20.0f);
-
-    gCoordinator.AddComponent(AvalancheEntity, SnowEmitter{
-        .enabled = true,
-        .preset = SnowEmitterPreset::AvalancheFront,
-        .spawnRate = 250.0f,
-        .particleLifetimeSec = 1.2f,
-        .particleSize = 3.0f,
-        .color = glm::vec3(0.95f, 0.97f, 1.0f) // white
-    });
-    gCoordinator.AddComponent(AvalancheEntity, SnowEmitterGridBox{
-        .enabled = true,
-        .localBoxSize = glm::vec3(avalancheSize.x, 1.0f, avalancheSize.z),
-        .gridResolution = glm::ivec3(15, 2, 1),
-        .localOffset = glm::vec3(0.0f, 3.0f, -15.0f),
-        .pattern = SnowEmitterGridPattern::Checkerboard
-    });
-    logger::info("Avalanche entity created");
-
-    auto& Avalanche = gCoordinator.GetComponent<AvalancheComponent>(AvalancheEntity).instance;
-
-    racingSystem->init(Avalanche);
-    logger::info("Loaded gates and avalanche for the race");
-
-    snowBallisticSystem->init();
-    logger::info("Loaded snow cannons on the map");
-
-    ///---- END OF ECS SETUP ----///
+    createWorldEntities();
 
     textSystem = std::make_unique<Text>();
 
@@ -389,6 +246,131 @@ void RacingGame::initEcsAndSystems()
 
 void RacingGame::createWorldEntities()
 {
+    // Create the player vehicle entity with physics components
+    //physx::PxVec3 spawnPos(-730.0f, 670.4f, -400.0f);
+    aiVehicleEntity1 = physicsSystem->createVehicleEntity("VehicleAI1", physx::PxVec3(20.f, 0.f, 0.f));
+    gCoordinator.GetComponent<VehicleComponent>(aiVehicleEntity1).playerID = 1;
+
+    aiVehicleEntity2 = physicsSystem->createVehicleEntity("VehicleAI2", physx::PxVec3(30.f, 0.f, 0.f));
+    gCoordinator.GetComponent<VehicleComponent>(aiVehicleEntity2).playerID = 2;
+
+    playerVehicleEntity = physicsSystem->createVehicleEntity("VehiclePlayer1", physx::PxVec3(10.0f, 0.f, 0.f));
+    gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).playerID = 0;
+
+    // Create Skybox first (if texture is available)
+    render::SphereConfig skyboxConfig;
+    skyboxConfig.radius = 100.0f;
+    skyboxConfig.slices = 32;
+    skyboxConfig.stacks = 32;
+    skyboxConfig.isSkybox = true;
+    Skybox = renderingSystem->createSphereEntity("assets/textures/sky/snow_landscape.hdr", skyboxConfig);
+    gCoordinator.GetComponent<PhysxTransform>(Skybox).scale = glm::vec3(3.f);
+    logger::info("Created Skybox entity");
+
+    // Create infinite ground plane with repeating snow texture
+    render::PlaneConfig planeConfig;
+    planeConfig.isInfinite = true;
+    planeConfig.uvRepeat = 500.0f;
+    planeConfig.textureWrapMode = GL_REPEAT;
+    GroundPlane = renderingSystem->createPlaneEntity("assets/textures/snowball.png", planeConfig);
+    logger::info("Created ground plane entity");
+
+    // Create Map model entity
+    MapModel = renderingSystem->createModelEntity("assets/obj/map/map.obj");
+
+    // Adjust scale and position
+    auto& mapTransform = gCoordinator.GetComponent<PhysxTransform>(MapModel);
+    mapTransform.scale = glm::vec3(0.2f);
+    mapTransform.pos = glm::vec3(0.f, -3.f, -50.f);
+    mapTransform.rot = glm::vec3(0.f, 45.f, 0.f);
+
+    // Add physics collision to the map entity
+    gCoordinator.AddComponent(
+        MapModel,
+        physicsSystem->createRigidBodyFromMesh(MapModel)
+    );
+
+    logger::info("Created Map model entity with collision");
+
+    // Load snowmobile parts for player & AI vehicle visuals
+    setupSnowmobileVisuals(playerVehicleEntity);
+    logger::info("Loaded snowmobile model for player vehicle");
+
+    setupSnowmobileVisuals(aiVehicleEntity1);
+    setupSnowmobileVisuals(aiVehicleEntity2);
+    logger::info("Loaded snowmobile models for ai vehicles");
+
+    gCoordinator.AddComponent(playerVehicleEntity, Racer{});
+    auto& playerVehicle = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).instance;
+    imguiPanel->setVehicle(playerVehicle);
+
+    gCoordinator.AddComponent(aiVehicleEntity1, Racer{});
+    gCoordinator.AddComponent(aiVehicleEntity1, AI{});
+
+    gCoordinator.AddComponent(aiVehicleEntity2, Racer{});
+    gCoordinator.AddComponent(aiVehicleEntity2, AI{});
+
+    // add particle emmitter to player vehicle to act as nitro
+    SnowEmitter nitroPreset = {
+        .enabled = false,
+        .preset = SnowEmitterPreset::Nitro,
+        .spawnRate = 150.0f,
+        .particleLifetimeSec = 0.175f,
+        .particleSize = 1.2f,
+        .color = glm::vec3(1.0f, 0.5f, 0.0f), // bright orange
+    };
+
+    // need two emitters because we have two exhaust positions
+    SnowEmitterGridBox boostGridPreset = {
+        .enabled = true,
+        .localBoxSize = glm::vec3(3.4f, 0.1f, 0.1f),
+        .gridResolution = glm::ivec3(2, 1, 1),
+        .localOffset = glm::vec3(0.0f, 0.6f, -2.5f),
+        .pattern = SnowEmitterGridPattern::All
+    };
+
+    gCoordinator.AddComponent(playerVehicleEntity, nitroPreset);
+    gCoordinator.AddComponent(playerVehicleEntity, boostGridPreset);
+    gCoordinator.AddComponent(aiVehicleEntity1, nitroPreset);
+    gCoordinator.AddComponent(aiVehicleEntity1, boostGridPreset);
+    gCoordinator.AddComponent(aiVehicleEntity2, nitroPreset);
+    gCoordinator.AddComponent(aiVehicleEntity2, boostGridPreset);
+    
+    // Create the avalanche entity (appears far behind the starting position)
+    AvalancheEntity = physicsSystem->createAvalancheEntity(glm::vec3(0.f, 15.f, -200.f), 15.0f);
+    
+    // Add rendering to the avalanche
+    auto avCubeRender = renderingSystem->getCubeRenderable("assets/textures/snowball.png");
+    avCubeRender.hasRollingTexture = true;
+    gCoordinator.AddComponent(AvalancheEntity, avCubeRender);
+
+    auto& avalancheInstance = gCoordinator.GetComponent<AvalancheComponent>(AvalancheEntity).instance;
+    const glm::vec3 avalancheSize = avalancheInstance ? avalancheInstance->mSize : glm::vec3(120.0f, 5.0f, 20.0f);
+
+    gCoordinator.AddComponent(AvalancheEntity, SnowEmitter{
+        .enabled = true,
+        .preset = SnowEmitterPreset::AvalancheFront,
+        .spawnRate = 250.0f,
+        .particleLifetimeSec = 1.2f,
+        .particleSize = 3.0f,
+        .color = glm::vec3(0.95f, 0.97f, 1.0f) // white
+    });
+    gCoordinator.AddComponent(AvalancheEntity, SnowEmitterGridBox{
+        .enabled = true,
+        .localBoxSize = glm::vec3(avalancheSize.x, 1.0f, avalancheSize.z),
+        .gridResolution = glm::ivec3(15, 2, 1),
+        .localOffset = glm::vec3(0.0f, 3.0f, -15.0f),
+        .pattern = SnowEmitterGridPattern::Checkerboard
+    });
+    logger::info("Avalanche entity created");
+
+    auto& Avalanche = gCoordinator.GetComponent<AvalancheComponent>(AvalancheEntity).instance;
+
+    racingSystem->init(Avalanche);
+    logger::info("Loaded gates and avalanche for the race");
+
+    snowBallisticSystem->init();
+    logger::info("Loaded snow cannons on the map");
 }
 
 void RacingGame::initUiSystems()
