@@ -24,6 +24,7 @@ void SnowVfxSystem::update(float deltaTime)
 
     spawnParticles(deltaTime);
     updateParticles(deltaTime);
+    rebuildSnowFrame();
 }
 
 void SnowVfxSystem::setTerrainSampler(std::shared_ptr<TerrainSnowSampler> sampler)
@@ -35,6 +36,11 @@ std::size_t SnowVfxSystem::aliveParticleCount() const
 {
     return static_cast<std::size_t>(std::count_if(
         particles.begin(), particles.end(), [](const SnowParticle& p) { return p.lifeSec > 0.0f; }));
+}
+
+const SnowFrame& SnowVfxSystem::snowFrame() const
+{
+    return currentSnowFrame;
 }
 
 std::size_t SnowVfxSystem::firstUnusedParticle()
@@ -107,5 +113,19 @@ void SnowVfxSystem::updateParticles(float deltaTime)
 
         particle.velocity += glm::vec3(0.0f, -9.81f, 0.0f) * deltaTime * 0.25f;
         particle.position += particle.velocity * deltaTime;
+    }
+}
+
+void SnowVfxSystem::rebuildSnowFrame()
+{
+    currentSnowFrame.particles.clear();
+    currentSnowFrame.particles.reserve(aliveParticleCount());
+
+    for (const SnowParticle& particle : particles) {
+        if (particle.lifeSec <= 0.0f) {
+            continue;
+        }
+
+        currentSnowFrame.particles.push_back(particle);
     }
 }
