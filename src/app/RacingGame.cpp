@@ -537,11 +537,17 @@ void RacingGame::updateInGameAudioState(float playerSpeed)
     audioManager->setChannelVolume(avalancheChannelID, volumeInDB);
 
     // Player engine sound speed gating
-    if (playerSpeed > 1.0f && !enginePlaying) {
-        engineChannelID = audioManager->playSounds("assets/audio/snowmobiles-4-trimmed.mp3", { 0,0,0 }, -15.0f);
-        enginePlaying = true;
+    if (playerSpeed > 1.0f) {
+        if (!enginePlaying) {
+            engineChannelID = audioManager->playSounds("assets/audio/snowmobiles-4-trimmed.mp3", { 0,0,0 }, -15.0f);
+            enginePlaying = true;
+        }
+        else {
+            // When returning from pause, the channel can be paused while still marked as playing.
+            audioManager->resumeChannel(engineChannelID);
+        }
     }
-    else if (playerSpeed <= 1.0f && enginePlaying) {
+    else if (enginePlaying) {
         audioManager->pauseChannel(engineChannelID);
         enginePlaying = false;
     }
