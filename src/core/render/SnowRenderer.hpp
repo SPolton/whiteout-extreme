@@ -23,6 +23,7 @@ public:
     void beginFrame();
     void submitSnowFrame(const SnowFrame& frame);
     void render(const glm::mat4& view, const glm::mat4& projection);
+    void setPointSizeClamp(float minPointPx, float maxPointPx);
 
     std::size_t submittedParticleCount() const;
 
@@ -35,6 +36,10 @@ private:
     std::shared_ptr<ShaderProgram> shader;
     VertexArrayHandle vao;
     VertexBufferHandle vbo;
+
+    // 0.0 means "use shader defaults".
+    float minPointPx = 0.0f;
+    float maxPointPx = 0.0f;
 
     bool initialized = false;
 

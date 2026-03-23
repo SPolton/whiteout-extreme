@@ -43,6 +43,8 @@ void SnowRenderer::render(const glm::mat4& view, const glm::mat4& projection)
         GL_FALSE,
         &projection[0][0]
     );
+    glUniform1f(glGetUniformLocation(*shader, "minPx"), minPointPx);
+    glUniform1f(glGetUniformLocation(*shader, "maxPx"), maxPointPx);
 
     glEnable(GL_PROGRAM_POINT_SIZE);
     glEnable(GL_BLEND);
@@ -55,6 +57,12 @@ void SnowRenderer::render(const glm::mat4& view, const glm::mat4& projection)
 
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
+}
+
+void SnowRenderer::setPointSizeClamp(float minPointPxValue, float maxPointPxValue)
+{
+    minPointPx = minPointPxValue;
+    maxPointPx = maxPointPxValue;
 }
 
 std::size_t SnowRenderer::submittedParticleCount() const
@@ -91,7 +99,7 @@ void SnowRenderer::uploadFrame()
     for (const SnowParticle& particle : currentSnowFrame.particles) {
         gpuVertices.push_back(SnowGpuVertex{
             .position = particle.position,
-            .size = particle.size * 14.0f,
+            .size = particle.size * 100.0f,
             .lifeSec = particle.lifeSec
         });
     }
