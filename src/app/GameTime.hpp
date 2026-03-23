@@ -15,6 +15,23 @@ struct GameTime {
     float fpsF() const { return static_cast<float>(fps); }
     float accF() const { return static_cast<float>(accumulator); }
 
+    void reset(double newTime = 0.0) {
+        t = 0.0;
+        currentTime = newTime;
+        accumulator = 0.0;
+        frameCount = 0;
+        physicsFrameCount = 0;
+        fps = 0.0;
+        fpsDelta = 0.0;
+    }
+
+    void updatePause(double newTime) {
+        // Reset to prevent large delta time on resume
+        currentTime = newTime;
+        accumulator = 0.0;
+        fpsDelta = 0.0;
+    }
+
     // Call at the start of each frame
     void update(double newTime) {
         // New Time Trackers

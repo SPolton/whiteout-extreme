@@ -285,7 +285,7 @@ RacingGame::~RacingGame()
 /// Main game loop
 void RacingGame::run()
 {
-    gameTime.currentTime = glfwGetTime();
+    gameTime.reset(glfwGetTime());
 
     while (!window->shouldClose())
     {
@@ -309,13 +309,12 @@ void RacingGame::run()
 
 void RacingGame::updateInGame()
 {
+    gameTime.update(glfwGetTime());
+
     // Setup in-game audio channels
     audioManager->pauseChannel(musicChannelID);
     audioManager->resumeChannel(inGameMusicChannelID);
     audioManager->resumeChannel(avalancheChannelID);
-
-    // Update gameplay timing
-    gameTime.update(glfwGetTime());
 
     // Run fixed-step physics and game systems
     updatePhysicsAndGameplayLoop();
@@ -343,6 +342,9 @@ void RacingGame::updateInGame()
 
 void RacingGame::updateInMenu(MenuAction actionButtons)
 {
+    // Reset to prevent big delta spike when returning to gameplay
+    gameTime.updatePause(glfwGetTime());
+
     handleMenuActions(actionButtons);
 
     if (gameState == GameState::MainMenu) {
@@ -358,6 +360,7 @@ void RacingGame::handleMenuActions(MenuAction actionButtons)
 {
     if (actionButtons == MenuAction::StartGame || actionButtons == MenuAction::ResumeGame) {
         if (actionButtons == MenuAction::StartGame) {
+            gameTime.reset(glfwGetTime());
             racingSystem->restart();
         }
         audioManager->resumeChannel(inGameMusicChannelID);
