@@ -4,6 +4,9 @@
 #include "core/gl/GLHandles.hpp"
 #include <glm/glm.hpp>
 #include <map>
+#include <memory>
+#include <string>
+#include <utility>
 
 struct Character {
     TextureHandle textureID; // ID handle of texture
@@ -33,7 +36,10 @@ public:
 
 private:
     ShaderProgram textShader;
-    charMap characters;
+    using FontKey = std::pair<std::string, int>;
+    std::map<FontKey, std::unique_ptr<charMap>> fontCache;
+    charMap* activeCharacters = nullptr;
+    FontKey activeFontKey{"", 0};
     
     VertexArrayHandle textVAO;
     VertexBufferHandle textVBO;
