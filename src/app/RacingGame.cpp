@@ -416,6 +416,8 @@ void RacingGame::updatePhysicsAndGameplayLoop()
         }
 
         vehicleControlSystem->update(gameTime.dtF());
+        aiSystem->update(gameTime.dtF());
+
         physicsSystem->update(gameTime.dtF());
         gameTime.physicsUpdate();
         physicsSteps++;
@@ -424,8 +426,6 @@ void RacingGame::updatePhysicsAndGameplayLoop()
         if (racingSystem->raceFinished) {
             gameState = GameState::GameOver;
         }
-
-        aiSystem->update(gameTime.dtF());
     }
 
     // Discard excess time when running slow to prevent spiral of death.
