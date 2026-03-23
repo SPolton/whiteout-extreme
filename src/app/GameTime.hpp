@@ -1,12 +1,9 @@
 #pragma once
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
 struct GameTime {
     double t = 0.0;
     const double dt = 1.0 / 60.0; // simulate at 60fps
-    double currentTime = glfwGetTime();
+    double currentTime = 0.0;
     double accumulator = 0.0;
     size_t frameCount = 0;
     size_t physicsFrameCount = 0;
@@ -19,9 +16,8 @@ struct GameTime {
     float accF() const { return static_cast<float>(accumulator); }
 
     // Call at the start of each frame
-    void update() {
+    void update(double newTime) {
         // New Time Trackers
-        double newTime = glfwGetTime();
         double frameTime = newTime - currentTime;
         currentTime = newTime;
         

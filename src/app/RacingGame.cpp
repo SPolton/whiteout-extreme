@@ -285,6 +285,8 @@ RacingGame::~RacingGame()
 /// Main game loop
 void RacingGame::run()
 {
+    gameTime.currentTime = glfwGetTime();
+
     while (!window->shouldClose())
     {
         audioManager->update();
@@ -313,7 +315,7 @@ void RacingGame::updateInGame()
     audioManager->resumeChannel(avalancheChannelID);
 
     // Update gameplay timing
-    gameTime.update();
+    gameTime.update(glfwGetTime());
 
     // Run fixed-step physics and game systems
     updatePhysicsAndGameplayLoop();
