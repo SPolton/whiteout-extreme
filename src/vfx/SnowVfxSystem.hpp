@@ -33,4 +33,10 @@ private:
     void spawnParticles(float deltaTime);
     void updateParticles(float deltaTime);
     void rebuildSnowFrame();
+
+    float jitterAmount = 3.5f;
+    float upVelocityMin = 1.0f;
+    float upVelocityMax = 5.0f;
+    float driftVelocityMin = -0.9f;
+    float driftVelocityMax = 0.9f;
 };

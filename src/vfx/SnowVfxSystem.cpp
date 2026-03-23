@@ -3,9 +3,10 @@
 #include "components/SnowEmitter.h"
 #include "components/Transform.h"
 #include "ecs/Coordinator.hpp"
+#include "utils/math.hpp"
 
 #include <algorithm>
-#include <cmath>
+#include <unordered_set>
 
 // https://learnopengl.com/In-Practice/2D-Game/Particles
 
@@ -86,12 +87,14 @@ void SnowVfxSystem::spawnParticles(float deltaTime)
             std::size_t idx = firstUnusedParticle();
             SnowParticle& particle = particles[idx];
 
-            const float seed = static_cast<float>((entity + idx + static_cast<std::size_t>(i)) % 31u);
-            const float jitterX = std::sin(seed * 1.17f) * 0.25f;
-            const float jitterZ = std::cos(seed * 0.73f) * 0.25f;
+            const float jitterX = math::random::RandomFloat(-jitterAmount, jitterAmount);
+            const float jitterZ = math::random::RandomFloat(-jitterAmount, jitterAmount);
+            const float upVelocity = math::random::RandomFloat(upVelocityMin, upVelocityMax);
+            const float driftVelocityX = math::random::RandomFloat(driftVelocityMin, driftVelocityMax);
+            const float driftVelocityZ = math::random::RandomFloat(driftVelocityMin, driftVelocityMax);
 
             particle.position = transform.pos + (transform.rot * emitter.localOffset) + glm::vec3(jitterX, 0.0f, jitterZ);
-            particle.velocity = transform.rot * glm::vec3(jitterX, 1.5f, jitterZ);
+            particle.velocity = transform.rot * glm::vec3(driftVelocityX, upVelocity, driftVelocityZ);
             particle.lifeSec = emitter.particleLifetimeSec;
             particle.size = std::max(emitter.particleSize, 0.05f);
         }
