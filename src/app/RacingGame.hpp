@@ -29,6 +29,9 @@ public:
 private:
     void updateInGame();
     void handleMenuActions(MenuAction actionButtons);
+    void updateMainMenu(MenuAction actionButtons);
+    void updatePauseMenu(MenuAction actionButtons);
+    void updateGameOverMenu(MenuAction actionButtons);
 
     void updateImGui();
     void syncImgui();
@@ -39,7 +42,6 @@ private:
     void updatePhysicsAndGameplayLoop();
     void renderInGameHUD();
     void updateInGameCameraTarget(float playerSpeed);
-    void finishMenuFrame();
 
     GameTime gameTime;
 

@@ -300,47 +300,15 @@ void RacingGame::run()
         // Dispatch to appropriate state handler
         if (gameState == GameState::InGame) {
             updateInGame();
+        } else if (gameState == GameState::MainMenu) {
+            updateMainMenu(actionButtons);
+        } else if (gameState == GameState::Pause) {
+            updatePauseMenu(actionButtons);
+        } else if (gameState == GameState::GameOver) {
+            updateGameOverMenu(actionButtons);
         }
-        else if (gameState == GameState::MainMenu) {
-            // render UI for main menu, take note of the action taken
-            MenuAction actionCursor = menus->renderMainMenu();
 
-            // if "Start" is pressed, go in the game
-            if (actionButtons == MenuAction::StartGame || actionCursor == MenuAction::StartGame) {
-                racingSystem->restart();
-                gameState = GameState::InGame;
-            }
-
-            finishMenuFrame();
-        }
-        else if (gameState == GameState::Pause) {
-            // render UI for pause menu, take note of the action taken
-            MenuAction actionCursor = menus->renderPauseMenu();
-
-            // if "Resume" is pressed, return to the game
-            if (actionButtons == MenuAction::ResumeGame || actionCursor == MenuAction::ResumeGame) {
-                gameState = GameState::InGame;
-            }
-            // if "Quit" is pressed, return to the main menu
-            else if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
-                gameState = GameState::MainMenu;
-            }
-
-            finishMenuFrame();
-        }
-        else if (gameState == GameState::GameOver) {
-            // render UI for race finished, take note of the action taken
-            auto& playerRacer = gCoordinator.GetComponent<Racer>(playerVehicleEntity);
-            int rank = playerRacer.currentRank;
-            MenuAction actionCursor = menus->renderGameOver(rank, playerRacer.engulfed);
-
-            // if "Return to main menu" is pressed, return to the main menu
-            if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
-                gameState = GameState::MainMenu;
-            }
-
-            finishMenuFrame();
-        }
+        endFrame();
     }
 }
 
@@ -353,6 +321,45 @@ void RacingGame::handleMenuActions(MenuAction actionButtons)
         audioManager->resumeChannel(inGameMusicChannelID);
         gameState = GameState::InGame;
     }
+}
+
+void RacingGame::updateMainMenu(MenuAction actionButtons)
+{
+    MenuAction actionCursor = menus->renderMainMenu();
+
+    if (actionButtons == MenuAction::StartGame || actionCursor == MenuAction::StartGame) {
+        racingSystem->restart();
+        gameState = GameState::InGame;
+    }
+
+    updateMenuAudioState();
+}
+
+void RacingGame::updatePauseMenu(MenuAction actionButtons)
+{
+    MenuAction actionCursor = menus->renderPauseMenu();
+
+    if (actionButtons == MenuAction::ResumeGame || actionCursor == MenuAction::ResumeGame) {
+        gameState = GameState::InGame;
+    }
+    else if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
+        gameState = GameState::MainMenu;
+    }
+
+    updateMenuAudioState();
+}
+
+void RacingGame::updateGameOverMenu(MenuAction actionButtons)
+{
+    auto& playerRacer = gCoordinator.GetComponent<Racer>(playerVehicleEntity);
+    int rank = playerRacer.currentRank;
+    MenuAction actionCursor = menus->renderGameOver(rank, playerRacer.engulfed);
+
+    if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
+        gameState = GameState::MainMenu;
+    }
+
+    updateMenuAudioState();
 }
 
 void RacingGame::updateInGame()
@@ -387,13 +394,6 @@ void RacingGame::updateInGame()
     renderingSystem->update(gameTime.fpsF());
     updateImGui();
     renderInGameHUD();
-    endFrame();
-}
-
-void RacingGame::finishMenuFrame()
-{
-    updateMenuAudioState();
-    endFrame();
 }
 
 void RacingGame::updateMenuAudioState()
