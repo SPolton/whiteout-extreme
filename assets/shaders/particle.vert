@@ -23,9 +23,9 @@ void main()
 
     float size = (aSize * perspectiveScale * scaleConstant) / dist;
 
-    // If uniforms are not set, OpenGL defaults them to 0.0, so fall back to sane defaults.
+    // Fall back to sane defaults since OpenGL defaults to 0.0
     float resolvedMinPx = (minPx > 0.0) ? minPx : 1.0;
-    float resolvedMaxPx = (maxPx > 0.0) ? maxPx : 24.0;
+    float resolvedMaxPx = (maxPx > 0.0) ? maxPx : 100.0;
     if (resolvedMaxPx < resolvedMinPx) {
         resolvedMaxPx = resolvedMinPx;
     }

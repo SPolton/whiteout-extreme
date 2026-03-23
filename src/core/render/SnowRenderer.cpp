@@ -72,7 +72,7 @@ std::size_t SnowRenderer::submittedParticleCount() const
 
 void SnowRenderer::initialize()
 {
-    shader = assetManager.loadShader("snow_particle");
+    shader = assetManager.loadShader("particle");
 
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
