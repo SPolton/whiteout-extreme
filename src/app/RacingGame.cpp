@@ -255,7 +255,7 @@ RacingGame::RacingGame()
         .preset = SnowEmitterPreset::AvalancheFront,
         .spawnRate = 250.0f,
         .particleLifetimeSec = 1.2f,
-        .particleSize = 10.0f,
+        .particleSize = 5.0f,
         .localOffset = glm::vec3(0.0f, 0.0f, -11.0f)
     });
     logger::info("Avalanche entity created");

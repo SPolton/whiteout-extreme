@@ -6,29 +6,29 @@ layout (location = 2) in float aLife;
 
 uniform mat4 view;
 uniform mat4 projection;
-uniform float minPx;
-uniform float maxPx;
 
 out float vLife;
+out vec2 vUv;
 
 void main()
 {
     vLife = aLife;
-    vec4 viewPos = view * vec4(aPosition, 1.0);
-    gl_Position = projection * viewPos;
+    const vec2 quadCorners[6] = vec2[](
+        vec2(-0.5, -0.5),
+        vec2( 0.5, -0.5),
+        vec2( 0.5,  0.5),
+        vec2(-0.5, -0.5),
+        vec2( 0.5,  0.5),
+        vec2(-0.5,  0.5)
+    );
+    vec2 corner = quadCorners[gl_VertexID % 6];
+    vUv = corner + vec2(0.5);
 
-    float dist = max(-viewPos.z, 0.01);
-    float perspectiveScale = projection[1][1];
-    float scaleConstant = 1.0;
+    mat3 invViewRot = transpose(mat3(view));
+    vec3 cameraRight = normalize(invViewRot[0]);
+    vec3 cameraUp = normalize(invViewRot[1]);
+    vec3 worldOffset = (cameraRight * corner.x + cameraUp * corner.y) * aSize;
 
-    float size = (aSize * perspectiveScale * scaleConstant) / dist;
-
-    // Fall back to sane defaults since OpenGL defaults to 0.0
-    float resolvedMinPx = (minPx > 0.0) ? minPx : 1.0;
-    float resolvedMaxPx = (maxPx > 0.0) ? maxPx : 100.0;
-    if (resolvedMaxPx < resolvedMinPx) {
-        resolvedMaxPx = resolvedMinPx;
-    }
-
-    gl_PointSize = clamp(size, resolvedMinPx, resolvedMaxPx);
+    vec3 worldPos = aPosition + worldOffset;
+    gl_Position = projection * view * vec4(worldPos, 1.0);
 }

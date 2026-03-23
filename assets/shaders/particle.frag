@@ -1,11 +1,12 @@
 #version 460 core
 
 in float vLife;
+in vec2 vUv;
 out vec4 FragColor;
 
 void main()
 {
-    vec2 center = gl_PointCoord - vec2(0.5);
+    vec2 center = vUv - vec2(0.5);
     float radius = length(center);
     if (radius > 0.5) {
         discard;
