@@ -361,10 +361,7 @@ void RacingGame::run()
                 gameState = GameState::InGame;
             }
 
-            this->updateMenuAudioState();
-
-            // swap buffer
-            this->endFrame();
+            this->finishMenuFrame();
         }
         else if (gameState == GameState::Pause) {
             // render UI for pause menu, take note of the action taken
@@ -379,10 +376,7 @@ void RacingGame::run()
                 gameState = GameState::MainMenu;
             }
 
-            this->updateMenuAudioState();
-
-            // swap buffer
-            this->endFrame();
+            this->finishMenuFrame();
         }
         else if (gameState == GameState::GameOver) {
             // render UI for race finished, take note of the action taken
@@ -395,12 +389,15 @@ void RacingGame::run()
                 gameState = GameState::MainMenu;
             }
 
-            this->updateMenuAudioState();
-
-            // swap buffer
-            this->endFrame();
+            this->finishMenuFrame();
         }
     }
+}
+
+void RacingGame::finishMenuFrame()
+{
+    this->updateMenuAudioState();
+    this->endFrame();
 }
 
 void RacingGame::updateMenuAudioState()

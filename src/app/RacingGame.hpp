@@ -36,6 +36,7 @@ private:
     void updatePhysicsAndGameplayLoop();
     void renderInGameHUD();
     void updateInGameCameraTarget(float playerSpeed);
+    void finishMenuFrame();
 
     GameTime gameTime;
 
