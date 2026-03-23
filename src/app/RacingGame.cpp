@@ -287,28 +287,33 @@ void RacingGame::run()
 {
     while (!window->shouldClose())
     {
-        // update audio
         audioManager->update();
 
-        // keep checking which input system we are using
+        // Keep checking for controller inputs and if menu actions are triggered
         menus->checkInputSystem();
+        menus->pollInputs();
 
-        // keep taking inputs in case pause menu is called
-        MenuAction actionButtons = menus->pollInputs();
-        handleMenuActions(actionButtons);
-
-        // Dispatch to appropriate state handler
         if (gameState == GameState::InGame) {
             updateInGame();
-        } else if (gameState == GameState::MainMenu) {
-            updateMainMenu(actionButtons);
-        } else if (gameState == GameState::Pause) {
-            updatePauseMenu(actionButtons);
-        } else if (gameState == GameState::GameOver) {
-            updateGameOverMenu(actionButtons);
+        } else {
+            updateInMenu();
         }
 
         endFrame();
+    }
+}
+
+void RacingGame::updateInMenu()
+{
+    MenuAction actionButtons = menus->pollInputs();
+    handleMenuActions(actionButtons);
+
+    if (gameState == GameState::MainMenu) {
+        updateMainMenu(actionButtons);
+    } else if (gameState == GameState::Pause) {
+        updatePauseMenu(actionButtons);
+    } else if (gameState == GameState::GameOver) {
+        updateGameOverMenu(actionButtons);
     }
 }
 

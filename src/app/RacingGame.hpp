@@ -28,6 +28,7 @@ public:
 
 private:
     void updateInGame();
+    void updateInMenu();
     void handleMenuActions(MenuAction actionButtons);
     void updateMainMenu(MenuAction actionButtons);
     void updatePauseMenu(MenuAction actionButtons);
