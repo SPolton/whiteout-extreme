@@ -26,20 +26,7 @@ Entity aiVehicleEntity2;
 
 RacingGame::RacingGame()
 {
-    ///---- Input Manager and Window ----/// 
-    if (!glfwInit()) {
-        logger::error("GLFW Init Failed");
-        return;
-    }
-
-    audioManager = std::make_shared<AudioEngine>();
-
-    inputManager = std::make_shared<InputManager>();
-    window = std::make_shared<Window>(inputManager, 1080, 720, "Whiteout Extreme");
-    window->makeContextCurrent();
-
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        logger::error("GLAD Init Failed");
+    if (!initPlatformAndWindow()) {
         return;
     }
 
@@ -371,8 +358,25 @@ RacingGame::~RacingGame()
 
 // ----- Initialization ----- //
 
-void RacingGame::initPlatformAndWindow()
+bool RacingGame::initPlatformAndWindow()
 {
+    if (!glfwInit()) {
+        logger::error("GLFW Init Failed");
+        return false;
+    }
+
+    audioManager = std::make_shared<AudioEngine>();
+
+    inputManager = std::make_shared<InputManager>();
+    window = std::make_shared<Window>(inputManager, 1080, 720, "Whiteout Extreme");
+    window->makeContextCurrent();
+
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        logger::error("GLAD Init Failed");
+        return false;
+    }
+
+    return true;
 }
 
 void RacingGame::initImGui()

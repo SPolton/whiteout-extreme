@@ -30,7 +30,7 @@ public:
 
 private:
     // Constructor phase
-    void initPlatformAndWindow();
+    bool initPlatformAndWindow();
     void initImGui();
     void initEcsAndSystems();
     void createWorldEntities();
