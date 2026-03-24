@@ -27,6 +27,10 @@ public:
     MenuAction renderMainMenu();
     MenuAction renderPauseMenu();
     MenuAction renderGameOver(int rank, bool engulfed);
+    MenuAction renderHelpMenu();
+    MenuAction renderControllerHelp();
+    MenuAction renderKeyboardHelp();
+
 
     // input related functions
     MenuAction pollInputs();

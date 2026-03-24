@@ -96,7 +96,7 @@ MenuAction GameMenus::pollInputs() {
         }
         // triggers main menu (do not allow keyboard input to navigate to main menu while in game)
         else if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_A) && gameState != GameState::InGame) {
-            // if one main menu, then start game
+            // if on main menu, then start game
             if (gameState == GameState::MainMenu) {
                 // play an "entering game" sound when button clicked
                 audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
@@ -112,6 +112,11 @@ MenuAction GameMenus::pollInputs() {
                 audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
                 return MenuAction::GoToMainMenu;
             }
+            else if (gameState == GameState::HelpMenu) {
+                // play UI button clicked sound
+                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                return MenuAction::None;
+            }
         }
         // B button to go back from pause to main menu
         else if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_B)) {
@@ -122,6 +127,13 @@ MenuAction GameMenus::pollInputs() {
                 audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
                 return MenuAction::GoToMainMenu;
             }
+        }
+        // triggers help menu (can only be navigated to from main menu)
+        // TODO: figure out what button on controller to trigger help menu
+        else if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_Y) && gameState == GameState::MainMenu) {
+            audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
+            gameState = GameState::HelpMenu; // update game state to render help page
+            return MenuAction::None; // no action taken
         }
     }
 
@@ -144,7 +156,7 @@ MenuAction GameMenus::pollInputs() {
     }
     // triggers main menu (do not allow keyboard input to navigate to main menu while in game)
     else if (inputManager->isKeyPressedOnce(GLFW_KEY_M) && gameState != GameState::InGame) {
-        // if one main menu, then start game
+        // if on main menu, then start game
         if (gameState == GameState::MainMenu) {
             // play an "entering game" sound when button clicked
             audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
@@ -160,6 +172,39 @@ MenuAction GameMenus::pollInputs() {
             audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
             return MenuAction::GoToMainMenu;
         }
+        else if (gameState == GameState::HelpMenu) {
+            // play UI button clicked sound
+            audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+            return MenuAction::GoToMainMenu;
+        }
+        else if (gameState == GameState::ControllerHelp) {
+            // play UI button clicked sound
+            audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+            return MenuAction::GoToMainMenu;
+        }
+        else if (gameState == GameState::KeyboardHelp) {
+            // play UI button clicked sound
+            audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+            return MenuAction::GoToMainMenu;
+        }
+    }
+    // triggers help menu (can only be navigated to from main menu)
+    else if (inputManager->isKeyPressedOnce(GLFW_KEY_H) && gameState == GameState::MainMenu) {
+        audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
+        gameState = GameState::HelpMenu; // update game state to render help page
+        return MenuAction::None; // no action taken
+    }
+    // triggers controller help menu (can only be navigated to from Help menu)
+    else if (inputManager->isKeyPressedOnce(GLFW_KEY_J) && gameState == GameState::HelpMenu) {
+        audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
+        gameState = GameState::ControllerHelp; // update game state to render help page
+        return MenuAction::None; // no action taken
+    }
+    // triggers keyboard help menu (can only be navigated to from Help menu)
+    else if (inputManager->isKeyPressedOnce(GLFW_KEY_K) && gameState == GameState::HelpMenu) {
+        audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
+        gameState = GameState::KeyboardHelp; // update game state to render help page
+        return MenuAction::None; // no action taken
     }
 
     return MenuAction::None;
@@ -233,6 +278,7 @@ MenuAction GameMenus::renderMainMenu()
 
     // render the text with the proper color assigned
     textSystem->renderText("Start", { 585.f, 400.f, 0.75f }, startColor);
+    textSystem->renderText("Help", { 605.f, 250.f, 0.75f }, defaultColor);
 
     textSystem->endText();
 
@@ -380,3 +426,209 @@ MenuAction GameMenus::renderGameOver(int rank, bool engulfed)
     // default return
     return MenuAction::None;
 }
+
+MenuAction GameMenus::renderHelpMenu()
+{
+    // Clear buffers
+    glClearColor(0.6f, 0.8f, 1.0f, 0.8f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // when in a menu, check for cursor position to highlight "buttons"
+    // get cursor position
+    glm::dvec2 cursorPos = inputManager->cursorPosition();
+
+    textSystem->beginText();
+
+    textSystem->loadFont("LuckiestGuy-Regular.ttf", 120);
+
+    // default color for the "Back" button
+    glm::vec3 defaultColor = { 0.f, 0.f, 0.6f };
+
+    // set the "Back" button to the default color (used when not hovered upon)
+    glm::vec3 backColor = defaultColor;
+
+    // check if mouse is hovered over the "Back" button
+    if (cursorPos.x > 485.f && cursorPos.x < 700.f) {
+        if (cursorPos.y > 540.f && cursorPos.y < 580.f) {
+            // if it is, highlight in red
+            backColor = { 0.8f, 0.f, 0.f };
+
+            // and check if the user clicks on the mouse while over the "Back" button
+            if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
+                // play an "entering game" sound when button clicked
+                audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
+                // if they do, toggle to show the main menu
+                return MenuAction::GoToMainMenu;
+            }
+        }
+    }
+
+    // pages to choose from
+    textSystem->renderText("Keyboard", { 500.f, 900.f, 0.75f }, defaultColor);
+    textSystem->renderText("Controller", { 460.f, 700.f, 0.75f }, defaultColor);
+
+    // render the text with the proper color assigned
+    textSystem->renderText("Back", { 585.f, 400.f, 0.75f }, backColor);
+
+    textSystem->endText();
+
+    // default return
+    return MenuAction::None;
+}
+
+MenuAction GameMenus::renderControllerHelp()
+{
+    // Clear buffers
+    glClearColor(0.6f, 0.8f, 1.0f, 0.8f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // when in a menu, check for cursor position to highlight "buttons"
+    // get cursor position
+    glm::dvec2 cursorPos = inputManager->cursorPosition();
+
+    textSystem->beginText();
+
+    textSystem->loadFont("LuckiestGuy-Regular.ttf", 120);
+
+    // default color for the "Start" button
+    glm::vec3 defaultColor = { 0.f, 0.f, 0.6f };
+
+    // set the "return" button to the default color (used when not hovered upon)
+    glm::vec3 startColor = defaultColor;
+
+    // check if mouse is hovered over the "return" button
+    if (cursorPos.x > 485.f && cursorPos.x < 700.f) {
+        if (cursorPos.y > 540.f && cursorPos.y < 580.f) {
+            // if it is, highlight in red
+            startColor = { 0.8f, 0.f, 0.f };
+
+            // and check if the user clicks on the mouse while over the "return" button
+            if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
+                // play ui button sound when button clicked
+                audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
+                // if they do, toggle to show the main menu
+                return MenuAction::GoToMainMenu;
+            }
+        }
+    }
+
+    // render the text with the proper color assigned
+    textSystem->renderText("Controller", { 400.f, 1300.f, 0.75f }, defaultColor);
+
+    // create vao to draw menu logo
+    GPU_Geometry gpuQuad;
+    gpuQuad.Update2D(quad); // update it with our basic quad info
+
+    shader->use();
+
+    // bind texture
+    glActiveTexture(GL_TEXTURE0);
+    logoTexture->bind();
+    glUniform1i(glGetUniformLocation(*shader, "sample"), 0);
+
+    // translations
+    float translateY = 0.25f;
+
+    // static model to pass to shader, renders png as is
+    glm::mat4 model = glm::mat4(
+        1.f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.f, 0.0f, 0.0f,
+        0.f, 0.0f, 1.f, 0.0f,
+        0.0f, translateY, 0.f, 1.0f
+    );
+
+    glUniformMatrix4fv(glGetUniformLocation(*shader, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+    // bind vao
+    gpuQuad.bind();
+
+    // draw quad
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    // return to main menu button
+    textSystem->renderText("Return to Main Menu", { 300.f, 400.f, 0.75f }, defaultColor);
+
+    textSystem->endText();
+
+    // default return
+    return MenuAction::None;
+}
+
+MenuAction GameMenus::renderKeyboardHelp()
+{
+    // Clear buffers
+    glClearColor(0.6f, 0.8f, 1.0f, 0.8f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // when in a menu, check for cursor position to highlight "buttons"
+    // get cursor position
+    glm::dvec2 cursorPos = inputManager->cursorPosition();
+
+    textSystem->beginText();
+
+    textSystem->loadFont("LuckiestGuy-Regular.ttf", 120);
+
+    // default color for the "Start" button
+    glm::vec3 defaultColor = { 0.f, 0.f, 0.6f };
+
+    // set the "return" button to the default color (used when not hovered upon)
+    glm::vec3 startColor = defaultColor;
+
+    // check if mouse is hovered over the "return" button
+    if (cursorPos.x > 485.f && cursorPos.x < 700.f) {
+        if (cursorPos.y > 540.f && cursorPos.y < 580.f) {
+            // if it is, highlight in red
+            startColor = { 0.8f, 0.f, 0.f };
+
+            // and check if the user clicks on the mouse while over the "return" button
+            if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
+                // play ui button sound when button clicked
+                audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
+                // if they do, toggle to show the main menu
+                return MenuAction::GoToMainMenu;
+            }
+        }
+    }
+
+    // render the text with the proper color assigned
+    textSystem->renderText("Keyboard", { 500.f, 1300.f, 0.75f }, defaultColor);
+
+    // create vao to draw menu logo
+    GPU_Geometry gpuQuad;
+    gpuQuad.Update2D(quad); // update it with our basic quad info
+
+    shader->use();
+
+    // bind texture
+    glActiveTexture(GL_TEXTURE0);
+    logoTexture->bind();
+    glUniform1i(glGetUniformLocation(*shader, "sample"), 0);
+
+    // translations
+    float translateY = 0.25f;
+
+    // static model to pass to shader, renders png as is
+    glm::mat4 model = glm::mat4(
+        1.f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.f, 0.0f, 0.0f,
+        0.f, 0.0f, 1.f, 0.0f,
+        0.0f, translateY, 0.f, 1.0f
+    );
+
+    glUniformMatrix4fv(glGetUniformLocation(*shader, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+    // bind vao
+    gpuQuad.bind();
+
+    // draw quad
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    // return to main menu button
+    textSystem->renderText("Return to Main Menu", { 300.f, 400.f, 0.75f }, defaultColor);
+
+    textSystem->endText();
+
+    // default return
+    return MenuAction::None;
+}
+

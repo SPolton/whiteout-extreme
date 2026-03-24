@@ -483,6 +483,63 @@ void RacingGame::run()
             // swap buffer
             this->endFrame();
         }
+        else if (gameState == GameState::HelpMenu) {
+            // render UI for help menu, take note of the action taken
+            MenuAction actionCursor = menus->renderHelpMenu();
+
+            // if "Back" is pressed, go to main menu
+            if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
+                gameState = GameState::MainMenu;
+            }
+
+            // if NOT in game, don't play in-game music
+            audioManager->pauseChannel(inGameMusicChannelID);
+            // if on main menu, play lobby music
+            audioManager->resumeChannel(musicChannelID);
+            // pause avalanche sounds in menus
+            audioManager->pauseChannel(avalancheChannelID);
+
+            // swap buffer
+            this->endFrame();
+        }
+        else if (gameState == GameState::ControllerHelp) {
+            // render UI for help menu, take note of the action taken
+            MenuAction actionCursor = menus->renderControllerHelp();
+
+            // if "Return to main menu" is pressed, go to main menu
+            if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
+                gameState = GameState::MainMenu;
+            }
+
+            // if NOT in game, don't play in-game music
+            audioManager->pauseChannel(inGameMusicChannelID);
+            // if on main menu, play lobby music
+            audioManager->resumeChannel(musicChannelID);
+            // pause avalanche sounds in menus
+            audioManager->pauseChannel(avalancheChannelID);
+
+            // swap buffer
+            this->endFrame();
+        }
+        else if (gameState == GameState::KeyboardHelp) {
+            // render UI for help menu, take note of the action taken
+            MenuAction actionCursor = menus->renderKeyboardHelp();
+
+            // if "Return to main menu" is pressed, go to main menu
+            if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
+                gameState = GameState::MainMenu;
+            }
+
+            // if NOT in game, don't play in-game music
+            audioManager->pauseChannel(inGameMusicChannelID);
+            // if on main menu, play lobby music
+            audioManager->resumeChannel(musicChannelID);
+            // pause avalanche sounds in menus
+            audioManager->pauseChannel(avalancheChannelID);
+
+            // swap buffer
+            this->endFrame();
+        }
         else if (gameState == GameState::Pause) {
             // render UI for pause menu, take note of the action taken
             MenuAction actionCursor = menus->renderPauseMenu();
