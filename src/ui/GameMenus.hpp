@@ -46,6 +46,7 @@ private:
     // Textures
     AssetManager& assetManager = AssetManager::getInstance();
     std::shared_ptr<Texture> logoTexture;
+    std::shared_ptr<Texture> backgroundTexture;
     std::shared_ptr<ShaderProgram> shader;
 
     // pointers to read input
