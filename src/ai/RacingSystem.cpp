@@ -138,7 +138,7 @@ void RacingSystem::update(float deltaTime)
 
         // ORIENTATION
         if (avalanche->gate->prevGate == &gates.at(0)) {
-            glm::vec3 lookDirCircuit = avalanche->gate->prevGate->direction;
+            glm::vec3 lookDirCircuit = avalanche->gate->prevGate->forward;
             avalanche->setOrientation(lookDirCircuit, deltaTime);
             //logger::error("avalanche race completion at {}", avalanche->raceCompletion);
             avalanche->raceCompletion = 0.0f;
@@ -150,13 +150,13 @@ void RacingSystem::update(float deltaTime)
             avalanche->raceCompletion = (avalanche->gate->prevGate->raceLength + lengthOnSegment) / totalRaceLength;
             //logger::error("avalanche race completion at {}", avalanche->raceCompletion);
 
-            float progress = lengthOnSegment / segmentLen;
+            float progress = (lengthOnSegment-10.0f) / segmentLen;
             progress = glm::clamp(progress, 0.0f, 1.0f);
 
             // 2. Orientation via LERP between direction of last and next gate
             glm::vec3 lookDirCircuit = glm::normalize(glm::mix(
-                avalanche->gate->prevGate->direction,
-                avalanche->gate->direction,
+                avalanche->gate->prevGate->forward,
+                avalanche->gate->forward,
                 progress
             ));
             avalanche->setOrientation(lookDirCircuit, deltaTime);
@@ -256,6 +256,8 @@ void RacingSystem::restart() {
     for (auto const& entity : mEntities) {
         auto& racer = gCoordinator.GetComponent<Racer>(entity);
         auto& racerTransf = gCoordinator.GetComponent<PhysxTransform>(entity);
+        auto& racerVehicle = gCoordinator.GetComponent<VehicleComponent>(entity);
+        racerVehicle.engineHeat = 0.0f;
 
         // 1. Reset gates, race completion and engulfment status
         racer.lastGate = &startGate;
@@ -346,7 +348,7 @@ void RacingSystem::restart() {
     avalanche->mBaseSpeed = 5.0f;
     avalanche->mCloseProximityTimer = 0.0f;
     avalanche->raceCompletion = 0.0f;
-    avalanche->mIsActive = false;
+    avalanche->mIsActive = true;
 
     logger::info("Race Restarted: {} vehicles on grid", leaderboard.size());
 }
@@ -429,6 +431,8 @@ void RacingSystem::initGatesFromPoints() {
 
         if (gate.width > 0.001f) {
             gate.right = (gate.rightPoint - gate.leftPoint) / gate.width;
+            gate.forward = glm::normalize(glm::cross(gate.right, upVec));
+            gate.up = glm::normalize(glm::cross(gate.right, gate.forward));
         }
     }
 
@@ -455,10 +459,10 @@ void RacingSystem::initGatesFromPoints() {
 
         gate.right = glm::normalize(glm::cross(gate.direction, upVec));
 
-        std::string tex = (i == 0 || i == gates.size() - 1) ? "assets/textures/2k_mars.jpg" : "assets/textures/carbon_fiber.jpg";
+        std::string tex = (i == 0 || i == gates.size() - 1) ? "assets/textures/2k_mars.jpg" : "assets/textures/snowball.png";
         renderingSystem->createBoxEntity(tex, render::BoxConfig{
             gate.position,
-            math::transform::quatFromDirection(gate.direction, upVec),
+            math::transform::quatFromDirection(gate.forward, gate.up),
             glm::vec3(gate.width, 0.1f, 0.1f)
         });
     }
