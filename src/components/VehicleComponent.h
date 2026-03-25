@@ -20,7 +20,7 @@ struct VehicleComponent {
     float steer = 0.0f;
 
     bool forwardGearDesired = true;
-    PxVehicleDirectDriveTransmissionCommandState::Enum gearState{ PxVehicleDirectDriveTransmissionCommandState::eFORWARD };
+    PxVehicleDirectDriveTransmissionCommandState::Enum gearState{ PxVehicleDirectDriveTransmissionCommandState::eREVERSE };
 
     const bool hasGearDesired() {
         return forwardGearDesired ?

@@ -173,8 +173,7 @@ void ImGuiPanel::renderVehiclePhysx() {
         */
         if (ImGui::Button("Reset Default Parameters")) {
             const char* path = "../../../assets/vehicledata";
-            // We assume your "original" files are named Base.json and EngineDrive.json
-            // Or you can change these names to "Default-Base.json", etc.
+            // "original" files are named Base.json and EngineDrive.json
             const char* defaultBase = "Base.json";
             const char* defaultEngine = "EngineDrive.json";
 
@@ -459,10 +458,16 @@ void ImGuiPanel::renderVehiclePhysx() {
             ImGui::SliderFloat("Front LatStiff Peak", &current.mBaseParams.tireForceParams[0].latStiffY, 0.0f, 5000000.0f, "%.0f");
             ImGui::SliderFloat("Front CamberStiff", &current.mBaseParams.tireForceParams[0].camberStiff, 0.0f, 500000.0f, "%.0f");
 
-            ImGui::SeparatorText("Front Grip & Load");
-            ImGui::SliderFloat("Front Base Friction", &current.mBaseParams.tireForceParams[0].frictionVsSlip[0][1], 0.0f, 2.0f, "%.2f");
-            ImGui::DragFloat2("Front Max Friction Point", current.mBaseParams.tireForceParams[0].frictionVsSlip[1], 0.01f, 0.0f, 2.0f);
-            ImGui::DragFloat2("Front Max Load Filter", current.mBaseParams.tireForceParams[0].loadFilter[1], 0.01f, 0.0f, 5.0f);
+            ImGui::SeparatorText("Front Grip Curve (Slip vs Friction)");
+            // Point 0: Zero Slip
+            ImGui::SliderFloat("Front Base Grip [0]", &current.mBaseParams.tireForceParams[0].frictionVsSlip[0][1], 0.0f, 5.0f, "%.2f");
+            // Point 1: Peak Grip (Slip value, Friction value)
+            ImGui::DragFloat2("Front Peak Point [1]", current.mBaseParams.tireForceParams[0].frictionVsSlip[1], 0.01f, 0.0f, 5.0f);
+            HelpMarker("X = Slip at peak, Y = Friction at peak");
+            // Point 2: DIE-OFF / FULL SLIP
+            ImGui::DragFloat2("Front End Point [2]", current.mBaseParams.tireForceParams[0].frictionVsSlip[2], 0.01f, 0.0f, 5.0f);
+            HelpMarker("X = Max Slip (usually 1.0), Y = Friction when sliding");
+            ImGui::DragFloat2("Front Max Load Filter", current.mBaseParams.tireForceParams[0].loadFilter[1], 0.01f, 0.0f, 10.0f);
 
             // Sync Tire Params Front
             ApplyToGroup(frontIndices, [&](int i) {
@@ -472,6 +477,8 @@ void ImGuiPanel::renderVehiclePhysx() {
                 current.mBaseParams.tireForceParams[i].frictionVsSlip[0][1] = current.mBaseParams.tireForceParams[0].frictionVsSlip[0][1];
                 current.mBaseParams.tireForceParams[i].frictionVsSlip[1][0] = current.mBaseParams.tireForceParams[0].frictionVsSlip[1][0];
                 current.mBaseParams.tireForceParams[i].frictionVsSlip[1][1] = current.mBaseParams.tireForceParams[0].frictionVsSlip[1][1];
+                current.mBaseParams.tireForceParams[i].frictionVsSlip[2][0] = current.mBaseParams.tireForceParams[0].frictionVsSlip[2][0];
+                current.mBaseParams.tireForceParams[i].frictionVsSlip[2][1] = current.mBaseParams.tireForceParams[0].frictionVsSlip[2][1];
                 current.mBaseParams.tireForceParams[i].loadFilter[1][0] = current.mBaseParams.tireForceParams[0].loadFilter[1][0];
                 current.mBaseParams.tireForceParams[i].loadFilter[1][1] = current.mBaseParams.tireForceParams[0].loadFilter[1][1];
                 });
@@ -514,10 +521,11 @@ void ImGuiPanel::renderVehiclePhysx() {
             ImGui::SliderFloat("Rear LatStiff Peak", &current.mBaseParams.tireForceParams[2].latStiffY, 0.0f, 5000000.0f, "%.0f");
             ImGui::SliderFloat("Rear CamberStiff", &current.mBaseParams.tireForceParams[2].camberStiff, 0.0f, 500000.0f, "%.0f");
 
-            ImGui::SeparatorText("Rear Grip & Load");
-            ImGui::SliderFloat("Rear Base Friction", &current.mBaseParams.tireForceParams[2].frictionVsSlip[0][1], 0.0f, 2.0f, "%.2f");
-            ImGui::DragFloat2("Rear Max Friction Point", current.mBaseParams.tireForceParams[2].frictionVsSlip[1], 0.01f, 0.0f, 2.0f);
-            ImGui::DragFloat2("Rear Max Load Filter", current.mBaseParams.tireForceParams[2].loadFilter[1], 0.01f, 0.0f, 5.0f);
+            ImGui::SeparatorText("Rear Grip Curve (Slip vs Friction)");
+            ImGui::SliderFloat("Rear Base Grip [0]", &current.mBaseParams.tireForceParams[2].frictionVsSlip[0][1], 0.0f, 5.0f, "%.2f");
+            ImGui::DragFloat2("Rear Peak Point [1]", current.mBaseParams.tireForceParams[2].frictionVsSlip[1], 0.01f, 0.0f, 5.0f);
+            ImGui::DragFloat2("Rear End Point [2]", current.mBaseParams.tireForceParams[2].frictionVsSlip[2], 0.01f, 0.0f, 5.0f);
+            ImGui::DragFloat2("Rear Max Load Filter", current.mBaseParams.tireForceParams[2].loadFilter[1], 0.01f, 0.0f, 10.0f);
 
             // Sync Tire Params Rear
             ApplyToGroup(rearIndices, [&](int i) {
@@ -527,6 +535,8 @@ void ImGuiPanel::renderVehiclePhysx() {
                 current.mBaseParams.tireForceParams[i].frictionVsSlip[0][1] = current.mBaseParams.tireForceParams[2].frictionVsSlip[0][1];
                 current.mBaseParams.tireForceParams[i].frictionVsSlip[1][0] = current.mBaseParams.tireForceParams[2].frictionVsSlip[1][0];
                 current.mBaseParams.tireForceParams[i].frictionVsSlip[1][1] = current.mBaseParams.tireForceParams[2].frictionVsSlip[1][1];
+                current.mBaseParams.tireForceParams[i].frictionVsSlip[2][0] = current.mBaseParams.tireForceParams[2].frictionVsSlip[2][0];
+                current.mBaseParams.tireForceParams[i].frictionVsSlip[2][1] = current.mBaseParams.tireForceParams[2].frictionVsSlip[2][1];
                 current.mBaseParams.tireForceParams[i].loadFilter[1][0] = current.mBaseParams.tireForceParams[2].loadFilter[1][0];
                 current.mBaseParams.tireForceParams[i].loadFilter[1][1] = current.mBaseParams.tireForceParams[2].loadFilter[1][1];
                 });
@@ -558,10 +568,10 @@ void ImGuiPanel::renderVehiclePhysx() {
         float redline = current.mEngineDriveParams.engineParams.maxOmega * (60.0f / 6.28318f);
         float rpmRatio = rpm / redline;
 
-        // Changement de couleur dynamique
-        ImVec4 color = ImVec4(0.0f, 1.0f, 0.0f, 1.0f); // Vert
-        if (rpmRatio > 0.7f) color = ImVec4(1.0f, 0.6f, 0.0f, 1.0f); // Orange à 70%
-        if (rpmRatio > 0.9f) color = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); // Rouge à 90%
+        // Dynamic color change
+        ImVec4 color = ImVec4(0.0f, 1.0f, 0.0f, 1.0f); // Green
+        if (rpmRatio > 0.7f) color = ImVec4(1.0f, 0.6f, 0.0f, 1.0f); // Orange at 70%
+        if (rpmRatio > 0.9f) color = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); // Red at 90%
 
         ImGui::PushStyleColor(ImGuiCol_PlotHistogram, color);
         ImGui::ProgressBar(rpmRatio, ImVec2(-1, 25), "ENGINE RPM");
