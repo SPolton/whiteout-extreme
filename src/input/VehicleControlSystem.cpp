@@ -35,10 +35,12 @@ void VehicleControlSystem::update(float deltaTime)
 
         // Reset flag isBoosting by default for this frame
         bool wasBoosting = vehicle.isBoosting;
-        vehicle.isBoosting = false;
 
         // Call inputs
-        if (entity == playerVehicleEntity) processInputs();
+        if (entity == playerVehicleEntity) {
+            vehicle.isBoosting = false;
+            processInputs();
+        }
 
         if (vehicle.isBoosting) {
             // --- LOGIC BOOST ---

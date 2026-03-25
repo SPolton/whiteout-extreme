@@ -30,6 +30,21 @@ void AISystem::update(float deltaTime)
             continue;
         }
 
+        // Handling Boost System
+        if (aiVehicle.engineHeat < 0.1f || (aiVehicle.engineHeat <= 0.98f && aiVehicle.isBoosting)) {
+            aiVehicle.isBoosting = true;
+            if (aiVehicle.timeSinceLastBoost > 0.1f) {
+                aiVehicle.engineHeat = std::min(1.0f, aiVehicle.engineHeat + aiVehicle.boostHeatInstantCost);
+            }
+        }
+        else if (aiVehicle.engineHeat > 0.98f) {
+            aiVehicle.isBoosting = false;
+        }
+        else {
+            aiVehicle.isBoosting = false;
+        }
+
+        // Handling Look-ahead target
         if (!aiRacer.targetGate) continue;
 
         // 1. Calculate direction vectors

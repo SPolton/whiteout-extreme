@@ -281,7 +281,7 @@ void RacingSystem::restart() {
         racerTransf.pos.y += 0.5f;
 
         // 3. Orientation of vehicle
-        glm::vec3 forward = glm::normalize(startGate.direction);
+        glm::vec3 forward = glm::normalize(startGate.forward);
         glm::vec3 worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
         glm::vec3 right = glm::normalize(glm::cross(worldUp, forward));
         glm::vec3 up = glm::cross(forward, right);
@@ -430,8 +430,8 @@ void RacingSystem::initGatesFromPoints() {
 
 
         if (gate.width > 0.001f) {
-            gate.right = (gate.rightPoint - gate.leftPoint) / gate.width;
-            gate.forward = glm::normalize(glm::cross(gate.right, upVec));
+            gate.right = glm::normalize(gate.rightPoint - gate.leftPoint);
+            gate.forward = glm::normalize(glm::cross(upVec, gate.right));
             gate.up = glm::normalize(glm::cross(gate.right, gate.forward));
         }
     }
@@ -456,8 +456,6 @@ void RacingSystem::initGatesFromPoints() {
         if (i > 0) {
             gate.prevGate = &gates.at(i - 1);
         }
-
-        gate.right = glm::normalize(glm::cross(gate.direction, upVec));
 
         std::string tex = (i == 0 || i == gates.size() - 1) ? "assets/textures/2k_mars.jpg" : "assets/textures/snowball.png";
         renderingSystem->createBoxEntity(tex, render::BoxConfig{
