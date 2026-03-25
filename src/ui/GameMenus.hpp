@@ -48,6 +48,7 @@ private:
     std::shared_ptr<Texture> logoTexture;
     std::shared_ptr<Texture> backgroundTexture;
     std::shared_ptr<Texture> keyboardTexture;
+    std::shared_ptr<Texture> controllerTexture;
     std::shared_ptr<ShaderProgram> shader;
 
     // pointers to read input

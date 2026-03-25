@@ -64,15 +64,26 @@ void GameMenus::init()
         logger::error("Failed to load background picture texture: {0}", e.what());
     }
 
-    // pre-load the texture for the help menu keyboard control
+    // pre-load the texture for the help menu keyboard controls
     try
     {
-        keyboardTexture = assetManager.loadTexture("assets/ui/Keyboard_controls.png");
-        logger::info("Keyboard control texture loaded successfully");
+        keyboardTexture = assetManager.loadTexture("assets/ui/Keyboard_controls_1.jpeg");
+        logger::info("Keyboard controls texture loaded successfully");
     }
     catch (const std::exception& e)
     {
-        logger::error("Failed to load keyboard control texture: {0}", e.what());
+        logger::error("Failed to load keyboard controls texture: {0}", e.what());
+    }
+
+    // pre-load the texture for the help menu controller controls
+    try
+    {
+        controllerTexture = assetManager.loadTexture("assets/ui/Controller_controls_1.jpeg");
+        logger::info("Controller controls texture loaded successfully");
+    }
+    catch (const std::exception& e)
+    {
+        logger::error("Failed to load controller controls texture: {0}", e.what());
     }
 
     // set the position of the quad of the logo
@@ -565,9 +576,6 @@ MenuAction GameMenus::renderControllerHelp()
         }
     }
 
-    // render the text with the proper color assigned
-    textSystem->renderText("Controller", { 400.f, 1300.f, 0.75f }, defaultColor);
-
     // create vao to draw menu logo
     GPU_Geometry gpuQuad;
     gpuQuad.Update2D(quad); // update it with our basic quad info
@@ -576,18 +584,15 @@ MenuAction GameMenus::renderControllerHelp()
 
     // bind texture
     glActiveTexture(GL_TEXTURE0);
-    logoTexture->bind();
+    controllerTexture->bind();
     glUniform1i(glGetUniformLocation(*shader, "sample"), 0);
-
-    // translations
-    float translateY = 0.25f;
 
     // static model to pass to shader, renders png as is
     glm::mat4 model = glm::mat4(
-        1.f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.f, 0.0f, 0.0f,
-        0.f, 0.0f, 1.f, 0.0f,
-        0.0f, translateY, 0.f, 1.0f
+        0.8f, 0.0f, 0.0f, 0.0f,
+        0.0f, 0.8f, 0.0f, 0.0f,
+        0.f, 0.0f, 0.8f, 0.0f,
+        0.0f, 0.15f, 0.f, 1.0f
     );
 
     glUniformMatrix4fv(glGetUniformLocation(*shader, "model"), 1, GL_FALSE, glm::value_ptr(model));
@@ -599,7 +604,7 @@ MenuAction GameMenus::renderControllerHelp()
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     // return to main menu button
-    textSystem->renderText("Return to Main Menu", { 300.f, 400.f, 0.75f }, defaultColor);
+    textSystem->renderText("Return to Main Menu", { 300.f, 100.f, 0.75f }, defaultColor);
 
     textSystem->endText();
 
