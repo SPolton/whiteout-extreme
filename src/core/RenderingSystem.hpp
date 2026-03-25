@@ -8,9 +8,10 @@
 #include "core/render/ShapeConfig.hpp"
 #include "core/scene/TurnTableCamera.hpp"
 #include "core/scene/FreeCamera.hpp"
+#include "core/scene/RacingCamera.hpp"
 #include "core/scene/Transform.hpp"
 
-#include "components/Entity.h"
+#include "components/Model.h"
 #include "components/Renderable.h"
 
 #include "ecs/Coordinator.hpp"
@@ -44,10 +45,10 @@ void cleanup();
 
     Renderable getCubeRenderable(const std::string& texturePath);
 
-    void updateCameraTarget(const glm::vec3& position);
-    glm::vec3 getCameraForward() const;
-    bool isTurnTableCamera() { return activeCamera == turntableCamera.get();};
-    CameraStats getActiveCameraStats() { return activeCamera->getStats(); };
+    void updateCameraTarget(const glm::vec3& position, const glm::vec3& forward, float speedMs);
+    glm::vec3 getCameraForward() const { return activeCamera->forward(); };
+    glm::vec3 getCameraRight() const { return activeCamera->right(); };
+    std::string getActiveCameraInfo() const { return activeCamera->toString(); };
 
     // Parameters changed by Imgui in the syncImgui method of RacingGame
     float camSpeed = 1.0f;
@@ -57,17 +58,15 @@ void cleanup();
     int vWidth;
     int vHeight;
 
-    // For rendering physics entities
-    void renderEntities(const std::vector<EntityPx>& entityList);
-
     void onMouseWheelChange(double xOffset, double yOffset);
     bool init();
 
 private:
     AssetManager& assetManager = AssetManager::getInstance();
 
-    std::unique_ptr<TurnTableCamera> turntableCamera;
     std::unique_ptr<FreeCamera> freeCamera;
+    std::unique_ptr<RacingCamera> racingCamera;
+    std::unique_ptr<TurnTableCamera> turntableCamera;
     BaseCamera* activeCamera;  // Pointer to the currently active camera
 
     std::unique_ptr<SceneTransform> targetTransform; // Camera target
@@ -76,6 +75,7 @@ private:
     std::shared_ptr<InputManager> inputManager;
     glm::dvec2 previousCursorPosition{};
     bool cursorPositionIsSetOnce = false;
+    float lastFrameDeltaTime = 1.0f / 60.0f;
 
     void processInput(float deltaTime);
     void processCameraInput(float deltaTime);

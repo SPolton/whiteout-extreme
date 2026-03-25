@@ -1,6 +1,7 @@
 #pragma once
-#include <memory>
+
 #include "physics/VehicleFourWheelDrive.hpp"
+#include <memory>
 
 using namespace physx::vehicle2;
 
@@ -11,8 +12,7 @@ using namespace physx::vehicle2;
 struct VehicleComponent {
     int playerID = 0;  // Optional: Unique identifier for the vehicle
 
-    // Unique pointer to manage the vehicle instance lifecycle
-    VehicleFourWheelDrive* instance = nullptr;
+    std::shared_ptr<VehicleFourWheelDrive> instance;
 
     // Control states (updated by the Input/Rendering system)
     float throttle = 0.0f;

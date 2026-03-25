@@ -57,6 +57,7 @@ public:
 	
 	int getWidth() const { return getSize().x; }
 	int getHeight() const { return getSize().y; }
+	float getAspectRatio() const { return static_cast<float>(getWidth()) / static_cast<float>(std::max(1, getHeight())); }
 
 	int shouldClose() { return glfwWindowShouldClose(window.get()); }
 	void makeContextCurrent() { glfwMakeContextCurrent(window.get()); }

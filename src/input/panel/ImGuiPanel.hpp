@@ -2,7 +2,7 @@
 
 #include <imgui.h>
 #include <glm/glm.hpp>
-#include "core/scene/CameraStats.hpp"
+#include <string>
 #include "physics/VehicleFourWheelDrive.hpp"
 
 struct VehicleDefaultParams {
@@ -21,8 +21,9 @@ public:
     void update();
 
     // For simplicity, expose settings directly (no getters)
-    // Camera stats (set by rendering system)
-    CameraStats cameraStats;
+    // Camera info string (set by rendering system)
+    std::string cameraInfo;
+    float aspectRatio = 1.0f;
 
     // Rendering settings
     glm::vec3 getBackgroundColor() const { return backgroundColor; }
@@ -38,7 +39,7 @@ public:
     bool showDebugWindow = true;
     bool showSettingsWindow = true;
 
-    void setVehicle(VehicleFourWheelDrive* v);
+    void setVehicle(std::shared_ptr<VehicleFourWheelDrive> v);
 
 protected:
     VehicleFourWheelDrive* vehicle = nullptr;

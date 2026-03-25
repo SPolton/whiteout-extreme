@@ -3,21 +3,13 @@
 
 using namespace physx;
 
-PhysicsObject::PhysicsObject(const char* name) {
-    mTransform = new PhysxTransform();
-    mEntity.name = name;
-    mEntity.transform = mTransform;
-    mEntity.model = nullptr;
-    mEntity.physType = PhysType::RigidBody;
-    mEntity.drawType = DrawType::Mesh;
+PhysicsObject::PhysicsObject(const char* name)
+    : mTransform(std::make_unique<PhysxTransform>())
+    , mName(name ? name : "unnamed_entity")
+{
 }
 
-PhysicsObject::~PhysicsObject() {
-    if (mTransform) {
-        delete mTransform;
-        mTransform = nullptr;
-    }
-}
+PhysicsObject::~PhysicsObject() = default;
 
 void PhysicsObject::updateTransform() {
     PxRigidActor* actor = getRigidActor();

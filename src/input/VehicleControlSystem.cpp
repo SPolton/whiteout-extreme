@@ -28,6 +28,9 @@ void VehicleControlSystem::update(float deltaTime)
 
     for (auto const& entity : mEntities) {
         auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(entity);
+        if (!vehicle.instance) {
+            continue;
+        }
         auto& engineParams = vehicle.instance->getVehicleData().mEngineDriveParams.engineParams;
 
         // Reset flag isBoosting by default for this frame
@@ -319,15 +322,9 @@ void VehicleControlSystem::throwSnowball()
     // auto& vehicleComponent = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity);
     if (vehicleComponent.snowBallCooldown > 0.f) return;
 
-    // ...and that the current camera is the TurnTable one
-    if (!renderingSystem->isTurnTableCamera()) return;
-
     // play sound of throwing snowball
     audioManager->playSounds("assets/audio/snowball-hit-01.mp3", { 0,0,0 }, -1.0f);
     //logger::info("Throwing snowball...");
-
-    // 2. Retrieve Player Transform
-    // auto& vehicleTransform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
 
     // Calculate the Forward direction based on the vehicle's current rotation
     // In many coordinate systems, (0, 0, 1) is the local forward axis

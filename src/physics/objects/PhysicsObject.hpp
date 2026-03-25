@@ -1,8 +1,10 @@
 #pragma once
 
 #include "PxPhysicsAPI.h"
-#include "components/Entity.h"
 #include "components/Transform.h"
+
+#include <memory>
+#include <string>
 
 class PhysicsObject {
 public:
@@ -15,12 +17,11 @@ public:
     // Update the transform from the PhysX actor
     virtual void updateTransform();
 
-    // Access to entity and transform
-    EntityPx& getEntity() { return mEntity; }
-    const EntityPx& getEntity() const { return mEntity; }
-    PhysxTransform* getTransform() { return mTransform; }
+    const std::string& name() const { return mName; }
+    PhysxTransform* getTransform() { return mTransform.get(); }
+    const PhysxTransform* getTransform() const { return mTransform.get(); }
 
 protected:
-    PhysxTransform* mTransform;
-    EntityPx mEntity;
+    std::unique_ptr<PhysxTransform> mTransform;
+    std::string mName;
 };
