@@ -393,7 +393,7 @@ void RacingGame::run()
             // textSystem->setProjection(width, height);
 
             textSystem->beginText();
-            /*
+            ///*
             textSystem->loadFont("arial.ttf", 48);
 
             float marginX = 30.f;
@@ -440,11 +440,96 @@ void RacingGame::run()
             float centerX = screenHeight / 2.0f;
             float centerY = screenHeight / 2.0f;
 
-            float snowballX = centerX * 1.0f;
-            float snowballY = 100.f;
+            float snowballX = centerX * 1.4f;
+            float snowballY = 275.f;
             float snowBallCoolDownPlayer = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).snowBallCooldown;
-            textSystem->renderText("SNOWBALL" + (snowBallCoolDownPlayer > 0.f ? std::format(": {:.1f}", snowBallCoolDownPlayer) : " READY !"), {snowballX + 2.f, snowballY - 2.f, 1.0f}, {1.0f, 1.0f, 1.0f});
-            textSystem->renderText("SNOWBALL" + (snowBallCoolDownPlayer > 0.f ? std::format(": {:.1f}", snowBallCoolDownPlayer) : " READY !"), { snowballX, snowballY, 1.0f }, { 1.0f, 0.35f, 0.0f });
+            textSystem->renderText("SNOWBALL", {snowballX + 2.f, snowballY - 2.f, 1.0f}, {1.0f, 1.0f, 1.0f});
+            textSystem->renderText("SNOWBALL", { snowballX, snowballY, 1.0f }, { 0.05f, 0.55f, 0.65f });
+            textSystem->renderText((snowBallCoolDownPlayer > 0.f ? std::format(" in {:.1f}s", snowBallCoolDownPlayer) : " READY !"), { snowballX + 2.f + 10.f, snowballY - 2.f - 50.f, 1.0f }, { 1.0f, 1.0f, 1.0f });
+            textSystem->renderText((snowBallCoolDownPlayer > 0.f ? std::format(" in {:.1f}s", snowBallCoolDownPlayer) : " READY !"), { snowballX + 10.f, snowballY - 50.f, 1.0f }, { 0.05f, 0.55f, 0.65f });
+
+
+            // -- Gauge Configuration --
+            float barWidth = 300.0f;
+            float barHeight = 20.0f;
+            float posX = 50.f;  // X Position (e.g., left side)
+            float posY = 100.f; // Y Position
+
+            // -- Engine Heat Logic --
+            float heat = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).engineHeat; // 0.0 to 1.0
+            int maxBars = 25; // Total gauge segments
+            int currentBarsCount = static_cast<int>(heat * maxBars);
+
+            float startX = 100.0f;
+            float startY = 100.0f;
+            float barSpacing = 18.0f; // Adjust based on the '/' character width in your font
+
+            // 0. --- TEXT LOGIC (Dynamic Scaling) ---
+            float baseScale = 1.5f;
+            // Scale increases by up to 50% based on heat level
+            float textScale = baseScale + (heat * 0.70f);
+
+            // 1. --- BACKGROUND RENDERING (Blue-Grey) ---
+            // Draw the empty gauge representing maximum capacity
+            std::string backgroundBarString = "";
+            for (int i = 0; i < maxBars; ++i) {
+                backgroundBarString += "/";
+            }
+            glm::vec3 backgroundColor = { 0.35f, 0.4f, 0.50f }; // Muted blue-grey
+            textSystem->renderText(backgroundBarString, { startX, startY, baseScale }, backgroundColor);
+
+
+            // 2. --- DYNAMIC COLOR LOGIC (Multi-stage Palette) ---
+            glm::vec3 color;
+            if (heat < 0.25f) {
+                // Turquoise -> Lemon Yellow
+                // Increase Red, keep Green max, slightly decrease Blue
+                float t = heat / 0.25f;
+                color = glm::vec3(t, 1.0f, 1.0f - t * 0.5f);
+            }
+            else if (heat < 0.50f) {
+                // Lemon Yellow -> Sun Yellow
+                // Remove remaining Blue for a pure Yellow
+                float t = (heat - 0.25f) / 0.25f;
+                color = glm::vec3(1.0f, 1.0f, 0.5f - t * 0.5f);
+            }
+            else if (heat < 0.75f) {
+                // Sun Yellow -> Fire Orange
+                // Decrease Green to shift towards Orange
+                float t = (heat - 0.50f) / 0.25f;
+                color = glm::vec3(1.0f, 1.0f - t * 0.5f, 0.0f);
+            }
+            else {
+                // Fire Orange -> Deep Magenta-Red (Danger Zone)
+                // Drop Green to 0 for pure Red and slightly increase Blue for intensity
+                float t = (heat - 0.75f) / 0.25f;
+                float r = 1.0f;               // Max Red
+                float g = 0.5f - t * 0.5f;    // Green drops to 0
+                float b = t * 0.35f;          // Blue rises slightly to saturate the red
+                color = glm::vec3(r, g, b);
+            }
+
+
+            // 3. --- PROGRESS RENDERING (Overlay) ---
+            std::string heatBarString = "";
+            for (int i = 0; i < currentBarsCount; ++i) {
+                heatBarString += "/";
+            }
+
+            // Draw the "filled" part over the grey background
+            textSystem->renderText(heatBarString, { startX, startY, baseScale }, color);
+
+            float textPadding = 38.0f;
+            float textX = startX + (maxBars * barSpacing) + textPadding;
+
+            // Display percentage or Overheat warning
+            std::string percentStr = (heat >= 0.995f) ? "OVERHEAT!" : std::format("{:.0f}%", heat * 100.0f);
+
+            // Render text with a drop shadow for better UI contrast
+            // Shadow (Black)
+            textSystem->renderText(percentStr, { textX + 2.f, startY - 2.f, textScale }, { 0.0f, 0.0f, 0.0f });
+            // Main text (Dynamic color)
+            textSystem->renderText(percentStr, { textX, startY, textScale }, color);
 
             // --- Crosshair / Center UI ---
             textSystem->renderText("+", { centerX - 5.f, centerY - 5.f, 0.75f }, { 1.f, 1.f, 1.f });
@@ -461,7 +546,7 @@ void RacingGame::run()
             textSystem->renderText("Boost: Y-Btn / SHIFT", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
             textSystem->renderText("Shoot: X-Btn / SPACE", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
             textSystem->renderText("Pause: Start / P", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
-            */
+            //*/
             textSystem->endText(); 
             this->endFrame();
             
