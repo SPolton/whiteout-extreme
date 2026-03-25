@@ -43,7 +43,7 @@ private:
     }
 
     // Basic Movement
-    void accelerate();
+    void accelerate(float throttle = 0.7f);
     void brake();
     void steerRight();
     void steerLeft();

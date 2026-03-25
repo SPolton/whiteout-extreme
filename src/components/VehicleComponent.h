@@ -19,6 +19,21 @@ struct VehicleComponent {
     float brake = 0.0f;
     float steer = 0.0f;
 
+    //BOOST SYSTEM
+    float boostTimer = 4.0f;
+    bool isBoosting = false;
+
+    float engineHeat = 0.0f;       // 0.0f to 100.0f (or 0.0 to 1.0)
+    float timeSinceLastBoost = 0.0f;
+    float maxHeat = 1.0f;
+    float heatCooldownTimer = 0.0f; // for 1s delay befor cooldown
+    bool isOverheated = false;      // optional : to block boost at 100%
+
+    // Tuning settings
+    float boostHeatInstantCost = 0.06f; // 10% instant
+    float boostHeatPerSecond = 0.18f;  // then linear heating (18% per sec)
+    float heatRecoveryDelay = 1.0f;
+
     bool forwardGearDesired = true;
     PxVehicleDirectDriveTransmissionCommandState::Enum gearState{ PxVehicleDirectDriveTransmissionCommandState::eREVERSE };
 

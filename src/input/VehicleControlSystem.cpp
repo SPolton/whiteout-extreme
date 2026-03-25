@@ -28,6 +28,37 @@ void VehicleControlSystem::update(float deltaTime)
 
     for (auto const& entity : mEntities) {
         auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(entity);
+        auto& engineParams = vehicle.instance->getVehicleData().mEngineDriveParams.engineParams;
+
+        // Reset flag isBoosting by default for this frame
+        bool wasBoosting = vehicle.isBoosting;
+        vehicle.isBoosting = false;
+
+        // Call inputs
+        if (entity == playerVehicleEntity) processInputs();
+
+        if (vehicle.isBoosting) {
+            // --- LOGIC BOOST ---
+            engineParams.maxOmega = 2100.0f;
+            vehicle.engineHeat = std::min(1.0f, vehicle.engineHeat + vehicle.boostHeatPerSecond * deltaTime);
+            vehicle.timeSinceLastBoost = 0.0f;
+        }
+        else {
+            // --- LOGIC COOLING ---
+            engineParams.maxOmega = 1300.0f;
+            vehicle.timeSinceLastBoost += deltaTime;
+
+            if (vehicle.timeSinceLastBoost > 1.0f && vehicle.engineHeat > 0.0f) {
+
+                // k increases slightly  : 0.05 at t=1s, 0.20 at t=2s, 0.45 at t=3s...
+                float t = vehicle.timeSinceLastBoost - 1.0f;
+                float decayRate = 0.05f * (t * t) + 0.02f;
+
+                vehicle.engineHeat -= decayRate * deltaTime;
+
+                if (vehicle.engineHeat < 0.0f) vehicle.engineHeat = 0.0f;
+            }
+        }
 
         if (vehicle.snowBallCooldown > 0.f) vehicle.snowBallCooldown -= deltaTime;
 
@@ -194,21 +225,21 @@ void VehicleControlSystem::processKeyboardInput()
 // Input -> Movement
 //==================================================================================================================//
 
-void VehicleControlSystem::accelerate()
+void VehicleControlSystem::accelerate(float throttle)
 {
     //logger::info("Accelerating...");
     // apply transformation here to move car forward
 
     auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity);
-
     vehicle.forwardGearDesired = true;
 
     if (vehicle.hasGearDesired()) {
-        currentThrottle = 1.0f;
-        //currentThrottle = 0.7f;
-    }
-    else {
-        currentBrake = 1.0f;
+        // currentThrottle set to 1.0 if flag isBoosting raised in this frame
+        currentThrottle = vehicle.isBoosting ? 1.0f : throttle;
+        currentBrake = 0.0f;
+    } else {
+        currentBrake = throttle;
+        currentThrottle = 0.0f;
     }
 }
 
@@ -251,7 +282,24 @@ void VehicleControlSystem::boost()
     //logger::info("Activate Boost...");
     // apply transformation here accelerate car even faster due to boost.
     // probably need a CD for this?
-    currentThrottle = 1.f; // full throttle
+    //currentThrottle = 1.f; // full throttle
+    //accelerate(1.0f);
+
+    auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity);
+
+    // Rising edge : instant boost cost 10% if not boosting before
+    if (vehicle.timeSinceLastBoost > 0.1f) {
+        vehicle.engineHeat = std::min(1.0f, vehicle.engineHeat + vehicle.boostHeatInstantCost);
+        logger::info("BOOST START: Instant cost applied");
+    }
+
+    if (vehicle.engineHeat < 1.0f) {
+        vehicle.isBoosting = true;
+        accelerate(1.0f); // Force throttle max
+    }
+    else {
+        accelerate();
+    }
 }
 
 void VehicleControlSystem::throwSnowball()
