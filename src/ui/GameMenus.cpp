@@ -64,6 +64,17 @@ void GameMenus::init()
         logger::error("Failed to load background picture texture: {0}", e.what());
     }
 
+    // pre-load the texture for the help menu keyboard control
+    try
+    {
+        keyboardTexture = assetManager.loadTexture("assets/ui/Keyboard_controls.png");
+        logger::info("Keyboard control texture loaded successfully");
+    }
+    catch (const std::exception& e)
+    {
+        logger::error("Failed to load keyboard control texture: {0}", e.what());
+    }
+
     // set the position of the quad of the logo
     quad.positions = {
         // Triangle 1
@@ -201,19 +212,19 @@ MenuAction GameMenus::pollInputs() {
     }
     // triggers help menu (can only be navigated to from main menu)
     else if (inputManager->isKeyPressedOnce(GLFW_KEY_H) && gameState == GameState::MainMenu) {
-        audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
+        audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
         gameState = GameState::HelpMenu; // update game state to render help page
         return MenuAction::None; // no action taken
     }
     // triggers controller help menu (can only be navigated to from Help menu)
     else if (inputManager->isKeyPressedOnce(GLFW_KEY_J) && gameState == GameState::HelpMenu) {
-        audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
+        audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
         gameState = GameState::ControllerHelp; // update game state to render help page
         return MenuAction::None; // no action taken
     }
     // triggers keyboard help menu (can only be navigated to from Help menu)
     else if (inputManager->isKeyPressedOnce(GLFW_KEY_K) && gameState == GameState::HelpMenu) {
-        audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
+        audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
         gameState = GameState::KeyboardHelp; // update game state to render help page
         return MenuAction::None; // no action taken
     }
@@ -497,8 +508,8 @@ MenuAction GameMenus::renderHelpMenu()
 
             // and check if the user clicks on the mouse while over the "Back" button
             if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
-                // play an "entering game" sound when button clicked
-                audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
+                // play ui button sound when button clicked
+                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
                 // if they do, toggle to show the main menu
                 return MenuAction::GoToMainMenu;
             }
@@ -547,7 +558,7 @@ MenuAction GameMenus::renderControllerHelp()
             // and check if the user clicks on the mouse while over the "return" button
             if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
                 // play ui button sound when button clicked
-                audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
+                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
                 // if they do, toggle to show the main menu
                 return MenuAction::GoToMainMenu;
             }
@@ -625,15 +636,12 @@ MenuAction GameMenus::renderKeyboardHelp()
             // and check if the user clicks on the mouse while over the "return" button
             if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
                 // play ui button sound when button clicked
-                audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
+                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
                 // if they do, toggle to show the main menu
                 return MenuAction::GoToMainMenu;
             }
         }
     }
-
-    // render the text with the proper color assigned
-    textSystem->renderText("Keyboard", { 500.f, 1300.f, 0.75f }, defaultColor);
 
     // create vao to draw menu logo
     GPU_Geometry gpuQuad;
@@ -643,18 +651,15 @@ MenuAction GameMenus::renderKeyboardHelp()
 
     // bind texture
     glActiveTexture(GL_TEXTURE0);
-    logoTexture->bind();
+    keyboardTexture->bind();
     glUniform1i(glGetUniformLocation(*shader, "sample"), 0);
-
-    // translations
-    float translateY = 0.25f;
 
     // static model to pass to shader, renders png as is
     glm::mat4 model = glm::mat4(
-        1.f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.f, 0.0f, 0.0f,
-        0.f, 0.0f, 1.f, 0.0f,
-        0.0f, translateY, 0.f, 1.0f
+        0.8f, 0.0f, 0.0f, 0.0f,
+        0.0f, 0.8f, 0.0f, 0.0f,
+        0.f, 0.0f, 0.8f, 0.0f,
+        0.0f, 0.15f, 0.f, 1.0f
     );
 
     glUniformMatrix4fv(glGetUniformLocation(*shader, "model"), 1, GL_FALSE, glm::value_ptr(model));
@@ -666,7 +671,7 @@ MenuAction GameMenus::renderKeyboardHelp()
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     // return to main menu button
-    textSystem->renderText("Return to Main Menu", { 300.f, 400.f, 0.75f }, defaultColor);
+    textSystem->renderText("Return to Main Menu", { 300.f, 100.f, 0.75f }, defaultColor);
 
     textSystem->endText();
 
