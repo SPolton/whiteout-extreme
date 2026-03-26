@@ -354,6 +354,12 @@ void RacingGame::updateInMenu(MenuAction actionButtons)
         updatePauseMenu(actionButtons);
     } else if (gameState == GameState::GameOver) {
         updateGameOverMenu(actionButtons);
+    } else if (gameState == GameState::HelpMenu) {
+        updateHelpMenu(actionButtons);
+    } else if (gameState == GameState::ControllerHelp) {
+        updateControllerHelpMenu(actionButtons);
+    } else if (gameState == GameState::KeyboardHelp) {
+        updateKeyboardHelpMenu(actionButtons);
     }
 }
 
@@ -400,6 +406,39 @@ void RacingGame::updateGameOverMenu(MenuAction actionButtons)
     auto& playerRacer = gCoordinator.GetComponent<Racer>(playerVehicleEntity);
     int rank = playerRacer.currentRank;
     MenuAction actionCursor = menus->renderGameOver(rank, playerRacer.engulfed);
+
+    if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
+        gameState = GameState::MainMenu;
+    }
+
+    updateMenuAudioState();
+}
+
+void RacingGame::updateHelpMenu(MenuAction actionButtons)
+{
+    MenuAction actionCursor = menus->renderHelpMenu();
+
+    if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
+        gameState = GameState::MainMenu;
+    }
+
+    updateMenuAudioState();
+}
+
+void RacingGame::updateControllerHelpMenu(MenuAction actionButtons)
+{
+    MenuAction actionCursor = menus->renderControllerHelp();
+
+    if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
+        gameState = GameState::MainMenu;
+    }
+
+    updateMenuAudioState();
+}
+
+void RacingGame::updateKeyboardHelpMenu(MenuAction actionButtons)
+{
+    MenuAction actionCursor = menus->renderKeyboardHelp();
 
     if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
         gameState = GameState::MainMenu;

@@ -34,6 +34,9 @@ private:
     void updateMainMenu(MenuAction actionButtons);
     void updatePauseMenu(MenuAction actionButtons);
     void updateGameOverMenu(MenuAction actionButtons);
+    void updateHelpMenu(MenuAction actionButtons);
+    void updateControllerHelpMenu(MenuAction actionButtons);
+    void updateKeyboardHelpMenu(MenuAction actionButtons);
 
     // Gameplay
     void updatePhysicsAndGameplayLoop();
