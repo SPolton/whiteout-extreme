@@ -383,6 +383,9 @@ void RacingGame::updateMainMenu(MenuAction actionButtons)
         racingSystem->restart();
         gameState = GameState::InGame;
     }
+    else if (actionButtons == MenuAction::GoToHelpMenu || actionCursor == MenuAction::GoToHelpMenu) {
+        gameState = GameState::HelpMenu;
+    }
 
     updateMenuAudioState();
 }
@@ -420,6 +423,12 @@ void RacingGame::updateHelpMenu(MenuAction actionButtons)
 
     if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
         gameState = GameState::MainMenu;
+    }
+    else if (actionButtons == MenuAction::GoToControllerHelp || actionCursor == MenuAction::GoToControllerHelp) {
+        gameState = GameState::ControllerHelp;
+    }
+    else if (actionButtons == MenuAction::GoToKeyboardHelp || actionCursor == MenuAction::GoToKeyboardHelp) {
+        gameState = GameState::KeyboardHelp;
     }
 
     updateMenuAudioState();

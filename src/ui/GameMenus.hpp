@@ -16,7 +16,10 @@ enum class MenuAction {
     None,
     StartGame,
     ResumeGame,
-    GoToMainMenu
+    GoToMainMenu,
+    GoToHelpMenu,
+    GoToControllerHelp,
+    GoToKeyboardHelp
 };
 
 class GameMenus {

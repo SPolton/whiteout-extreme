@@ -323,9 +323,12 @@ MenuAction GameMenus::renderMainMenu()
     // set the "Start" button to the default color (used when not hovered upon)
     glm::vec3 startColor = defaultColor;
 
+    // set the "Help" button to the default color (used when not hovered upon)
+    glm::vec3 helpColor = defaultColor;
+
     // check if mouse is hovered over the "Start" button
-    if (cursorPos.x > 485.f && cursorPos.x < 700.f) {
-        if (cursorPos.y > 540.f && cursorPos.y < 580.f) {
+    if (cursorPos.x > 440.f && cursorPos.x < 635.f) {
+        if (cursorPos.y > 480.f && cursorPos.y < 520.f) {
             // if it is, highlight in red
             startColor = { 0.8f, 0.f, 0.f };
 
@@ -339,9 +342,25 @@ MenuAction GameMenus::renderMainMenu()
         }
     }
 
+    // check if mouse is hovered over the "Help" button
+    if (cursorPos.x > 450.f && cursorPos.x < 610.f) {
+        if (cursorPos.y > 555.f && cursorPos.y < 595.f) {
+            // if it is, highlight in red
+            helpColor = { 0.8f, 0.f, 0.f };
+
+            // and check if the user clicks on the mouse while over the "Help" button
+            if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
+                // play ui button sound when button clicked
+                audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
+                // if they do, toggle to show the help menu
+                return MenuAction::GoToHelpMenu;
+            }
+        }
+    }
+
     // render the text with the proper color assigned
     textSystem->renderText("Start", { 585.f, 400.f, 0.75f }, startColor);
-    textSystem->renderText("Help", { 605.f, 250.f, 0.75f }, defaultColor);
+    textSystem->renderText("Help", { 605.f, 250.f, 0.75f }, helpColor);
 
     // small text to credit ai generated background picture
     textSystem->loadFont("arial.ttf", 35);
@@ -378,8 +397,8 @@ MenuAction GameMenus::renderPauseMenu() {
     glm::vec3 quitColor = defaultColor;
 
     // check if mouse is hovered over the "Resume" button
-    if (cursorPos.x > 495.f && cursorPos.x < 685.f) {
-        if (cursorPos.y > 270.f && cursorPos.y < 300.f) {
+    if (cursorPos.x > 445.f && cursorPos.x < 630.f) {
+        if (cursorPos.y > 240.f && cursorPos.y < 270.f) {
             // if it is, highlight in red
             resumeColor = { 0.8f, 0.f, 0.f };
 
@@ -394,8 +413,8 @@ MenuAction GameMenus::renderPauseMenu() {
     }
 
     // check if mouse is hovered over the "Quit" button
-    if (cursorPos.x > 310.f && cursorPos.x < 895.f) {
-        if (cursorPos.y > 355.f && cursorPos.y < 385.f) {
+    if (cursorPos.x > 275.f && cursorPos.x < 845.f) {
+        if (cursorPos.y > 310.f && cursorPos.y < 355.f) {
             // if it is, highlight in red
             quitColor = { 0.8f, 0.f, 0.f };
 
@@ -456,7 +475,7 @@ MenuAction GameMenus::renderGameOver(int rank, bool engulfed)
     glm::vec3 defaultColor = { 0.f, 0.f, 0.6f };
 
     // set the "Return to menu" button to the default color (used when not hovered upon)
-    glm::vec3 startColor = defaultColor;
+    glm::vec3 returnColor = defaultColor;
 
     // check for controller inputs
     if (inputSystem == 1) {
@@ -470,10 +489,10 @@ MenuAction GameMenus::renderGameOver(int rank, bool engulfed)
     }
     // otherwise it must be keyboard/mouse input
     // check if mouse is hovered over the "Return to menu" button
-    if (cursorPos.x > 225.f && cursorPos.x < 1000.f) {
-        if (cursorPos.y > 540.f && cursorPos.y < 575.f) {
+    if (cursorPos.x > 200.f && cursorPos.x < 900.f) {
+        if (cursorPos.y > 630.f && cursorPos.y < 675.f) {
             // if it is, highlight in red
-            startColor = { 0.8f, 0.f, 0.f };
+            returnColor = { 0.8f, 0.f, 0.f };
 
             // and check if the user clicks on the mouse while over the "Return to menu" button
             if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
@@ -485,8 +504,8 @@ MenuAction GameMenus::renderGameOver(int rank, bool engulfed)
         }
     }
 
-    // render the text with the proper color assigned
-    textSystem->renderText("Return to Main Menu", { 270.f, 400.f, 0.75f }, startColor);
+    // return to main menu button
+    textSystem->renderText("Return to Main Menu", { 270.f, 100.f, 0.75f }, returnColor);
 
     textSystem->endText();
 
@@ -508,15 +527,49 @@ MenuAction GameMenus::renderHelpMenu()
 
     textSystem->loadFont("LuckiestGuy-Regular.ttf", 120);
 
-    // default color for the "Back" button
+    // default color for all buttons
     glm::vec3 defaultColor = { 0.f, 0.f, 0.6f };
 
     // set the "Back" button to the default color (used when not hovered upon)
     glm::vec3 backColor = defaultColor;
+    // set the "Keyboard" button to the default color (used when not hovered upon)
+    glm::vec3 keyboardColor = defaultColor;
+    // set the "Controller" button to the default color (used when not hovered upon)
+    glm::vec3 controllerColor = defaultColor;
 
+    // check if mouse is hovered over the "Controller" button
+    if (cursorPos.x > 340.f && cursorPos.x < 730.f) {
+        if (cursorPos.y > 330.f && cursorPos.y < 370.f) {
+            // if it is, highlight in red
+            controllerColor = { 0.8f, 0.f, 0.f };
+
+            // and check if the user clicks on the mouse while over the "Controller" button
+            if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
+                // play ui button sound when button clicked
+                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                // if they do, toggle to show the controller help menu
+                return MenuAction::GoToControllerHelp;
+            }
+        }
+    }
+    // check if mouse is hovered over the "Keyboard" button
+    if (cursorPos.x > 370.f && cursorPos.x < 705.f) {
+        if (cursorPos.y > 230.f && cursorPos.y < 270.f) {
+            // if it is, highlight in red
+            keyboardColor = { 0.8f, 0.f, 0.f };
+
+            // and check if the user clicks on the mouse while over the "Keyboard" button
+            if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
+                // play ui button sound when button clicked
+                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                // if they do, toggle to show the keyboard help menu
+                return MenuAction::GoToKeyboardHelp;
+            }
+        }
+    }
     // check if mouse is hovered over the "Back" button
-    if (cursorPos.x > 485.f && cursorPos.x < 700.f) {
-        if (cursorPos.y > 540.f && cursorPos.y < 580.f) {
+    if (cursorPos.x > 445.f && cursorPos.x < 610.f) {
+        if (cursorPos.y > 480.f && cursorPos.y < 520.f) {
             // if it is, highlight in red
             backColor = { 0.8f, 0.f, 0.f };
 
@@ -531,11 +584,11 @@ MenuAction GameMenus::renderHelpMenu()
     }
 
     // pages to choose from
-    textSystem->renderText("Keyboard", { 500.f, 900.f, 0.75f }, defaultColor);
-    textSystem->renderText("Controller", { 460.f, 700.f, 0.75f }, defaultColor);
+    textSystem->renderText("Keyboard", { 500.f, 900.f, 0.75f }, keyboardColor);
+    textSystem->renderText("Controller", { 460.f, 700.f, 0.75f }, controllerColor);
 
     // render the text with the proper color assigned
-    textSystem->renderText("Back", { 585.f, 400.f, 0.75f }, backColor);
+    textSystem->renderText("Back", { 600.f, 400.f, 0.75f }, backColor);
 
     textSystem->endText();
 
@@ -557,17 +610,17 @@ MenuAction GameMenus::renderControllerHelp()
 
     textSystem->loadFont("LuckiestGuy-Regular.ttf", 120);
 
-    // default color for the "Start" button
+    // default color for the "Return" button
     glm::vec3 defaultColor = { 0.f, 0.f, 0.6f };
 
     // set the "return" button to the default color (used when not hovered upon)
-    glm::vec3 startColor = defaultColor;
+    glm::vec3 returnColor = defaultColor;
 
     // check if mouse is hovered over the "return" button
-    if (cursorPos.x > 485.f && cursorPos.x < 700.f) {
-        if (cursorPos.y > 540.f && cursorPos.y < 580.f) {
+    if (cursorPos.x > 200.f && cursorPos.x < 900.f) {
+        if (cursorPos.y > 630.f && cursorPos.y < 675.f) {
             // if it is, highlight in red
-            startColor = { 0.8f, 0.f, 0.f };
+            returnColor = { 0.8f, 0.f, 0.f };
 
             // and check if the user clicks on the mouse while over the "return" button
             if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
@@ -607,7 +660,7 @@ MenuAction GameMenus::renderControllerHelp()
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     // return to main menu button
-    textSystem->renderText("Return to Main Menu", { 300.f, 100.f, 0.75f }, defaultColor);
+    textSystem->renderText("Return to Main Menu", { 270.f, 100.f, 0.75f }, returnColor);
 
     textSystem->endText();
 
@@ -629,17 +682,17 @@ MenuAction GameMenus::renderKeyboardHelp()
 
     textSystem->loadFont("LuckiestGuy-Regular.ttf", 120);
 
-    // default color for the "Start" button
+    // default color for the "Return" button
     glm::vec3 defaultColor = { 0.f, 0.f, 0.6f };
 
     // set the "return" button to the default color (used when not hovered upon)
-    glm::vec3 startColor = defaultColor;
+    glm::vec3 returnColor = defaultColor;
 
     // check if mouse is hovered over the "return" button
-    if (cursorPos.x > 485.f && cursorPos.x < 700.f) {
-        if (cursorPos.y > 540.f && cursorPos.y < 580.f) {
+    if (cursorPos.x > 200.f && cursorPos.x < 900.f) {
+        if (cursorPos.y > 630.f && cursorPos.y < 675.f) {
             // if it is, highlight in red
-            startColor = { 0.8f, 0.f, 0.f };
+            returnColor = { 0.8f, 0.f, 0.f };
 
             // and check if the user clicks on the mouse while over the "return" button
             if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
@@ -679,7 +732,7 @@ MenuAction GameMenus::renderKeyboardHelp()
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     // return to main menu button
-    textSystem->renderText("Return to Main Menu", { 300.f, 100.f, 0.75f }, defaultColor);
+    textSystem->renderText("Return to Main Menu", { 270.f, 100.f, 0.75f }, returnColor);
 
     textSystem->endText();
 
