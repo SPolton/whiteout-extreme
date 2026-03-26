@@ -568,12 +568,6 @@ void RacingGame::renderInGameHUD()
     textSystem->renderText((snowBallCoolDownPlayer > 0.f ? std::format(" in {:.1f}s", snowBallCoolDownPlayer) : " READY !"), { snowballX + 10.f, snowballY - 50.f, 1.0f }, { 0.05f, 0.55f, 0.65f });
 
     // -- BOOST GAUGE --
-    // -- Gauge Configuration --
-    float barWidth = 300.0f;
-    float barHeight = 20.0f;
-    float posX = 50.f;  // X Position (e.g., left side)
-    float posY = 100.f; // Y Position
-
     // -- Engine Heat Logic --
     float heat = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).engineHeat; // 0.0 to 1.
     bool engineOverheated = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).isOverheated;

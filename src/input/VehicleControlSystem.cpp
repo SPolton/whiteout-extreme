@@ -33,9 +33,6 @@ void VehicleControlSystem::update(float deltaTime)
         }
         auto& engineParams = vehicle.instance->getVehicleData().mEngineDriveParams.engineParams;
 
-        // Reset flag isBoosting by default for this frame
-        bool wasBoosting = vehicle.isBoosting;
-
         // Call inputs
         if (entity == playerVehicleEntity) {
             vehicle.isBoosting = false;
