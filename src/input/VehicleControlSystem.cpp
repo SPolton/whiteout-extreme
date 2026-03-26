@@ -23,8 +23,8 @@ void VehicleControlSystem::update(float deltaTime)
 {
     if (!inputManager) return;
 
-    resetInputs();
-    processInputs();
+    //resetInputs();
+    //processInputs();
 
     for (auto const& entity : mEntities) {
         auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(entity);
@@ -39,19 +39,60 @@ void VehicleControlSystem::update(float deltaTime)
         // Call inputs
         if (entity == playerVehicleEntity) {
             vehicle.isBoosting = false;
+            resetInputs();
             processInputs();
         }
 
-        if (vehicle.isBoosting) {
+        if (vehicle.isOverheated) {
+            vehicle.isBoosting = false;
+        }
+
+        if (vehicle.isBoosting && !vehicle.isOverheated) {
             // --- LOGIC BOOST ---
             engineParams.maxOmega = 2100.0f;
             vehicle.engineHeat = std::min(1.0f, vehicle.engineHeat + vehicle.boostHeatPerSecond * deltaTime);
             vehicle.timeSinceLastBoost = 0.0f;
+
+            // --- OVERHEAT ---
+            if (vehicle.engineHeat >= 1.0f) {
+                vehicle.engineHeat = 1.0f;
+                vehicle.isOverheated = true;
+                vehicle.isBoosting = false;
+
+                // Max Speed reduced punishment
+                engineParams.maxOmega = 600.0f;
+            
+                // Slight spin and front impulse punishments (PHYSX)
+                if (gCoordinator.HasComponent<RigidBody>(entity)) {
+                    auto& rb = gCoordinator.GetComponent<RigidBody>(entity);
+                    auto* dynamicActor = rb.actor->is<physx::PxRigidDynamic>();
+
+                    if (dynamicActor) {
+                        float spinImpulse = 6500.0f;
+                        float sideSelect = (rand() % 2 == 0) ? 1.0f : -1.0f;
+                        dynamicActor->addTorque(physx::PxVec3(0, spinImpulse * sideSelect, 0), physx::PxForceMode::eIMPULSE);
+                        
+                        physx::PxTransform pose = dynamicActor->getGlobalPose();
+                        physx::PxVec3 backwardDir = -pose.q.rotate(physx::PxVec3(0, 0, 1));
+
+                        float hitForce = 9000.0f;
+                        physx::PxVec3 frontHitImpulse = (backwardDir * hitForce) + physx::PxVec3(0, 1000.0f, 0);
+
+                        dynamicActor->addForce(frontHitImpulse, physx::PxForceMode::eIMPULSE);
+
+                    }
+                }
+                logger::error("ENGINE OVERHEATED!");
+            }
         }
         else {
             // --- LOGIC COOLING ---
-            engineParams.maxOmega = 1300.0f;
+            engineParams.maxOmega = vehicle.isOverheated? 600.f: 1300.0f;
             vehicle.timeSinceLastBoost += deltaTime;
+
+            if (vehicle.isOverheated && vehicle.engineHeat <= 0.1f) {
+                vehicle.isOverheated = false;
+            }
 
             if (vehicle.timeSinceLastBoost > 1.0f && vehicle.engineHeat > 0.0f) {
                 float t = vehicle.timeSinceLastBoost - 1.2f;
@@ -60,6 +101,12 @@ void VehicleControlSystem::update(float deltaTime)
 
                 if (vehicle.engineFreezing) {
                     decayRate *= 3.0f;
+                    if (vehicle.isOverheated) {
+                        decayRate *= 0.3f;
+                    }
+                }
+                else if (vehicle.isOverheated) {
+                    decayRate *= 0.5f;
                 }
 
                 vehicle.engineHeat -= decayRate * deltaTime;
@@ -70,9 +117,9 @@ void VehicleControlSystem::update(float deltaTime)
         // LOGIC FREEZING
         if (vehicle.engineFreezing) {
             vehicle.engineHeat = std::clamp(vehicle.engineHeat - deltaTime * 0.08f, 0.0f, 1.0f);
-            if (entity == playerVehicleEntity) {
-                logger::warn("Avalanche is cooling down the engine");
-            }
+            //if (entity == playerVehicleEntity) {
+                //logger::warn("Avalanche is cooling down the engine");
+            //}
         }
 
         if (vehicle.snowBallCooldown > 0.f) vehicle.snowBallCooldown -= deltaTime;
@@ -250,7 +297,7 @@ void VehicleControlSystem::accelerate(float throttle)
 
     if (vehicle.hasGearDesired()) {
         // currentThrottle set to 1.0 if flag isBoosting raised in this frame
-        currentThrottle = vehicle.isBoosting ? 1.0f : throttle;
+        currentThrottle = throttle;
         currentBrake = 0.0f;
     } else {
         currentBrake = throttle;
@@ -302,18 +349,22 @@ void VehicleControlSystem::boost()
 
     auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity);
 
-    // Rising edge : instant boost cost 10% if not boosting before
-    if (vehicle.timeSinceLastBoost > 0.1f) {
-        vehicle.engineHeat = std::min(1.0f, vehicle.engineHeat + vehicle.boostHeatInstantCost);
-        logger::info("BOOST START: Instant cost applied");
+    if (vehicle.isOverheated) {
+        vehicle.isBoosting = false;
+        return;
     }
 
-    if (vehicle.engineHeat < 1.0f) {
+    if (vehicle.engineHeat < 1.0f && !vehicle.isOverheated) {
         vehicle.isBoosting = true;
-        accelerate(1.0f); // Force throttle max
+        accelerate(1.0f);
     }
     else {
+        vehicle.isBoosting = false;
         accelerate();
+    }
+
+    if (vehicle.isBoosting && vehicle.timeSinceLastBoost > 0.1f) {
+        vehicle.engineHeat = std::min(1.0f, vehicle.engineHeat + vehicle.boostHeatInstantCost);
     }
 }
 

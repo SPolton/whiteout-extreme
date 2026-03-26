@@ -30,6 +30,7 @@ void AISystem::update(float deltaTime)
             continue;
         }
 
+        /*
         // Handling Boost System
         if (aiVehicle.engineHeat < 0.1f || (aiVehicle.engineHeat <= 0.98f && aiVehicle.isBoosting)) {
             aiVehicle.isBoosting = true;
@@ -41,6 +42,34 @@ void AISystem::update(float deltaTime)
             aiVehicle.isBoosting = false;
         }
         else {
+            aiVehicle.isBoosting = false;
+        }
+        */
+
+        // --- Handling Boost System with Risk Factor ---
+
+        // 1. Default safety threshold (AI normally stops at 95%)
+        float safetyThreshold = 0.95f;
+
+        // 2. Introduce a "Rare Mistake" chance
+        // We check this every frame, so we use a very small probability (e.g., 2 in 1000)
+        // This simulates a momentary lapse in judgment or "tunnel vision"
+        if (rand() % 1000 < 2) {
+            // AI becomes reckless and won't stop boosting until it's too late
+            safetyThreshold = 1.2f;
+        }
+
+        // 3. Apply Boost Logic
+        if (aiVehicle.engineHeat < 0.1f || (aiVehicle.engineHeat <= safetyThreshold && aiVehicle.isBoosting)) {
+            aiVehicle.isBoosting = true;
+
+            // Apply instant heat cost if enough time has passed since the last burst
+            if (aiVehicle.timeSinceLastBoost > 0.1f) {
+                aiVehicle.engineHeat = std::min(1.0f, aiVehicle.engineHeat + aiVehicle.boostHeatInstantCost);
+            }
+        }
+        else {
+            // Stop boosting if threshold reached or safety triggered
             aiVehicle.isBoosting = false;
         }
 

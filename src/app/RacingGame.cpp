@@ -576,9 +576,12 @@ void RacingGame::renderInGameHUD()
 
     // -- Engine Heat Logic --
     float heat = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).engineHeat; // 0.0 to 1.
+    bool engineOverheated = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).isOverheated;
     bool engineFreezing = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).engineFreezing;
     int maxBars = 25; // Total gauge segments
     int currentBarsCount = static_cast<int>(heat * maxBars);
+
+    if (engineOverheated) heat = 1.0f;
 
     float startX = 100.0f;
     float startY = 100.0f;
@@ -644,7 +647,7 @@ void RacingGame::renderInGameHUD()
     float textX = startX + (maxBars * barSpacing) + textPadding;
 
     // Display percentage or Overheat warning
-    std::string percentStr = (heat >= 0.995f) ? "OVERHEAT!" : std::format("{:.0f}%", heat * 100.0f);
+    std::string percentStr = (heat >= 1.0f) ? "OVERHEAT!" : std::format("{:.0f}%", heat * 100.0f);
 
     // Render text with a drop shadow for better UI contrast
     // Shadow (Black)

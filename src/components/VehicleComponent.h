@@ -31,7 +31,7 @@ struct VehicleComponent {
     bool engineFreezing = false;
 
     // Tuning settings
-    float boostHeatInstantCost = 0.06f; // 10% instant
+    float boostHeatInstantCost = 0.12f; // 10% instant
     float boostHeatPerSecond = 0.18f;  // then linear heating (18% per sec)
     float heatRecoveryDelay = 1.0f;
 
