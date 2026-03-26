@@ -110,6 +110,9 @@ void GameMenus::init()
 }
 
 MenuAction GameMenus::pollInputs() {
+    // poll controller state first
+    inputManager->pollControllerInputs();
+
     // check for controller inputs
     if (inputSystem == 1) {
         // triggers pause menu
