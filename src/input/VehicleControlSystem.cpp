@@ -54,14 +54,24 @@ void VehicleControlSystem::update(float deltaTime)
             vehicle.timeSinceLastBoost += deltaTime;
 
             if (vehicle.timeSinceLastBoost > 1.0f && vehicle.engineHeat > 0.0f) {
+                float t = vehicle.timeSinceLastBoost - 1.2f;
 
-                // k increases slightly  : 0.05 at t=1s, 0.20 at t=2s, 0.45 at t=3s...
-                float t = vehicle.timeSinceLastBoost - 1.0f;
-                float decayRate = 0.05f * (t * t) + 0.02f;
+                float decayRate = (0.03f * (t * t)) + 0.05f;
+
+                if (vehicle.engineFreezing) {
+                    decayRate *= 3.0f;
+                }
 
                 vehicle.engineHeat -= decayRate * deltaTime;
-
                 if (vehicle.engineHeat < 0.0f) vehicle.engineHeat = 0.0f;
+            }
+        }
+
+        // LOGIC FREEZING
+        if (vehicle.engineFreezing) {
+            vehicle.engineHeat = std::clamp(vehicle.engineHeat - deltaTime * 0.08f, 0.0f, 1.0f);
+            if (entity == playerVehicleEntity) {
+                logger::warn("Avalanche is cooling down the engine");
             }
         }
 

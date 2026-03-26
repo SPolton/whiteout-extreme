@@ -575,7 +575,8 @@ void RacingGame::renderInGameHUD()
     float posY = 100.f; // Y Position
 
     // -- Engine Heat Logic --
-    float heat = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).engineHeat; // 0.0 to 1.0
+    float heat = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).engineHeat; // 0.0 to 1.
+    bool engineFreezing = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).engineFreezing;
     int maxBars = 25; // Total gauge segments
     int currentBarsCount = static_cast<int>(heat * maxBars);
 
@@ -594,7 +595,8 @@ void RacingGame::renderInGameHUD()
     for (int i = 0; i < maxBars; ++i) {
         backgroundBarString += "/";
     }
-    glm::vec3 backgroundColor = { 0.35f, 0.4f, 0.50f }; // Muted blue-grey
+    glm::vec3 cooledDownBackground{ 0.65f, 0.80f, 1.0f };
+    glm::vec3 backgroundColor = engineFreezing? cooledDownBackground : glm::vec3{ 0.35f, 0.4f, 0.50f }; // Muted blue-grey
     textSystem->renderText(backgroundBarString, { startX, startY, baseScale }, backgroundColor);
 
 
@@ -646,9 +648,14 @@ void RacingGame::renderInGameHUD()
 
     // Render text with a drop shadow for better UI contrast
     // Shadow (Black)
-    textSystem->renderText(percentStr, { textX + 2.f, startY - 2.f, textScale }, { 0.0f, 0.0f, 0.0f });
+    textSystem->renderText(percentStr, { textX + 2.f, startY - 2.f, textScale }, engineFreezing? cooledDownBackground : glm::vec3{ 0.0f, 0.0f, 0.0f });
     // Main text (Dynamic color)
     textSystem->renderText(percentStr, { textX, startY, textScale }, color);
+
+    if (engineFreezing) {
+        textSystem->renderText("*** Freezing ***", { startX + 3.f, startY - 70.f + 3.f, baseScale }, cooledDownBackground);
+        textSystem->renderText("*** Freezing ***", { startX, startY - 70.f, baseScale }, {1.f, 1.f, 1.f});
+    }
 
     // --- Crosshair / Center UI ---
     textSystem->renderText("+", { centerX - 5.f, centerY - 5.f, 0.75f }, { 1.f, 1.f, 1.f });

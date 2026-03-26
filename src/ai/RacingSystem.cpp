@@ -68,6 +68,8 @@ void RacingSystem::update(float deltaTime)
         racer.lengthOnLane = lengthOnLane;
         racer.raceCompletion = (racer.lastGate->raceLength + lengthOnLane) / totalRaceLength;
 
+        racerVehicle.engineFreezing = racer.raceCompletion - avalanche->raceCompletion <= 0.004f;
+
         if (shouldLog && false) {
             // LOGGER INFO BLOCK
             logger::info("--- Racer Debug ---");
