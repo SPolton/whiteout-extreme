@@ -132,11 +132,17 @@ MenuAction GameMenus::pollInputs() {
         }
         // triggers main menu (do not allow keyboard input to navigate to main menu while in game)
         else if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_A) && gameState != GameState::InGame) {
-            // if on main menu, then start game
-            if (gameState == GameState::MainMenu) {
+            // if on main menu and player selected "start", then start game
+            if (gameState == GameState::MainMenu && selectedMenuOption == 0) {
                 // play an "entering game" sound when button clicked
                 audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
                 return MenuAction::StartGame;
+            }
+            // if on main menu and player selected "help", then go to help menu
+            else if (gameState == GameState::MainMenu && selectedMenuOption == 1) {
+                // play UI button clicked sound
+                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                return MenuAction::GoToHelpMenu;
             }
             else if (gameState == GameState::Pause) {
                 // play an "entering game" sound when button clicked
@@ -326,6 +332,22 @@ MenuAction GameMenus::renderMainMenu()
     // set the "Help" button to the default color (used when not hovered upon)
     glm::vec3 helpColor = defaultColor;
 
+    // if detected controller is source of input, then auto select (highlight in red) first menu option
+    if (inputSystem == 1) {
+        // add "deadzone" (since most controllers won't return back to 0.0 exactly)
+        float deadZone = 0.2f;
+
+        // check for right stick movement to scroll through menu options
+        // if negative, it is scrolling up
+        // if positive, it is scrolling down
+        if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_Y) < -deadZone) {
+            selectedMenuOption = 0; // if scrolled up, "start" button selected. save state
+        }
+        else if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_Y) > deadZone) {
+            selectedMenuOption = 1; // if scrolled down, "help" button selected. save state
+        }
+    }
+
     // check if mouse is hovered over the "Start" button
     if (cursorPos.x > 440.f && cursorPos.x < 635.f) {
         if (cursorPos.y > 480.f && cursorPos.y < 520.f) {
@@ -356,6 +378,18 @@ MenuAction GameMenus::renderMainMenu()
                 return MenuAction::GoToHelpMenu;
             }
         }
+    }
+
+    // update button highlights based on which button currently selected (know from state keeping)
+    if (selectedMenuOption == 0) {
+        // select the "start" button
+        startColor = { 0.8f, 0.f, 0.f };
+        helpColor = defaultColor;
+    }
+    else if (selectedMenuOption == 1) {
+        // select the "help" button
+        helpColor = { 0.8f, 0.f, 0.f };
+        startColor = defaultColor;
     }
 
     // render the text with the proper color assigned
@@ -536,6 +570,11 @@ MenuAction GameMenus::renderHelpMenu()
     glm::vec3 keyboardColor = defaultColor;
     // set the "Controller" button to the default color (used when not hovered upon)
     glm::vec3 controllerColor = defaultColor;
+
+    // if detected controller is source of input, then auto select (highlight in red) first menu option
+    if (inputSystem == 1) {
+        keyboardColor = { 0.8f, 0.f, 0.f };
+    }
 
     // check if mouse is hovered over the "Controller" button
     if (cursorPos.x > 340.f && cursorPos.x < 730.f) {

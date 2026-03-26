@@ -79,4 +79,9 @@ private:
 
     // used to display image textures
     CPU_Geometry quad;
+
+    // button selected states on main menu
+    // 0 = start, 1 = help
+    bool defaultMainMenuOption = 0;
+    bool selectedMenuOption = 0;
 };
