@@ -5,6 +5,7 @@
 // Implementation constructor
 Implementation::Implementation() {
     mpStudioSystem = NULL;
+    mnNextChannelId = 0;
     // check that all FMOD calls are successful
     AudioEngine::errorCheck(FMOD::Studio::System::create(&mpStudioSystem));
     AudioEngine::errorCheck(mpStudioSystem->initialize(32, FMOD_STUDIO_INIT_LIVEUPDATE, FMOD_INIT_PROFILE_ENABLE, NULL));
@@ -46,6 +47,9 @@ Implementation* sgpImplementation = nullptr;
 // Audio Engine methods
 //=============================================================================================================//
 void AudioEngine::init() {
+    if (sgpImplementation) {
+        return;
+    }
     sgpImplementation = new Implementation;
 }
 
@@ -218,5 +222,9 @@ int AudioEngine::errorCheck(FMOD_RESULT result) {
 
 // engine shutdown
 void AudioEngine::shutdown() {
+    if (!sgpImplementation) {
+        return;
+    }
     delete sgpImplementation;
+    sgpImplementation = nullptr;
 }

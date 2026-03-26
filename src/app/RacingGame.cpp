@@ -268,324 +268,335 @@ RacingGame::RacingGame()
     // call functions that will load sounds this component will use
     menus->loadMenuSounds();
     vehicleControlSystem->loadVehicleSounds();
+
+    // play ai racer sounds
+    audioManager->loadSound("assets/audio/snowmobiles-1-trimmed.wav", false, true, true);
+    aiEngineChannelID1 = audioManager->playSounds("assets/audio/snowmobiles-1-trimmed.wav", { 0,0,0 }, -15.0f);
+    aiEngineChannelID2 = audioManager->playSounds("assets/audio/snowmobiles-1-trimmed.wav", { 0,0,0 }, -15.0f);
+}
+
+RacingGame::~RacingGame()
+{
+    logger::info("Shutting down systems...");
+    
+    // shut down audio engine
+    audioManager->shutdown();
 }
 
 /// Main game loop
 void RacingGame::run()
 {
+    gameTime.reset(glfwGetTime());
 
     while (!window->shouldClose())
     {
-        // update audio
         audioManager->update();
 
-        // keep checking which input system we are using
+        // Keep checking for controller inputs and if menu actions are triggered
         menus->checkInputSystem();
-
-        // keep taking inputs in case pause menu is called
         MenuAction actionButtons = menus->pollInputs();
 
-        // check for entering game
-        if (actionButtons == MenuAction::StartGame || actionButtons == MenuAction::ResumeGame) {
-            if (actionButtons == MenuAction::StartGame) {
-                racingSystem->restart();
-            }
-            // play in game music
-            audioManager->resumeChannel(inGameMusicChannelID);
-            gameState = GameState::InGame;
-        }
-
-        // if in game
         if (gameState == GameState::InGame) {
-
-            // if in game, don't play lobby music
-            audioManager->pauseChannel(musicChannelID);
-            // play in-game music
-            audioManager->resumeChannel(inGameMusicChannelID);
-            // play avalanche sounds
-            audioManager->resumeChannel(avalancheChannelID);
-
-            gameTime.update();
-
-            // Vehicle control system Loop - process player inputs and update vehicle state before physics simulation
-            //vehicleControlSystem->update(gameTime.dtF());
-
-            // Physics System Loop, adaptive based on performance
-            int maxPhysicsSteps = gameTime.maxPhysicsSteps();
-            int physicsSteps = 0;
-            while (gameTime.accumulator >= gameTime.dt && physicsSteps < maxPhysicsSteps) {
-                if (gameTime.frameCount < static_cast<unsigned>(300) && gameTime.physicsFrameCount > static_cast<unsigned>(maxPhysicsSteps)) {
-                    break; // Skip the first frames to avoid slow startup
-                }
-                vehicleControlSystem->update(gameTime.dtF());
-                physicsSystem->update(gameTime.dtF());
-                gameTime.physicsUpdate();
-                physicsSteps++;
-
-                racingSystem->update(gameTime.dtF());
-                if (racingSystem->raceFinished) {
-                    gameState = GameState::GameOver;
-                }
-                aiSystem->update(gameTime.dtF());
-            }
-
-            // get the positions of the avalanche and the player
-            glm::vec3 avalanchePos = gCoordinator.GetComponent<PhysxTransform>(AvalancheEntity).pos;
-            glm::vec3 playerPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
-            // calculate the distance between them
-            float distance = glm::length(avalanchePos - playerPos);
-
-            // use that distance against the maxAudible distance. multiply by a quiet value so that it increases in sound
-            float distanceRatio = std::clamp(distance / (maxAudibleDistance), 0.0f, 1.0f);
-            float volumeInDB = distanceRatio * -60.0f; //-60db is standard silence
-            float masterVolumeOffset = -5.0f;
-            volumeInDB += masterVolumeOffset;
-
-            // set volume of avalanche based on distance
-            audioManager->setChannelVolume(avalancheChannelID, volumeInDB);
-
-            // get velocity of the vehicle
-            float speed = glm::length(gCoordinator.GetComponent<RigidBody>(playerVehicleEntity).linearVelocity);
-
-            // if speed is more than 1, that means vehicle is moving, play the engine sound
-            if (speed > 1.0f && !enginePlaying) {
-                engineChannelID = audioManager->playSounds("assets/audio/snowmobiles-4-trimmed.mp3", { 0,0,0 }, -15.0f);
-                enginePlaying = true;
-            }
-            else if (speed <= 1.0f && enginePlaying) {
-                // otherwise vehicle is not considered moving, pause the channel that plays the engine sound
-                audioManager->pauseChannel(engineChannelID);
-                enginePlaying = false;
-            }
-        
-            // Discard excess time when running slow to prevent spiral of death
-            if (physicsSteps >= maxPhysicsSteps) {
-                gameTime.discardExcessTime();
-            }
-
-            // Process Escape key input to close window
-            if (inputManager->isKeyPressedOnce(GLFW_KEY_ESCAPE))
-                glfwSetWindowShouldClose(window->getGLFWwindow(), true);
-
-            // If entity exists, update camera target to follow the player vehicle BEFORE rendering
-            // This prevents 1-frame lag that causes ghosting/phasing artifacts
-            if (gCoordinator.HasComponent<PhysxTransform>(playerVehicleEntity)) {
-                auto& transform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
-                auto& modelRenderable = gCoordinator.GetComponent<ModelRenderable>(playerVehicleEntity);
-                
-                // Target the visual center, not the physics origin
-                glm::vec3 visualOffset = transform.rot * modelRenderable.visualOffsetPos;
-                glm::vec3 targetPos = transform.pos + visualOffset;
-                targetPos.y += 2.f;
-                renderingSystem->updateCameraTarget(targetPos);
-            }
-
-            // Process F key input to toggle camera, and IJKLUO to move the free camera
-            renderingSystem->update(gameTime.fpsF());
-
-            // Update values and sync imgui parameters
-            this->updateImGui();
-
-            // Must be called after renderer update, but before text rendering
-            // auto width = renderingSystem->getWindowWidth();
-            // auto height = renderingSystem->getWindowHeight();
-            // textSystem->setProjection(width, height);
-
-            textSystem->beginText();
-            textSystem->loadFont("arial.ttf", 48);
-
-            float marginX = 30.f;
-            float screenHeight = 1440.f;
-            float topY = screenHeight - 50.f;
-
-            // --- Debug & System Info ---
-            textSystem->renderText(
-                "Rendered Frames: " + std::to_string(gameTime.frameCount),
-                { marginX, topY - 20.f, 0.40f }, { 0.2f, 0.5f, 0.8f });
-
-            textSystem->renderText(
-                "Physics Frames: " + std::to_string(gameTime.physicsFrameCount),
-                { marginX, topY - 40.f, 0.40f }, { 0.5f, 0.2f, 0.8f });
-
-            textSystem->renderText(
-                "Game FPS: " + std::to_string(static_cast<int>(1.0f / gameTime.fpsF())),
-                { marginX, topY - 75.f, 0.75f }, { 0.9f, 0.9f, 0.4f });
-
-            // --- Leaderboard Section ---
-            float lbYStart = topY - 250.f;
-            textSystem->renderText("LEADERBOARD :", { marginX + 2.0f, lbYStart - 2.0f, 0.85f }, { 1.f, 1.f, 1.f });
-            textSystem->renderText("LEADERBOARD :", { marginX, lbYStart, 0.85f }, { 0.15f, 0.7f, 0.6f });
-
-            for (size_t i = 0; i < racingSystem->leaderboard.size(); ++i) {
-                Entity e = racingSystem->leaderboard[i];
-                auto& racer = gCoordinator.GetComponent<Racer>(e);
-                auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(e);
-                
-                // Color: Gold for Player (ID 0), White/Grey for AI
-                glm::vec3 color = racer.engulfed? glm::vec3(0.8f, 0.25f, 0.15f): (vehicle.playerID == 0) ? glm::vec3(1.0f, 0.8f, 0.0f) : glm::vec3(0.2f, 0.7f, 0.8f);
-                std::string name = (vehicle.playerID == 0) ? "PLAYER" : "AI_" + std::to_string(e);
-                std::string entry = std::to_string(i + 1) + ". " + name + (racer.engulfed? " X engulfed" : "") + ", at " + std::to_string(static_cast<int>(racer.raceCompletion * 100)) + "%";
-
-                float textX = marginX;
-                float textY = lbYStart - 50.f - (i * 50.f);
-                float scale = 0.75f;
-
-                textSystem->renderText(entry, { textX + 2.0f, textY - 2.0f, scale }, { 0.0f, 0.0f, 0.0f });
-                textSystem->renderText(entry, { textX, textY, scale }, color);
-            }
-
-            // -- Snowball throw --
-            float centerX = screenHeight / 2.0f;
-            float centerY = screenHeight / 2.0f;
-
-            float snowballX = centerX * 1.0f;
-            float snowballY = 100.f;
-            float snowBallCoolDownPlayer = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).snowBallCooldown;
-            textSystem->renderText("SNOWBALL" + (snowBallCoolDownPlayer > 0.f ? std::format(": {:.1f}", snowBallCoolDownPlayer) : " READY !"), {snowballX + 2.f, snowballY - 2.f, 1.0f}, {1.0f, 1.0f, 1.0f});
-            textSystem->renderText("SNOWBALL" + (snowBallCoolDownPlayer > 0.f ? std::format(": {:.1f}", snowBallCoolDownPlayer) : " READY !"), { snowballX, snowballY, 1.0f }, { 1.0f, 0.35f, 0.0f });
-
-            // --- Crosshair / Center UI ---
-            textSystem->renderText("+", { centerX - 5.f, centerY - 5.f, 0.75f }, { 1.f, 1.f, 1.f });
-
-            // --- Input Controls Info (Top Right) ---
-            float controlX = centerX * 1.4f;
-            glm::vec3 controlsColor{ 0.35f, 0.55f, 0.10f };
-            float contolsSize{ 0.55f };
-            float controlsOffset{28.f};
-            float offset{ 0.f };
-            textSystem->renderText("CONTROLS", { controlX, topY, 0.75f }, { 0.55f, 0.8f, 0.15f });
-            textSystem->renderText("Drive: RT-LT / W-S", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
-            textSystem->renderText("Steer: L-Stick / A-D", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
-            textSystem->renderText("Boost: Y-Btn / SHIFT", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
-            textSystem->renderText("Shoot: X-Btn / SPACE", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
-            textSystem->renderText("Pause: Start / P", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
-            
-            textSystem->endText();
-            this->endFrame();
+            updateInGame();
+        } else {
+            updateInMenu(actionButtons);
         }
-        else if (gameState == GameState::MainMenu) {
-            // render UI for main menu, take note of the action taken
-            MenuAction actionCursor = menus->renderMainMenu();
 
-            // if "Start" is pressed, go in the game
-            if (actionButtons == MenuAction::StartGame || actionCursor == MenuAction::StartGame) {
-                racingSystem->restart();
-                gameState = GameState::InGame;
-            }
+        endFrame();
+    }
+}
 
-            // if NOT in game, don't play in-game music
-            audioManager->pauseChannel(inGameMusicChannelID);
-            // if on main menu, play lobby music
-            audioManager->resumeChannel(musicChannelID);
-            // pause avalanche sounds in menus
-            audioManager->pauseChannel(avalancheChannelID);
+// ----- State handlers ----- //
 
-            // swap buffer
-            this->endFrame();
+void RacingGame::updateInGame()
+{
+    gameTime.update(glfwGetTime());
+
+    // Setup in-game audio channels
+    audioManager->pauseChannel(musicChannelID);
+    audioManager->resumeChannel(inGameMusicChannelID);
+    audioManager->resumeChannel(avalancheChannelID);
+
+    // Run fixed-step physics and game systems
+    updatePhysicsAndGameplayLoop();
+
+    // Get player state for audio and camera updates
+    glm::vec3 playerPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
+    float speed = glm::length(gCoordinator.GetComponent<RigidBody>(playerVehicleEntity).linearVelocity);
+
+    // Update spatial audio (avalanche distance, engine speed gating, AI sounds)
+    updateInGameAudioState(speed);
+
+    // Check for quit input
+    if (inputManager->isKeyPressedOnce(GLFW_KEY_ESCAPE)) {
+        glfwSetWindowShouldClose(window->getGLFWwindow(), true);
+    }
+
+    // Update camera to follow player
+    updateInGameCameraTarget(speed);
+
+    // Render scene and UI
+    renderingSystem->update(gameTime.fpsF());
+    updateImGui();
+    renderInGameHUD();
+}
+
+void RacingGame::updateInMenu(MenuAction actionButtons)
+{
+    // Reset to prevent big delta spike when returning to gameplay
+    gameTime.updatePause(glfwGetTime());
+
+    handleMenuActions(actionButtons);
+
+    if (gameState == GameState::MainMenu) {
+        updateMainMenu(actionButtons);
+    } else if (gameState == GameState::Pause) {
+        updatePauseMenu(actionButtons);
+    } else if (gameState == GameState::GameOver) {
+        updateGameOverMenu(actionButtons);
+    }
+}
+
+void RacingGame::handleMenuActions(MenuAction actionButtons)
+{
+    if (actionButtons == MenuAction::StartGame || actionButtons == MenuAction::ResumeGame) {
+        if (actionButtons == MenuAction::StartGame) {
+            gameTime.reset(glfwGetTime());
+            racingSystem->restart();
         }
-        else if (gameState == GameState::HelpMenu) {
-            // render UI for help menu, take note of the action taken
-            MenuAction actionCursor = menus->renderHelpMenu();
+        audioManager->resumeChannel(inGameMusicChannelID);
+        gameState = GameState::InGame;
+    }
+}
 
-            // if "Back" is pressed, go to main menu
-            if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
-                gameState = GameState::MainMenu;
-            }
+void RacingGame::updateMainMenu(MenuAction actionButtons)
+{
+    MenuAction actionCursor = menus->renderMainMenu();
 
-            // if NOT in game, don't play in-game music
-            audioManager->pauseChannel(inGameMusicChannelID);
-            // if on main menu, play lobby music
-            audioManager->resumeChannel(musicChannelID);
-            // pause avalanche sounds in menus
-            audioManager->pauseChannel(avalancheChannelID);
+    if (actionButtons == MenuAction::StartGame || actionCursor == MenuAction::StartGame) {
+        racingSystem->restart();
+        gameState = GameState::InGame;
+    }
 
-            // swap buffer
-            this->endFrame();
+    updateMenuAudioState();
+}
+
+void RacingGame::updatePauseMenu(MenuAction actionButtons)
+{
+    MenuAction actionCursor = menus->renderPauseMenu();
+
+    if (actionButtons == MenuAction::ResumeGame || actionCursor == MenuAction::ResumeGame) {
+        gameState = GameState::InGame;
+    }
+    else if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
+        gameState = GameState::MainMenu;
+    }
+
+    updateMenuAudioState();
+}
+
+void RacingGame::updateGameOverMenu(MenuAction actionButtons)
+{
+    auto& playerRacer = gCoordinator.GetComponent<Racer>(playerVehicleEntity);
+    int rank = playerRacer.currentRank;
+    MenuAction actionCursor = menus->renderGameOver(rank, playerRacer.engulfed);
+
+    if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
+        gameState = GameState::MainMenu;
+    }
+
+    updateMenuAudioState();
+}
+
+// ----- Gameplay helpers ----- //
+
+void RacingGame::updatePhysicsAndGameplayLoop()
+{
+    // Physics System Loop, adaptive based on performance.
+    size_t maxPhysicsSteps = gameTime.maxPhysicsSteps();
+    size_t physicsSteps = 0;
+
+    while (gameTime.accumulator >= gameTime.dt && physicsSteps < maxPhysicsSteps) {
+        if (gameTime.frameCount < 300 && gameTime.physicsFrameCount > maxPhysicsSteps) {
+            break; // Skip the first frames to avoid slow startup.
         }
-        else if (gameState == GameState::ControllerHelp) {
-            // render UI for help menu, take note of the action taken
-            MenuAction actionCursor = menus->renderControllerHelp();
 
-            // if "Return to main menu" is pressed, go to main menu
-            if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
-                gameState = GameState::MainMenu;
-            }
+        vehicleControlSystem->update(gameTime.dtF());
+        aiSystem->update(gameTime.dtF());
 
-            // if NOT in game, don't play in-game music
-            audioManager->pauseChannel(inGameMusicChannelID);
-            // if on main menu, play lobby music
-            audioManager->resumeChannel(musicChannelID);
-            // pause avalanche sounds in menus
-            audioManager->pauseChannel(avalancheChannelID);
+        physicsSystem->update(gameTime.dtF());
+        gameTime.physicsUpdate();
+        physicsSteps++;
 
-            // swap buffer
-            this->endFrame();
-        }
-        else if (gameState == GameState::KeyboardHelp) {
-            // render UI for help menu, take note of the action taken
-            MenuAction actionCursor = menus->renderKeyboardHelp();
-
-            // if "Return to main menu" is pressed, go to main menu
-            if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
-                gameState = GameState::MainMenu;
-            }
-
-            // if NOT in game, don't play in-game music
-            audioManager->pauseChannel(inGameMusicChannelID);
-            // if on main menu, play lobby music
-            audioManager->resumeChannel(musicChannelID);
-            // pause avalanche sounds in menus
-            audioManager->pauseChannel(avalancheChannelID);
-
-            // swap buffer
-            this->endFrame();
-        }
-        else if (gameState == GameState::Pause) {
-            // render UI for pause menu, take note of the action taken
-            MenuAction actionCursor = menus->renderPauseMenu();
-
-            // if "Resume" is pressed, return to the game
-            if (actionButtons == MenuAction::ResumeGame || actionCursor == MenuAction::ResumeGame) {
-                gameState = GameState::InGame;
-            }
-            // if "Quit" is pressed, return to the main menu
-            else if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
-                gameState = GameState::MainMenu;
-            }
-
-            // if NOT in game, don't play in-game music
-            audioManager->pauseChannel(inGameMusicChannelID);
-            // if on pause menu, play lobby music
-            audioManager->resumeChannel(musicChannelID);
-            // pause avalanche sounds in menus
-            audioManager->pauseChannel(avalancheChannelID);
-
-            // swap buffer
-            this->endFrame();
-        }
-        else if (gameState == GameState::GameOver) {
-            // render UI for race finished, take note of the action taken
-            auto& playerRacer = gCoordinator.GetComponent<Racer>(playerVehicleEntity);
-            int rank = playerRacer.currentRank;
-            MenuAction actionCursor = menus->renderGameOver(rank, playerRacer.engulfed);
-
-            // if "Return to main menu" is pressed, return to the main menu
-            if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
-                gameState = GameState::MainMenu;
-            }
-
-            // if NOT in game, don't play in-game music
-            audioManager->pauseChannel(inGameMusicChannelID);
-            // pause avalanche sounds in menus
-            audioManager->pauseChannel(avalancheChannelID);
-
-            // swap buffer
-            this->endFrame();
+        racingSystem->update(gameTime.dtF());
+        if (racingSystem->raceFinished) {
+            gameState = GameState::GameOver;
         }
     }
-    logger::info("Shutting down systems...");
-    // shut down audio engine
-    audioManager->shutdown();
+
+    // Discard excess time when running slow to prevent spiral of death.
+    if (physicsSteps >= maxPhysicsSteps) {
+        gameTime.discardExcessTime();
+    }
+}
+
+void RacingGame::updateInGameAudioState(float playerSpeed)
+{
+    // Avalanche distance-based volume
+    glm::vec3 avalanchePos = gCoordinator.GetComponent<PhysxTransform>(AvalancheEntity).pos;
+    glm::vec3 playerPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
+    float distance = glm::length(avalanchePos - playerPos);
+
+    float distanceRatio = std::clamp(distance / maxAudibleDistance, 0.0f, 1.0f);
+    float volumeInDB = distanceRatio * -60.0f;
+    float masterVolumeOffset = -5.0f;
+    volumeInDB += masterVolumeOffset;
+    audioManager->setChannelVolume(avalancheChannelID, volumeInDB);
+
+    // Player engine sound speed gating
+    if (playerSpeed > 1.0f) {
+        if (!enginePlaying) {
+            engineChannelID = audioManager->playSounds("assets/audio/snowmobiles-4-trimmed.mp3", { 0,0,0 }, -15.0f);
+            enginePlaying = true;
+        }
+        else {
+            // When returning from pause, the channel can be paused while still marked as playing.
+            audioManager->resumeChannel(engineChannelID);
+        }
+    }
+    else if (enginePlaying) {
+        audioManager->pauseChannel(engineChannelID);
+        enginePlaying = false;
+    }
+
+    // Resume AI engine channels
+    audioManager->resumeChannel(aiEngineChannelID1);
+    audioManager->resumeChannel(aiEngineChannelID2);
+
+    // AI distance-based volume
+    glm::vec3 aiRacer1Pos = gCoordinator.GetComponent<PhysxTransform>(aiVehicleEntity1).pos;
+    glm::vec3 aiRacer2Pos = gCoordinator.GetComponent<PhysxTransform>(aiVehicleEntity2).pos;
+
+    float distanceAi1 = glm::length(aiRacer1Pos - playerPos);
+    float distanceAi2 = glm::length(aiRacer2Pos - playerPos);
+
+    float distanceRatio1 = std::clamp(distanceAi1 / maxAudibleDistance, 0.0f, 1.0f);
+    float distanceRatio2 = std::clamp(distanceAi2 / maxAudibleDistance, 0.0f, 1.0f);
+    float volumeInDB1 = distanceRatio1 * -60.0f + masterVolumeOffset;
+    float volumeInDB2 = distanceRatio2 * -60.0f + masterVolumeOffset;
+
+    audioManager->setChannelVolume(aiEngineChannelID1, volumeInDB1);
+    audioManager->setChannelVolume(aiEngineChannelID2, volumeInDB2);
+}
+
+void RacingGame::updateInGameCameraTarget(float playerSpeed)
+{
+    // If entity exists, update camera target to follow the player vehicle BEFORE rendering.
+    // This prevents 1-frame lag that causes ghosting/phasing artifacts.
+    if (!gCoordinator.HasComponent<PhysxTransform>(playerVehicleEntity)) {
+        return;
+    }
+
+    auto& transform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
+    auto& modelRenderable = gCoordinator.GetComponent<ModelRenderable>(playerVehicleEntity);
+
+    // Target the visual center, not the physics origin.
+    glm::vec3 visualOffset = transform.rot * modelRenderable.visualOffsetPos;
+    glm::vec3 targetPos = transform.pos + visualOffset;
+    targetPos.y += 2.f;
+
+    glm::vec3 targetForward = transform.forward();
+    renderingSystem->updateCameraTarget(targetPos, targetForward, playerSpeed);
+}
+
+void RacingGame::renderInGameHUD()
+{
+    textSystem->beginText();
+    textSystem->loadFont("arial.ttf", 48);
+
+    float marginX = 30.f;
+    float screenHeight = 1440.f;
+    float topY = screenHeight - 50.f;
+
+    // --- Debug & System Info ---
+    textSystem->renderText(
+        "Rendered Frames: " + std::to_string(gameTime.frameCount),
+        { marginX, topY - 20.f, 0.40f }, { 0.2f, 0.5f, 0.8f });
+
+    textSystem->renderText(
+        "Physics Frames: " + std::to_string(gameTime.physicsFrameCount),
+        { marginX, topY - 40.f, 0.40f }, { 0.5f, 0.2f, 0.8f });
+
+    textSystem->renderText(
+        "Game FPS: " + std::to_string(static_cast<int>(1.0f / gameTime.fpsF())),
+        { marginX, topY - 75.f, 0.75f }, { 0.9f, 0.9f, 0.4f });
+
+    // --- Leaderboard Section ---
+    float lbYStart = topY - 250.f;
+    textSystem->renderText("LEADERBOARD :", { marginX + 2.0f, lbYStart - 2.0f, 0.85f }, { 1.f, 1.f, 1.f });
+    textSystem->renderText("LEADERBOARD :", { marginX, lbYStart, 0.85f }, { 0.15f, 0.7f, 0.6f });
+
+    for (size_t i = 0; i < racingSystem->leaderboard.size(); ++i) {
+        Entity e = racingSystem->leaderboard[i];
+        auto& racer = gCoordinator.GetComponent<Racer>(e);
+        auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(e);
+
+        // Color: Gold for Player (ID 0), White/Grey for AI
+        glm::vec3 color = racer.engulfed ? glm::vec3(0.8f, 0.25f, 0.15f) : (vehicle.playerID == 0) ? glm::vec3(1.0f, 0.8f, 0.0f) : glm::vec3(0.2f, 0.7f, 0.8f);
+        std::string name = (vehicle.playerID == 0) ? "PLAYER" : "AI_" + std::to_string(e);
+        std::string entry = std::to_string(i + 1) + ". " + name + (racer.engulfed ? " X engulfed" : "") + ", at " + std::to_string(static_cast<int>(racer.raceCompletion * 100)) + "%";
+
+        float textX = marginX;
+        float textY = lbYStart - 50.f - (i * 50.f);
+        float scale = 0.75f;
+
+        textSystem->renderText(entry, { textX + 2.0f, textY - 2.0f, scale }, { 0.0f, 0.0f, 0.0f });
+        textSystem->renderText(entry, { textX, textY, scale }, color);
+    }
+
+    // -- Snowball throw --
+    float centerX = screenHeight / 2.0f;
+    float centerY = screenHeight / 2.0f;
+
+    float snowballX = centerX * 1.0f;
+    float snowballY = 100.f;
+    float snowBallCoolDownPlayer = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).snowBallCooldown;
+    textSystem->renderText("SNOWBALL" + (snowBallCoolDownPlayer > 0.f ? std::format(": {:.1f}", snowBallCoolDownPlayer) : " READY !"), { snowballX + 2.f, snowballY - 2.f, 1.0f }, { 1.0f, 1.0f, 1.0f });
+    textSystem->renderText("SNOWBALL" + (snowBallCoolDownPlayer > 0.f ? std::format(": {:.1f}", snowBallCoolDownPlayer) : " READY !"), { snowballX, snowballY, 1.0f }, { 1.0f, 0.35f, 0.0f });
+
+    // --- Crosshair / Center UI ---
+    textSystem->renderText("+", { centerX - 5.f, centerY - 5.f, 0.75f }, { 1.f, 1.f, 1.f });
+
+    // --- Input Controls Info (Top Right) ---
+    float controlX = centerX * 1.4f;
+    glm::vec3 controlsColor{ 0.35f, 0.55f, 0.10f };
+    float contolsSize{ 0.55f };
+    float controlsOffset{ 28.f };
+    float offset{ 0.f };
+    textSystem->renderText("CONTROLS", { controlX, topY, 0.75f }, { 0.55f, 0.8f, 0.15f });
+    textSystem->renderText("Drive: RT-LT / W-S", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
+    textSystem->renderText("Steer: L-Stick / A-D", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
+    textSystem->renderText("Boost: Y-Btn / SHIFT", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
+    textSystem->renderText("Shoot: X-Btn / SPACE", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
+    textSystem->renderText("Pause: Start / P", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
+
+    textSystem->endText();
+}
+
+// ----- UI and utility helpers ----- //
+
+void RacingGame::updateMenuAudioState()
+{
+    // if NOT in game, don't play in-game music
+    audioManager->pauseChannel(inGameMusicChannelID);
+    // if on menu, play lobby music
+    audioManager->resumeChannel(musicChannelID);
+    // pause avalanche sounds in menus
+    audioManager->pauseChannel(avalancheChannelID);
+    // no engine sounds in menus
+    audioManager->pauseChannel(engineChannelID);
+    audioManager->pauseChannel(aiEngineChannelID1);
+    audioManager->pauseChannel(aiEngineChannelID2);
 }
 
 void RacingGame::updateImGui() {
@@ -603,16 +614,15 @@ void RacingGame::updateImGui() {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
-    // Update camera stats for UI
-    imguiPanel->cameraStats = renderingSystem->getActiveCameraStats();
-    imguiPanel->cameraStats.aspect = static_cast<float>(window->getWidth()) / static_cast<float>(window->getHeight());
+    // Update camera info for UI
+    imguiPanel->cameraInfo = renderingSystem->getActiveCameraInfo();
+    imguiPanel->aspectRatio = window->getAspectRatio();
 
     // Update UI
     imguiWrapper->beginFrame();
     imguiPanel->update();
     imguiWrapper->renderFPS();
-    this->syncImgui();
-    imguiPanel->cameraStats = renderingSystem->getActiveCameraStats();
+    syncImgui();
     imguiWrapper->endFrame();
 };
 

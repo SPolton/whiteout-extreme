@@ -4,7 +4,6 @@
 #include "common/PhysicsCallback.hpp"
 #include "VehicleFourWheelDrive.hpp"
 
-#include "components/Entity.h"
 #include "components/Physics.hpp"
 #include "components/Renderable.h"
 #include "components/Transform.h"
@@ -21,16 +20,10 @@ extern Coordinator gCoordinator;
 
 class PhysicsSystem : public System {
 public:
-    std::vector<EntityPx> entityList;
-
     PhysicsSystem();
     ~PhysicsSystem();
 
     void update(float deltaTime);
-    physx::PxVec3 getPos(int i);
-
-    std::vector<PhysxTransform*> transformList;
-    //void updateTransforms();
 
     Entity createVehicleEntity(const char* name, physx::PxVec3 spawnPos);
     Entity createAvalancheEntity(const glm::vec3& startPos, float initialSpeed = 15.0f);
@@ -49,8 +42,6 @@ private:
     void initGroundPlane();
     void cleanupGroundPlane();
 
-    std::vector<physx::PxRigidDynamic*> rigidDynamicList;
-
     // PhysX management class instances.
     physx::PxDefaultAllocator mAllocator;
     physx::PxDefaultErrorCallback mErrorCallback;
@@ -66,9 +57,6 @@ private:
 
     //A ground plane to drive on.
     physx::PxRigidStatic* mGroundPlane = NULL;
-
-    // Vehicle system
-  //VehicleFourWheelDrive* mVehicleSystem = NULL;
 
     ContactReportCallback* mContactReportCallback = NULL;
 

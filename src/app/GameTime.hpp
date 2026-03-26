@@ -1,15 +1,12 @@
 #pragma once
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
 struct GameTime {
     double t = 0.0;
     const double dt = 1.0 / 60.0; // simulate at 60fps
-    double currentTime = glfwGetTime();
+    double currentTime = 0.0;
     double accumulator = 0.0;
-    unsigned int frameCount = 0;
-    unsigned int physicsFrameCount = 0;
+    size_t frameCount = 0;
+    size_t physicsFrameCount = 0;
     double fps = 0.0;
 
     // convenience getters for float values
@@ -18,10 +15,26 @@ struct GameTime {
     float fpsF() const { return static_cast<float>(fps); }
     float accF() const { return static_cast<float>(accumulator); }
 
+    void reset(double newTime = 0.0) {
+        t = 0.0;
+        currentTime = newTime;
+        accumulator = 0.0;
+        frameCount = 0;
+        physicsFrameCount = 0;
+        fps = 0.0;
+        fpsDelta = 0.0;
+    }
+
+    void updatePause(double newTime) {
+        // Reset to prevent large delta time on resume
+        currentTime = newTime;
+        accumulator = 0.0;
+        fpsDelta = 0.0;
+    }
+
     // Call at the start of each frame
-    void update() {
+    void update(double newTime) {
         // New Time Trackers
-        double newTime = glfwGetTime();
         double frameTime = newTime - currentTime;
         currentTime = newTime;
         
@@ -45,7 +58,7 @@ struct GameTime {
     }
 
     // Calculate max physics steps based on frame time to prevent spiral of death
-    int maxPhysicsSteps() const {
+    size_t maxPhysicsSteps() const {
         // If frame time (fps) is greater than dt, game is running slow
         // Limit physics updates to reduce load
         if (fps > dt * 2.0) {

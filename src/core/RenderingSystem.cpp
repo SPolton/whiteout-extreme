@@ -132,10 +132,11 @@ bool RenderingSystem::init()
     targetTransform->setPosition(glm::vec3(0.f, 0.f, 0.f));
 
     // Create cameras
+    racingCamera = std::make_unique<RacingCamera>();
     turntableCamera = std::make_unique<TurnTableCamera>(*targetTransform);
     turntableCamera->adjustTheta(glm::radians(180.f));
     freeCamera = std::make_unique<FreeCamera>();
-    activeCamera = turntableCamera.get();  // Non-owning raw pointer to turntable camera
+    activeCamera = racingCamera.get();  // Non-owning raw pointer to camera
     
     logger::info("Camera initialized");
 
@@ -288,7 +289,7 @@ void RenderingSystem::render()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glm::mat4 view = activeCamera->getViewMatrix();
+    glm::mat4 view = activeCamera->viewMatrix();
     glm::mat4 projection = getProjectionMatrix();
 
     // Iterate through all entities that the RenderingSystem tracks
@@ -366,7 +367,7 @@ void RenderingSystem::render()
             if (!renderable.cpuData->indices.empty()) {
                 glDrawElements(
                     GL_TRIANGLES,
-                    renderable.cpuData->indices.size(),
+                    static_cast<GLsizei>(renderable.cpuData->indices.size()),
                     GL_UNSIGNED_INT,
                     nullptr
                 );
@@ -375,7 +376,7 @@ void RenderingSystem::render()
                 glDrawArrays(
                     GL_TRIANGLES,
                     0,
-                    renderable.cpuData->positions.size()
+                    static_cast<GLsizei>(renderable.cpuData->positions.size())
                 );
             }
 
@@ -423,7 +424,7 @@ void RenderingSystem::render()
                 // Set lighting uniforms for the model shader
                 glm::vec3 lightPos(0.0f, 20.0f, 0.0f);
                 glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
-                glm::vec3 viewPos = activeCamera->getPosition();
+                glm::vec3 viewPos = activeCamera->position();
                 
                 glUniform3fv(glGetUniformLocation(*modelRenderable.shader, "lightPos"), 1, &lightPos[0]);
                 glUniform3fv(glGetUniformLocation(*modelRenderable.shader, "lightColor"), 1, &lightColor[0]);
@@ -436,64 +437,24 @@ void RenderingSystem::render()
     }
 }
 
-void RenderingSystem::renderEntities(const std::vector<EntityPx>& entityList)
-{
-    // Get shader and geometry
-    auto shader = assetManager.loadShader("textured");
-    auto cubeGeometry = assetManager.loadGeometry("cube", ShapeGenerator::cube());
-    auto cubeCPUData = assetManager.getCPUGeometry("cube");
-    
-    // Use shader
-    shader->use();
-    
-    // Get projection matrix (perspective projection for 3D)
-    glm::mat4 projection = getProjectionMatrix();
-    glUniformMatrix4fv(glGetUniformLocation(*shader, "projection"), 1, GL_FALSE, &projection[0][0]);
-    
-    // Get view matrix from active camera (transforms world coords to camera/view space)
-    glm::mat4 view = activeCamera->getViewMatrix();
-    glUniformMatrix4fv(glGetUniformLocation(*shader, "view"), 1, GL_FALSE, &view[0][0]);
-    
-    // Bind cube geometry once
-    cubeGeometry->bind();
-    
-    // Render each entity
-    for (size_t i = 0; i < entityList.size(); i++) {
-        glm::vec3 pos = entityList[i].transform->pos;
-        glm::quat rot = entityList[i].transform->rot;
-        
-        // Model matrix: Scale -> Rotate -> Translate (SRT)
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, pos);       // Translate
-        model = model * glm::mat4_cast(rot);      // Rotate
-        model = glm::scale(model, glm::vec3(1.0f)); // Scale
-        
-        // Send model matrix to shader
-        glUniformMatrix4fv(glGetUniformLocation(*shader, "model"), 1, GL_FALSE, &model[0][0]);
-        
-        if (cubeCPUData) {
-            // Draw the cube
-            if (!cubeCPUData->indices.empty()) {
-                glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(cubeCPUData->indices.size()), GL_UNSIGNED_INT, nullptr);
-            }
-            else {
-                glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(cubeCPUData->positions.size()));
-            }
-        }
-    }
-}
-
 glm::mat4 RenderingSystem::getProjectionMatrix() const
 {
     float const aspectRatio = static_cast<float>(vWidth) / static_cast<float>(vHeight);
     
     // Perspective projection for active camera
     // FOV is already in radians, no conversion needed
-    return glm::perspective(activeCamera->getFOV(), aspectRatio, 0.1f, 5000.0f);
+    return glm::perspective(activeCamera->fov(), aspectRatio, 0.1f, 5000.0f);
 }
 
 void RenderingSystem::update(float deltaTime)
 {
+    if (freeCamera) {
+        freeCamera->movementSpeed(camSpeed * 10.f);
+    }
+    if (racingCamera) {
+        racingCamera->update(deltaTime);
+    }
+
     processInput(deltaTime);
 
     // center skybox on camera
@@ -502,7 +463,7 @@ void RenderingSystem::update(float deltaTime)
             auto& renderable = gCoordinator.GetComponent<Renderable>(entity);
             if (renderable.isSkybox) {
                 auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
-                transform.pos = activeCamera->getPosition();
+                transform.pos = activeCamera->position();
             }
         }
     }
@@ -512,33 +473,44 @@ void RenderingSystem::update(float deltaTime)
 
 void RenderingSystem::onMouseWheelChange(double xOffset, double yOffset)
 {
+    (void)xOffset;
     float scroll = -static_cast<float>(yOffset) * this->camZoomSpeed * 0.016f;
-    activeCamera->adjustRadius(scroll);
+
+    if (activeCamera == freeCamera.get()) {
+        freeCamera->adjustFov(scroll);
+    }
+    else if (activeCamera == turntableCamera.get()) {
+        turntableCamera->adjustDistance(scroll);
+    }
 }
 
 void RenderingSystem::toggleCamera()
 {
-    if (activeCamera == turntableCamera.get())
+    if (activeCamera == freeCamera.get())
     {
-        activeCamera = freeCamera.get();
-        logger::info("Switched to FreeCamera (FPS-style)");
+        activeCamera = racingCamera.get();
+        logger::info("Switched to RacingCamera");
     }
-    else
+    else if (activeCamera == racingCamera.get())
     {
         activeCamera = turntableCamera.get();
         logger::info("Switched to TurnTableCamera (Orbit)");
     }
+    else
+    {
+        freeCamera->position(activeCamera->position());
+        activeCamera = freeCamera.get();
+        logger::info("Switched to FreeCamera");
+    }
 }
 
-void RenderingSystem::updateCameraTarget(const glm::vec3& position)
+void RenderingSystem::updateCameraTarget(const glm::vec3& position, const glm::vec3& forward, float speedMs)
 {
     if (targetTransform) {
         targetTransform->setPosition(position);
     }
-}
 
-glm::vec3 RenderingSystem::getCameraForward() const
-{
-    auto view = activeCamera->getViewMatrix();
-    return -glm::vec3(view[0][2], view[1][2], view[2][2]);
+    if (racingCamera) {
+        racingCamera->updateTarget(position, forward, speedMs);
+    }
 }

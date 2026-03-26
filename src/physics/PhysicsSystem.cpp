@@ -16,14 +16,6 @@ PhysicsSystem::PhysicsSystem()
 
 PhysicsSystem::~PhysicsSystem()
 {
-    // Clean up vehicle system first
-    /*
-    if (mVehicleSystem) {
-        delete mVehicleSystem;
-        mVehicleSystem = nullptr;
-    }
-    */
-    //cleanupGroundPlane();
     cleanupPhysX();
 }
 
@@ -83,6 +75,17 @@ void PhysicsSystem::initPhysX()
 
 void PhysicsSystem::cleanupPhysX()
 {
+    // Clean up all vehicles before PhysX Foundation is released
+    for (auto const& entity : mEntities) {
+        if (gCoordinator.HasComponent<VehicleComponent>(entity)) {
+            auto& vehicleComp = gCoordinator.GetComponent<VehicleComponent>(entity);
+            if (vehicleComp.instance) {
+                // Force destruction of the PhysX vehicle objects now
+                vehicleComp.instance.reset();
+            }
+        }
+    }
+
     vehicle2::PxCloseVehicleExtension();
 
     PX_RELEASE(mMaterial);
@@ -129,13 +132,6 @@ void PhysicsSystem::cleanupGroundPlane()
     logger::info("Ground plane cleaned up successfully.");
 }
 
-PxVec3 PhysicsSystem::getPos(int i)
-{
-    // get position
-    PxVec3 position = rigidDynamicList[i]->getGlobalPose().p;
-    return position;
-}
-
 void PhysicsSystem::update(float deltaTime)
 {
     // PRE-SIMULATION PHASE: Update physics-related components before stepping the simulation
@@ -180,7 +176,6 @@ void PhysicsSystem::update(float deltaTime)
 
 Entity PhysicsSystem::createVehicleEntity(const char* name, physx::PxVec3 spawnPos)
 {
-    // Create the Player Vehicle Entity
     VehicleFourWheelDrive::ConstructData vehicleData{
         .vehicleName = name,
         .vehicleDataPath = "assets/vehicledata",
@@ -190,29 +185,25 @@ Entity PhysicsSystem::createVehicleEntity(const char* name, physx::PxVec3 spawnP
         .material = mMaterial
     };
 
-    // Create the vehicle instance
-    auto* newVehicleSystem = new VehicleFourWheelDrive(vehicleData);
+    auto vehicleInstance = std::make_shared<VehicleFourWheelDrive>(vehicleData);
 
-    // 1. Create a new entity for the vehicle
     Entity vehicleEntity = gCoordinator.CreateEntity();
 
-    // 2. Add necessary components to the vehicle entity
-    // Transform
     gCoordinator.AddComponent(vehicleEntity, PhysxTransform{
-        glm::vec3(spawnPos.x, spawnPos.y, spawnPos.z),                // Position
-        glm::quat(1.f, 0.f, 0.f, 0.f),           // Identity rotation
-        glm::vec3(1.65f, 1.4f, 3.75f)            // Scale
+        glm::vec3(spawnPos.x, spawnPos.y, spawnPos.z),
+        glm::quat(1.f, 0.f, 0.f, 0.f),
+        glm::vec3(1.65f, 1.4f, 3.75f)
         });
 
     // RigidBody (using the chassis actor from the vehicle)
-    gCoordinator.AddComponent(vehicleEntity, RigidBody{ newVehicleSystem->getRigidActor() });
+    gCoordinator.AddComponent(vehicleEntity, RigidBody{ vehicleInstance->getRigidActor() });
 
     // Set the actual PhysX actor position to match
     PxTransform pxTransform(spawnPos);
-    newVehicleSystem->getRigidActor()->setGlobalPose(pxTransform);
+    vehicleInstance->getRigidActor()->setGlobalPose(pxTransform);
 
     // VehicleComponent (store the vehicle instance for later updates and access)
-    gCoordinator.AddComponent(vehicleEntity, VehicleComponent{ .instance = newVehicleSystem });
+    gCoordinator.AddComponent(vehicleEntity, VehicleComponent{ .instance = vehicleInstance });
 
     logger::info("Vehicle entity created with ID: {}", vehicleEntity);
 
