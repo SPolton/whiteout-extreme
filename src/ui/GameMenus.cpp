@@ -144,6 +144,16 @@ MenuAction GameMenus::pollInputs() {
                 audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
                 return MenuAction::GoToHelpMenu;
             }
+            else if (gameState == GameState::Pause && selectedPauseMenuOption == 0) {
+                // play an "entering game" sound when button clicked
+                audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
+                return MenuAction::ResumeGame;
+            }
+            else if (gameState == GameState::Pause && selectedPauseMenuOption == 1) {
+                // play UI button clicked sound
+                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                return MenuAction::GoToMainMenu;
+            }
             else if (gameState == GameState::Pause) {
                 // play an "entering game" sound when button clicked
                 audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
@@ -430,6 +440,22 @@ MenuAction GameMenus::renderPauseMenu() {
     glm::vec3 resumeColor = defaultColor;
     glm::vec3 quitColor = defaultColor;
 
+    // if detected controller is source of input, then auto select (highlight in red) first menu option
+    if (inputSystem == 1) {
+        // add "deadzone" (since most controllers won't return back to 0.0 exactly)
+        float deadZone = 0.2f;
+
+        // check for right stick movement to scroll through menu options
+        // if negative, it is scrolling up
+        // if positive, it is scrolling down
+        if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_Y) < -deadZone) {
+            selectedPauseMenuOption = 0; // if scrolled up, "resume" button selected. save state
+        }
+        else if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_Y) > deadZone) {
+            selectedPauseMenuOption = 1; // if scrolled down, "quit" button selected. save state
+        }
+    }
+
     // check if mouse is hovered over the "Resume" button
     if (cursorPos.x > 445.f && cursorPos.x < 630.f) {
         if (cursorPos.y > 240.f && cursorPos.y < 270.f) {
@@ -460,6 +486,18 @@ MenuAction GameMenus::renderPauseMenu() {
                 return MenuAction::GoToMainMenu;
             }
         }
+    }
+
+    // update button highlights based on which button currently selected (know from state keeping)
+    if (selectedPauseMenuOption == 0) {
+        // select the "resume" button
+        resumeColor = { 0.8f, 0.f, 0.f };
+        quitColor = defaultColor;
+    }
+    else if (selectedPauseMenuOption == 1) {
+        // select the "quit" button
+        quitColor = { 0.8f, 0.f, 0.f };
+        resumeColor = defaultColor;
     }
 
     // render the text with the proper color assigned

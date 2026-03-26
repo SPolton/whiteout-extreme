@@ -84,4 +84,14 @@ private:
     // 0 = start, 1 = help
     bool defaultMainMenuOption = 0;
     bool selectedMenuOption = 0;
+
+    // button selected states on pause menu
+    // 0 = resume, 1 = quit
+    bool defaultPauseMenuOption = 0;
+    bool selectedPauseMenuOption = 0;
+
+    // button selected states on help menu
+    // 0 = keyboard, 1 = controller, 2 = back
+    bool defaultHelpMenuOption = 2;
+    bool selectedHelpMenuOption = 0;
 };
