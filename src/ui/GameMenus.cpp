@@ -132,6 +132,7 @@ MenuAction GameMenus::pollInputs() {
         }
         // triggers main menu (do not allow keyboard input to navigate to main menu while in game)
         else if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_A) && gameState != GameState::InGame) {
+            // MAIN MENU
             // if on main menu and player selected "start", then start game
             if (gameState == GameState::MainMenu && selectedMenuOption == 0) {
                 // play an "entering game" sound when button clicked
@@ -144,6 +145,7 @@ MenuAction GameMenus::pollInputs() {
                 audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
                 return MenuAction::GoToHelpMenu;
             }
+            // PAUSE MENU
             else if (gameState == GameState::Pause && selectedPauseMenuOption == 0) {
                 // play an "entering game" sound when button clicked
                 audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
@@ -159,15 +161,27 @@ MenuAction GameMenus::pollInputs() {
                 audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
                 return MenuAction::ResumeGame;
             }
+            // GAME OVER SCREEN
             else if (gameState == GameState::GameOver) {
                 // play UI button clicked sound
                 audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
                 return MenuAction::GoToMainMenu;
             }
-            else if (gameState == GameState::HelpMenu) {
+            // HELP MENU
+            else if (gameState == GameState::HelpMenu && selectedHelpMenuOption == 0) {
                 // play UI button clicked sound
                 audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
-                return MenuAction::None;
+                return MenuAction::GoToKeyboardHelp;
+            }
+            else if (gameState == GameState::HelpMenu && selectedHelpMenuOption == 1) {
+                // play UI button clicked sound
+                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                return MenuAction::GoToControllerHelp;
+            }
+            else if (gameState == GameState::HelpMenu && selectedHelpMenuOption == 2) {
+                // play UI button clicked sound
+                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                return MenuAction::GoToMainMenu;
             }
         }
         // B button to go back from pause to main menu
@@ -179,13 +193,22 @@ MenuAction GameMenus::pollInputs() {
                 audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
                 return MenuAction::GoToMainMenu;
             }
-        }
-        // triggers help menu (can only be navigated to from main menu)
-        // TODO: figure out what button on controller to trigger help menu
-        else if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_Y) && gameState == GameState::MainMenu) {
-            audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
-            gameState = GameState::HelpMenu; // update game state to render help page
-            return MenuAction::None; // no action taken
+            // HELP MENU
+            else if (gameState == GameState::HelpMenu) {
+                // play UI button clicked sound
+                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                return MenuAction::GoToMainMenu;
+            }
+            else if (gameState == GameState::KeyboardHelp) {
+                // play UI button clicked sound
+                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                return MenuAction::GoToMainMenu;
+            }
+            else if (gameState == GameState::ControllerHelp) {
+                // play UI button clicked sound
+                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                return MenuAction::GoToMainMenu;
+            }
         }
     }
 
@@ -611,7 +634,28 @@ MenuAction GameMenus::renderHelpMenu()
 
     // if detected controller is source of input, then auto select (highlight in red) first menu option
     if (inputSystem == 1) {
-        keyboardColor = { 0.8f, 0.f, 0.f };
+        // add "deadzone" (since most controllers won't return back to 0.0 exactly)
+        float deadZone = 0.2f;
+
+        // check for right stick movement to scroll through menu options
+        // if negative, it is scrolling up
+        // if positive, it is scrolling down
+        if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_Y) < -deadZone) {
+            if (selectedHelpMenuOption == 1) {
+                selectedHelpMenuOption = 0; // scrolled up to "controller" from "keyboard" button
+            }
+            else if (selectedHelpMenuOption == 2) {
+                selectedHelpMenuOption = 1; // scrolled up to "controller" from "back" button
+            }
+        }
+        else if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_Y) > deadZone) {
+            if (selectedHelpMenuOption == 0) {
+                selectedHelpMenuOption = 1; // scrolled down to "controller" from "keyboard" button
+            }
+            else if (selectedHelpMenuOption == 1) {
+                selectedHelpMenuOption = 2; // scrolled down to "back" from "controller" button
+            }
+        }
     }
 
     // check if mouse is hovered over the "Controller" button
@@ -658,6 +702,26 @@ MenuAction GameMenus::renderHelpMenu()
                 return MenuAction::GoToMainMenu;
             }
         }
+    }
+
+    // update button highlights based on which button currently selected (know from state keeping)
+    if (selectedHelpMenuOption == 0) {
+        // select the "keyboard" button
+        keyboardColor = { 0.8f, 0.f, 0.f };
+        backColor = defaultColor;
+        controllerColor = defaultColor;
+    }
+    else if (selectedHelpMenuOption == 1) {
+        // select the "controller" button
+        controllerColor = { 0.8f, 0.f, 0.f };
+        keyboardColor = defaultColor;
+        backColor = defaultColor;
+    }
+    else if (selectedHelpMenuOption == 2) {
+        // select the "back" button
+        backColor = { 0.8f, 0.f, 0.f };
+        keyboardColor = defaultColor;
+        controllerColor = defaultColor;
     }
 
     // pages to choose from
