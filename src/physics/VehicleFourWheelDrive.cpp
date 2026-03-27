@@ -84,9 +84,6 @@
 #include <ctype.h>
 
 #include "VehicleFourWheelDrive.hpp"
-#include "vehiclecommon/enginedrivetrain/EngineDrivetrain.h"
-#include "vehiclecommon/serialization/BaseSerialization.h"
-#include "vehiclecommon/serialization/EngineDrivetrainSerialization.h"
 
 #include "common/Flags.hpp"
 #include "utils/logger.h"

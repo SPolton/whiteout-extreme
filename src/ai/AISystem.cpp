@@ -30,11 +30,55 @@ void AISystem::update(float deltaTime)
             continue;
         }
 
+        /*
+        // Handling Boost System
+        if (aiVehicle.engineHeat < 0.1f || (aiVehicle.engineHeat <= 0.98f && aiVehicle.isBoosting)) {
+            aiVehicle.isBoosting = true;
+            if (aiVehicle.timeSinceLastBoost > 0.1f) {
+                aiVehicle.engineHeat = std::min(1.0f, aiVehicle.engineHeat + aiVehicle.boostHeatInstantCost);
+            }
+        }
+        else if (aiVehicle.engineHeat > 0.98f) {
+            aiVehicle.isBoosting = false;
+        }
+        else {
+            aiVehicle.isBoosting = false;
+        }
+        */
+
+        // --- Handling Boost System with Risk Factor ---
+
+        // 1. Default safety threshold (AI normally stops at 95%)
+        float safetyThreshold = 0.95f;
+
+        // 2. Introduce a "Rare Mistake" chance
+        // We check this every frame, so we use a very small probability (e.g., 2 in 1000)
+        // This simulates a momentary lapse in judgment or "tunnel vision"
+        if (rand() % 1000 < 2) {
+            // AI becomes reckless and won't stop boosting until it's too late
+            safetyThreshold = 1.2f;
+        }
+
+        // 3. Apply Boost Logic
+        if (aiVehicle.engineHeat < 0.1f || (aiVehicle.engineHeat <= safetyThreshold && aiVehicle.isBoosting)) {
+            aiVehicle.isBoosting = true;
+
+            // Apply instant heat cost if enough time has passed since the last burst
+            if (aiVehicle.timeSinceLastBoost > 0.1f) {
+                aiVehicle.engineHeat = std::min(1.0f, aiVehicle.engineHeat + aiVehicle.boostHeatInstantCost());
+            }
+        }
+        else {
+            // Stop boosting if threshold reached or safety triggered
+            aiVehicle.isBoosting = false;
+        }
+
+        // Handling Look-ahead target
         if (!aiRacer.targetGate) continue;
 
         // 1. Calculate direction vectors
         //glm::vec3 targetPos = aiRacer.getTargetPosition();
-        glm::vec3 targetPos = aiRacer.getLookAheadTarget(10.f);
+        glm::vec3 targetPos = aiRacer.getLookAheadTarget(20.f);
         glm::vec3 toTargetVec = targetPos - aiTransf.pos;
         float distanceToTarget = glm::length(toTargetVec);
         glm::vec3 toTarget = (distanceToTarget > 0.001f) ? glm::normalize(toTargetVec) : aiTransf.getForwardVector();
@@ -52,13 +96,13 @@ void AISystem::update(float deltaTime)
 
         // 4. Movement and Braking Logic
         float currentSpeed = aiVehicle.speed();
-        float maxThrottle = 0.7f; 
+        float throttle = aiVehicle.isBoosting? 1.0f: 0.7f;
         float angleDeg = glm::degrees(angle);
 
         if (aiVehicle.forwardGearDesired) {
             if (angleDeg > 60.f) {
                 if (currentSpeed < 5.0f) { 
-                    aiVehicle.throttle = maxThrottle;
+                    aiVehicle.throttle = throttle;
                     aiVehicle.brake = 0.0f;
                 }
                 else {
@@ -69,11 +113,11 @@ void AISystem::update(float deltaTime)
             else if (angleDeg > 20.f) {
                 aiVehicle.brake = 0.0f;
                 float throttleFactor = glm::clamp(1.0f - (angleDeg / 60.0f), 0.4f, 1.0f);
-                aiVehicle.throttle = maxThrottle * throttleFactor;
+                aiVehicle.throttle = throttle * throttleFactor;
             }
             else {
                 aiVehicle.brake = 0.0f;
-                aiVehicle.throttle = maxThrottle;
+                aiVehicle.throttle = throttle;
             }
         }
 
