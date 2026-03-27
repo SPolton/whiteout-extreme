@@ -32,7 +32,7 @@ RacingGame::RacingGame()
     audioManager = std::make_shared<AudioEngine>();
 
     inputManager = std::make_shared<InputManager>();
-    window = std::make_shared<Window>(inputManager, 1200, 800, "Whiteout Extreme");
+    window = std::make_shared<Window>(inputManager, 1080, 720, "Whiteout Extreme");
     window->makeContextCurrent();
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -252,7 +252,8 @@ RacingGame::RacingGame()
 
     textSystem->setProjection(1440.0f, 1440.0f);
 
-    menus = std::make_unique<GameMenus>(textSystem.get(), inputManager.get(), audioManager.get(), gameState);
+    menus = std::make_unique<GameMenus>(textSystem.get(), inputManager.get(), audioManager.get(), window.get(), gameState);
+    menus->init();
 
    // intiailize audio engine
     audioManager->init();
@@ -355,6 +356,12 @@ void RacingGame::updateInMenu(MenuAction actionButtons)
         updatePauseMenu(actionButtons);
     } else if (gameState == GameState::GameOver) {
         updateGameOverMenu(actionButtons);
+    } else if (gameState == GameState::HelpMenu) {
+        updateHelpMenu(actionButtons);
+    } else if (gameState == GameState::ControllerHelp) {
+        updateControllerHelpMenu(actionButtons);
+    } else if (gameState == GameState::KeyboardHelp) {
+        updateKeyboardHelpMenu(actionButtons);
     }
 }
 
@@ -377,6 +384,9 @@ void RacingGame::updateMainMenu(MenuAction actionButtons)
     if (actionButtons == MenuAction::StartGame || actionCursor == MenuAction::StartGame) {
         racingSystem->restart();
         gameState = GameState::InGame;
+    }
+    else if (actionButtons == MenuAction::GoToHelpMenu || actionCursor == MenuAction::GoToHelpMenu) {
+        gameState = GameState::HelpMenu;
     }
 
     updateMenuAudioState();
@@ -401,6 +411,45 @@ void RacingGame::updateGameOverMenu(MenuAction actionButtons)
     auto& playerRacer = gCoordinator.GetComponent<Racer>(playerVehicleEntity);
     int rank = playerRacer.currentRank;
     MenuAction actionCursor = menus->renderGameOver(rank, playerRacer.engulfed);
+
+    if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
+        gameState = GameState::MainMenu;
+    }
+
+    updateMenuAudioState();
+}
+
+void RacingGame::updateHelpMenu(MenuAction actionButtons)
+{
+    MenuAction actionCursor = menus->renderHelpMenu();
+
+    if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
+        gameState = GameState::MainMenu;
+    }
+    else if (actionButtons == MenuAction::GoToControllerHelp || actionCursor == MenuAction::GoToControllerHelp) {
+        gameState = GameState::ControllerHelp;
+    }
+    else if (actionButtons == MenuAction::GoToKeyboardHelp || actionCursor == MenuAction::GoToKeyboardHelp) {
+        gameState = GameState::KeyboardHelp;
+    }
+
+    updateMenuAudioState();
+}
+
+void RacingGame::updateControllerHelpMenu(MenuAction actionButtons)
+{
+    MenuAction actionCursor = menus->renderControllerHelp();
+
+    if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
+        gameState = GameState::MainMenu;
+    }
+
+    updateMenuAudioState();
+}
+
+void RacingGame::updateKeyboardHelpMenu(MenuAction actionButtons)
+{
+    MenuAction actionCursor = menus->renderKeyboardHelp();
 
     if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
         gameState = GameState::MainMenu;

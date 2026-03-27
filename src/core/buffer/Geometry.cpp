@@ -62,3 +62,9 @@ void GPU_Geometry::Update(CPU_Geometry const &data)
     UpdateUVs(data.uvs.size(), data.uvs.data());
     UpdateIndices(data.indices.size(), data.indices.data());
 }
+
+void GPU_Geometry::Update2D(CPU_Geometry const& data)
+{
+    UpdatePositions(data.positions.size(), data.positions.data());
+    UpdateUVs(data.uvs.size(), data.uvs.data());
+}
