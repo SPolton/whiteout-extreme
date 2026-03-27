@@ -65,7 +65,7 @@ void AISystem::update(float deltaTime)
 
             // Apply instant heat cost if enough time has passed since the last burst
             if (aiVehicle.timeSinceLastBoost > 0.1f) {
-                aiVehicle.engineHeat = std::min(1.0f, aiVehicle.engineHeat + aiVehicle.boostHeatInstantCost);
+                aiVehicle.engineHeat = std::min(1.0f, aiVehicle.engineHeat + aiVehicle.boostHeatInstantCost());
             }
         }
         else {

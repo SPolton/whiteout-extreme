@@ -2,6 +2,7 @@
 
 #include "physics/VehicleFourWheelDrive.hpp"
 #include <memory>
+#include <random>
 
 using namespace physx::vehicle2;
 
@@ -31,9 +32,16 @@ struct VehicleComponent {
     bool engineFreezing = false;
 
     // Tuning settings
-    float boostHeatInstantCost = 0.12f; // 10% instant
     float boostHeatPerSecond = 0.18f;  // then linear heating (18% per sec)
     float heatRecoveryDelay = 1.0f;
+
+    float boostHeatInstantCost() {
+        static std::random_device rd;
+        static std::mt19937 gen(rd());
+        static std::uniform_real_distribution<float> dis(0.05f, 0.15f);
+
+        return dis(gen);
+    }
 
     bool forwardGearDesired = true;
     PxVehicleDirectDriveTransmissionCommandState::Enum gearState{ PxVehicleDirectDriveTransmissionCommandState::eREVERSE };
