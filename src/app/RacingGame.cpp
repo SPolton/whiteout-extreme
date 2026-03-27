@@ -275,6 +275,10 @@ RacingGame::RacingGame()
     audioManager->loadSound("assets/audio/snowmobiles-1-trimmed.wav", false, true, true);
     aiEngineChannelID1 = audioManager->playSounds("assets/audio/snowmobiles-1-trimmed.wav", { 0,0,0 }, -15.0f);
     aiEngineChannelID2 = audioManager->playSounds("assets/audio/snowmobiles-1-trimmed.wav", { 0,0,0 }, -15.0f);
+
+    // boost sounds
+    audioManager->loadSound("assets/audio/apex-vent.mp3", false, false, false);
+    audioManager->loadSound("assets/audio/overheat.mp3", false, false, false);
 }
 
 RacingGame::~RacingGame()

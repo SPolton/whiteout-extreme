@@ -63,6 +63,7 @@ void VehicleControlSystem::update(float deltaTime)
 
             // --- OVERHEAT ---
             if (vehicle.engineHeat >= 1.0f) {
+                if (entity == playerVehicleEntity) audioManager->playSounds("assets/audio/overheat.mp3", { 0,0,0 }, -6.0f);
                 vehicle.engineHeat = 1.0f;
                 vehicle.isOverheated = true;
                 vehicle.isBoosting = false;
@@ -103,7 +104,9 @@ void VehicleControlSystem::update(float deltaTime)
                 vehicle.isOverheated = false;
             }
 
+            // - APEX-VENT -
             if (vehicle.engineHeat > 0.90f && !vehicle.isOverheated) {
+                if (entity == playerVehicleEntity) audioManager->playSounds("assets/audio/apex-vent.mp3", { 0,0,0 }, -13.0f);
                 vehicle.boostMaster = true;
                 vehicle.timeSinceBoostMaster = 0.0f;
 
