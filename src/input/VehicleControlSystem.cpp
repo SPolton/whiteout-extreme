@@ -44,7 +44,18 @@ void VehicleControlSystem::update(float deltaTime)
             vehicle.isBoosting = false;
         }
 
+        if (vehicle.boostMaster) {
+            vehicle.timeSinceBoostMaster += deltaTime;
+            if (vehicle.timeSinceBoostMaster > 2.0f) {
+                vehicle.boostMaster = false;
+                vehicle.boostMasterBonus = 0.0f;
+                vehicle.timeSinceBoostMaster = 0.0f;
+            }
+        }
+
         if (vehicle.isBoosting && !vehicle.isOverheated) {
+            if (vehicle.boostMaster) vehicle.boostMaster = false;
+
             // --- LOGIC BOOST ---
             engineParams.maxOmega = 2100.0f;
             vehicle.engineHeat = std::min(1.0f, vehicle.engineHeat + vehicle.boostHeatPerSecond * deltaTime);
@@ -55,6 +66,7 @@ void VehicleControlSystem::update(float deltaTime)
                 vehicle.engineHeat = 1.0f;
                 vehicle.isOverheated = true;
                 vehicle.isBoosting = false;
+                vehicle.boostMaster = false;
 
                 // Max Speed reduced punishment
                 engineParams.maxOmega = 600.0f;
@@ -84,11 +96,24 @@ void VehicleControlSystem::update(float deltaTime)
         }
         else {
             // --- LOGIC COOLING ---
-            engineParams.maxOmega = vehicle.isOverheated? 600.f: 1300.0f;
+            engineParams.maxOmega = vehicle.isOverheated? 700.f: 1300.0f;
             vehicle.timeSinceLastBoost += deltaTime;
 
-            if (vehicle.isOverheated && vehicle.engineHeat <= 0.1f) {
+            if (vehicle.isOverheated && vehicle.engineHeat <= 0.2f) {
                 vehicle.isOverheated = false;
+            }
+
+            if (vehicle.engineHeat > 0.90f && !vehicle.isOverheated) {
+                vehicle.boostMaster = true;
+                vehicle.timeSinceBoostMaster = 0.0f;
+
+                float x = (vehicle.engineHeat - 0.90f) / (1.0f - 0.90f);
+                vehicle.boostMasterAccuracy = x;
+
+                vehicle.boostMasterBonus = 0.1f + (std::pow(x, 3.0f) * 0.4f);
+
+                vehicle.engineHeat -= vehicle.boostMasterBonus;
+                vehicle.timeSinceLastBoost = 0.75f;
             }
 
             if (vehicle.timeSinceLastBoost > 1.0f && vehicle.engineHeat > 0.0f) {
@@ -361,7 +386,7 @@ void VehicleControlSystem::boost()
     }
 
     if (vehicle.isBoosting && vehicle.timeSinceLastBoost > 0.1f) {
-        vehicle.engineHeat = std::min(1.0f, vehicle.engineHeat + vehicle.boostHeatInstantCost);
+        vehicle.engineHeat = std::min(1.0f, vehicle.engineHeat + vehicle.boostHeatInstantCost());
     }
 }
 

@@ -633,7 +633,7 @@ void RacingGame::renderInGameHUD()
     // 0. --- TEXT LOGIC (Dynamic Scaling) ---
     float baseScale = 1.5f;
     // Scale increases by up to 50% based on heat level
-    float textScale = baseScale + (heat * 0.70f);
+    float textScale = baseScale - 0.5f + (heat * 0.20f);
 
     // 1. --- BACKGROUND RENDERING (Blue-Grey) ---
     // Draw the empty gauge representing maximum capacity
@@ -644,6 +644,8 @@ void RacingGame::renderInGameHUD()
     glm::vec3 cooledDownBackground{ 0.65f, 0.80f, 1.0f };
     glm::vec3 backgroundColor = engineFreezing? cooledDownBackground : glm::vec3{ 0.35f, 0.4f, 0.50f }; // Muted blue-grey
     textSystem->renderText(backgroundBarString, { startX, startY, baseScale }, backgroundColor);
+
+    glm::vec3 boostMasterColor{ 0.60f, 1.0f, 0.9f };
 
 
     // 2. --- DYNAMIC COLOR LOGIC (Multi-stage Palette) ---
@@ -684,24 +686,57 @@ void RacingGame::renderInGameHUD()
     }
 
     // Draw the "filled" part over the grey background
-    textSystem->renderText(heatBarString, { startX, startY, baseScale }, color);
+    bool boostMaster = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).boostMaster;
+
+    textSystem->renderText(heatBarString, { startX, startY, baseScale }, color); // boostMaster ? boostMasterColor : color);
 
     float textPadding = 38.0f;
     float textX = startX + (maxBars * barSpacing) + textPadding;
 
-    // Display percentage or Overheat warning
-    std::string percentStr = (heat >= 1.0f) ? "OVERHEAT!" : std::format("{:.0f}%", heat * 100.0f);
 
-    // Render text with a drop shadow for better UI contrast
-    // Shadow (Black)
-    textSystem->renderText(percentStr, { textX + 2.f, startY - 2.f, textScale }, engineFreezing? cooledDownBackground : glm::vec3{ 0.0f, 0.0f, 0.0f });
-    // Main text (Dynamic color)
-    textSystem->renderText(percentStr, { textX, startY, textScale }, color);
+    if (boostMaster) {
+        float boostMasterBonus = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).boostMasterBonus;
+        float boostMasterAccuracy = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).boostMasterAccuracy;
+
+        float accuracyPct = boostMasterAccuracy * 100.0f;
+        std::string grade;
+        glm::vec3 gradeColor;
+
+        if (accuracyPct >= 75.f) {
+            grade = "EPIC";
+            gradeColor = { 0.00f, 1.00f, 0.9f };
+        }
+        else if (accuracyPct >= 40.f) {
+            grade = "GREAT";
+            gradeColor = { 0.15f, 0.85f, 0.7f };
+        }
+        else {
+            grade = "GOOD";
+            gradeColor = { 0.30f, 0.70f, 0.50f };
+        }
+
+        std::string bonusStr = std::format("{} APEX VENT -{:.0f}%", grade, boostMasterBonus * 100.0f);
+
+        textSystem->renderText(bonusStr, { textX + 2.f, startY - 2.f, textScale }, engineFreezing ? cooledDownBackground : glm::vec3{ 0.0f, 0.0f, 0.0f });
+        textSystem->renderText(bonusStr, { textX, startY, textScale }, gradeColor);
+    }
+    else {
+        // Display percentage or Overheat warning
+        std::string percentStr = (heat >= 1.0f) ? "OVERHEAT" : std::format("{:.0f}%", heat * 100.0f);
+
+        // Render text with a drop shadow for better UI contrast
+        // Shadow (Black)
+        textSystem->renderText(percentStr, { textX + 2.f, startY - 2.f, textScale }, engineFreezing ? cooledDownBackground : glm::vec3{ 0.0f, 0.0f, 0.0f });
+        // Main text (Dynamic color)
+        textSystem->renderText(percentStr, { textX, startY, textScale }, color);
+    }
 
     if (engineFreezing) {
-        textSystem->renderText("*** Freezing ***", { startX + 3.f, startY - 70.f + 3.f, baseScale }, cooledDownBackground);
-        textSystem->renderText("*** Freezing ***", { startX, startY - 70.f, baseScale }, {1.f, 1.f, 1.f});
+        textSystem->renderText(" ** Freezing **", { startX + 3.f, startY - 70.f + 3.f, baseScale }, cooledDownBackground);
+        textSystem->renderText(" ** Freezing **", { startX, startY - 70.f, baseScale }, { 0.9f, 0.95f, 1.f });
     }
+
+    
 
     // --- Crosshair / Center UI ---
     textSystem->renderText("+", { centerX - 5.f, centerY - 5.f, 0.75f }, { 1.f, 1.f, 1.f });

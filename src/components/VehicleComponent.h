@@ -30,6 +30,10 @@ struct VehicleComponent {
     float heatCooldownTimer = 0.0f; // for 1s delay befor cooldown
     bool isOverheated = false;      // optional : to block boost at 100%
     bool engineFreezing = false;
+    bool boostMaster = false;
+    float timeSinceBoostMaster = 0.0f;
+    float boostMasterBonus = 0.0f;
+    float boostMasterAccuracy = 0.0f;
 
     // Tuning settings
     float boostHeatPerSecond = 0.18f;  // then linear heating (18% per sec)
