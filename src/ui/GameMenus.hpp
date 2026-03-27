@@ -97,4 +97,8 @@ private:
 
     // variable to keep track whether stick movement was detected
     float stickPosition = 0.0f;
+
+    // colors
+    glm::vec3 blue = { 0.f, 0.f, 0.6f };
+    glm::vec3 red = { 0.8f, 0.f, 0.f };
 };
