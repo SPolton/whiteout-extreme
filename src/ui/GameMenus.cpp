@@ -183,6 +183,13 @@ MenuAction GameMenus::pollInputs() {
                 audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
                 return MenuAction::GoToMainMenu;
             }
+            // HELP MENU SUBPAGES
+            // only one option to return to main menu, so it is auto selected
+            else if (gameState == GameState::ControllerHelp || gameState == GameState::KeyboardHelp) {
+                // play UI button clicked sound
+                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                return MenuAction::GoToMainMenu;
+            }
         }
         // B button to go back from pause to main menu
         else if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_B)) {
@@ -379,6 +386,18 @@ MenuAction GameMenus::renderMainMenu()
         else if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_Y) > deadZone) {
             selectedMenuOption = 1; // if scrolled down, "help" button selected. save state
         }
+
+        // update button highlights based on which button currently selected (know from state keeping)
+        if (selectedMenuOption == 0) {
+            // select the "start" button
+            startColor = { 0.8f, 0.f, 0.f };
+            helpColor = defaultColor;
+        }
+        else if (selectedMenuOption == 1) {
+            // select the "help" button
+            helpColor = { 0.8f, 0.f, 0.f };
+            startColor = defaultColor;
+        }
     }
 
     // check if mouse is hovered over the "Start" button
@@ -411,18 +430,6 @@ MenuAction GameMenus::renderMainMenu()
                 return MenuAction::GoToHelpMenu;
             }
         }
-    }
-
-    // update button highlights based on which button currently selected (know from state keeping)
-    if (selectedMenuOption == 0) {
-        // select the "start" button
-        startColor = { 0.8f, 0.f, 0.f };
-        helpColor = defaultColor;
-    }
-    else if (selectedMenuOption == 1) {
-        // select the "help" button
-        helpColor = { 0.8f, 0.f, 0.f };
-        startColor = defaultColor;
     }
 
     // render the text with the proper color assigned
@@ -477,6 +484,18 @@ MenuAction GameMenus::renderPauseMenu() {
         else if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_Y) > deadZone) {
             selectedPauseMenuOption = 1; // if scrolled down, "quit" button selected. save state
         }
+
+        // update button highlights based on which button currently selected (know from state keeping)
+        if (selectedPauseMenuOption == 0) {
+            // select the "resume" button
+            resumeColor = { 0.8f, 0.f, 0.f };
+            quitColor = defaultColor;
+        }
+        else if (selectedPauseMenuOption == 1) {
+            // select the "quit" button
+            quitColor = { 0.8f, 0.f, 0.f };
+            resumeColor = defaultColor;
+        }
     }
 
     // check if mouse is hovered over the "Resume" button
@@ -509,18 +528,6 @@ MenuAction GameMenus::renderPauseMenu() {
                 return MenuAction::GoToMainMenu;
             }
         }
-    }
-
-    // update button highlights based on which button currently selected (know from state keeping)
-    if (selectedPauseMenuOption == 0) {
-        // select the "resume" button
-        resumeColor = { 0.8f, 0.f, 0.f };
-        quitColor = defaultColor;
-    }
-    else if (selectedPauseMenuOption == 1) {
-        // select the "quit" button
-        quitColor = { 0.8f, 0.f, 0.f };
-        resumeColor = defaultColor;
     }
 
     // render the text with the proper color assigned
@@ -571,6 +578,11 @@ MenuAction GameMenus::renderGameOver(int rank, bool engulfed)
 
     // set the "Return to menu" button to the default color (used when not hovered upon)
     glm::vec3 returnColor = defaultColor;
+
+    // if detected controller is source of input, then auto select (highlight in red) first menu option
+    if (inputSystem == 1) {
+        returnColor = { 0.8f, 0.f, 0.f };
+    }
 
     // check for controller inputs
     if (inputSystem == 1) {
@@ -637,10 +649,16 @@ MenuAction GameMenus::renderHelpMenu()
         // add "deadzone" (since most controllers won't return back to 0.0 exactly)
         float deadZone = 0.2f;
 
+        // get the current (right) stick position in y-direction
+        float currentStickPosition = inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_Y);
+
         // check for right stick movement to scroll through menu options
         // if negative, it is scrolling up
         // if positive, it is scrolling down
-        if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_Y) < -deadZone) {
+
+        // if the stick currently is scrolling up, and the previous position was not scrolling up, then move to next menu option
+        // (prevents hold scrolling which jumps past the middle option)
+        if (currentStickPosition < -deadZone && stickPosition >= -deadZone) {
             if (selectedHelpMenuOption == 1) {
                 selectedHelpMenuOption = 0; // scrolled up to "controller" from "keyboard" button
             }
@@ -648,13 +666,37 @@ MenuAction GameMenus::renderHelpMenu()
                 selectedHelpMenuOption = 1; // scrolled up to "controller" from "back" button
             }
         }
-        else if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_Y) > deadZone) {
+        // if the stick currently is scrolling down, and the previous position was not scrolling down, then move to next menu option
+        else if (currentStickPosition > deadZone && stickPosition <= deadZone) {
             if (selectedHelpMenuOption == 0) {
                 selectedHelpMenuOption = 1; // scrolled down to "controller" from "keyboard" button
             }
             else if (selectedHelpMenuOption == 1) {
                 selectedHelpMenuOption = 2; // scrolled down to "back" from "controller" button
             }
+        }
+
+        // update the latest stick position
+        stickPosition = currentStickPosition;
+
+        // update button highlights based on which button currently selected (know from state keeping)
+        if (selectedHelpMenuOption == 0) {
+            // select the "keyboard" button
+            keyboardColor = { 0.8f, 0.f, 0.f };
+            backColor = defaultColor;
+            controllerColor = defaultColor;
+        }
+        else if (selectedHelpMenuOption == 1) {
+            // select the "controller" button
+            controllerColor = { 0.8f, 0.f, 0.f };
+            keyboardColor = defaultColor;
+            backColor = defaultColor;
+        }
+        else if (selectedHelpMenuOption == 2) {
+            // select the "back" button
+            backColor = { 0.8f, 0.f, 0.f };
+            keyboardColor = defaultColor;
+            controllerColor = defaultColor;
         }
     }
 
@@ -704,26 +746,6 @@ MenuAction GameMenus::renderHelpMenu()
         }
     }
 
-    // update button highlights based on which button currently selected (know from state keeping)
-    if (selectedHelpMenuOption == 0) {
-        // select the "keyboard" button
-        keyboardColor = { 0.8f, 0.f, 0.f };
-        backColor = defaultColor;
-        controllerColor = defaultColor;
-    }
-    else if (selectedHelpMenuOption == 1) {
-        // select the "controller" button
-        controllerColor = { 0.8f, 0.f, 0.f };
-        keyboardColor = defaultColor;
-        backColor = defaultColor;
-    }
-    else if (selectedHelpMenuOption == 2) {
-        // select the "back" button
-        backColor = { 0.8f, 0.f, 0.f };
-        keyboardColor = defaultColor;
-        controllerColor = defaultColor;
-    }
-
     // pages to choose from
     textSystem->renderText("Keyboard", { 500.f, 900.f, 0.75f }, keyboardColor);
     textSystem->renderText("Controller", { 460.f, 700.f, 0.75f }, controllerColor);
@@ -756,6 +778,11 @@ MenuAction GameMenus::renderControllerHelp()
 
     // set the "return" button to the default color (used when not hovered upon)
     glm::vec3 returnColor = defaultColor;
+
+    // if detected controller is source of input, then auto select (highlight in red) first menu option
+    if (inputSystem == 1) {
+        returnColor = { 0.8f, 0.f, 0.f };
+    }
 
     // check if mouse is hovered over the "return" button
     if (cursorPos.x > 200.f && cursorPos.x < 900.f) {
@@ -828,6 +855,11 @@ MenuAction GameMenus::renderKeyboardHelp()
 
     // set the "return" button to the default color (used when not hovered upon)
     glm::vec3 returnColor = defaultColor;
+
+    // if detected controller is source of input, then auto select (highlight in red) first menu option
+    if (inputSystem == 1) {
+        returnColor = { 0.8f, 0.f, 0.f };
+    }
 
     // check if mouse is hovered over the "return" button
     if (cursorPos.x > 200.f && cursorPos.x < 900.f) {

@@ -82,16 +82,19 @@ private:
 
     // button selected states on main menu
     // 0 = start, 1 = help
-    bool defaultMainMenuOption = 0;
-    bool selectedMenuOption = 0;
+    int defaultMainMenuOption = 0;
+    int selectedMenuOption = 0;
 
     // button selected states on pause menu
     // 0 = resume, 1 = quit
-    bool defaultPauseMenuOption = 0;
-    bool selectedPauseMenuOption = 0;
+    int defaultPauseMenuOption = 0;
+    int selectedPauseMenuOption = 0;
 
     // button selected states on help menu
     // 0 = keyboard, 1 = controller, 2 = back
-    bool defaultHelpMenuOption = 2;
-    bool selectedHelpMenuOption = 0;
+    int defaultHelpMenuOption = 2;
+    int selectedHelpMenuOption = 2;
+
+    // variable to keep track whether stick movement was detected
+    float stickPosition = 0.0f;
 };
