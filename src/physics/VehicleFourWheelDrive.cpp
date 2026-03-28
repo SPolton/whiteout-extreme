@@ -167,8 +167,8 @@ bool VehicleFourWheelDrive::initVehicle(ConstructData info)
 	mVehicle.mEngineDriveState.gearboxState.currentGear = mVehicle.mEngineDriveParams.gearBoxParams.neutralGear + 1;
 	mVehicle.mEngineDriveState.gearboxState.targetGear = mVehicle.mEngineDriveParams.gearBoxParams.neutralGear + 1;
 
-	//Set the vehicle to use the automatic gearbox.
-	mVehicle.mTransmissionCommandState.targetGear = PxVehicleEngineDriveTransmissionCommandState::eAUTOMATIC_GEAR;
+    // Initialize gearbox drive command state
+    syncDesiredGear();
 
     // Collision filtering for the vehicle
     PxFilterData vehicleFilter(COLLISION_FLAG_CHASSIS, COLLISION_FLAG_CHASSIS_AGAINST, 0, 0);
