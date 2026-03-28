@@ -273,8 +273,8 @@ RacingGame::RacingGame()
 
     // play ai racer sounds
     audioManager->loadSound("assets/audio/snowmobiles-1-trimmed.wav", false, true, true);
-    aiEngineChannelID1 = audioManager->playSounds("assets/audio/snowmobiles-1-trimmed.wav", { 0,0,0 }, -15.0f);
-    aiEngineChannelID2 = audioManager->playSounds("assets/audio/snowmobiles-1-trimmed.wav", { 0,0,0 }, -15.0f);
+    aiEngineChannelID1 = audioManager->playSounds("assets/audio/snowmobiles-1-trimmed.wav", { 0,0,0 }, -20.0f);
+    aiEngineChannelID2 = audioManager->playSounds("assets/audio/snowmobiles-1-trimmed.wav", { 0,0,0 }, -20.0f);
 
     // boost sounds
     audioManager->loadSound("assets/audio/apex-vent.mp3", false, false, false);
@@ -510,7 +510,7 @@ void RacingGame::updateInGameAudioState(float playerSpeed)
     // Player engine sound speed gating
     if (playerSpeed > 1.0f) {
         if (!enginePlaying) {
-            engineChannelID = audioManager->playSounds("assets/audio/snowmobiles-4-trimmed.mp3", { 0,0,0 }, -15.0f);
+            engineChannelID = audioManager->playSounds("assets/audio/snowmobile-player.wav", { 0,0,0 }, -15.0f);
             enginePlaying = true;
         }
         else {

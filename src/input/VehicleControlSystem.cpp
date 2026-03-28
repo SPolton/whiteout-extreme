@@ -273,12 +273,12 @@ void VehicleControlSystem::processControllerInput()
 
     // if the button is currently pressed down and previously wasn't, play the nitro starting sound
     if (boostIsPressed && !boostWasPressedController) {
-        audioManager->playSounds("assets/audio/nitro_start.wav", { 0,0,0 }, -8.0f);
+        audioManager->playSounds("assets/audio/nitro-start.wav", { 0,0,0 }, -8.0f);
     }
     // if the button is currently NOT pressed down and previously WAS, play the nitro ending sound
     else if (!boostIsPressed && boostWasPressedController) {
         // when ending boost, play fade out boost
-        audioManager->playSounds("assets/audio/boost_end.wav", { 0,0,0 }, -7.f);
+        audioManager->playSounds("assets/audio/boost-end.wav", { 0,0,0 }, -7.f);
     }
 
     // if top button pressed, activate boost
@@ -335,12 +335,12 @@ void VehicleControlSystem::processKeyboardInput()
 
     // if the key is currently pressed down and previously wasn't, play the nitro starting sound
     if (boostIsPressed && !boostWasPressedKeybaord) {
-        audioManager->playSounds("assets/audio/nitro_start.wav", { 0,0,0 }, -8.0f);
+        audioManager->playSounds("assets/audio/nitro-start.wav", { 0,0,0 }, -8.0f);
     }
     // if the key is currently NOT pressed down and previously WAS, play the nitro ending sound
     else if (!boostIsPressed && boostWasPressedKeybaord) {
         // when ending boost, play fade out boost
-        audioManager->playSounds("assets/audio/boost_end.wav", { 0,0,0 }, -7.f);
+        audioManager->playSounds("assets/audio/boost-end.wav", { 0,0,0 }, -7.f);
     }
 
     // let us just assume we use one skill at a time
@@ -463,7 +463,7 @@ void VehicleControlSystem::throwSnowball()
     if (vehicleComponent.snowBallCooldown > 0.f) return;
 
     // play sound of throwing snowball
-    audioManager->playSounds("assets/audio/snowball-hit-01.mp3", { 0,0,0 }, -1.0f);
+    audioManager->playSounds("assets/audio/snowball-hit-01.mp3", { 0,0,0 }, 2.0f);
     //logger::info("Throwing snowball...");
 
     // Calculate the Forward direction based on the vehicle's current rotation
@@ -508,13 +508,13 @@ void VehicleControlSystem::throwSnowball()
 void VehicleControlSystem::loadVehicleSounds()
 {
     // for acceleration
-    audioManager->loadSound("assets/audio/snowmobiles-4-trimmed.mp3", false, true, true);
+    audioManager->loadSound("assets/audio/snowmobile-player.wav", false, true, true);
     // for throwing snowball
     audioManager->loadSound("assets/audio/snowball-hit-01.mp3", false, false, false);
     // for boost
     audioManager->loadSound("assets/audio/boost.wav", false, true, true);
-    audioManager->loadSound("assets/audio/nitro_start.wav", false, false, false);
-    audioManager->loadSound("assets/audio/boost_end.wav", false, false, false);
+    audioManager->loadSound("assets/audio/nitro-start.wav", false, false, false);
+    audioManager->loadSound("assets/audio/boost-end.wav", false, false, false);
 }
 
 // called from RacingGame to pause boost audio
