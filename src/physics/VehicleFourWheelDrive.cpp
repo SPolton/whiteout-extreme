@@ -81,8 +81,6 @@
 // It is a good idea to record and playback with pvd (PhysX Visual Debugger).
 // ****************************************************************************
 
-#include <ctype.h>
-
 #include "VehicleFourWheelDrive.hpp"
 
 #include "common/Flags.hpp"
@@ -92,31 +90,6 @@
 using namespace physx;
 using namespace physx::vehicle2;
 using namespace snippetvehicle;
-
-//The vehicle with engine drivetrain
-EngineDriveVehicle mVehicle;
-
-//Commands are issued to the vehicle in a pre-choreographed sequence.
-struct Command
-{
-    PxF32 brake;
-    PxF32 throttle;
-    PxF32 steer;
-    PxU32 gear;
-    PxF32 duration;
-};
-const PxU32 gTargetGearCommand = PxVehicleEngineDriveTransmissionCommandState::eAUTOMATIC_GEAR;
-Command gCommands[] =
-{
-    {0.5f, 0.0f, 0.0f, gTargetGearCommand, 2.0f},	//brake on and come to rest for 2 seconds
-    {0.0f, 0.65f, 0.0f, gTargetGearCommand, 5.0f},	//throttle for 5 seconds
-    {0.5f, 0.0f, 0.0f, gTargetGearCommand, 5.0f},	//brake for 5 seconds
-    {0.0f, 0.75f, 0.0f, gTargetGearCommand, 5.0f},	//throttle for 5 seconds
-    {0.0f, 0.25f, 0.5f, gTargetGearCommand, 5.0f}	//light throttle and steer for 5 seconds.
-};
-const PxU32 gNbCommands = sizeof(gCommands) / sizeof(Command);
-PxReal gCommandTime = 0.0f;			//Time spent on current command
-PxU32 gCommandProgress = 0;			//The id of the current command.
 
 
 VehicleFourWheelDrive::VehicleFourWheelDrive(ConstructData info)
