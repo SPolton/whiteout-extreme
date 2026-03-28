@@ -55,7 +55,7 @@ void VehicleControlSystem::update(float deltaTime)
 
         // on first time playing boost sound, start the audio file
         if (vehicle.isBoosting && firstTimePlaying) {
-            boostChannelID = audioManager->playSounds("assets/audio/boost.wav", { 0,0,0 }, -5.f);
+            boostChannelID = audioManager->playSounds("assets/audio/boost.wav", { 0,0,0 }, -7.f);
             firstTimePlaying = false;
         }
         // otherwise resume and pause boost channel based on vehicle boosting state
@@ -273,12 +273,12 @@ void VehicleControlSystem::processControllerInput()
 
     // if the button is currently pressed down and previously wasn't, play the nitro starting sound
     if (boostIsPressed && !boostWasPressedController) {
-        audioManager->playSounds("assets/audio/nitro_start.wav", { 0,0,0 }, -5.0f);
+        audioManager->playSounds("assets/audio/nitro_start.wav", { 0,0,0 }, -8.0f);
     }
     // if the button is currently NOT pressed down and previously WAS, play the nitro ending sound
     else if (!boostIsPressed && boostWasPressedController) {
         // when ending boost, play fade out boost
-        audioManager->playSounds("assets/audio/boost_end.wav", { 0,0,0 }, -5.f);
+        audioManager->playSounds("assets/audio/boost_end.wav", { 0,0,0 }, -7.f);
     }
 
     // if top button pressed, activate boost
@@ -335,12 +335,12 @@ void VehicleControlSystem::processKeyboardInput()
 
     // if the key is currently pressed down and previously wasn't, play the nitro starting sound
     if (boostIsPressed && !boostWasPressedKeybaord) {
-        audioManager->playSounds("assets/audio/nitro_start.wav", { 0,0,0 }, -5.0f);
+        audioManager->playSounds("assets/audio/nitro_start.wav", { 0,0,0 }, -8.0f);
     }
     // if the key is currently NOT pressed down and previously WAS, play the nitro ending sound
     else if (!boostIsPressed && boostWasPressedKeybaord) {
         // when ending boost, play fade out boost
-        audioManager->playSounds("assets/audio/boost_end.wav", { 0,0,0 }, -5.f);
+        audioManager->playSounds("assets/audio/boost_end.wav", { 0,0,0 }, -7.f);
     }
 
     // let us just assume we use one skill at a time
