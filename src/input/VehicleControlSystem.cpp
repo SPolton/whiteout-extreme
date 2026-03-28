@@ -53,15 +53,20 @@ void VehicleControlSystem::update(float deltaTime)
             }
         }
 
-        //if (vehicle.isBoosting && !boostPlaying && boostChannelID == -1) {
-        //    boostChannelID = audioManager->playSounds("assets/audio/boost.wav", { 0,0,0 }, -5.0f);
-        //    boostPlaying = true;
-        //}
-        //else if (!vehicle.isBoosting && boostChannelID != -1) {
-        //    audioManager->pauseChannel(boostChannelID);
-        //    boostChannelID = -1;
-        //    boostPlaying = false;
-        //}
+        // on first time playing boost sound, start the audio file
+        if (vehicle.isBoosting && firstTimePlaying) {
+            boostChannelID = audioManager->playSounds("assets/audio/boost.wav", { 0,0,0 }, -4.f);
+            firstTimePlaying = false;
+        }
+        // otherwise resume and pause boost channel based on vehicle boosting state
+        else if (vehicle.isBoosting && !boostPlaying) {
+            audioManager->resumeChannel(boostChannelID);
+            boostPlaying = true;
+        }
+        else if (!vehicle.isBoosting) {
+            audioManager->pauseChannel(boostChannelID);
+            boostPlaying = false;
+        }
 
         if (vehicle.isBoosting && !vehicle.isOverheated) {
             if (vehicle.boostMaster) vehicle.boostMaster = false;
@@ -73,12 +78,9 @@ void VehicleControlSystem::update(float deltaTime)
 
             // --- OVERHEAT ---
             if (vehicle.engineHeat >= 1.0f) {
-                //// stop boost sound
-                //if (boostChannelID != -1) {
-                //    audioManager->pauseChannel(boostChannelID);
-                //    boostChannelID = -1;
-                //    boostPlaying = false;
-                //}
+                // pause boost sound when engine overheated
+                audioManager->pauseChannel(boostChannelID);
+                boostPlaying = false;
 
                 if (entity == playerVehicleEntity) audioManager->playSounds("assets/audio/overheat.mp3", { 0,0,0 }, -6.0f);
                 vehicle.engineHeat = 1.0f;

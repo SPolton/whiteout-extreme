@@ -55,6 +55,7 @@ private:
     // keep track of boost sound playing state
     int boostChannelID = -1;
     bool boostPlaying = false;
+    bool firstTimePlaying = true;
     // one for each input type to prevent overlapping audio
     bool boostWasPressedController = false;
     bool boostWasPressedKeybaord = false;
