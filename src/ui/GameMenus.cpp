@@ -302,6 +302,9 @@ MenuAction GameMenus::renderMainMenu()
     // get cursor position
     glm::dvec2 cursorPos = inputManager->cursorPosition();
 
+    // get scaling factor
+    glm::vec2 scalingFactor = getScale();
+
     textSystem->beginText();
 
     textSystem->loadFont("LuckiestGuy-Regular.ttf", 120);
@@ -401,8 +404,8 @@ MenuAction GameMenus::renderMainMenu()
     }
 
     // check if mouse is hovered over the "Start" button
-    if (cursorPos.x > 440.f && cursorPos.x < 635.f) {
-        if (cursorPos.y > 480.f && cursorPos.y < 520.f) {
+    if (cursorPos.x > 440.f * scalingFactor.x && cursorPos.x < 635.f * scalingFactor.x) {
+        if (cursorPos.y > 480.f * scalingFactor.y && cursorPos.y < 520.f * scalingFactor.y) {
             // if it is, highlight in red
             startColor = red;
 
@@ -417,8 +420,8 @@ MenuAction GameMenus::renderMainMenu()
     }
 
     // check if mouse is hovered over the "Help" button
-    if (cursorPos.x > 450.f && cursorPos.x < 610.f) {
-        if (cursorPos.y > 555.f && cursorPos.y < 595.f) {
+    if (cursorPos.x > 450.f * scalingFactor.x && cursorPos.x < 610.f * scalingFactor.x) {
+        if (cursorPos.y > 555.f * scalingFactor.y && cursorPos.y < 595.f * scalingFactor.y) {
             // if it is, highlight in red
             helpColor = red;
 
@@ -454,6 +457,9 @@ MenuAction GameMenus::renderPauseMenu() {
     // when in a menu, check for cursor position to highlight "buttons"
     // get cursor position
     glm::dvec2 cursorPos = inputManager->cursorPosition();
+
+    // get scaling factor
+    glm::vec2 scalingFactor = getScale();
 
     textSystem->beginText();
 
@@ -499,8 +505,8 @@ MenuAction GameMenus::renderPauseMenu() {
     }
 
     // check if mouse is hovered over the "Resume" button
-    if (cursorPos.x > 445.f && cursorPos.x < 630.f) {
-        if (cursorPos.y > 240.f && cursorPos.y < 270.f) {
+    if (cursorPos.x > 445.f * scalingFactor.x && cursorPos.x < 630.f * scalingFactor.x) {
+        if (cursorPos.y > 240.f * scalingFactor.y && cursorPos.y < 270.f * scalingFactor.y) {
             // if it is, highlight in red
             resumeColor = red;
 
@@ -515,8 +521,8 @@ MenuAction GameMenus::renderPauseMenu() {
     }
 
     // check if mouse is hovered over the "Quit" button
-    if (cursorPos.x > 275.f && cursorPos.x < 845.f) {
-        if (cursorPos.y > 310.f && cursorPos.y < 355.f) {
+    if (cursorPos.x > 275.f * scalingFactor.x && cursorPos.x < 845.f * scalingFactor.x) {
+        if (cursorPos.y > 310.f * scalingFactor.y && cursorPos.y < 355.f * scalingFactor.y) {
             // if it is, highlight in red
             quitColor = red;
 
@@ -551,6 +557,9 @@ MenuAction GameMenus::renderGameOver(int rank, bool engulfed)
     // get cursor position
     glm::dvec2 cursorPos = inputManager->cursorPosition();
 
+    // get scaling factor
+    glm::vec2 scalingFactor = getScale();
+
     textSystem->beginText();
 
     textSystem->loadFont("LuckiestGuy-Regular.ttf", 120);
@@ -571,7 +580,7 @@ MenuAction GameMenus::renderGameOver(int rank, bool engulfed)
     // Display the Rank (positioned 100 pixels below the previous line)
     textSystem->renderText(rankText, { 600.f, 700.f, 1.0f }, { 0.8f, 0.2f, 1.0f });
 
-    if(engulfed) textSystem->renderText("ENGULFED !", {525.f, 600.f, 0.65f}, { 0.9f, 0.35f, 0.20f });
+    if(engulfed) textSystem->renderText("ENGULFED !", {525.f, 600.f, 0.65f }, { 0.9f, 0.35f, 0.20f });
 
     // default color for the "Return to menu" button
     glm::vec3 defaultColor = blue;
@@ -596,8 +605,8 @@ MenuAction GameMenus::renderGameOver(int rank, bool engulfed)
     }
     // otherwise it must be keyboard/mouse input
     // check if mouse is hovered over the "Return to menu" button
-    if (cursorPos.x > 200.f && cursorPos.x < 900.f) {
-        if (cursorPos.y > 630.f && cursorPos.y < 675.f) {
+    if (cursorPos.x > 200.f * scalingFactor.x && cursorPos.x < 900.f * scalingFactor.x) {
+        if (cursorPos.y > 630.f * scalingFactor.y && cursorPos.y < 675.f * scalingFactor.y) {
             // if it is, highlight in red
             returnColor = red;
 
@@ -629,6 +638,9 @@ MenuAction GameMenus::renderHelpMenu()
     // when in a menu, check for cursor position to highlight "buttons"
     // get cursor position
     glm::dvec2 cursorPos = inputManager->cursorPosition();
+
+    // get scaling factor
+    glm::vec2 scalingFactor = getScale();
 
     textSystem->beginText();
 
@@ -701,8 +713,8 @@ MenuAction GameMenus::renderHelpMenu()
     }
 
     // check if mouse is hovered over the "Controller" button
-    if (cursorPos.x > 340.f && cursorPos.x < 730.f) {
-        if (cursorPos.y > 330.f && cursorPos.y < 370.f) {
+    if (cursorPos.x > 340.f * scalingFactor.x && cursorPos.x < 730.f * scalingFactor.x) {
+        if (cursorPos.y > 330.f * scalingFactor.y && cursorPos.y < 370.f * scalingFactor.y) {
             // if it is, highlight in red
             controllerColor = red;
 
@@ -716,8 +728,8 @@ MenuAction GameMenus::renderHelpMenu()
         }
     }
     // check if mouse is hovered over the "Keyboard" button
-    if (cursorPos.x > 370.f && cursorPos.x < 705.f) {
-        if (cursorPos.y > 230.f && cursorPos.y < 270.f) {
+    if (cursorPos.x > 370.f * scalingFactor.x && cursorPos.x < 705.f * scalingFactor.x) {
+        if (cursorPos.y > 230.f * scalingFactor.y && cursorPos.y < 270.f * scalingFactor.y) {
             // if it is, highlight in red
             keyboardColor = red;
 
@@ -731,8 +743,8 @@ MenuAction GameMenus::renderHelpMenu()
         }
     }
     // check if mouse is hovered over the "Back" button
-    if (cursorPos.x > 445.f && cursorPos.x < 610.f) {
-        if (cursorPos.y > 480.f && cursorPos.y < 520.f) {
+    if (cursorPos.x > 445.f * scalingFactor.x && cursorPos.x < 610.f * scalingFactor.x) {
+        if (cursorPos.y > 480.f * scalingFactor.y && cursorPos.y < 520.f * scalingFactor.y) {
             // if it is, highlight in red
             backColor = red;
 
@@ -769,6 +781,9 @@ MenuAction GameMenus::renderControllerHelp()
     // get cursor position
     glm::dvec2 cursorPos = inputManager->cursorPosition();
 
+    // get scaling factor
+    glm::vec2 scalingFactor = getScale();
+
     textSystem->beginText();
 
     textSystem->loadFont("LuckiestGuy-Regular.ttf", 120);
@@ -785,8 +800,8 @@ MenuAction GameMenus::renderControllerHelp()
     }
 
     // check if mouse is hovered over the "return" button
-    if (cursorPos.x > 200.f && cursorPos.x < 900.f) {
-        if (cursorPos.y > 630.f && cursorPos.y < 675.f) {
+    if (cursorPos.x > 200.f * scalingFactor.x && cursorPos.x < 900.f * scalingFactor.x) {
+        if (cursorPos.y > 630.f * scalingFactor.y && cursorPos.y < 675.f * scalingFactor.y) {
             // if it is, highlight in red
             returnColor = red;
 
@@ -846,6 +861,9 @@ MenuAction GameMenus::renderKeyboardHelp()
     // get cursor position
     glm::dvec2 cursorPos = inputManager->cursorPosition();
 
+    // get scaling factor
+    glm::vec2 scalingFactor = getScale();
+
     textSystem->beginText();
 
     textSystem->loadFont("LuckiestGuy-Regular.ttf", 120);
@@ -862,8 +880,8 @@ MenuAction GameMenus::renderKeyboardHelp()
     }
 
     // check if mouse is hovered over the "return" button
-    if (cursorPos.x > 200.f && cursorPos.x < 900.f) {
-        if (cursorPos.y > 630.f && cursorPos.y < 675.f) {
+    if (cursorPos.x > 200.f * scalingFactor.x && cursorPos.x < 900.f * scalingFactor.x) {
+        if (cursorPos.y > 630.f * scalingFactor.y && cursorPos.y < 675.f * scalingFactor.y) {
             // if it is, highlight in red
             returnColor = red;
 
@@ -913,3 +931,21 @@ MenuAction GameMenus::renderKeyboardHelp()
     return MenuAction::None;
 }
 
+glm::vec2 GameMenus::getScale() {
+    // initialize variables
+    float scaleX = 1.f;
+    float scaleY = 1.f;
+
+    // calculate scaling factor based on current windopw size and default window size
+    scaleX = window->getWidth() / defaultWindowWidth;
+    scaleY = window->getHeight() / defaultWindowHeight;
+
+    // return value
+    glm::vec2 scale = {
+        scaleX,
+        scaleY
+    };
+
+    // return calculated value
+    return scale;
+}
