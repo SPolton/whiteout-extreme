@@ -24,6 +24,9 @@ public:
     // to control boost sound in RacingGame
     void pauseBoostAudio();
 
+    // controls whether player engine should loop
+    bool stopPlayerEngine = true;
+
 private:
     // Input management
     std::shared_ptr<InputManager> inputManager;
@@ -62,4 +65,9 @@ private:
     // one for each input type to prevent overlapping audio
     bool boostWasPressedController = false;
     bool boostWasPressedKeybaord = false;
+
+    // track throttle pressing state
+    bool throttleWasPressedKeybaord = false;
+    bool throttleWasPressedController = false;
+
 };

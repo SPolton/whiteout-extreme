@@ -248,12 +248,25 @@ void VehicleControlSystem::processControllerInput()
 
     // check for throttle/braking
     // anything greater than 0 means it is pressed
-    if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER) > 0.0f) {
+    bool throttleIsPressed = inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER);
+
+    // if the key is currently NOT pressed down and previously WAS, play the engine ending sound
+    if (!throttleIsPressed && throttleWasPressedController) {
+        // when ending acceleration, play fade out engine
+        audioManager->playSounds("assets/audio/snowmobile-player-end.wav", { 0,0,0 }, 5.f);
+        // warn to stop looping engine sound
+        stopPlayerEngine = true;
+    }
+
+    if (throttleIsPressed > 0.0f) {
         accelerate();
     }
     else if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_LEFT_TRIGGER) > 0.0f) {
         brake();
     }
+
+    // update state to track for next frame
+    throttleWasPressedController = throttleIsPressed;
 
     // add "deadzone" (since most controllers won't return back to 0.0 exactly)
     float deadZone = 0.2f;
@@ -285,6 +298,11 @@ void VehicleControlSystem::processControllerInput()
     // if left button pressed, throw projectile
     if (boostIsPressed) {
         boost();
+
+        // if no throttle, don't play engine
+        if (!throttleIsPressed) {
+            stopPlayerEngine = true;
+        }
     }
     else if (inputManager->isControllerButtonPressed(GLFW_GAMEPAD_BUTTON_X)) {
         throwSnowball();
@@ -309,12 +327,26 @@ void VehicleControlSystem::processKeyboardInput()
     * D (right arrow) = steer right
     */
 
-    if (inputManager->isKeyPressed(GLFW_KEY_W) || inputManager->isKeyPressed(GLFW_KEY_UP)) {
+    // get current state of throttle key
+    bool throttleIsPressed = inputManager->isKeyPressed(GLFW_KEY_W) || inputManager->isKeyPressed(GLFW_KEY_UP);
+
+    // if the key is currently NOT pressed down and previously WAS, play the engine ending sound
+    if (!throttleIsPressed && throttleWasPressedKeybaord) {
+        // when ending acceleration, play fade out engine
+        audioManager->playSounds("assets/audio/snowmobile-player-end.wav", { 0,0,0 }, 5.f);
+        // warn to stop looping engine sound
+        stopPlayerEngine = true;
+    }
+
+    if (throttleIsPressed) {
         accelerate();
     }
     else if (inputManager->isKeyPressed(GLFW_KEY_S) || inputManager->isKeyPressed(GLFW_KEY_DOWN)) {
         brake();
     }
+
+    // update state to track for next frame
+    throttleWasPressedKeybaord = throttleIsPressed;
 
     // Should be able to steer left or right while accelerating
     if (inputManager->isKeyPressed(GLFW_KEY_D) || inputManager->isKeyPressed(GLFW_KEY_RIGHT)) {
@@ -346,6 +378,11 @@ void VehicleControlSystem::processKeyboardInput()
     // let us just assume we use one skill at a time
     if (boostIsPressed) {
         boost();
+
+        // if no throttle, don't play engine
+        if (!throttleIsPressed) {
+            stopPlayerEngine = true;
+        }
     }
     else if (inputManager->isKeyPressed(GLFW_KEY_SPACE) || inputManager->isKeyPressed(GLFW_KEY_E)) {
         throwSnowball();
@@ -379,6 +416,9 @@ void VehicleControlSystem::accelerate(float throttle)
         currentBrake = throttle;
         currentThrottle = 0.0f;
     }
+
+    // is playing when accelerating
+    stopPlayerEngine = false;
 }
 
 void VehicleControlSystem::brake()
@@ -509,6 +549,8 @@ void VehicleControlSystem::loadVehicleSounds()
 {
     // for acceleration
     audioManager->loadSound("assets/audio/snowmobile-player.wav", false, true, true);
+    // for deceleration
+    audioManager->loadSound("assets/audio/snowmobile-player-end.wav", false, false, false);
     // for throwing snowball
     audioManager->loadSound("assets/audio/snowball-hit-01.mp3", false, false, false);
     // for boost

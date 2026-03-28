@@ -508,7 +508,7 @@ void RacingGame::updateInGameAudioState(float playerSpeed)
     audioManager->setChannelVolume(avalancheChannelID, volumeInDB);
 
     // Player engine sound speed gating
-    if (playerSpeed > 1.0f) {
+    if (!vehicleControlSystem->stopPlayerEngine && playerSpeed > 1.0f) {
         if (!enginePlaying) {
             engineChannelID = audioManager->playSounds("assets/audio/snowmobile-player.wav", { 0,0,0 }, -15.0f);
             enginePlaying = true;
