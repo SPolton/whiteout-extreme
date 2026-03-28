@@ -123,6 +123,7 @@ float RacingCamera::targetFovDegrees() const
 
 void RacingCamera::updateShake(float dt, glm::vec3 const& forward, glm::vec3 const& right)
 {
+    (void)forward;
     float const targetSpeed = glm::length(mTargetVelocity);
 
     if (!isShakeEnabled || dt <= 0.0f || targetSpeed < mShakeMinSpeedMs) {
@@ -157,6 +158,11 @@ void RacingCamera::updateShake(float dt, glm::vec3 const& forward, glm::vec3 con
         mShakeIntensity = 0.0f;
     }
 
+    // High-speed baseline shake (small vibration at high speed)
+    float const speedNorm = glm::clamp(targetSpeed / mFovSpeedAtMax, 0.0f, 1.0f); // Reuse FOV speed normalization
+    float const baseVibe = speedNorm * mSpeedBaseline;
+    mShakeIntensity = glm::max(mShakeIntensity, baseVibe);
+
     mShakeTime += dt;
     mPrevSpeedMs = mSmoothSpeed;
     mPrevAccelMs2 = accelMs2;
@@ -183,7 +189,7 @@ void RacingCamera::updateShake(float dt, glm::vec3 const& forward, glm::vec3 con
         0.1f * std::sin(3.9f * w * t + 2.7f);
 
     // Vertical shake is usually more noticeable, so scale it down a bit.
-    float const verticalAmp = 0.6f;
+    float const verticalAmp = glm::mix(0.5f, 0.7f, mShakeIntensity);
     mShakePosOffset =
         right * (sx * mShakePosAmp * mShakeIntensity)
         + mUp * (sy * mShakePosAmp * verticalAmp * mShakeIntensity);

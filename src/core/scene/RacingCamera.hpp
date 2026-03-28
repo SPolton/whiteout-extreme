@@ -46,7 +46,7 @@ private:
     float mLookAheadDist = 5.f;  // To anticipate frame motion and turns
 
     float mCurrentFovDeg{};         // Current FOV in degrees used by the rate limiter
-    float mMinFovDeg = 50.f;        // Base field of view in degrees
+    float mMinFovDeg = 55.f;        // Base field of view in degrees
     float mMaxFovDeg = 130.f;       // Upper FOV bound at high speed
     float mFovSpeedAtMax = 35.f;    // Speed (m/s) that maps to max FOV
     float mFovRiseLambda = 3.75f;   // Speed increase response for FOV
@@ -67,7 +67,8 @@ private:
     float mShakeJerkDeadband = 50.0f;   // Ignore low-amplitude jerk noise
     float mShakeMinSpeedMs = 0.5f;      // Disable shake near idle
     float mSpeedSmoothingTime = 0.12f;  // How long to smooth speed for shake (seconds)
-    
+    float mSpeedBaseline = 0.15f;       // Baseline shake intensity at max speed
+
     // Tracked state for shake calculations
     glm::vec3 mShakePosOffset{};
     float mShakeIntensity = 0.0f;
