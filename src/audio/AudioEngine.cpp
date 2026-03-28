@@ -204,6 +204,7 @@ void AudioEngine::setChannel3dPosition(int nChannelId, const Vector3& vPos)
 // set listener position
 void AudioEngine::set3dListenerAndOrientation(const Vector3& vPos, float fVolumeDB)
 {
+    (void)fVolumeDB;
     FMOD_VECTOR position = vectorToFmod(vPos);
 };
 
