@@ -30,11 +30,11 @@ RacingGame::RacingGame()
         return;
     }
 
-    initImGui();
     initEcsAndSystems();
     createWorldEntities();
     initUiSystems();
     initAudio();
+    initImGui();
 }
 
 RacingGame::~RacingGame()
@@ -66,21 +66,6 @@ bool RacingGame::initPlatformAndWindow()
     }
 
     return true;
-}
-
-void RacingGame::initImGui()
-{
-    imguiWrapper = std::make_unique<ImGuiWrapper>();
-    if (!imguiWrapper->init(window->getGLFWwindow())) {
-        logger::error("ImGui Init Failed");
-    }
-    imguiPanel = std::make_unique<ImGuiPanel>();
-    logger::info("ImGui initialized");
-
-#ifdef NDEBUG
-    imguiPanel->showDebugWindow = false;
-    imguiPanel->showSettingsWindow = false;
-#endif
 }
 
 void RacingGame::initEcsAndSystems()
@@ -271,8 +256,6 @@ void RacingGame::createWorldEntities()
     logger::info("Loaded snowmobile models for ai vehicles");
 
     gCoordinator.AddComponent(playerVehicleEntity, Racer{});
-    auto& playerVehicle = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).instance;
-    imguiPanel->setVehicle(playerVehicle);
 
     gCoordinator.AddComponent(aiVehicleEntity1, Racer{});
     gCoordinator.AddComponent(aiVehicleEntity1, AI{});
@@ -305,7 +288,7 @@ void RacingGame::createWorldEntities()
     gCoordinator.AddComponent(aiVehicleEntity1, boostGridPreset);
     gCoordinator.AddComponent(aiVehicleEntity2, nitroPreset);
     gCoordinator.AddComponent(aiVehicleEntity2, boostGridPreset);
-    
+
     // Create the avalanche entity (appears far behind the starting position)
     AvalancheEntity = physicsSystem->createAvalancheEntity(glm::vec3(0.f, 15.f, -200.f), 15.0f);
     
@@ -377,6 +360,29 @@ void RacingGame::initAudio()
     // boost sounds
     audioManager->loadSound("assets/audio/apex-vent.mp3", false, false, false);
     audioManager->loadSound("assets/audio/overheat.mp3", false, false, false);
+}
+
+void RacingGame::initImGui()
+{
+    imguiWrapper = std::make_unique<ImGuiWrapper>();
+    if (!imguiWrapper->init(window->getGLFWwindow())) {
+        logger::error("ImGui Init Failed");
+    }
+    imguiPanel = std::make_unique<ImGuiPanel>();
+    logger::info("ImGui initialized");
+
+#ifdef NDEBUG
+    imguiPanel->showDebugWindow = false;
+    imguiPanel->showSettingsWindow = false;
+#endif
+
+    // To tune the vehicle parameters in real-time
+    auto& playerVehicle = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).instance;
+    if (playerVehicle) {
+        imguiPanel->setVehicle(playerVehicle);
+    } else {
+        logger::error("ImGui player vehicle instance is null!");
+    }
 }
 
 /// ----- Public methods ----- ///

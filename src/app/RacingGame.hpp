@@ -31,11 +31,11 @@ public:
 private:
     // Constructor phase
     bool initPlatformAndWindow();
-    void initImGui();
     void initEcsAndSystems();
     void createWorldEntities();
     void initUiSystems();
     void initAudio();
+    void initImGui();
 
     // State handlers
     void updateInGame();
