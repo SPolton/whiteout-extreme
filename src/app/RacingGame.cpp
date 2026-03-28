@@ -541,6 +541,9 @@ void RacingGame::updateInGameAudioState(float playerSpeed)
 
     audioManager->setChannelVolume(aiEngineChannelID1, volumeInDB1);
     audioManager->setChannelVolume(aiEngineChannelID2, volumeInDB2);
+
+    // resume boost related audios
+    vehicleControlSystem->resumeBoostAudio();
 }
 
 void RacingGame::updateInGameCameraTarget(float playerSpeed)

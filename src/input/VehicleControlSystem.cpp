@@ -82,7 +82,9 @@ void VehicleControlSystem::update(float deltaTime)
                 audioManager->pauseChannel(boostChannelID);
                 boostPlaying = false;
 
-                if (entity == playerVehicleEntity) audioManager->playSounds("assets/audio/overheat.mp3", { 0,0,0 }, -6.0f);
+                if (entity == playerVehicleEntity) {
+                    overheatChannelID = audioManager->playSounds("assets/audio/overheat.mp3", { 0,0,0 }, -6.0f);
+                }
                 vehicle.engineHeat = 1.0f;
                 vehicle.isOverheated = true;
                 vehicle.isBoosting = false;
@@ -125,7 +127,9 @@ void VehicleControlSystem::update(float deltaTime)
 
             // - APEX-VENT -
             if (vehicle.engineHeat > 0.90f && !vehicle.isOverheated) {
-                if (entity == playerVehicleEntity) audioManager->playSounds("assets/audio/apex-vent.mp3", { 0,0,0 }, -13.0f);
+                if (entity == playerVehicleEntity) {
+                    apexVentChannelID = audioManager->playSounds("assets/audio/apex-vent.mp3", { 0,0,0 }, -13.0f);
+                }
                 vehicle.boostMaster = true;
                 vehicle.timeSinceBoostMaster = 0.0f;
 
@@ -286,12 +290,12 @@ void VehicleControlSystem::processControllerInput()
 
     // if the button is currently pressed down and previously wasn't, play the nitro starting sound
     if (boostIsPressed && !boostWasPressedController) {
-        audioManager->playSounds("assets/audio/nitro-start.wav", { 0,0,0 }, -8.0f);
+        boostStartChannelID = audioManager->playSounds("assets/audio/nitro-start.wav", { 0,0,0 }, -8.0f);
     }
     // if the button is currently NOT pressed down and previously WAS, play the nitro ending sound
     else if (!boostIsPressed && boostWasPressedController) {
         // when ending boost, play fade out boost
-        audioManager->playSounds("assets/audio/boost-end.wav", { 0,0,0 }, -7.f);
+        boostEndChannelID = audioManager->playSounds("assets/audio/boost-end.wav", { 0,0,0 }, -7.f);
     }
 
     // if top button pressed, activate boost
@@ -367,12 +371,12 @@ void VehicleControlSystem::processKeyboardInput()
 
     // if the key is currently pressed down and previously wasn't, play the nitro starting sound
     if (boostIsPressed && !boostWasPressedKeybaord) {
-        audioManager->playSounds("assets/audio/nitro-start.wav", { 0,0,0 }, -8.0f);
+        boostStartChannelID = audioManager->playSounds("assets/audio/nitro-start.wav", { 0,0,0 }, -8.0f);
     }
     // if the key is currently NOT pressed down and previously WAS, play the nitro ending sound
     else if (!boostIsPressed && boostWasPressedKeybaord) {
         // when ending boost, play fade out boost
-        audioManager->playSounds("assets/audio/boost-end.wav", { 0,0,0 }, -7.f);
+        boostEndChannelID = audioManager->playSounds("assets/audio/boost-end.wav", { 0,0,0 }, -7.f);
     }
 
     // let us just assume we use one skill at a time
@@ -564,5 +568,20 @@ void VehicleControlSystem::pauseBoostAudio()
 {
     if (!audioManager) return;
     audioManager->pauseChannel(boostChannelID);
+    audioManager->pauseChannel(boostStartChannelID);
+    audioManager->pauseChannel(boostEndChannelID);
+    audioManager->pauseChannel(overheatChannelID);
+    audioManager->pauseChannel(apexVentChannelID);
     boostPlaying = false;
+}
+
+// called from RacingGame to resume boost audio
+void VehicleControlSystem::resumeBoostAudio()
+{
+    if (!audioManager) return;
+    audioManager->resumeChannel(boostStartChannelID);
+    audioManager->resumeChannel(boostEndChannelID);
+    audioManager->resumeChannel(overheatChannelID);
+    audioManager->resumeChannel(apexVentChannelID);
+    // no need to deal with main boost sound, it is handled by key press per frame
 }
