@@ -23,13 +23,128 @@ void VehicleControlSystem::update(float deltaTime)
 {
     if (!inputManager) return;
 
-    resetInputs();
-    processInputs();
+    //resetInputs();
+    //processInputs();
 
     for (auto const& entity : mEntities) {
         auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(entity);
         if (!vehicle.instance) {
             continue;
+        }
+        auto& engineParams = vehicle.instance->getVehicleData().mEngineDriveParams.engineParams;
+
+        // Call inputs
+        if (entity == playerVehicleEntity) {
+            vehicle.isBoosting = false;
+            resetInputs();
+            processInputs();
+        }
+
+        if (vehicle.isOverheated) {
+            vehicle.isBoosting = false;
+        }
+
+        if (vehicle.boostMaster) {
+            vehicle.timeSinceBoostMaster += deltaTime;
+            if (vehicle.timeSinceBoostMaster > 2.0f) {
+                vehicle.boostMaster = false;
+                vehicle.boostMasterBonus = 0.0f;
+                vehicle.timeSinceBoostMaster = 0.0f;
+            }
+        }
+
+        if (vehicle.isBoosting && !vehicle.isOverheated) {
+            if (vehicle.boostMaster) vehicle.boostMaster = false;
+
+            // --- LOGIC BOOST ---
+            engineParams.maxOmega = 2100.0f;
+            vehicle.engineHeat = std::min(1.0f, vehicle.engineHeat + vehicle.boostHeatPerSecond * deltaTime);
+            vehicle.timeSinceLastBoost = 0.0f;
+
+            // --- OVERHEAT ---
+            if (vehicle.engineHeat >= 1.0f) {
+                if (entity == playerVehicleEntity) audioManager->playSounds("assets/audio/overheat.mp3", { 0,0,0 }, -6.0f);
+                vehicle.engineHeat = 1.0f;
+                vehicle.isOverheated = true;
+                vehicle.isBoosting = false;
+                vehicle.boostMaster = false;
+
+                // Max Speed reduced punishment
+                engineParams.maxOmega = 600.0f;
+            
+                // Slight spin and front impulse punishments (PHYSX)
+                if (gCoordinator.HasComponent<RigidBody>(entity)) {
+                    auto& rb = gCoordinator.GetComponent<RigidBody>(entity);
+                    auto* dynamicActor = rb.actor->is<physx::PxRigidDynamic>();
+
+                    if (dynamicActor) {
+                        float spinImpulse = 6500.0f;
+                        float sideSelect = (rand() % 2 == 0) ? 1.0f : -1.0f;
+                        dynamicActor->addTorque(physx::PxVec3(0, spinImpulse * sideSelect, 0), physx::PxForceMode::eIMPULSE);
+                        
+                        physx::PxTransform pose = dynamicActor->getGlobalPose();
+                        physx::PxVec3 backwardDir = -pose.q.rotate(physx::PxVec3(0, 0, 1));
+
+                        float hitForce = 9000.0f;
+                        physx::PxVec3 frontHitImpulse = (backwardDir * hitForce) + physx::PxVec3(0, 1000.0f, 0);
+
+                        dynamicActor->addForce(frontHitImpulse, physx::PxForceMode::eIMPULSE);
+
+                    }
+                }
+                logger::error("ENGINE OVERHEATED!");
+            }
+        }
+        else {
+            // --- LOGIC COOLING ---
+            engineParams.maxOmega = vehicle.isOverheated? 700.f: 1300.0f;
+            vehicle.timeSinceLastBoost += deltaTime;
+
+            if (vehicle.isOverheated && vehicle.engineHeat <= 0.2f) {
+                vehicle.isOverheated = false;
+            }
+
+            // - APEX-VENT -
+            if (vehicle.engineHeat > 0.90f && !vehicle.isOverheated) {
+                if (entity == playerVehicleEntity) audioManager->playSounds("assets/audio/apex-vent.mp3", { 0,0,0 }, -13.0f);
+                vehicle.boostMaster = true;
+                vehicle.timeSinceBoostMaster = 0.0f;
+
+                float x = (vehicle.engineHeat - 0.90f) / (1.0f - 0.90f);
+                vehicle.boostMasterAccuracy = x;
+
+                vehicle.boostMasterBonus = 0.1f + (std::pow(x, 3.0f) * 0.4f);
+
+                vehicle.engineHeat -= vehicle.boostMasterBonus;
+                vehicle.timeSinceLastBoost = 0.75f;
+            }
+
+            if (vehicle.timeSinceLastBoost > 1.0f && vehicle.engineHeat > 0.0f) {
+                float t = vehicle.timeSinceLastBoost - 1.2f;
+
+                float decayRate = (0.03f * (t * t)) + 0.05f;
+
+                if (vehicle.engineFreezing) {
+                    decayRate *= 3.0f;
+                    if (vehicle.isOverheated) {
+                        decayRate *= 0.3f;
+                    }
+                }
+                else if (vehicle.isOverheated) {
+                    decayRate *= 0.5f;
+                }
+
+                vehicle.engineHeat -= decayRate * deltaTime;
+                if (vehicle.engineHeat < 0.0f) vehicle.engineHeat = 0.0f;
+            }
+        }
+
+        // LOGIC FREEZING
+        if (vehicle.engineFreezing) {
+            vehicle.engineHeat = std::clamp(vehicle.engineHeat - deltaTime * 0.08f, 0.0f, 1.0f);
+            //if (entity == playerVehicleEntity) {
+                //logger::warn("Avalanche is cooling down the engine");
+            //}
         }
 
         if (vehicle.snowBallCooldown > 0.f) vehicle.snowBallCooldown -= deltaTime;
@@ -197,20 +312,21 @@ void VehicleControlSystem::processKeyboardInput()
 // Input -> Movement
 //==================================================================================================================//
 
-void VehicleControlSystem::accelerate()
+void VehicleControlSystem::accelerate(float throttle)
 {
     //logger::info("Accelerating...");
     // apply transformation here to move car forward
 
     auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity);
-
     vehicle.forwardGearDesired = true;
 
     if (vehicle.hasGearDesired()) {
-        currentThrottle = 0.7f;
-    }
-    else {
-        currentBrake = 1.0f;
+        // currentThrottle set to 1.0 if flag isBoosting raised in this frame
+        currentThrottle = throttle;
+        currentBrake = 0.0f;
+    } else {
+        currentBrake = throttle;
+        currentThrottle = 0.0f;
     }
 }
 
@@ -224,7 +340,7 @@ void VehicleControlSystem::brake()
     vehicle.forwardGearDesired = false;
 
     if (vehicle.hasGearDesired()) {
-        currentThrottle = 0.7f;
+        currentThrottle = 1.0f;
     }
     else {
         currentBrake = 1.0f;
@@ -253,7 +369,28 @@ void VehicleControlSystem::boost()
     //logger::info("Activate Boost...");
     // apply transformation here accelerate car even faster due to boost.
     // probably need a CD for this?
-    currentThrottle = 1.f; // full throttle
+    //currentThrottle = 1.f; // full throttle
+    //accelerate(1.0f);
+
+    auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity);
+
+    if (vehicle.isOverheated) {
+        vehicle.isBoosting = false;
+        return;
+    }
+
+    if (vehicle.engineHeat < 1.0f && !vehicle.isOverheated) {
+        vehicle.isBoosting = true;
+        accelerate(1.0f);
+    }
+    else {
+        vehicle.isBoosting = false;
+        accelerate();
+    }
+
+    if (vehicle.isBoosting && vehicle.timeSinceLastBoost > 0.1f) {
+        vehicle.engineHeat = std::min(1.0f, vehicle.engineHeat + vehicle.boostHeatInstantCost());
+    }
 }
 
 void VehicleControlSystem::throwSnowball()
@@ -262,10 +399,11 @@ void VehicleControlSystem::throwSnowball()
     if (vehicleComponent.snowBallCooldown > 0.f) return;
 
     auto& vehicleTransform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
-    std::cout << "{" << vehicleTransform.pos.x << ", "
-        << vehicleTransform.pos.y << ", "
-        << vehicleTransform.pos.z << "}" << std::endl;
+    std::cout << "{" << vehicleTransform.pos.x << "f, "
+        << vehicleTransform.pos.y << "f, "
+        << vehicleTransform.pos.z << "f}" << std::endl;
 
+    
     // 1. Safety Check: Ensure the player entity is valid
     if (!gCoordinator.HasComponent<VehicleComponent>(playerVehicleEntity)) return;
 

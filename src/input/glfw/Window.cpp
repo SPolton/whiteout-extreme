@@ -85,6 +85,16 @@ void Window::windowSizeMetaCallback(GLFWwindow* window, int width, int height) {
 	}
 }
 
+void Window::charMetaCallback(GLFWwindow* window, unsigned int codepoint) {
+    if (ImGui::GetCurrentContext()) {
+        ImGui_ImplGlfw_CharCallback(window, codepoint);
+    }
+
+    CallbackInterface* callbacks = static_cast<CallbackInterface*>(glfwGetWindowUserPointer(window));
+    if (callbacks && !ImGui::GetIO().WantCaptureKeyboard) {
+    }
+}
+
 // ----------------------
 // non-static definitions
 // ----------------------
@@ -142,6 +152,7 @@ void Window::connectCallbacks() {
 	glfwSetCursorPosCallback(window.get(), cursorPosMetaCallback);
 	glfwSetScrollCallback(window.get(), scrollMetaCallback);
 	glfwSetWindowSizeCallback(window.get(), windowSizeMetaCallback);
+    glfwSetCharCallback(window.get(), charMetaCallback);
 }
 
 void Window::setCallbacks(std::shared_ptr<CallbackInterface> callbacks_) {

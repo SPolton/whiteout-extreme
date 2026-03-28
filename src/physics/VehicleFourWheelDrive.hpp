@@ -4,6 +4,8 @@
 #include "objects/PhysicsObject.hpp"
 #include "vehiclecommon/SnippetVehicleHelpers.h"
 #include "vehiclecommon/enginedrivetrain/EngineDrivetrain.h"
+#include "vehiclecommon/serialization/BaseSerialization.h"
+#include "vehiclecommon/serialization/EngineDrivetrainSerialization.h"
 
 using namespace snippetvehicle;
 
@@ -36,6 +38,8 @@ public:
         mVehicle.mTransmissionCommandState.targetGear = state;
         return state;
     }
+
+    EngineDriveVehicle& getVehicleData() { return mVehicle; }
 
 private:
     EngineDriveVehicle mVehicle;

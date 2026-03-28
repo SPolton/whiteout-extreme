@@ -17,6 +17,8 @@ struct Gate {
 
     glm::vec3 direction = glm::vec3(0.0f);
     glm::vec3 right = glm::vec3(0.0f);
+    glm::vec3 forward = glm::vec3(0.0f);
+    glm::vec3 up = glm::vec3(0.0f);
 
     Gate* nextGate = nullptr;
     Gate* prevGate = nullptr;
