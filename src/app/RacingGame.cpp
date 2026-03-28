@@ -326,7 +326,7 @@ void RacingGame::updateInGame()
 
     // Run fixed-step physics and game systems
     // Skip gameplay updates until the race starts
-    if (gameTime.gameTimeF() < raceStartCountdown) {
+    if (0.1f < gameTime.gameTimeF() && gameTime.gameTimeF() < raceStartCountdown) {
         gameTime.updatePause(glfwGetTime());
     } else {
         updatePhysicsAndGameplayLoop();
