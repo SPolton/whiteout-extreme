@@ -21,6 +21,9 @@ public:
     void loadVehicleSounds();
     int channelID;
 
+    // to control boost sound in RacingGame
+    void pauseBoostAudio();
+
 private:
     // Input management
     std::shared_ptr<InputManager> inputManager;
@@ -51,4 +54,12 @@ private:
     // Skills
     void boost();
     void throwSnowball();
+
+    // keep track of boost sound playing state
+    int boostChannelID = -1;
+    bool boostPlaying = false;
+    bool firstTimePlaying = true;
+    // one for each input type to prevent overlapping audio
+    bool boostWasPressedController = false;
+    bool boostWasPressedKeybaord = false;
 };
