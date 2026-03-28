@@ -163,11 +163,21 @@ void RacingCamera::updateShake(float dt, glm::vec3 const& forward, glm::vec3 con
 
     // Slight deterministic procedural shake layered over spring follow.
     float const w = 2.0f * glm::pi<float>() * mShakeFreqHz;
-    float const sx = std::sin(w * mShakeTime);
-    float const sy = std::sin(w * 1.37f * mShakeTime + 1.2f);
+    float const t = mShakeTime;
+
+    // Use a sum of sines for better shake pattern.
+    float const sx =
+        0.6f * std::sin(w * t) +
+        0.3f * std::sin(2.3f * w * t + 0.7f) +
+        0.1f * std::sin(4.7f * w * t + 2.1f);
+
+    float const sy =
+        0.6f * std::sin(1.2f * w * t + 1.1f) +
+        0.3f * std::sin(2.1f * w * t + 0.3f) +
+        0.1f * std::sin(3.9f * w * t + 2.7f);
 
     // Vertical shake is usually more noticeable, so scale it down a bit.
-    float verticalAmp = 0.6f;
+    float const verticalAmp = 0.6f;
     mShakePosOffset =
         right * (sx * mShakePosAmp * mShakeIntensity)
         + mUp * (sy * mShakePosAmp * verticalAmp * mShakeIntensity);
