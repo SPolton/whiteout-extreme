@@ -30,7 +30,6 @@ private:
     // State handlers
     void updateInGame();
     void updateInMenu(MenuAction actionButtons);
-    void handleMenuActions(MenuAction actionButtons);
     void updateMainMenu(MenuAction actionButtons);
     void updatePauseMenu(MenuAction actionButtons);
     void updateGameOverMenu(MenuAction actionButtons);

@@ -358,8 +358,6 @@ void RacingGame::updateInMenu(MenuAction actionButtons)
     // Reset to prevent big delta spike when returning to gameplay
     gameTime.updatePause(glfwGetTime());
 
-    // handleMenuActions(actionButtons);
-
     if (gameState == GameState::MainMenu) {
         updateMainMenu(actionButtons);
     } else if (gameState == GameState::Pause) {
@@ -375,18 +373,6 @@ void RacingGame::updateInMenu(MenuAction actionButtons)
     }
 }
 
-void RacingGame::handleMenuActions(MenuAction actionButtons)
-{
-    if (actionButtons == MenuAction::StartGame || actionButtons == MenuAction::ResumeGame) {
-        if (actionButtons == MenuAction::StartGame) {
-            gameTime.reset(glfwGetTime());
-            racingSystem->restart();
-        }
-        audioManager->resumeChannel(inGameMusicChannelID);
-        gameState = GameState::InGame;
-    }
-}
-
 void RacingGame::updateMainMenu(MenuAction actionButtons)
 {
     MenuAction actionCursor = menus->renderMainMenu();
@@ -394,6 +380,7 @@ void RacingGame::updateMainMenu(MenuAction actionButtons)
     if (actionButtons == MenuAction::StartGame || actionCursor == MenuAction::StartGame) {
         gameTime.reset(glfwGetTime());
         racingSystem->restart();
+        audioManager->resumeChannel(inGameMusicChannelID);
         gameState = GameState::InGame;
     }
     else if (actionButtons == MenuAction::GoToHelpMenu || actionCursor == MenuAction::GoToHelpMenu) {
@@ -408,6 +395,7 @@ void RacingGame::updatePauseMenu(MenuAction actionButtons)
     MenuAction actionCursor = menus->renderPauseMenu();
 
     if (actionButtons == MenuAction::ResumeGame || actionCursor == MenuAction::ResumeGame) {
+        audioManager->resumeChannel(inGameMusicChannelID);
         gameState = GameState::InGame;
     }
     else if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
