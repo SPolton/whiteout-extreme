@@ -324,7 +324,12 @@ void RacingGame::updateInGame()
     audioManager->resumeChannel(avalancheChannelID);
 
     // Run fixed-step physics and game systems
-    updatePhysicsAndGameplayLoop();
+    // Skip gameplay updates until the race starts
+    if (gameTime.gameTimeF() < raceStartCountdown) {
+        gameTime.updatePause(glfwGetTime());
+    } else {
+        updatePhysicsAndGameplayLoop();
+    }
 
     // Get player state for audio and camera updates
     glm::vec3 playerPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
@@ -352,7 +357,7 @@ void RacingGame::updateInMenu(MenuAction actionButtons)
     // Reset to prevent big delta spike when returning to gameplay
     gameTime.updatePause(glfwGetTime());
 
-    handleMenuActions(actionButtons);
+    // handleMenuActions(actionButtons);
 
     if (gameState == GameState::MainMenu) {
         updateMainMenu(actionButtons);
@@ -386,6 +391,7 @@ void RacingGame::updateMainMenu(MenuAction actionButtons)
     MenuAction actionCursor = menus->renderMainMenu();
 
     if (actionButtons == MenuAction::StartGame || actionCursor == MenuAction::StartGame) {
+        gameTime.reset(glfwGetTime());
         racingSystem->restart();
         gameState = GameState::InGame;
     }
@@ -467,14 +473,8 @@ void RacingGame::updateKeyboardHelpMenu(MenuAction actionButtons)
 void RacingGame::updatePhysicsAndGameplayLoop()
 {
     // Physics System Loop, adaptive based on performance.
-    size_t maxPhysicsSteps = gameTime.maxPhysicsSteps();
     size_t physicsSteps = 0;
-
-    while (gameTime.accumulator >= gameTime.dt && physicsSteps < maxPhysicsSteps) {
-        if (gameTime.frameCount < 300 && gameTime.physicsFrameCount > maxPhysicsSteps) {
-            break; // Skip the first frames to avoid slow startup.
-        }
-
+    while (gameTime.accF() >= gameTime.dtF() && physicsSteps < gameTime.maxPhysicsSteps()) {
         vehicleControlSystem->update(gameTime.dtF());
         aiSystem->update(gameTime.dtF());
 

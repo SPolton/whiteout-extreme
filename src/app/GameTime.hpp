@@ -1,24 +1,21 @@
 #pragma once
 
 struct GameTime {
-    double t = 0.0;
     const double dt = 1.0 / 60.0; // simulate at 60fps
-    double currentTime = 0.0;
-    double accumulator = 0.0;
     size_t frameCount = 0;
     size_t physicsFrameCount = 0;
-    double fps = 0.0;
 
     // convenience getters for float values
     float dtF() const { return static_cast<float>(dt); }
-    float tF() const { return static_cast<float>(t); }
-    float fpsF() const { return static_cast<float>(fps); }
     float accF() const { return static_cast<float>(accumulator); }
+    float fpsF() const { return static_cast<float>(fps); }
     float frameTimeF() const { return static_cast<float>(lastFrameTime); }
+    float gameTimeF() const { return static_cast<float>(gameTime); }
+    float totalTimeF() const { return static_cast<float>(totalTime); }
 
     void reset(double newTime = 0.0) {
-        t = 0.0;
-        currentTime = newTime;
+        totalTime = newTime;
+        gameTime = 0.0;
         accumulator = 0.0;
         frameCount = 0;
         physicsFrameCount = 0;
@@ -28,16 +25,16 @@ struct GameTime {
 
     void updatePause(double newTime) {
         // Reset to prevent large delta time on resume
-        currentTime = newTime;
+        totalTime = newTime;
         accumulator = 0.0;
         lastFrameTime = 0.0;
     }
 
     // Call at the start of each frame
     void update(double newTime) {
-        // New Time Trackers
-        double frameTime = newTime - currentTime;
-        currentTime = newTime;
+        double frameTime = newTime - totalTime;
+        gameTime += frameTime;
+        totalTime = newTime;
         
         // Clamp frame time to prevent spiral of death
         // Max 0.25 seconds (4 frames at 60fps) prevents teleporting after freezes
@@ -56,7 +53,6 @@ struct GameTime {
     // Call after each physics update
     void physicsUpdate() {
         accumulator -= dt;
-        t += dt;
         physicsFrameCount++;
     }
 
@@ -70,7 +66,12 @@ struct GameTime {
         return 8;
     }
 private:
+    // in seconds
+    double gameTime = 0.0;      // total elapsed in-game time
+    double totalTime = 0.0;     // total time at the last frame
     double lastFrameTime = 0.0; // duration of the last frame
+    double accumulator = 0.0;   // physics time step accumulator
+    double fps = 0.0;           // smoothed frames per second
 
     // Discard excess accumulator when performance is poor
     void discardExcessAccumulator() {

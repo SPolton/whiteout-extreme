@@ -50,6 +50,7 @@ private:
     void syncImgui();
     void endFrame();
 
+    float raceStartCountdown = 3.0f; // seconds until race starts
     GameTime gameTime;
 
     std::shared_ptr<InputManager> inputManager;
