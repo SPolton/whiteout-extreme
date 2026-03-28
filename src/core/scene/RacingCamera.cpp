@@ -46,7 +46,20 @@ void RacingCamera::update(float dt)
     glm::vec3 const idealOffset = -forward * mArmLength + mUp * mArmHeight;
 
     init(idealOffset);
+    updateSpring(dt, idealOffset);
+    updateFov(dt);
+    updateShake(dt, forward, right);
 
+    glm::vec3 const springPos = mTargetPos + mSpringOffset;
+
+    // Base follow camera, add same shake to eye + target (rigid, not orbital).
+    // Look slightly ahead to anticipate turns.
+    mLookAt = mTargetPos + forward * mLookAheadDist + mShakePosOffset;
+    mPosition = springPos + mShakePosOffset;
+}
+
+void RacingCamera::updateSpring(float dt, glm::vec3 const& idealOffset)
+{
     if (!isSpringEnabled) {
         // Drag disabled means no spring simulation: lock to ideal offset immediately.
         mSpringOffset = idealOffset;
@@ -65,16 +78,6 @@ void RacingCamera::update(float dt)
         mSpringVel += force * dt;
         mSpringOffset += mSpringVel * dt;
     }
-    glm::vec3 const springPos = mTargetPos + mSpringOffset;
-
-    updateFov(dt);
-
-    updateShake(dt, forward, right);
-
-    // Base follow camera, add same shake to eye + target (rigid, not orbital).
-    // Look slightly ahead to anticipate turns.
-    mLookAt = mTargetPos + forward * mLookAheadDist + mShakePosOffset;
-    mPosition = springPos + mShakePosOffset;
 }
 
 void RacingCamera::updateFov(float dt)

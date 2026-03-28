@@ -78,6 +78,7 @@ private:
     float mPrevAccelMs2 = 0.0f;
 
     void init(glm::vec3 const& idealOffset);
+    void updateSpring(float dt, glm::vec3 const& idealOffset);
     void updateFov(float dt);
     void updateShake(float dt, glm::vec3 const& forward, glm::vec3 const& right);
     float targetFovDegrees() const;
