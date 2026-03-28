@@ -21,6 +21,9 @@ public:
     void loadVehicleSounds();
     int channelID;
 
+    // to control boost sound in RacingGame
+    void pauseBoostAudio();
+
 private:
     // Input management
     std::shared_ptr<InputManager> inputManager;

@@ -516,3 +516,11 @@ void VehicleControlSystem::loadVehicleSounds()
     audioManager->loadSound("assets/audio/nitro_start.wav", false, false, false);
     audioManager->loadSound("assets/audio/boost_end.wav", false, false, false);
 }
+
+// called from RacingGame to pause boost audio
+void VehicleControlSystem::pauseBoostAudio()
+{
+    if (!audioManager) return;
+    audioManager->pauseChannel(boostChannelID);
+    boostPlaying = false;
+}

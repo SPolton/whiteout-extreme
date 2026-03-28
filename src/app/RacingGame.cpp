@@ -775,6 +775,8 @@ void RacingGame::updateMenuAudioState()
     audioManager->pauseChannel(engineChannelID);
     audioManager->pauseChannel(aiEngineChannelID1);
     audioManager->pauseChannel(aiEngineChannelID2);
+    // no boost sound in menus
+    vehicleControlSystem->pauseBoostAudio();
 }
 
 void RacingGame::updateImGui() {
