@@ -342,7 +342,7 @@ void RacingGame::updateInGame()
     updateInGameCameraTarget(speed);
 
     // Render scene and UI
-    renderingSystem->update(gameTime.fpsF());
+    renderingSystem->update(gameTime.dtF());
     updateImGui();
     renderInGameHUD();
 }
@@ -487,11 +487,6 @@ void RacingGame::updatePhysicsAndGameplayLoop()
             gameState = GameState::GameOver;
         }
     }
-
-    // Discard excess time when running slow to prevent spiral of death.
-    if (physicsSteps >= maxPhysicsSteps) {
-        gameTime.discardExcessTime();
-    }
 }
 
 void RacingGame::updateInGameAudioState(float playerSpeed)
@@ -585,7 +580,7 @@ void RacingGame::renderInGameHUD()
         { marginX, topY - 40.f, 0.40f }, { 0.5f, 0.2f, 0.8f });
 
     textSystem->renderText(
-        "Game FPS: " + std::to_string(static_cast<int>(1.0f / gameTime.fpsF())),
+        "Game FPS: " + std::to_string(static_cast<int>(gameTime.fpsF())),
         { marginX, topY - 75.f, 0.75f }, { 0.9f, 0.9f, 0.4f });
 
     // --- Leaderboard Section ---
