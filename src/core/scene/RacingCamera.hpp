@@ -18,7 +18,6 @@ public:
     void update(float dt);
 
     glm::mat4 viewMatrix() override;
-    glm::vec3 position() override;
     std::string toString() const override;
 
 private:
@@ -29,7 +28,6 @@ private:
     bool mInitialized = false;
 
     glm::vec3 mLookAt{};        // Point the camera looks at (target position + look-ahead)
-    glm::vec3 mSpringPos{};     // Final camera world position
     glm::vec3 mSpringOffset{};  // Smoothed offset from the target
     glm::vec3 mSpringVel{};     // Velocity of the offset spring
 

@@ -12,7 +12,7 @@ void RacingCamera::init(glm::vec3 const& idealOffset)
 
     mSpringOffset = idealOffset;
     mSpringVel = glm::vec3(0.0f);
-    mSpringPos = mTargetPos + mSpringOffset;
+    mPosition = mTargetPos + mSpringOffset;
 
     mFovFilteredSpeed = glm::max(mTargetSpeedMs, 0.0f);
     mCurrentFovDeg = targetFovDegrees();
@@ -60,14 +60,13 @@ void RacingCamera::update(float dt)
         mSpringVel += force * dt;
         mSpringOffset += mSpringVel * dt;
     }
+    glm::vec3 const springPos = mTargetPos + mSpringOffset;
 
     updateFov(dt);
 
-    mSpringPos = mTargetPos + mSpringOffset;
-
-    // Look a bit ahead of the vehicle so framing anticipates turns.
+    // Look slightly ahead to anticipate turns.
     mLookAt = mTargetPos + forward * mLookAheadDist;
-    mPosition = mSpringPos;
+    mPosition = springPos;
 }
 
 void RacingCamera::updateFov(float dt)
@@ -118,12 +117,7 @@ float RacingCamera::targetFovDegrees() const
 glm::mat4 RacingCamera::viewMatrix()
 {
     // The lookAt target is the vehicle position plus a look-ahead in the forward direction.
-    return glm::lookAt(mSpringPos, mLookAt, mUp);
-}
-
-glm::vec3 RacingCamera::position()
-{
-    return mSpringPos;
+    return glm::lookAt(position(), mLookAt, mUp);
 }
 
 std::string RacingCamera::toString() const
@@ -134,7 +128,7 @@ std::string RacingCamera::toString() const
         "LookAt: ({:.1f}, {:.1f}, {:.1f})\n"
         "FOV: {:.1f}  Speed: {:.1f} m/s ({:.1f} m/s)\n"
         "Damping ratio: {:.2f}  Arm: {:.1f}m / {:.1f}m",
-        mSpringPos.x, mSpringPos.y, mSpringPos.z,
+        mPosition.x, mPosition.y, mPosition.z,
         mLookAt.x, mLookAt.y, mLookAt.z,
         glm::degrees(mFov), mTargetSpeedMs, mFovFilteredSpeed,
         mDampingRatio, mArmLength, mArmHeight
