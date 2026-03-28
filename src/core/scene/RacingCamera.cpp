@@ -15,7 +15,8 @@ void RacingCamera::init(glm::vec3 const& idealOffset)
     mPosition = mTargetPos + mSpringOffset;
 
     mFovFilteredSpeed = glm::max(mTargetSpeedMs, 0.0f);
-    mPrevSpeedMs = mFovFilteredSpeed;
+    mSmoothSpeed = mFovFilteredSpeed;
+    mPrevSpeedMs = mSmoothSpeed;
     mPrevAccelMs2 = 0.0f;
     mCurrentFovDeg = targetFovDegrees();
     fov(mCurrentFovDeg);
@@ -128,28 +129,36 @@ void RacingCamera::updateShake(float dt, glm::vec3 const& right)
         mShakePosOffset = glm::vec3(0.0f);
         mShakeIntensity = 0.0f;
         mShakeTime = 0.0f;
+        mSmoothSpeed = targetSpeed;
         mPrevSpeedMs = targetSpeed;
         mPrevAccelMs2 = 0.0f;
         return;
     }
 
-    // Use change in acceleration (jerk) to drive the shake effect
-    float const accelMs2 = (targetSpeed - mPrevSpeedMs) / dt;
+    // Use change in acceleration (jerk) to drive a procedural shake effect.
+    // Smooth speed to suppress frame-to-frame jitter before differentiation.
+    float const speedLambda = 1.0f / mSpeedSmoothingTime;
+    float const speedAlpha  = 1.0f - exp(-speedLambda * dt);
+    mSmoothSpeed = glm::mix(mSmoothSpeed, targetSpeed, speedAlpha);
+
+    // Derivatives from smoothed speed.
+    float const accelMs2 = (mSmoothSpeed - mPrevSpeedMs) / dt;
     float const jerkMs3 = std::abs((accelMs2 - mPrevAccelMs2) / dt);
-    float const jerkNorm = glm::clamp(jerkMs3 / mShakeJerkAtMax, 0.0f, 1.0f);
+
+    // Threshold and normalize so only meaningful jolts contribute.
+    float const jerkEffective = glm::max(jerkMs3 - mShakeJerkDeadband, 0.0f);
+    float const jerkNorm = glm::clamp(jerkEffective / mShakeJerkAtMax, 0.0f, 1.0f);
     float const jerkResponse = std::sqrt(jerkNorm);
 
-    // Exponential decay plus driven response keeps shake punchy.
-    float const alpha = 1.0f - std::exp(-mShakeLambda * dt);
-    float const decay = std::exp(-mShakeDecay * dt);
-    mShakeIntensity *= decay;
-    mShakeIntensity = glm::mix(mShakeIntensity, jerkResponse, alpha);
+    // Impulse-style response: decay continuously, but take immediate peaks.
+    mShakeIntensity *= std::exp(-mShakeDecay * dt);
+    mShakeIntensity = glm::max(mShakeIntensity, jerkResponse);
     if (mShakeIntensity < mShakeDeadzone) {
         mShakeIntensity = 0.0f;
     }
 
     mShakeTime += dt;
-    mPrevSpeedMs = targetSpeed;
+    mPrevSpeedMs = mSmoothSpeed;
     mPrevAccelMs2 = accelMs2;
 
     // Slight deterministic procedural shake layered over spring follow.
@@ -176,13 +185,13 @@ std::string RacingCamera::toString() const
         "Racing Camera\n"
         "Pos: ({:.1f}, {:.1f}, {:.1f})\n"
         "LookAt: ({:.1f}, {:.1f}, {:.1f})\n"
-        "FOV: {:.1f}  Speed: {:.1f} m/s ({:.1f} m/s)\n"
         "Damping ratio: {:.2f}  Arm: {:.1f}m / {:.1f}m\n"
-        "Shake intensity: {:.2f}",
+        "FOV: {:.1f}  Speed: {:.1f} m/s ({:.1f} m/s)\n"
+        "Shake: {:.1f}  Acceleration: {:.1f}",
         mPosition.x, mPosition.y, mPosition.z,
         mLookAt.x, mLookAt.y, mLookAt.z,
-        glm::degrees(mFov), mTargetSpeedMs, mFovFilteredSpeed,
         mDampingRatio, mArmLength, mArmHeight,
-        mShakeIntensity
+        glm::degrees(mFov), mTargetSpeedMs, mFovFilteredSpeed,
+        mShakeIntensity, mPrevAccelMs2
     );
 }
