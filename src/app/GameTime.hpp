@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 struct GameTime {
     const double dt = 1.0 / 60.0; // simulate at 60fps
     size_t frameCount = 0;
@@ -65,6 +67,18 @@ struct GameTime {
         if (ratio > 1.0) return 4;
         return 8;
     }
+
+    std::string toString() const {
+        return
+            "GameTime(game: " + std::to_string(gameTime) +
+            ", total: " + std::to_string(totalTime) +
+            ", frameTime: " + std::to_string(lastFrameTime) +
+            ", accumulator: " + std::to_string(accumulator) +
+            ", fps: " + std::to_string(fps) +
+            ", frames: " + std::to_string(frameCount) +
+            ", physicsFrames: " + std::to_string(physicsFrameCount) + ")";
+    }
+
 private:
     // in seconds
     double gameTime = 0.0;      // total elapsed in-game time

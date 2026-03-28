@@ -296,6 +296,7 @@ void RacingGame::run()
 
     while (!window->shouldClose())
     {
+        // logger::debug("{}", gameTime.toString());
         audioManager->update();
 
         // Keep checking for controller inputs and if menu actions are triggered
