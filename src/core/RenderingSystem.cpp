@@ -504,13 +504,13 @@ void RenderingSystem::toggleCamera()
     }
 }
 
-void RenderingSystem::updateCameraTarget(const glm::vec3& position, const glm::vec3& forward, float speedMs)
+void RenderingSystem::updateCameraTarget(const glm::vec3& position, const glm::vec3& forward, const glm::vec3& velocity)
 {
     if (targetTransform) {
         targetTransform->setPosition(position);
     }
 
     if (racingCamera) {
-        racingCamera->updateTarget(position, forward, speedMs);
+        racingCamera->updateTarget(position, forward, velocity);
     }
 }

@@ -14,19 +14,20 @@ void RacingCamera::init(glm::vec3 const& idealOffset)
     mSpringVel = glm::vec3(0.0f);
     mPosition = mTargetPos + mSpringOffset;
 
+    mTargetSpeedMs = glm::length(mTargetVelocity);
     mFovFilteredSpeed = glm::max(mTargetSpeedMs, 0.0f);
     mSmoothSpeed = mFovFilteredSpeed;
     mPrevSpeedMs = mSmoothSpeed;
-    mPrevAccelMs2 = 0.0f;
     mCurrentFovDeg = targetFovDegrees();
     fov(mCurrentFovDeg);
 }
 
-void RacingCamera::updateTarget(glm::vec3 targetPos, glm::vec3 targetForward, float speedMs)
+void RacingCamera::updateTarget(glm::vec3 targetPos, glm::vec3 targetForward, glm::vec3 targetVelocity)
 {
     mTargetPos = targetPos;
     mTargetForward = targetForward;
-    mTargetSpeedMs = speedMs;
+    mTargetVelocity = targetVelocity;
+    mTargetSpeedMs = glm::length(targetVelocity);
     mHasTarget = true;
 }
 
@@ -68,7 +69,7 @@ void RacingCamera::update(float dt)
 
     updateFov(dt);
 
-    updateShake(dt, right);
+    updateShake(dt, forward, right);
 
     // Base follow camera, add same shake to eye + target (rigid, not orbital).
     // Look slightly ahead to anticipate turns.
@@ -93,15 +94,14 @@ void RacingCamera::updateFov(float dt)
     // than deceleration narrows it, which feels more natural.
     float const targetSpeed = glm::max(mTargetSpeedMs, 0.0f);
     float const lambda = targetSpeed >= mFovFilteredSpeed ? mFovRiseLambda : mFovFallLambda;
-    float const speedAlpha = 1.0f - std::exp(-glm::max(lambda, 0.01f) * dt);
+    float const speedAlpha = 1.0f - std::exp(-lambda * dt);
     mFovFilteredSpeed = glm::mix(mFovFilteredSpeed, targetSpeed, speedAlpha);
 
     // Clamp the per-frame FOV delta to mMaxFovStepFrame degrees.
     // This is a hard ceiling: no matter how large the filtered-speed jump,
     // the visible FOV can never change by more than that many degrees in one frame.
     float const targetFovDeg = targetFovDegrees();
-    float const maxStep = glm::max(mMaxFovStepFrame, 0.01f);
-    float const delta = glm::clamp(targetFovDeg - mCurrentFovDeg, -maxStep, maxStep);
+    float const delta = glm::clamp(targetFovDeg - mCurrentFovDeg, -mMaxFovStepFrame, mMaxFovStepFrame);
     mCurrentFovDeg += delta;
 
     fov(mCurrentFovDeg);
@@ -110,7 +110,7 @@ void RacingCamera::updateFov(float dt)
 float RacingCamera::targetFovDegrees() const
 {
     // Normalise filtered speed into [0, 1] where 1 = mFovSpeedAtMax.
-    float speedNorm = glm::clamp(mFovFilteredSpeed / glm::max(mFovSpeedAtMax, 0.001f), 0.0f, 1.0f);
+    float speedNorm = glm::clamp(mFovFilteredSpeed / mFovSpeedAtMax, 0.0f, 1.0f);
 
     // Smoothstep: f(t) = t^2 (3 - 2t)
     // Produces an S-curve with zero derivative at t=0 and t=1, so the FOV
@@ -121,9 +121,9 @@ float RacingCamera::targetFovDegrees() const
     return glm::mix(mMinFovDeg, mMaxFovDeg, speedNorm);
 }
 
-void RacingCamera::updateShake(float dt, glm::vec3 const& right)
+void RacingCamera::updateShake(float dt, glm::vec3 const& forward, glm::vec3 const& right)
 {
-    float const targetSpeed = glm::max(mTargetSpeedMs, 0.0f);
+    float const targetSpeed = glm::length(mTargetVelocity);
 
     if (!isShakeEnabled || dt <= 0.0f || targetSpeed < mShakeMinSpeedMs) {
         mShakePosOffset = glm::vec3(0.0f);

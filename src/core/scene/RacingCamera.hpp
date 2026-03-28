@@ -13,7 +13,7 @@ public:
     explicit RacingCamera() = default;
 
     // Store the latest tracked vehicle state
-    void updateTarget(glm::vec3 targetPos, glm::vec3 targetForward, float speedMs);
+    void updateTarget(glm::vec3 targetPos, glm::vec3 targetForward, glm::vec3 targetVelocity);
 
     // Advance spring and FOV once per render frame
     void update(float dt);
@@ -24,6 +24,7 @@ public:
 private:
     glm::vec3 mTargetPos{};
     glm::vec3 mTargetForward{ 0.0f, 0.0f, 1.0f };
+    glm::vec3 mTargetVelocity{};
     float mTargetSpeedMs = 0.0f;
     bool mHasTarget = false;
     bool mInitialized = false;
@@ -75,6 +76,6 @@ private:
 
     void init(glm::vec3 const& idealOffset);
     void updateFov(float dt);
-    void updateShake(float dt, glm::vec3 const& right);
+    void updateShake(float dt, glm::vec3 const& forward, glm::vec3 const& right);
     float targetFovDegrees() const;
 };
