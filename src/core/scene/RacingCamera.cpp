@@ -161,8 +161,14 @@ void RacingCamera::updateShake(float dt, glm::vec3 const& forward, glm::vec3 con
     mPrevSpeedMs = mSmoothSpeed;
     mPrevAccelMs2 = accelMs2;
 
-    // Slight deterministic procedural shake layered over spring follow.
-    float const w = 2.0f * glm::pi<float>() * mShakeFreqHz;
+    // Frequency modulation that adapts to intensity to feel more natural
+    float freq;
+    if (isShakeLowToHigh)
+        freq = glm::mix(mShakeMinFreqHz, mShakeMaxFreqHz, mShakeIntensity); // low to high
+    else
+        freq = glm::mix(mShakeMaxFreqHz, mShakeMinFreqHz, mShakeIntensity); // high to low
+
+    float const w = 2.0f * glm::pi<float>() * freq;
     float const t = mShakeTime;
 
     // Use a sum of sines for better shake pattern.

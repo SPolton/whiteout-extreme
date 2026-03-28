@@ -5,10 +5,11 @@
 // Follow camera tuned for racing: spring-smoothed position + speed-reactive FOV.
 class RacingCamera : public BaseCamera {
 public:
-    bool isSpringEnabled = true; // Apply spring forces for smooth follow
-    bool isDragEnabled = true;   // Apply spring drag (damping)
-    bool isFovEnabled = true;    // Adjust FOV based on speed
-    bool isShakeEnabled = true;  // Add shake based on jerk (change in acceleration)
+    bool isSpringEnabled = true;    // Apply spring forces for smooth follow
+    bool isDragEnabled = true;      // Apply spring drag (damping)
+    bool isFovEnabled = true;       // Adjust FOV based on speed
+    bool isShakeEnabled = true;     // Add shake based on jerk (change in acceleration)
+    bool isShakeLowToHigh = false;  // False does the opposite: low intensity = more shake frequency
 
     explicit RacingCamera() = default;
 
@@ -55,8 +56,9 @@ private:
 
     // Jerk-driven shake (jerk = d(acceleration)/dt).
     float mShakePosAmp = 0.06f;         // Max positional shake in meters
-    float mShakeFreqHz = 5.0f;          // Constant shake frequency
     float mShakeJerkAtMax = 300.0f;     // m/s^3 that maps to full shake intensity
+    float mShakeMinFreqHz = 5.0f;       // Min shake frequency at low speed
+    float mShakeMaxFreqHz = 12.0f;      // Max shake frequency at high speed
     float mShakeLambda = 15.0f;         // Response speed for shake intensity
     float mShakeDecay = 5.0f;           // Decay rate for shake intensity (higher = faster decay)
 
