@@ -53,6 +53,16 @@ void VehicleControlSystem::update(float deltaTime)
             }
         }
 
+        //if (vehicle.isBoosting && !boostPlaying && boostChannelID == -1) {
+        //    boostChannelID = audioManager->playSounds("assets/audio/boost.wav", { 0,0,0 }, -5.0f);
+        //    boostPlaying = true;
+        //}
+        //else if (!vehicle.isBoosting && boostChannelID != -1) {
+        //    audioManager->pauseChannel(boostChannelID);
+        //    boostChannelID = -1;
+        //    boostPlaying = false;
+        //}
+
         if (vehicle.isBoosting && !vehicle.isOverheated) {
             if (vehicle.boostMaster) vehicle.boostMaster = false;
 
@@ -63,6 +73,13 @@ void VehicleControlSystem::update(float deltaTime)
 
             // --- OVERHEAT ---
             if (vehicle.engineHeat >= 1.0f) {
+                //// stop boost sound
+                //if (boostChannelID != -1) {
+                //    audioManager->pauseChannel(boostChannelID);
+                //    boostChannelID = -1;
+                //    boostPlaying = false;
+                //}
+
                 if (entity == playerVehicleEntity) audioManager->playSounds("assets/audio/overheat.mp3", { 0,0,0 }, -6.0f);
                 vehicle.engineHeat = 1.0f;
                 vehicle.isOverheated = true;
@@ -249,14 +266,25 @@ void VehicleControlSystem::processControllerInput()
         steerLeft();
     }
 
+    // get current state of boost button
+    bool boostIsPressed = inputManager->isControllerButtonPressed(GLFW_GAMEPAD_BUTTON_Y);
+
+    // if the button is currently pressed down and previously wasn't, play the nitro starting sound
+    if (boostIsPressed && !boostWasPressedController) {
+        audioManager->playSounds("assets/audio/nitro_start.wav", { 0,0,0 }, -4.0f);
+    }
+
     // if top button pressed, activate boost
     // if left button pressed, throw projectile
-    if (inputManager->isControllerButtonPressed(GLFW_GAMEPAD_BUTTON_Y)) {
+    if (boostIsPressed) {
         boost();
     }
     else if (inputManager->isControllerButtonPressed(GLFW_GAMEPAD_BUTTON_X)) {
         throwSnowball();
     }
+
+    // update state to track for next frame
+    boostWasPressedController = boostIsPressed;
 
     // triggers menu/pause
     if (inputManager->isControllerButtonPressed(GLFW_GAMEPAD_BUTTON_START)) {
@@ -295,13 +323,24 @@ void VehicleControlSystem::processKeyboardInput()
     * Space Bar = Throw Snowball (assuming auto aim for now...otherwise mouse input needed)
     */
 
+    // get current state of boost button
+    bool boostIsPressed = inputManager->isKeyPressed(GLFW_KEY_LEFT_SHIFT);
+
+    // if the key is currently pressed down and previously wasn't, play the nitro starting sound
+    if (boostIsPressed && !boostWasPressedKeybaord) {
+        audioManager->playSounds("assets/audio/nitro_start.wav", { 0,0,0 }, -4.0f);
+    }
+
     // let us just assume we use one skill at a time
-    if (inputManager->isKeyPressed(GLFW_KEY_LEFT_SHIFT)) {
+    if (boostIsPressed) {
         boost();
     }
     else if (inputManager->isKeyPressed(GLFW_KEY_SPACE) || inputManager->isKeyPressed(GLFW_KEY_E)) {
         throwSnowball();
     }
+
+    // update state to track for next frame
+    boostWasPressedKeybaord = boostIsPressed;
 
     // triggers menu/pause
     if (inputManager->isKeyPressed(GLFW_KEY_P)) {
@@ -460,4 +499,7 @@ void VehicleControlSystem::loadVehicleSounds()
     audioManager->loadSound("assets/audio/snowmobiles-4-trimmed.mp3", false, true, true);
     // for throwing snowball
     audioManager->loadSound("assets/audio/snowball-hit-01.mp3", false, false, false);
+    // for boost
+    audioManager->loadSound("assets/audio/boost.wav", false, true, true);
+    audioManager->loadSound("assets/audio/nitro_start.wav", false, false, false);
 }
