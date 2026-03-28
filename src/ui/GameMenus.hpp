@@ -46,6 +46,9 @@ public:
     void init();
 
 private:
+    // calculate scaling factor
+    glm::vec2 getScale();
+
     // Textures
     AssetManager& assetManager = AssetManager::getInstance();
     std::shared_ptr<Texture> logoTexture;
