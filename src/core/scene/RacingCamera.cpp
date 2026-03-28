@@ -15,6 +15,8 @@ void RacingCamera::init(glm::vec3 const& idealOffset)
     mPosition = mTargetPos + mSpringOffset;
 
     mFovFilteredSpeed = glm::max(mTargetSpeedMs, 0.0f);
+    mPrevSpeedMs = mFovFilteredSpeed;
+    mPrevAccelMs2 = 0.0f;
     mCurrentFovDeg = targetFovDegrees();
     fov(mCurrentFovDeg);
 }
@@ -35,6 +37,7 @@ void RacingCamera::update(float dt)
     glm::vec3 forward = glm::length(mTargetForward) > 0.0001f
         ? glm::normalize(mTargetForward)
         : glm::vec3(0.0f, 0.0f, 1.0f);
+    glm::vec3 const right = glm::normalize(glm::cross(forward, mUp));
 
     // Desired chase offset relative to the current vehicle position.
     // Smoothing the offset instead of the camera position avoids visible translation lag.
@@ -64,9 +67,12 @@ void RacingCamera::update(float dt)
 
     updateFov(dt);
 
+    updateShake(dt, right);
+
+    // Base follow camera, add same shake to eye + target (rigid, not orbital).
     // Look slightly ahead to anticipate turns.
-    mLookAt = mTargetPos + forward * mLookAheadDist;
-    mPosition = springPos;
+    mLookAt = mTargetPos + forward * mLookAheadDist + mShakePosOffset;
+    mPosition = springPos + mShakePosOffset;
 }
 
 void RacingCamera::updateFov(float dt)
@@ -114,6 +120,50 @@ float RacingCamera::targetFovDegrees() const
     return glm::mix(mMinFovDeg, mMaxFovDeg, speedNorm);
 }
 
+void RacingCamera::updateShake(float dt, glm::vec3 const& right)
+{
+    float const targetSpeed = glm::max(mTargetSpeedMs, 0.0f);
+
+    if (!isShakeEnabled || dt <= 0.0f || targetSpeed < mShakeMinSpeedMs) {
+        mShakePosOffset = glm::vec3(0.0f);
+        mShakeIntensity = 0.0f;
+        mShakeTime = 0.0f;
+        mPrevSpeedMs = targetSpeed;
+        mPrevAccelMs2 = 0.0f;
+        return;
+    }
+
+    // Use change in acceleration (jerk) to drive the shake effect
+    float const accelMs2 = (targetSpeed - mPrevSpeedMs) / dt;
+    float const jerkMs3 = std::abs((accelMs2 - mPrevAccelMs2) / dt);
+    float const jerkNorm = glm::clamp(jerkMs3 / mShakeJerkAtMax, 0.0f, 1.0f);
+    float const jerkResponse = std::sqrt(jerkNorm);
+
+    // Exponential decay plus driven response keeps shake punchy.
+    float const alpha = 1.0f - std::exp(-mShakeLambda * dt);
+    float const decay = std::exp(-mShakeDecay * dt);
+    mShakeIntensity *= decay;
+    mShakeIntensity = glm::mix(mShakeIntensity, jerkResponse, alpha);
+    if (mShakeIntensity < mShakeDeadzone) {
+        mShakeIntensity = 0.0f;
+    }
+
+    mShakeTime += dt;
+    mPrevSpeedMs = targetSpeed;
+    mPrevAccelMs2 = accelMs2;
+
+    // Slight deterministic procedural shake layered over spring follow.
+    float const w = 2.0f * glm::pi<float>() * mShakeFreqHz;
+    float const sx = std::sin(w * mShakeTime);
+    float const sy = std::sin(w * 1.37f * mShakeTime + 1.2f);
+
+    // Vertical shake is usually more noticeable, so scale it down a bit.
+    float verticalAmp = 0.6f;
+    mShakePosOffset =
+        right * (sx * mShakePosAmp * mShakeIntensity)
+        + mUp * (sy * mShakePosAmp * verticalAmp * mShakeIntensity);
+}
+
 glm::mat4 RacingCamera::viewMatrix()
 {
     // The lookAt target is the vehicle position plus a look-ahead in the forward direction.
@@ -127,10 +177,12 @@ std::string RacingCamera::toString() const
         "Pos: ({:.1f}, {:.1f}, {:.1f})\n"
         "LookAt: ({:.1f}, {:.1f}, {:.1f})\n"
         "FOV: {:.1f}  Speed: {:.1f} m/s ({:.1f} m/s)\n"
-        "Damping ratio: {:.2f}  Arm: {:.1f}m / {:.1f}m",
+        "Damping ratio: {:.2f}  Arm: {:.1f}m / {:.1f}m\n"
+        "Shake intensity: {:.2f}",
         mPosition.x, mPosition.y, mPosition.z,
         mLookAt.x, mLookAt.y, mLookAt.z,
         glm::degrees(mFov), mTargetSpeedMs, mFovFilteredSpeed,
-        mDampingRatio, mArmLength, mArmHeight
+        mDampingRatio, mArmLength, mArmHeight,
+        mShakeIntensity
     );
 }
