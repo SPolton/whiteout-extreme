@@ -37,12 +37,6 @@ private:
     float mArmHeight = 2.2f;    // Ideal height above the target
     float mStiffness = 20.0f;   // Spring strength (ks); higher = snappier follow
 
-    /* // ORIGINAL
-    float mArmLength = 7.0f;    // Ideal distance behind the target
-    float mArmHeight = 2.0f;    // Ideal height above the target
-    float mStiffness = 30.0f;   // Spring strength (ks); higher = snappier follow
-    */
-
     // Damping ratio: zeta = kd / (2*sqrt(ks)).
     // zeta = 1.0 is critically damped (no oscillation).
     // zeta < 1 = underdamped (slight bounce).
@@ -50,28 +44,14 @@ private:
     float mDampingRatio = 0.85f;
     float mLookAheadDist = 5.f;  // To anticipate frame motion and turns
 
-    float mCurrentFovDeg{};      // Current FOV in degrees used by the rate limiter
-    float mMinFovDeg = 55.f;     // Base field of view in degrees
-    float mMaxFovDeg = 132.f;    // Upper FOV bound at high speed
-    float mFovSpeedAtMax = 35.f; // Speed (m/s) that maps to max FOV
-    float mFovRiseLambda = 3.75f; // Speed increase response for FOV
-    float mFovFallLambda = 0.75f; // Speed decrease response for FOV
-    float mMaxFovStepFrame = 2.0f; // Hard cap on FOV change per frame (degrees)
-    float mFovFilteredSpeed{};   // Single source of truth for filtered speed
-
-    /* // ORIGINAL
-    float mDampingRatio = 0.9f;
-    float mLookAheadDist = 5.f;  // To anticipate frame motion and turns
-
-    float mCurrentFovDeg{};      // Current FOV in degrees used by the rate limiter
-    float mMinFovDeg = 50.f;     // Base field of view in degrees
-    float mMaxFovDeg = 120.f;    // Upper FOV bound at high speed
-    float mFovSpeedAtMax = 25.f; // Speed (m/s) that maps to max FOV
-    float mFovRiseLambda = 2.0f; // Speed increase response for FOV
-    float mFovFallLambda = 0.5f; // Speed decrease response for FOV
-    float mMaxFovStepFrame = 2.0f; // Hard cap on FOV change per frame (degrees)
-    float mFovFilteredSpeed{};   // Single source of truth for filtered speed
-    */
+    float mCurrentFovDeg{};         // Current FOV in degrees used by the rate limiter
+    float mMinFovDeg = 55.f;        // Base field of view in degrees
+    float mMaxFovDeg = 132.f;       // Upper FOV bound at high speed
+    float mFovSpeedAtMax = 35.f;    // Speed (m/s) that maps to max FOV
+    float mFovRiseLambda = 3.75f;   // Speed increase response for FOV
+    float mFovFallLambda = 0.75f;   // Speed decrease response for FOV
+    float mMaxFovStepFrame = 2.0f;  // Hard cap on FOV change per frame (degrees)
+    float mFovFilteredSpeed{};      // Single source of truth for filtered speed
 
     void init(glm::vec3 const& idealOffset);
     void updateFov(float dt);
