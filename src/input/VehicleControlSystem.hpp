@@ -23,6 +23,10 @@ public:
 
     // to control boost sound in RacingGame
     void pauseBoostAudio();
+    void resumeBoostAudio();
+
+    // controls whether player engine should loop
+    bool stopPlayerEngine = true;
 
 private:
     // Input management
@@ -62,4 +66,14 @@ private:
     // one for each input type to prevent overlapping audio
     bool boostWasPressedController = false;
     bool boostWasPressedKeybaord = false;
+
+    // track throttle pressing state
+    bool throttleWasPressedKeybaord = false;
+    bool throttleWasPressedController = false;
+
+    // channels to pause all boost related sounds if on menus
+    int boostStartChannelID = -1;
+    int boostEndChannelID = -1;
+    int overheatChannelID = -1;
+    int apexVentChannelID = -1;
 };
