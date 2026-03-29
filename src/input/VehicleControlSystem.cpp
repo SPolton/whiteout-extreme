@@ -531,11 +531,18 @@ void VehicleControlSystem::throwSnowball()
 
     // Calculate the Forward direction based on the vehicle's current rotation
     // In many coordinate systems, (0, 0, 1) is the local forward axis
-    glm::vec3 forward = renderingSystem->getCameraForward();
+    glm::vec3 forward = vehicleTransform.forward(); //renderingSystem->getCameraForward();
+    glm::vec3 up = vehicleTransform.up();
+
+
+    float tiltAmount = 0.17f; // 0.05 - 0.3
+    glm::vec3 tiltedForward = forward - (up * tiltAmount);
+    glm::vec3 forwardTilted = glm::normalize(tiltedForward);
+
 
     // Calculate Spawn Position: 
     // Offset the snowball so it doesn't spawn inside the car's collision box
-    glm::vec3 spawnPos = vehicleTransform.pos + (forward * 3.0f) + glm::vec3(0, 2.0f, 0);
+    glm::vec3 spawnPos = vehicleTransform.pos + (forward * 3.0f) + glm::vec3(0, 1.0f, 0);
 
     // 3. Create Visual Entity
     Entity snowball = renderingSystem->createSphereEntity("assets/textures/snowball.png");
@@ -545,7 +552,7 @@ void VehicleControlSystem::throwSnowball()
     ballTrans.rot = vehicleTransform.rot; // Align snowball orientation with the car
 
     // 4. Setup Physics
-    float snowballRadius = 0.5f;
+    float snowballRadius = 0.7f;
     ballTrans.scale = glm::vec3(snowballRadius);
 
     // Create the RigidBody and add it to the ECS
@@ -554,15 +561,17 @@ void VehicleControlSystem::throwSnowball()
     // 5. Apply Initial Velocity
     physx::PxRigidDynamic* dynamicActor = gCoordinator.GetComponent<RigidBody>(snowball).actor->is<physx::PxRigidDynamic>();
     if (dynamicActor) {
-        float launchSpeed = 90.f; // Meters per second
-        glm::vec3 velocity = forward * launchSpeed;
+        float launchSpeed = 93.f; // Meters per second
+        glm::vec3 velocity = forwardTilted * launchSpeed;
+
+        dynamicActor->setLinearDamping(0.61f);
 
         // Enable CCD (Continuous Collision Detection)
         dynamicActor->setRigidBodyFlag(physx::PxRigidBodyFlag::eENABLE_CCD, true);
 
         // Pass the velocity vector to PhysX
         dynamicActor->setLinearVelocity(physx::PxVec3(velocity.x, velocity.y, velocity.z));
-        dynamicActor->setMass(dynamicActor->getMass() * 25);
+        dynamicActor->setMass(dynamicActor->getMass() * 10);
     }
     vehicleComponent.snowBallCooldown = 3.0f;
 }
