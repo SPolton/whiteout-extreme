@@ -35,6 +35,9 @@ public:
     float camSpeed = 2.0f;
     float camZoomSpeed = 10.0f;
 
+    // VFX settings
+    bool isParticlesEnabled = true;
+
     // Window settings
     bool showDebugWindow = true;
     bool showSettingsWindow = true;

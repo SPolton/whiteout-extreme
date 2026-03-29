@@ -9,6 +9,7 @@
 #include "physics/PhysicsSystem.hpp"
 #include "audio/AudioEngine.h"
 #include "ui/GameMenus.hpp"
+#include "vfx/SnowVfxSystem.hpp"
 #include "GameState.hpp"
 #include "input/glfw/Window.hpp"
 #include "input/glfw/InputManager.hpp"
@@ -66,6 +67,7 @@ private:
     std::shared_ptr<VehicleControlSystem> vehicleControlSystem;
     std::shared_ptr<RacingSystem> racingSystem;
     std::shared_ptr<AISystem> aiSystem;
+    std::shared_ptr<SnowVfxSystem> snowVfxSystem;
 
     std::unique_ptr<Text> textSystem;
 
