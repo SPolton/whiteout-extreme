@@ -332,11 +332,6 @@ void RacingGame::updateInGame()
 {
     gameTime.update(glfwGetTime());
 
-    // Setup in-game audio channels
-    audioManager->pauseChannel(musicChannelID);
-    audioManager->resumeChannel(inGameMusicChannelID);
-    audioManager->resumeChannel(avalancheChannelID);
-
     // Run fixed-step physics and game systems
     // Skip gameplay updates until the race starts
     if (0.1f < gameTime.gameTimeF() && gameTime.gameTimeF() < raceStartCountdown) {
@@ -350,21 +345,16 @@ void RacingGame::updateInGame()
     glm::vec3 const playerVelocity = gCoordinator.GetComponent<RigidBody>(playerVehicleEntity).linearVelocity;
     float const speed = glm::length(playerVelocity);
 
-    // Update spatial audio (avalanche distance, engine speed gating, AI sounds)
+    // Update spatial audio
     updateInGameAudioState(speed);
-
-    // Check for quit input
-    if (inputManager->isKeyPressedOnce(GLFW_KEY_ESCAPE)) {
-        glfwSetWindowShouldClose(window->getGLFWwindow(), true);
-    }
 
     // Update camera to follow player
     updateInGameCameraTarget(playerVelocity);
 
     renderingSystem->setSnowFrame(snowVfxSystem->snowFrame());
-
-    // Render scene and UI
     renderingSystem->update(gameTime.dtF());
+
+    // Render UI and HUD
     updateImGui();
     renderInGameHUD();
 }
@@ -497,6 +487,10 @@ void RacingGame::updatePhysicsAndGameplayLoop()
 
 void RacingGame::updateInGameAudioState(float playerSpeed)
 {
+    audioManager->pauseChannel(musicChannelID);
+    audioManager->resumeChannel(inGameMusicChannelID);
+    audioManager->resumeChannel(avalancheChannelID);
+
     // Avalanche distance-based volume
     glm::vec3 avalanchePos = gCoordinator.GetComponent<PhysxTransform>(AvalancheEntity).pos;
     glm::vec3 playerPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
@@ -789,6 +783,11 @@ void RacingGame::updateImGui() {
 
     // Set viewport
     glViewport(0, 0, window->getWidth(), window->getHeight());
+
+    // Check for quit input
+    if (inputManager->isKeyPressedOnce(GLFW_KEY_ESCAPE)) {
+        glfwSetWindowShouldClose(window->getGLFWwindow(), true);
+    }
 
     // Apply wireframe mode if enabled
     if (imguiPanel->showWireframe) {
