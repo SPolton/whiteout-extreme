@@ -3,6 +3,7 @@
 #include "physics/VehicleFourWheelDrive.hpp"
 #include <memory>
 #include <random>
+#include "ecs/Types.hpp"
 
 
 /**
@@ -12,6 +13,10 @@ struct VehicleComponent {
     int playerID = 0;  // Optional: Unique identifier for the vehicle
 
     std::shared_ptr<VehicleFourWheelDrive> instance;
+
+    // Visual smoothing states (for rendering purposes, not used in physics)
+    float visualSteer = 0.0f;
+    float smoothedVisualSteer = 0.0f;
 
     //BOOST SYSTEM
     float boostTimer = 4.0f;
@@ -44,4 +49,9 @@ struct VehicleComponent {
 
     // Vehicle flip timer
     float flipTimer = 0.0f;
+
+    Entity chassisVisual = 0;
+    Entity handleVisual = 0;
+    Entity runnerLeftVisual = 0;
+    Entity runnerRightVisual = 0;
 };

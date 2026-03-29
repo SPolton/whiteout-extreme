@@ -194,22 +194,16 @@ RacingGame::RacingGame()
     );
 
     logger::info("Created Map model entity with collision");
-    // Load snowmobile model for the player and AI vehicles
-    Entity snowmobileVisual = renderingSystem->createModelEntity("assets/obj/snowmobile/snowmobile.obj");
-    auto& snowmobileRenderable = gCoordinator.GetComponent<ModelRenderable>(snowmobileVisual);
-    snowmobileRenderable.visualOffsetPos = glm::vec3(0.0f, 0.0f, 1.5f);
-    gCoordinator.AddComponent(playerVehicleEntity, snowmobileRenderable);
-    gCoordinator.AddComponent(aiVehicleEntity1, snowmobileRenderable);
-    gCoordinator.AddComponent(aiVehicleEntity2, snowmobileRenderable);
-    gCoordinator.DestroyEntity(snowmobileVisual);
 
-    // Fix rotation and scale
-    auto& vehicleTransform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
-    vehicleTransform.rot = glm::angleAxis(glm::radians(0.0f), glm::vec3(0.f, 1.f, 0.f));
-    vehicleTransform.scale = glm::vec3(1.5f);  // Doubled the vehicle size
-
+    // Load snowmobile parts for player & AI vehicle visuals
+    setupSnowmobileVisuals(playerVehicleEntity);
     logger::info("Loaded snowmobile model for player vehicle");
 
+    setupSnowmobileVisuals(aiVehicleEntity1);
+    setupSnowmobileVisuals(aiVehicleEntity2);
+    logger::info("Loaded snowmobile models for ai vehicles");
+
+    /*
     auto& aiVehicleTransform = gCoordinator.GetComponent<PhysxTransform>(aiVehicleEntity1);
     aiVehicleTransform.rot = glm::angleAxis(glm::radians(0.0f), glm::vec3(0.f, 1.f, 0.f));
     aiVehicleTransform.scale = glm::vec3(1.5f);  // Uniform scale instead of stretched box scale
@@ -218,7 +212,7 @@ RacingGame::RacingGame()
     aiVehicleTransform2.rot = glm::angleAxis(glm::radians(0.0f), glm::vec3(0.f, 1.f, 0.f));
     aiVehicleTransform2.scale = glm::vec3(1.5f);  // Uniform scale instead of stretched box scale
 
-    logger::info("Loaded snowmobile models for ai vehicles");
+    */
 
     gCoordinator.AddComponent(playerVehicleEntity, Racer{});
     auto& playerVehicle = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).instance;
@@ -803,4 +797,27 @@ void RacingGame::syncImgui() {
 void RacingGame::endFrame() {
     window->swapBuffers();
     glfwPollEvents();
+}
+
+void RacingGame::setupSnowmobileVisuals(Entity vehicleEntity)
+{
+    Entity chassis = renderingSystem->createModelEntity("assets/obj/snowmobile/snowmobile.obj");
+    Entity handle = renderingSystem->createModelEntity("assets/obj/snowmobile/handle.obj");
+    Entity runnerLeft = renderingSystem->createModelEntity("assets/obj/snowmobile/left_runner.obj");
+    Entity runnerRight = renderingSystem->createModelEntity("assets/obj/snowmobile/right_runner.obj");
+
+    auto& vehicleComp = gCoordinator.GetComponent<VehicleComponent>(vehicleEntity);
+    vehicleComp.chassisVisual = chassis;
+    vehicleComp.handleVisual = handle;
+    vehicleComp.runnerLeftVisual = runnerLeft;
+    vehicleComp.runnerRightVisual = runnerRight;
+
+    gCoordinator.AddComponent(chassis, PhysxTransform{});
+    gCoordinator.AddComponent(handle, PhysxTransform{});
+    gCoordinator.AddComponent(runnerLeft, PhysxTransform{});
+    gCoordinator.AddComponent(runnerRight, PhysxTransform{});
+
+    auto& vehicleTransform = gCoordinator.GetComponent<PhysxTransform>(vehicleEntity);
+    vehicleTransform.rot = glm::angleAxis(glm::radians(0.0f), glm::vec3(0.f, 1.f, 0.f));
+    vehicleTransform.scale = glm::vec3(1.5f);
 }

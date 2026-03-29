@@ -49,6 +49,9 @@ private:
     void syncImgui();
     void endFrame();
 
+    // Visual setup
+    void setupSnowmobileVisuals(Entity vehicleEntity);
+
     float raceStartCountdown = 3.0f; // seconds until race starts
     GameTime gameTime;
 

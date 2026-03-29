@@ -214,6 +214,50 @@ void VehicleControlSystem::update(float deltaTime)
                 currentForwardGearDesired
             );
         }
+
+        vehicle.visualSteer = currentSteer;
+
+        // Update visual parts to follow vehicle
+        if (vehicle.chassisVisual != 0) {
+            auto& vehicleTransform = gCoordinator.GetComponent<PhysxTransform>(entity);
+            float steerSpeed = 6.0f;
+            vehicle.smoothedVisualSteer += (vehicle.visualSteer - vehicle.smoothedVisualSteer) * steerSpeed * deltaTime;
+            vehicle.smoothedVisualSteer = glm::clamp(vehicle.smoothedVisualSteer, -1.0f, 1.0f);
+
+            float maxSteerAngle = glm::radians(25.0f);
+            float steeringAngle = vehicle.smoothedVisualSteer * maxSteerAngle;
+            float handleSteeringAngle = steeringAngle * 0.3f;
+
+            // Chassis follows vehicle exactly
+            auto& chassisTrans = gCoordinator.GetComponent<PhysxTransform>(vehicle.chassisVisual);
+            chassisTrans.pos = vehicleTransform.pos;
+            chassisTrans.rot = vehicleTransform.rot;
+            chassisTrans.scale = vehicleTransform.scale;
+
+            // Handle
+            glm::vec3 handleOffset = glm::vec3(0.0f, 1.43751f, -0.23f);
+            glm::vec3 handleWorldOffset = vehicleTransform.rot * handleOffset;
+            auto& handleTrans = gCoordinator.GetComponent<PhysxTransform>(vehicle.handleVisual);
+            handleTrans.pos = vehicleTransform.pos + handleWorldOffset;
+            handleTrans.rot = vehicleTransform.rot * glm::angleAxis(handleSteeringAngle, glm::vec3(0, 1, 0));
+            handleTrans.scale = vehicleTransform.scale;
+
+            // Left runner
+            glm::vec3 runnerLOffset = glm::vec3(0.57f, 0.0f, 1.0f);
+            glm::vec3 runnerLWorldOffset = vehicleTransform.rot * runnerLOffset;
+            auto& runnerLTrans = gCoordinator.GetComponent<PhysxTransform>(vehicle.runnerLeftVisual);
+            runnerLTrans.pos = vehicleTransform.pos + runnerLWorldOffset;
+            runnerLTrans.rot = vehicleTransform.rot * glm::angleAxis(steeringAngle, glm::vec3(0, 1, 0));
+            runnerLTrans.scale = vehicleTransform.scale;
+
+            // Right runner
+            glm::vec3 runnerROffset = glm::vec3(-0.57f, 0.0f, 1.0f);
+            glm::vec3 runnerRWorldOffset = vehicleTransform.rot * runnerROffset;
+            auto& runnerRTrans = gCoordinator.GetComponent<PhysxTransform>(vehicle.runnerRightVisual);
+            runnerRTrans.pos = vehicleTransform.pos + runnerRWorldOffset;
+            runnerRTrans.rot = vehicleTransform.rot * glm::angleAxis(steeringAngle, glm::vec3(0, 1, 0));
+            runnerRTrans.scale = vehicleTransform.scale;
+        }
     }
 }
 
