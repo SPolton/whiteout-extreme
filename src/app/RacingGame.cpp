@@ -328,7 +328,8 @@ void RacingGame::updateInGame()
 
     // Get player state for audio and camera updates
     glm::vec3 playerPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
-    float speed = glm::length(gCoordinator.GetComponent<RigidBody>(playerVehicleEntity).linearVelocity);
+    glm::vec3 const playerVelocity = gCoordinator.GetComponent<RigidBody>(playerVehicleEntity).linearVelocity;
+    float const speed = glm::length(playerVelocity);
 
     // Update spatial audio (avalanche distance, engine speed gating, AI sounds)
     updateInGameAudioState(speed);
@@ -339,7 +340,7 @@ void RacingGame::updateInGame()
     }
 
     // Update camera to follow player
-    updateInGameCameraTarget(speed);
+    updateInGameCameraTarget(playerVelocity);
 
     // Render scene and UI
     renderingSystem->update(gameTime.fpsF());
@@ -546,7 +547,7 @@ void RacingGame::updateInGameAudioState(float playerSpeed)
     vehicleControlSystem->resumeBoostAudio();
 }
 
-void RacingGame::updateInGameCameraTarget(float playerSpeed)
+void RacingGame::updateInGameCameraTarget(glm::vec3 const& playerVelocity)
 {
     // If entity exists, update camera target to follow the player vehicle BEFORE rendering.
     // This prevents 1-frame lag that causes ghosting/phasing artifacts.
@@ -563,7 +564,7 @@ void RacingGame::updateInGameCameraTarget(float playerSpeed)
     targetPos.y += 2.f;
 
     glm::vec3 targetForward = transform.forward();
-    renderingSystem->updateCameraTarget(targetPos, targetForward, playerSpeed);
+    renderingSystem->updateCameraTarget(targetPos, targetForward, playerVelocity);
 }
 
 void RacingGame::renderInGameHUD()
