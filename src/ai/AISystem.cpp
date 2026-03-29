@@ -92,7 +92,7 @@ void AISystem::update(float deltaTime)
         glm::vec3 crossResult = glm::cross(forward, toTarget);
         float steerDirection = (crossResult.y > 0.0f) ? 1.0f : -1.0f;
         aiVehicle.steer = glm::clamp(angle * steerDirection * 2.0f, -1.0f, 1.0f);
-
+        aiVehicle.visualSteer = aiVehicle.steer;
 
         // 4. Movement and Braking Logic
         float currentSpeed = aiVehicle.speed();

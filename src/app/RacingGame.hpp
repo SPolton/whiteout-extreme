@@ -50,6 +50,9 @@ private:
     void syncImgui();
     void endFrame();
 
+    // Visual setup
+    void setupSnowmobileVisuals(Entity vehicleEntity);
+
     GameTime gameTime;
 
     std::shared_ptr<InputManager> inputManager;

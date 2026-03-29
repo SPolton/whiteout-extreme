@@ -3,6 +3,7 @@
 #include "physics/VehicleFourWheelDrive.hpp"
 #include <memory>
 #include <random>
+#include "ecs/Types.hpp"
 
 using namespace physx::vehicle2;
 
@@ -19,6 +20,10 @@ struct VehicleComponent {
     float throttle = 0.0f;
     float brake = 0.0f;
     float steer = 0.0f;
+
+    // Visual smoothing states (for rendering purposes, not used in physics)
+    float visualSteer = 0.0f;
+    float smoothedVisualSteer = 0.0f;
 
     //BOOST SYSTEM
     float boostTimer = 4.0f;
@@ -72,4 +77,9 @@ struct VehicleComponent {
 
     // Vehicle flip timer
     float flipTimer = 0.0f;
+
+    Entity chassisVisual = 0;
+    Entity handleVisual = 0;
+    Entity runnerLeftVisual = 0;
+    Entity runnerRightVisual = 0;
 };
