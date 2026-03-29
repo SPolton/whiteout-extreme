@@ -109,20 +109,57 @@ void SnowVfxSystem::spawnParticles(float deltaTime)
 
         accumulator -= static_cast<float>(spawnCount);
 
-        for (int i = 0; i < spawnCount; ++i) {
-            std::size_t idx = firstUnusedParticle();
-            SnowParticle& particle = particles[idx];
+        // particles movement if emmiter is nitro
+        if (emitter.preset == SnowEmitterPreset::Nitro) {
 
-            const float jitterX = math::random::RandomFloat(-jitterAmount, jitterAmount);
-            const float jitterZ = math::random::RandomFloat(-jitterAmount, jitterAmount);
-            const float upVelocity = math::random::RandomFloat(upVelocityMin, upVelocityMax);
-            const float driftVelocityX = math::random::RandomFloat(driftVelocityMin, driftVelocityMax);
-            const float driftVelocityZ = math::random::RandomFloat(driftVelocityMin, driftVelocityMax);
+            // we spawn two times the particles, one for left and one for right exhuast
+            int nitroSpawnCount = spawnCount * 2;
 
-            particle.position = transform.pos + (transform.rot * emitter.localOffset) + glm::vec3(jitterX, 0.0f, jitterZ);
-            particle.velocity = transform.rot * glm::vec3(driftVelocityX, upVelocity, driftVelocityZ);
-            particle.lifeSec = emitter.particleLifetimeSec;
-            particle.size = std::max(emitter.particleSize, 0.05f);
+            for (int i = 0; i < nitroSpawnCount; ++i) {
+                std::size_t idx = firstUnusedParticle();
+                SnowParticle& particle = particles[idx];
+
+                // forward position of vehicle
+                glm::vec3 forward = transform.rot * glm::vec3(0, 0, 1);
+                // make particles really fast
+                const float speed = 15.0f;
+                // nitro particles moves in opposite direction (of forward) with specified speed
+                particle.velocity = (-forward * speed);
+
+                // if not at half point, spawn on one side
+                if (i < spawnCount) {
+                    // no jitter needed for nitro
+                    particle.position = transform.pos + (transform.rot * emitter.localOffset);
+                }
+                // when half point has been hit, spawn on other side
+                else {
+                    particle.position = transform.pos + (transform.rot * emitter.localOffset2);
+                }
+
+                // set the other particle attributes
+                particle.lifeSec = emitter.particleLifetimeSec;
+                particle.size = std::max(emitter.particleSize, 0.05f);
+                particle.color = glm::vec3(0.8f, 0.2f, 0.0f); // orange
+            }
+        }
+        // otherwise its for avalanche
+        else {
+            for (int i = 0; i < spawnCount; ++i) {
+                std::size_t idx = firstUnusedParticle();
+                SnowParticle& particle = particles[idx];
+
+                const float jitterX = math::random::RandomFloat(-jitterAmount, jitterAmount);
+                const float jitterZ = math::random::RandomFloat(-jitterAmount, jitterAmount);
+                const float upVelocity = math::random::RandomFloat(upVelocityMin, upVelocityMax);
+                const float driftVelocityX = math::random::RandomFloat(driftVelocityMin, driftVelocityMax);
+                const float driftVelocityZ = math::random::RandomFloat(driftVelocityMin, driftVelocityMax);
+
+                particle.position = transform.pos + (transform.rot * emitter.localOffset) + glm::vec3(jitterX, 0.0f, jitterZ);
+                particle.velocity = transform.rot * glm::vec3(driftVelocityX, upVelocity, driftVelocityZ);
+                particle.lifeSec = emitter.particleLifetimeSec;
+                particle.size = std::max(emitter.particleSize, 0.05f);
+                particle.color = glm::vec3(0.95f, 0.97f, 1.0f); // white
+            }
         }
     }
 }

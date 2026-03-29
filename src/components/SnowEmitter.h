@@ -7,6 +7,7 @@ enum class SnowEmitterPreset {
     AvalancheFront,
     WheelTrail,
     WheelSplash,
+    Nitro,
     Custom
 };
 
@@ -20,4 +21,5 @@ struct SnowEmitter {
     float particleSize = 0.0f;
 
     glm::vec3 localOffset{0.0f, 0.0f, 0.0f};
+    glm::vec3 localOffset2{0.0f, 0.0f, 0.0f}; // used for nitro (we have two exhuast pipes)
 };

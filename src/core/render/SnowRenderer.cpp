@@ -80,6 +80,11 @@ void SnowRenderer::initialize()
     glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(SnowGpuVertex), (void*)offsetof(SnowGpuVertex, lifeSec));
     glVertexAttribDivisor(2, 1);
 
+    // for color
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(SnowGpuVertex), (void*)offsetof(SnowGpuVertex, color));
+    glVertexAttribDivisor(3, 1);
+
     glBindVertexArray(0);
 
     initialized = true;
@@ -94,7 +99,8 @@ void SnowRenderer::uploadFrame()
         gpuVertices.push_back(SnowGpuVertex{
             .position = particle.position,
             .size = particle.size,
-            .lifeSec = particle.lifeSec
+            .lifeSec = particle.lifeSec,
+            .color = particle.color
         });
     }
 

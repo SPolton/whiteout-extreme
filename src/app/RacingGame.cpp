@@ -229,6 +229,18 @@ RacingGame::RacingGame()
     auto& playerVehicle = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).instance;
     imguiPanel->setVehicle(playerVehicle);
 
+    // add particle emmitter to player vehicle to act as nitro
+    // need two offsets because we have two exhaust positions
+    gCoordinator.AddComponent(playerVehicleEntity, SnowEmitter{
+        .enabled = false,
+        .preset = SnowEmitterPreset::Nitro,
+        .spawnRate = 150.0f,
+        .particleLifetimeSec = 0.23f,
+        .particleSize = 1.2f,
+        .localOffset = glm::vec3(0.85f, 0.6f, -2.0f),
+        .localOffset2 = glm::vec3(-0.85f, 0.6f, -2.0f)
+    });
+
     gCoordinator.AddComponent(aiVehicleEntity1, Racer{});
     gCoordinator.AddComponent(aiVehicleEntity1, AI{});
 
@@ -492,6 +504,17 @@ void RacingGame::updatePhysicsAndGameplayLoop()
         if (racingSystem->raceFinished) {
             gameState = GameState::GameOver;
         }
+    }
+
+    // need to use to toggle nitro on and off
+    auto& nitroEmitter = gCoordinator.GetComponent<SnowEmitter>(playerVehicleEntity);
+    // if boosting, enable emitter
+    if (vehicleControlSystem->isBoosting) {
+        nitroEmitter.enabled = true;
+    }
+    // otherwise turn emitter off
+    else {
+        nitroEmitter.enabled = false;
     }
 }
 
