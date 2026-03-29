@@ -21,7 +21,7 @@ void ImGuiPanel::update()
     // Settings window
     if (showSettingsWindow) {
         ImGui::SetNextWindowPos(ImVec2(600, 10), ImGuiCond_FirstUseEver);
-        ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(300, 200), ImGuiCond_FirstUseEver);
         ImGui::Begin("Settings", &showSettingsWindow);
         renderRenderSettings();
         renderCameraInfo();
@@ -53,17 +53,19 @@ void ImGuiPanel::renderDebugInfo()
 
 void ImGuiPanel::renderRenderSettings()
 {
-    if (ImGui::CollapsingHeader("Render Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
-        ImGui::ColorEdit3("Background Color", &backgroundColor[0]);
+    if (ImGui::CollapsingHeader("Render Settings")) {
+        // ImGui::ColorEdit3("Background Color", &backgroundColor[0]);
         ImGui::Checkbox("Wireframe Mode", &showWireframe);
-        ImGui::Checkbox("Show Normals", &showNormals);
-        ImGui::SliderFloat("Animation Speed", &animationSpeed, 0.0f, 5.0f);
+        // ImGui::Checkbox("Show Normals", &showNormals);
+        // ImGui::SliderFloat("Animation Speed", &animationSpeed, 0.0f, 5.0f);
+        ImGui::Checkbox("Particles Enabled (V key)", &isParticlesEnabled);
         
         if (ImGui::Button("Reset Defaults")) {
             backgroundColor = defaultBackgroundColor;
             showWireframe = false;
             showNormals = false;
             animationSpeed = 1.0f;
+            isParticlesEnabled = true;
         }
     }
 }

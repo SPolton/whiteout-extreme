@@ -5,6 +5,7 @@
 #include "core/assets/Texture.hpp"
 #include "core/buffer/Geometry.hpp"
 #include "core/render/ShaderProgram.hpp"
+#include "core/render/SnowRenderer.hpp"
 #include "core/render/ShapeConfig.hpp"
 #include "core/scene/TurnTableCamera.hpp"
 #include "core/scene/FreeCamera.hpp"
@@ -21,6 +22,7 @@
 #include "input/glfw/Window.hpp"
 #include "input/panel/ImGuiPanel.hpp"
 #include "input/panel/ImGuiWrapper.hpp"
+#include "vfx/SnowParticle.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -46,6 +48,7 @@ void cleanup();
     Renderable getCubeRenderable(const std::string& texturePath);
 
     void updateCameraTarget(const glm::vec3& position, const glm::vec3& forward, const glm::vec3& velocity);
+    void setSnowFrame(const SnowFrame& frame);
     glm::vec3 getCameraForward() const { return activeCamera->forward(); };
     glm::vec3 getCameraRight() const { return activeCamera->right(); };
     std::string getActiveCameraInfo() const { return activeCamera->toString(); };
@@ -63,6 +66,7 @@ void cleanup();
 
 private:
     AssetManager& assetManager = AssetManager::getInstance();
+    SnowRenderer snowRenderer;
 
     std::unique_ptr<FreeCamera> freeCamera;
     std::unique_ptr<RacingCamera> racingCamera;

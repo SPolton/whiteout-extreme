@@ -5,6 +5,7 @@
 #include "components/Model.h"
 #include "components/Physics.hpp"
 #include "components/Renderable.h"
+#include "components/SnowEmitter.h"
 #include "components/Transform.h"
 #include "components/VehicleComponent.h"
 #include "ecs/Coordinator.hpp"
@@ -62,6 +63,7 @@ RacingGame::RacingGame()
     gCoordinator.RegisterComponent<AvalancheComponent>();
     gCoordinator.RegisterComponent<Racer>();
     gCoordinator.RegisterComponent<AI>();
+    gCoordinator.RegisterComponent<SnowEmitter>();
 
     // 2.Create Systems and Set Signatures
     // RENDERING SYSTEM: Requires Transform AND <Renderable OR ModelRenderable>
@@ -144,6 +146,15 @@ RacingGame::RacingGame()
         signature.set(gCoordinator.GetComponentType<VehicleComponent>());
         signature.set(gCoordinator.GetComponentType<PhysxTransform>());
         gCoordinator.SetSystemSignature<AISystem>(signature);
+    }
+
+    // SNOW VFX SYSTEM: Requires Transform AND SnowEmitter
+    snowVfxSystem = gCoordinator.RegisterSystem<SnowVfxSystem>();
+    {
+        Signature signature;
+        signature.set(gCoordinator.GetComponentType<PhysxTransform>());
+        signature.set(gCoordinator.GetComponentType<SnowEmitter>());
+        gCoordinator.SetSystemSignature<SnowVfxSystem>(signature);
     }
 
     // 3.Create Entities and add Components to them:
@@ -233,6 +244,14 @@ RacingGame::RacingGame()
     auto avCubeRender = renderingSystem->getCubeRenderable("assets/textures/snowball.png");
     avCubeRender.hasRollingTexture = true;
     gCoordinator.AddComponent(AvalancheEntity, avCubeRender);
+    gCoordinator.AddComponent(AvalancheEntity, SnowEmitter{
+        .enabled = true,
+        .preset = SnowEmitterPreset::AvalancheFront,
+        .spawnRate = 250.0f,
+        .particleLifetimeSec = 1.2f,
+        .particleSize = 5.0f,
+        .localOffset = glm::vec3(0.0f, 3.0f, -12.0f)
+    });
     logger::info("Avalanche entity created");
 
     auto& Avalanche = gCoordinator.GetComponent<AvalancheComponent>(AvalancheEntity).instance;
@@ -341,6 +360,8 @@ void RacingGame::updateInGame()
 
     // Update camera to follow player
     updateInGameCameraTarget(playerVelocity);
+
+    renderingSystem->setSnowFrame(snowVfxSystem->snowFrame());
 
     // Render scene and UI
     renderingSystem->update(gameTime.dtF());
@@ -461,6 +482,7 @@ void RacingGame::updatePhysicsAndGameplayLoop()
     while (gameTime.accF() >= gameTime.dtF() && physicsSteps < gameTime.maxPhysicsSteps()) {
         vehicleControlSystem->update(gameTime.dtF());
         aiSystem->update(gameTime.dtF());
+        snowVfxSystem->update(gameTime.dtF());
 
         physicsSystem->update(gameTime.dtF());
         gameTime.physicsUpdate();
@@ -792,6 +814,16 @@ void RacingGame::syncImgui() {
     renderingSystem->camSpeed = imguiPanel->camSpeed;
     renderingSystem->camZoomSpeed = imguiPanel->camZoomSpeed;
     //renderingSystem->wireframeMode = imguiPanel->showWireframe;
+
+    // Sync particles enabled state
+    gCoordinator.GetComponent<SnowEmitter>(AvalancheEntity).enabled = imguiPanel->isParticlesEnabled;
+
+    // Debug: Toggle particles
+    if (inputManager->isKeyPressedOnce(GLFW_KEY_V)) {
+        imguiPanel->isParticlesEnabled = !imguiPanel->isParticlesEnabled;
+        gCoordinator.GetComponent<SnowEmitter>(AvalancheEntity).enabled = imguiPanel->isParticlesEnabled;
+        logger::info("Particles debug toggle: {}", imguiPanel->isParticlesEnabled ? "ON" : "OFF");
+    }
 }
 
 void RacingGame::endFrame() {
