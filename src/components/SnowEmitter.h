@@ -10,6 +10,23 @@ enum class SnowEmitterPreset {
     Custom
 };
 
+// ECS data component for all snow-related emitters.
+struct SnowEmitter {
+    bool enabled = true;
+    SnowEmitterPreset preset = SnowEmitterPreset::Custom;
+
+    float spawnRate = 0.0f;
+    float particleLifetimeSec = 0.0f;
+    float particleSize = 0.0f;
+
+    glm::vec3 localOffset{0.0f, 0.0f, 0.0f};
+
+    bool isValid() const {
+        return enabled && spawnRate > 0.0f &&
+            particleLifetimeSec > 0.0f && particleSize > 0.0f;
+    }
+};
+
 // Grid pattern selection for boxed emitter layouts.
 enum class SnowEmitterGridPattern {
     All,
@@ -41,22 +58,9 @@ struct SnowEmitterGridBox {
     SnowEmitterGridPattern pattern = SnowEmitterGridPattern::Checkerboard;
     SnowEmitterParticleOverrides particleOverrides{};
 
-    bool isValid() const
-    {
+    bool isValid() const {
         return enabled &&
             gridResolution.x >= 1 && gridResolution.y >= 1 && gridResolution.z >= 1 &&
             localBoxSize.x > 0.0f && localBoxSize.y > 0.0f && localBoxSize.z > 0.0f;
     }
-};
-
-// ECS data component for all snow-related emitters.
-struct SnowEmitter {
-    bool enabled = true;
-    SnowEmitterPreset preset = SnowEmitterPreset::Custom;
-
-    float spawnRate = 0.0f;
-    float particleLifetimeSec = 0.0f;
-    float particleSize = 0.0f;
-
-    glm::vec3 localOffset{0.0f, 0.0f, 0.0f};
 };

@@ -104,17 +104,13 @@ void SnowVfxSystem::spawnParticlesFromEmitter(Entity entity, float deltaTime)
     auto& emitter = gCoordinator.GetComponent<SnowEmitter>(entity);
     auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
 
-    if (!emitter.enabled || emitter.spawnRate <= 0.0f || emitter.particleLifetimeSec <= 0.0f) {
-        return;
-    }
+    if (!emitter.isValid()) return;
 
     float& accumulator = emitterSpawnAccumulator[entity];
     accumulator += emitter.spawnRate * deltaTime;
 
     int spawnCount = static_cast<int>(accumulator);
-    if (spawnCount <= 0) {
-        return;
-    }
+    if (spawnCount <= 0) return;
 
     if (spawnCount > kMaxSpawnPerEmitterPerStep) {
         spawnCount = kMaxSpawnPerEmitterPerStep;
@@ -148,15 +144,10 @@ void SnowVfxSystem::spawnParticleAt(SnowEmitter const& emitter, PhysxTransform c
 void SnowVfxSystem::updateParticles(float deltaTime)
 {
     for (SnowParticle& particle : particles) {
-        if (particle.lifeSec <= 0.0f) {
-            continue;
-        }
+        if (!particle.isValid()) continue;
 
         particle.lifeSec -= deltaTime;
-        if (particle.lifeSec <= 0.0f) {
-            particle.lifeSec = 0.0f;
-            continue;
-        }
+        if (!particle.isValid()) continue;
 
         particle.velocity += glm::vec3(0.0f, -9.81f, 0.0f) * deltaTime * 0.25f;
         particle.position += particle.velocity * deltaTime;
@@ -169,9 +160,7 @@ void SnowVfxSystem::rebuildSnowFrame()
     currentSnowFrame.particles.reserve(aliveParticleCount());
 
     for (const SnowParticle& particle : particles) {
-        if (particle.lifeSec <= 0.0f) {
-            continue;
-        }
+        if (!particle.isValid()) continue;
 
         currentSnowFrame.particles.push_back(particle);
     }
