@@ -1,7 +1,5 @@
 #include "SnowVfxSystem.hpp"
 
-#include "components/SnowEmitter.h"
-#include "components/Transform.h"
 #include "ecs/Coordinator.hpp"
 #include "utils/math.hpp"
 
@@ -87,44 +85,64 @@ void SnowVfxSystem::cleanupEmitterAccumulators()
 void SnowVfxSystem::spawnParticles(float deltaTime)
 {
     for (auto const& entity : mEntities) {
-        auto& emitter = gCoordinator.GetComponent<SnowEmitter>(entity);
-        auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
-
-        if (!emitter.enabled || emitter.spawnRate <= 0.0f || emitter.particleLifetimeSec <= 0.0f) {
-            continue;
-        }
-
-        float& accumulator = emitterSpawnAccumulator[entity];
-        accumulator += emitter.spawnRate * deltaTime;
-
-        int spawnCount = static_cast<int>(accumulator);
-        if (spawnCount <= 0) {
-            continue;
-        }
-
-        if (spawnCount > kMaxSpawnPerEmitterPerStep) {
-            spawnCount = kMaxSpawnPerEmitterPerStep;
-            accumulator = 0.0f;
-        }
-
-        accumulator -= static_cast<float>(spawnCount);
-
-        for (int i = 0; i < spawnCount; ++i) {
-            std::size_t idx = firstUnusedParticle();
-            SnowParticle& particle = particles[idx];
-
-            const float jitterX = math::random::RandomFloat(-jitterAmount, jitterAmount);
-            const float jitterZ = math::random::RandomFloat(-jitterAmount, jitterAmount);
-            const float upVelocity = math::random::RandomFloat(upVelocityMin, upVelocityMax);
-            const float driftVelocityX = math::random::RandomFloat(driftVelocityMin, driftVelocityMax);
-            const float driftVelocityZ = math::random::RandomFloat(driftVelocityMin, driftVelocityMax);
-
-            particle.position = transform.pos + (transform.rot * emitter.localOffset) + glm::vec3(jitterX, 0.0f, jitterZ);
-            particle.velocity = transform.rot * glm::vec3(driftVelocityX, upVelocity, driftVelocityZ);
-            particle.lifeSec = emitter.particleLifetimeSec;
-            particle.size = std::max(emitter.particleSize, 0.05f);
+        bool hasGridBox = gCoordinator.HasComponent<SnowEmitterGridBox>(entity);
+        if (hasGridBox) {
+            spawnParticlesFromGridBox(entity, deltaTime);
+        } else {
+            spawnParticlesFromEmitter(entity, deltaTime);
         }
     }
+}
+
+void SnowVfxSystem::spawnParticlesFromGridBox(Entity entity, float deltaTime)
+{
+    spawnParticlesFromEmitter(entity, deltaTime);
+}
+
+void SnowVfxSystem::spawnParticlesFromEmitter(Entity entity, float deltaTime)
+{
+    auto& emitter = gCoordinator.GetComponent<SnowEmitter>(entity);
+    auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
+
+    if (!emitter.enabled || emitter.spawnRate <= 0.0f || emitter.particleLifetimeSec <= 0.0f) {
+        return;
+    }
+
+    float& accumulator = emitterSpawnAccumulator[entity];
+    accumulator += emitter.spawnRate * deltaTime;
+
+    int spawnCount = static_cast<int>(accumulator);
+    if (spawnCount <= 0) {
+        return;
+    }
+
+    if (spawnCount > kMaxSpawnPerEmitterPerStep) {
+        spawnCount = kMaxSpawnPerEmitterPerStep;
+        accumulator = 0.0f;
+    }
+
+    accumulator -= static_cast<float>(spawnCount);
+
+    for (int i = 0; i < spawnCount; ++i) {
+        spawnParticleAt(emitter, transform);
+    }
+}
+
+void SnowVfxSystem::spawnParticleAt(SnowEmitter const& emitter, PhysxTransform const& transform)
+{
+    std::size_t idx = firstUnusedParticle();
+    SnowParticle& particle = particles[idx];
+
+    const float jitterX = math::random::RandomFloat(-jitterAmount, jitterAmount);
+    const float jitterZ = math::random::RandomFloat(-jitterAmount, jitterAmount);
+    const float upVelocity = math::random::RandomFloat(upVelocityMin, upVelocityMax);
+    const float driftVelocityX = math::random::RandomFloat(driftVelocityMin, driftVelocityMax);
+    const float driftVelocityZ = math::random::RandomFloat(driftVelocityMin, driftVelocityMax);
+
+    particle.position = transform.pos + (transform.rot * emitter.localOffset) + glm::vec3(jitterX, 0.0f, jitterZ);
+    particle.velocity = transform.rot * glm::vec3(driftVelocityX, upVelocity, driftVelocityZ);
+    particle.lifeSec = emitter.particleLifetimeSec;
+    particle.size = std::max(emitter.particleSize, 0.05f);
 }
 
 void SnowVfxSystem::updateParticles(float deltaTime)
