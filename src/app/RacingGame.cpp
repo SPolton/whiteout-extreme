@@ -544,18 +544,15 @@ void RacingGame::updateInGameAudioState(float playerSpeed)
 
 void RacingGame::updateInGameCameraTarget(glm::vec3 const& playerVelocity)
 {
-    // If entity exists, update camera target to follow the player vehicle BEFORE rendering.
-    // This prevents 1-frame lag that causes ghosting/phasing artifacts.
+    // If entity exists, update camera target to follow the player vehicle.
     if (!gCoordinator.HasComponent<PhysxTransform>(playerVehicleEntity)) {
         return;
     }
 
     auto& transform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
-    auto& modelRenderable = gCoordinator.GetComponent<ModelRenderable>(playerVehicleEntity);
 
-    // Target the visual center, not the physics origin.
-    glm::vec3 visualOffset = transform.rot * modelRenderable.visualOffsetPos;
-    glm::vec3 targetPos = transform.pos + visualOffset;
+    // Target the approximate visual center, not the physics origin.
+    glm::vec3 targetPos = transform.pos;
     targetPos.y += 2.f;
 
     glm::vec3 targetForward = transform.forward();
