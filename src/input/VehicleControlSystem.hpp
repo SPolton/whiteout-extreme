@@ -42,6 +42,7 @@ private:
     float currentThrottle = 0.0f;
     float currentBrake = 0.0f;
     float currentSteer = 0.0f;
+    bool currentForwardGearDesired = true;
 
     void resetInputs() {
         currentThrottle = 0.0f;
@@ -69,7 +70,7 @@ private:
 
     // track throttle pressing state
     bool throttleWasPressedKeybaord = false;
-    bool throttleWasPressedController = false;
+    float throttleWasPressedController = 0.0f;
 
     // channels to pause all boost related sounds if on menus
     int boostStartChannelID = -1;

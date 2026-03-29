@@ -207,23 +207,13 @@ void VehicleControlSystem::update(float deltaTime)
         }
 
         if(vehicle.playerID == 0) {
-            vehicle.throttle = currentThrottle;
-            vehicle.brake = currentBrake;
-            vehicle.steer = currentSteer;
-
-            if (!vehicle.hasGearDesired()) {
-                if (vehicle.speed() < 1.f) {
-                    vehicle.setGearDesired();
-                }
-            }
+            vehicle.instance->applyDriveCommand(
+                currentThrottle,
+                currentBrake,
+                currentSteer,
+                currentForwardGearDesired
+            );
         }
-
-        vehicle.instance->setInputs(
-            vehicle.throttle,
-            vehicle.brake,
-            vehicle.steer
-        );
-        //vehicle.instance->stepPhysics(deltaTime);
     }
 }
 
@@ -252,10 +242,10 @@ void VehicleControlSystem::processControllerInput()
 
     // check for throttle/braking
     // anything greater than 0 means it is pressed
-    bool throttleIsPressed = inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER);
+    float throttleIsPressed = inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER);
 
     // if the key is currently NOT pressed down and previously WAS, play the engine ending sound
-    if (!throttleIsPressed && throttleWasPressedController) {
+    if (!(throttleIsPressed > 0.0f) && (throttleWasPressedController > 0.0f)) {
         // when ending acceleration, play fade out engine
         engineEndChannelID = audioManager->playSounds("assets/audio/snowmobile-player-end.wav", { 0,0,0 }, 5.f);
         // warn to stop looping engine sound
@@ -409,17 +399,9 @@ void VehicleControlSystem::accelerate(float throttle)
     //logger::info("Accelerating...");
     // apply transformation here to move car forward
 
-    auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity);
-    vehicle.forwardGearDesired = true;
-
-    if (vehicle.hasGearDesired()) {
-        // currentThrottle set to 1.0 if flag isBoosting raised in this frame
-        currentThrottle = throttle;
-        currentBrake = 0.0f;
-    } else {
-        currentBrake = throttle;
-        currentThrottle = 0.0f;
-    }
+    currentForwardGearDesired = true;
+    currentThrottle = throttle;
+    currentBrake = 0.0f;
 
     // is playing when accelerating
     stopPlayerEngine = false;
@@ -430,16 +412,9 @@ void VehicleControlSystem::brake()
     //logger::info("Braking...");
     // apply transformation here to slow car down
 
-    auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity);
-
-    vehicle.forwardGearDesired = false;
-
-    if (vehicle.hasGearDesired()) {
-        currentThrottle = 1.0f;
-    }
-    else {
-        currentBrake = 1.0f;
-    }
+    currentForwardGearDesired = false;
+    currentThrottle = 1.0f;
+    currentBrake = 0.0f;
 }
 
 void VehicleControlSystem::steerRight()
