@@ -3,6 +3,7 @@
 #include "SnowParticle.hpp"
 #include "TerrainSnowSampler.hpp"
 #include "ecs/System.hpp"
+#include "components/SnowEmitter.h"
 
 #include <glm/glm.hpp>
 
@@ -35,6 +36,9 @@ private:
     void spawnParticles(float deltaTime);
     void updateParticles(float deltaTime);
     void rebuildSnowFrame();
+
+    // Generate deterministic grid spawn points from box parameters.
+    static std::vector<glm::vec3> generateGridSpawnPoints(SnowEmitterGridBox const& gridBox);
 
     float jitterAmount = 3.5f;
     float upVelocityMin = 1.0f;

@@ -40,6 +40,13 @@ struct SnowEmitterGridBox {
 
     SnowEmitterGridPattern pattern = SnowEmitterGridPattern::Checkerboard;
     SnowEmitterParticleOverrides particleOverrides{};
+
+    bool isValid() const
+    {
+        return enabled &&
+            gridResolution.x >= 1 && gridResolution.y >= 1 && gridResolution.z >= 1 &&
+            localBoxSize.x > 0.0f && localBoxSize.y > 0.0f && localBoxSize.z > 0.0f;
+    }
 };
 
 // ECS data component for all snow-related emitters.

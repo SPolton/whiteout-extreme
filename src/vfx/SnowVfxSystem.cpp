@@ -158,3 +158,36 @@ void SnowVfxSystem::rebuildSnowFrame()
         currentSnowFrame.particles.push_back(particle);
     }
 }
+
+std::vector<glm::vec3> SnowVfxSystem::generateGridSpawnPoints(SnowEmitterGridBox const& gridBox)
+{
+    std::vector<glm::vec3> points;
+
+    if (!gridBox.isValid()) {
+        return points;
+    }
+
+    // Compute cell dimensions.
+    const glm::vec3 cellSize = gridBox.localBoxSize / glm::vec3(gridBox.gridResolution);
+    const glm::vec3 halfBox = gridBox.localBoxSize * 0.5f;
+
+    // Generate grid cell centers in local space, origin at box center.
+    for (int x = 0; x < gridBox.gridResolution.x; ++x) {
+        for (int y = 0; y < gridBox.gridResolution.y; ++y) {
+            for (int z = 0; z < gridBox.gridResolution.z; ++z) {
+                // Check pattern filter.
+                if (gridBox.pattern == SnowEmitterGridPattern::Checkerboard) {
+                    if ((x + y + z) % 2 != 0) {
+                        continue;
+                    }
+                }
+
+                // Compute cell center.
+                const glm::vec3 cellCenter = -halfBox + cellSize * glm::vec3(x + 0.5f, y + 0.5f, z + 0.5f);
+                points.push_back(gridBox.localOffset + cellCenter);
+            }
+        }
+    }
+
+    return points;
+}
