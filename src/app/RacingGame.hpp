@@ -30,7 +30,6 @@ private:
     // State handlers
     void updateInGame();
     void updateInMenu(MenuAction actionButtons);
-    void handleMenuActions(MenuAction actionButtons);
     void updateMainMenu(MenuAction actionButtons);
     void updatePauseMenu(MenuAction actionButtons);
     void updateGameOverMenu(MenuAction actionButtons);
@@ -50,6 +49,7 @@ private:
     void syncImgui();
     void endFrame();
 
+    float raceStartCountdown = 3.0f; // seconds until race starts
     GameTime gameTime;
 
     std::shared_ptr<InputManager> inputManager;

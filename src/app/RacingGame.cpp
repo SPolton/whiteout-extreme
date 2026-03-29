@@ -296,6 +296,7 @@ void RacingGame::run()
 
     while (!window->shouldClose())
     {
+        // logger::debug("{}", gameTime.toString());
         audioManager->update();
 
         // Keep checking for controller inputs and if menu actions are triggered
@@ -324,7 +325,12 @@ void RacingGame::updateInGame()
     audioManager->resumeChannel(avalancheChannelID);
 
     // Run fixed-step physics and game systems
-    updatePhysicsAndGameplayLoop();
+    // Skip gameplay updates until the race starts
+    if (0.1f < gameTime.gameTimeF() && gameTime.gameTimeF() < raceStartCountdown) {
+        gameTime.updatePause(glfwGetTime());
+    } else {
+        updatePhysicsAndGameplayLoop();
+    }
 
     // Get player state for audio and camera updates
     glm::vec3 playerPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
@@ -343,7 +349,7 @@ void RacingGame::updateInGame()
     updateInGameCameraTarget(playerVelocity);
 
     // Render scene and UI
-    renderingSystem->update(gameTime.fpsF());
+    renderingSystem->update(gameTime.dtF());
     updateImGui();
     renderInGameHUD();
 }
@@ -352,8 +358,6 @@ void RacingGame::updateInMenu(MenuAction actionButtons)
 {
     // Reset to prevent big delta spike when returning to gameplay
     gameTime.updatePause(glfwGetTime());
-
-    handleMenuActions(actionButtons);
 
     if (gameState == GameState::MainMenu) {
         updateMainMenu(actionButtons);
@@ -370,24 +374,14 @@ void RacingGame::updateInMenu(MenuAction actionButtons)
     }
 }
 
-void RacingGame::handleMenuActions(MenuAction actionButtons)
-{
-    if (actionButtons == MenuAction::StartGame || actionButtons == MenuAction::ResumeGame) {
-        if (actionButtons == MenuAction::StartGame) {
-            gameTime.reset(glfwGetTime());
-            racingSystem->restart();
-        }
-        audioManager->resumeChannel(inGameMusicChannelID);
-        gameState = GameState::InGame;
-    }
-}
-
 void RacingGame::updateMainMenu(MenuAction actionButtons)
 {
     MenuAction actionCursor = menus->renderMainMenu();
 
     if (actionButtons == MenuAction::StartGame || actionCursor == MenuAction::StartGame) {
+        gameTime.reset(glfwGetTime());
         racingSystem->restart();
+        audioManager->resumeChannel(inGameMusicChannelID);
         gameState = GameState::InGame;
     }
     else if (actionButtons == MenuAction::GoToHelpMenu || actionCursor == MenuAction::GoToHelpMenu) {
@@ -402,6 +396,7 @@ void RacingGame::updatePauseMenu(MenuAction actionButtons)
     MenuAction actionCursor = menus->renderPauseMenu();
 
     if (actionButtons == MenuAction::ResumeGame || actionCursor == MenuAction::ResumeGame) {
+        audioManager->resumeChannel(inGameMusicChannelID);
         gameState = GameState::InGame;
     }
     else if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
@@ -468,14 +463,8 @@ void RacingGame::updateKeyboardHelpMenu(MenuAction actionButtons)
 void RacingGame::updatePhysicsAndGameplayLoop()
 {
     // Physics System Loop, adaptive based on performance.
-    size_t maxPhysicsSteps = gameTime.maxPhysicsSteps();
     size_t physicsSteps = 0;
-
-    while (gameTime.accumulator >= gameTime.dt && physicsSteps < maxPhysicsSteps) {
-        if (gameTime.frameCount < 300 && gameTime.physicsFrameCount > maxPhysicsSteps) {
-            break; // Skip the first frames to avoid slow startup.
-        }
-
+    while (gameTime.accF() >= gameTime.dtF() && physicsSteps < gameTime.maxPhysicsSteps()) {
         vehicleControlSystem->update(gameTime.dtF());
         aiSystem->update(gameTime.dtF());
 
@@ -487,11 +476,6 @@ void RacingGame::updatePhysicsAndGameplayLoop()
         if (racingSystem->raceFinished) {
             gameState = GameState::GameOver;
         }
-    }
-
-    // Discard excess time when running slow to prevent spiral of death.
-    if (physicsSteps >= maxPhysicsSteps) {
-        gameTime.discardExcessTime();
     }
 }
 
@@ -586,7 +570,7 @@ void RacingGame::renderInGameHUD()
         { marginX, topY - 40.f, 0.40f }, { 0.5f, 0.2f, 0.8f });
 
     textSystem->renderText(
-        "Game FPS: " + std::to_string(static_cast<int>(1.0f / gameTime.fpsF())),
+        "Game FPS: " + std::to_string(static_cast<int>(gameTime.fpsF())),
         { marginX, topY - 75.f, 0.75f }, { 0.9f, 0.9f, 0.4f });
 
     // --- Leaderboard Section ---
