@@ -165,6 +165,31 @@ void AudioEngine::resumeChannel(int nChannelId)
     }
 }
 
+// based on given channel, stop playing the sound
+void AudioEngine::stopChannel(int nChannelId)
+{
+    // initialize var for pointer
+    FMOD::Channel* pChannel = nullptr;
+
+    // look for channel with id
+    auto tFoundIt = sgpImplementation->mChannels.find(nChannelId);
+    // if found and not at end of map
+    if (tFoundIt != sgpImplementation->mChannels.end())
+    {
+        // retrieve pointer
+        pChannel = tFoundIt->second;
+    }
+
+    // if channel exists
+    if (pChannel)
+    {
+        // stop audio channel
+        AudioEngine::errorCheck(pChannel->stop());
+        // remove from channel map
+        sgpImplementation->mChannels.erase(tFoundIt);
+    }
+}
+
 // set volume and position of sound
 void AudioEngine::setChannel3dPosition(int nChannelId, const Vector3& vPos)
 {
@@ -179,6 +204,7 @@ void AudioEngine::setChannel3dPosition(int nChannelId, const Vector3& vPos)
 // set listener position
 void AudioEngine::set3dListenerAndOrientation(const Vector3& vPos, float fVolumeDB)
 {
+    (void)fVolumeDB;
     FMOD_VECTOR position = vectorToFmod(vPos);
 };
 

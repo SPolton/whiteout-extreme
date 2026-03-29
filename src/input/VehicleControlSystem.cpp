@@ -53,6 +53,21 @@ void VehicleControlSystem::update(float deltaTime)
             }
         }
 
+        // on first time playing boost sound, start the audio file
+        if (vehicle.isBoosting && firstTimePlaying) {
+            boostChannelID = audioManager->playSounds("assets/audio/boost.wav", { 0,0,0 }, -7.f);
+            firstTimePlaying = false;
+        }
+        // otherwise resume and pause boost channel based on vehicle boosting state
+        else if (vehicle.isBoosting && !boostPlaying) {
+            audioManager->resumeChannel(boostChannelID);
+            boostPlaying = true;
+        }
+        else if (!vehicle.isBoosting) {
+            audioManager->pauseChannel(boostChannelID);
+            boostPlaying = false;
+        }
+
         if (vehicle.isBoosting && !vehicle.isOverheated) {
             if (vehicle.boostMaster) vehicle.boostMaster = false;
 
@@ -63,7 +78,13 @@ void VehicleControlSystem::update(float deltaTime)
 
             // --- OVERHEAT ---
             if (vehicle.engineHeat >= 1.0f) {
-                if (entity == playerVehicleEntity) audioManager->playSounds("assets/audio/overheat.mp3", { 0,0,0 }, -6.0f);
+                // pause boost sound when engine overheated
+                audioManager->pauseChannel(boostChannelID);
+                boostPlaying = false;
+
+                if (entity == playerVehicleEntity) {
+                    overheatChannelID = audioManager->playSounds("assets/audio/overheat.mp3", { 0,0,0 }, -6.0f);
+                }
                 vehicle.engineHeat = 1.0f;
                 vehicle.isOverheated = true;
                 vehicle.isBoosting = false;
@@ -106,7 +127,9 @@ void VehicleControlSystem::update(float deltaTime)
 
             // - APEX-VENT -
             if (vehicle.engineHeat > 0.90f && !vehicle.isOverheated) {
-                if (entity == playerVehicleEntity) audioManager->playSounds("assets/audio/apex-vent.mp3", { 0,0,0 }, -13.0f);
+                if (entity == playerVehicleEntity) {
+                    apexVentChannelID = audioManager->playSounds("assets/audio/apex-vent.mp3", { 0,0,0 }, -13.0f);
+                }
                 vehicle.boostMaster = true;
                 vehicle.timeSinceBoostMaster = 0.0f;
 
@@ -184,23 +207,15 @@ void VehicleControlSystem::update(float deltaTime)
         }
 
         if(vehicle.playerID == 0) {
-            vehicle.throttle = currentThrottle;
-            vehicle.brake = currentBrake;
-            vehicle.steer = currentSteer;
-            vehicle.visualSteer = vehicle.steer;
-
-            if (!vehicle.hasGearDesired()) {
-                if (vehicle.speed() < 1.f) {
-                    vehicle.setGearDesired();
-                }
-            }
+            vehicle.instance->applyDriveCommand(
+                currentThrottle,
+                currentBrake,
+                currentSteer,
+                currentForwardGearDesired
+            );
         }
 
-        vehicle.instance->setInputs(
-            vehicle.throttle,
-            vehicle.brake,
-            vehicle.steer
-        );
+        vehicle.visualSteer = currentSteer;
 
         // Update visual parts to follow vehicle
         if (vehicle.chassisVisual != 0) {
@@ -243,8 +258,6 @@ void VehicleControlSystem::update(float deltaTime)
             runnerRTrans.rot = vehicleTransform.rot * glm::angleAxis(steeringAngle, glm::vec3(0, 1, 0));
             runnerRTrans.scale = vehicleTransform.scale;
         }
-
-        //vehicle.instance->stepPhysics(deltaTime);
     }
 }
 
@@ -273,12 +286,25 @@ void VehicleControlSystem::processControllerInput()
 
     // check for throttle/braking
     // anything greater than 0 means it is pressed
-    if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER) > 0.0f) {
+    float throttleIsPressed = inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER);
+
+    // if the key is currently NOT pressed down and previously WAS, play the engine ending sound
+    if (!(throttleIsPressed > 0.0f) && (throttleWasPressedController > 0.0f)) {
+        // when ending acceleration, play fade out engine
+        engineEndChannelID = audioManager->playSounds("assets/audio/snowmobile-player-end.wav", { 0,0,0 }, 5.f);
+        // warn to stop looping engine sound
+        stopPlayerEngine = true;
+    }
+
+    if (throttleIsPressed > 0.0f) {
         accelerate();
     }
     else if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_LEFT_TRIGGER) > 0.0f) {
         brake();
     }
+
+    // update state to track for next frame
+    throttleWasPressedController = throttleIsPressed;
 
     // add "deadzone" (since most controllers won't return back to 0.0 exactly)
     float deadZone = 0.2f;
@@ -293,14 +319,35 @@ void VehicleControlSystem::processControllerInput()
         steerLeft();
     }
 
+    // get current state of boost button
+    bool boostIsPressed = inputManager->isControllerButtonPressed(GLFW_GAMEPAD_BUTTON_Y);
+
+    // if the button is currently pressed down and previously wasn't, play the nitro starting sound
+    if (boostIsPressed && !boostWasPressedController) {
+        boostStartChannelID = audioManager->playSounds("assets/audio/nitro-start.wav", { 0,0,0 }, -8.0f);
+    }
+    // if the button is currently NOT pressed down and previously WAS, play the nitro ending sound
+    else if (!boostIsPressed && boostWasPressedController) {
+        // when ending boost, play fade out boost
+        boostEndChannelID = audioManager->playSounds("assets/audio/boost-end.wav", { 0,0,0 }, -7.f);
+    }
+
     // if top button pressed, activate boost
     // if left button pressed, throw projectile
-    if (inputManager->isControllerButtonPressed(GLFW_GAMEPAD_BUTTON_Y)) {
+    if (boostIsPressed) {
         boost();
+
+        // if no throttle, don't play engine
+        if (!throttleIsPressed) {
+            stopPlayerEngine = true;
+        }
     }
     else if (inputManager->isControllerButtonPressed(GLFW_GAMEPAD_BUTTON_X)) {
         throwSnowball();
     }
+
+    // update state to track for next frame
+    boostWasPressedController = boostIsPressed;
 
     // triggers menu/pause
     if (inputManager->isControllerButtonPressed(GLFW_GAMEPAD_BUTTON_START)) {
@@ -318,12 +365,26 @@ void VehicleControlSystem::processKeyboardInput()
     * D (right arrow) = steer right
     */
 
-    if (inputManager->isKeyPressed(GLFW_KEY_W) || inputManager->isKeyPressed(GLFW_KEY_UP)) {
+    // get current state of throttle key
+    bool throttleIsPressed = inputManager->isKeyPressed(GLFW_KEY_W) || inputManager->isKeyPressed(GLFW_KEY_UP);
+
+    // if the key is currently NOT pressed down and previously WAS, play the engine ending sound
+    if (!throttleIsPressed && throttleWasPressedKeybaord) {
+        // when ending acceleration, play fade out engine
+        engineEndChannelID = audioManager->playSounds("assets/audio/snowmobile-player-end.wav", { 0,0,0 }, 5.f);
+        // warn to stop looping engine sound
+        stopPlayerEngine = true;
+    }
+
+    if (throttleIsPressed) {
         accelerate();
     }
     else if (inputManager->isKeyPressed(GLFW_KEY_S) || inputManager->isKeyPressed(GLFW_KEY_DOWN)) {
         brake();
     }
+
+    // update state to track for next frame
+    throttleWasPressedKeybaord = throttleIsPressed;
 
     // Should be able to steer left or right while accelerating
     if (inputManager->isKeyPressed(GLFW_KEY_D) || inputManager->isKeyPressed(GLFW_KEY_RIGHT)) {
@@ -339,13 +400,34 @@ void VehicleControlSystem::processKeyboardInput()
     * Space Bar = Throw Snowball (assuming auto aim for now...otherwise mouse input needed)
     */
 
+    // get current state of boost button
+    bool boostIsPressed = inputManager->isKeyPressed(GLFW_KEY_LEFT_SHIFT);
+
+    // if the key is currently pressed down and previously wasn't, play the nitro starting sound
+    if (boostIsPressed && !boostWasPressedKeybaord) {
+        boostStartChannelID = audioManager->playSounds("assets/audio/nitro-start.wav", { 0,0,0 }, -8.0f);
+    }
+    // if the key is currently NOT pressed down and previously WAS, play the nitro ending sound
+    else if (!boostIsPressed && boostWasPressedKeybaord) {
+        // when ending boost, play fade out boost
+        boostEndChannelID = audioManager->playSounds("assets/audio/boost-end.wav", { 0,0,0 }, -7.f);
+    }
+
     // let us just assume we use one skill at a time
-    if (inputManager->isKeyPressed(GLFW_KEY_LEFT_SHIFT)) {
+    if (boostIsPressed) {
         boost();
+
+        // if no throttle, don't play engine
+        if (!throttleIsPressed) {
+            stopPlayerEngine = true;
+        }
     }
     else if (inputManager->isKeyPressed(GLFW_KEY_SPACE) || inputManager->isKeyPressed(GLFW_KEY_E)) {
         throwSnowball();
     }
+
+    // update state to track for next frame
+    boostWasPressedKeybaord = boostIsPressed;
 
     // triggers menu/pause
     if (inputManager->isKeyPressed(GLFW_KEY_P)) {
@@ -361,17 +443,12 @@ void VehicleControlSystem::accelerate(float throttle)
     //logger::info("Accelerating...");
     // apply transformation here to move car forward
 
-    auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity);
-    vehicle.forwardGearDesired = true;
+    currentForwardGearDesired = true;
+    currentThrottle = throttle;
+    currentBrake = 0.0f;
 
-    if (vehicle.hasGearDesired()) {
-        // currentThrottle set to 1.0 if flag isBoosting raised in this frame
-        currentThrottle = throttle;
-        currentBrake = 0.0f;
-    } else {
-        currentBrake = throttle;
-        currentThrottle = 0.0f;
-    }
+    // is playing when accelerating
+    stopPlayerEngine = false;
 }
 
 void VehicleControlSystem::brake()
@@ -379,16 +456,9 @@ void VehicleControlSystem::brake()
     //logger::info("Braking...");
     // apply transformation here to slow car down
 
-    auto& vehicle = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity);
-
-    vehicle.forwardGearDesired = false;
-
-    if (vehicle.hasGearDesired()) {
-        currentThrottle = 1.0f;
-    }
-    else {
-        currentBrake = 1.0f;
-    }
+    currentForwardGearDesired = false;
+    currentThrottle = 1.0f;
+    currentBrake = 0.0f;
 }
 
 void VehicleControlSystem::steerRight()
@@ -456,7 +526,7 @@ void VehicleControlSystem::throwSnowball()
     if (vehicleComponent.snowBallCooldown > 0.f) return;
 
     // play sound of throwing snowball
-    audioManager->playSounds("assets/audio/snowball-hit-01.mp3", { 0,0,0 }, -1.0f);
+    audioManager->playSounds("assets/audio/snowball-hit-01.mp3", { 0,0,0 }, 2.0f);
     //logger::info("Throwing snowball...");
 
     // Calculate the Forward direction based on the vehicle's current rotation
@@ -501,7 +571,38 @@ void VehicleControlSystem::throwSnowball()
 void VehicleControlSystem::loadVehicleSounds()
 {
     // for acceleration
-    audioManager->loadSound("assets/audio/snowmobiles-4-trimmed.mp3", false, true, true);
+    audioManager->loadSound("assets/audio/snowmobile-player.wav", false, true, true);
+    // for deceleration
+    audioManager->loadSound("assets/audio/snowmobile-player-end.wav", false, false, false);
     // for throwing snowball
     audioManager->loadSound("assets/audio/snowball-hit-01.mp3", false, false, false);
+    // for boost
+    audioManager->loadSound("assets/audio/boost.wav", false, true, true);
+    audioManager->loadSound("assets/audio/nitro-start.wav", false, false, false);
+    audioManager->loadSound("assets/audio/boost-end.wav", false, false, false);
+}
+
+// called from RacingGame to pause boost and engine audio
+void VehicleControlSystem::pauseBoostAndEngineAudio()
+{
+    if (!audioManager) return;
+    audioManager->pauseChannel(boostChannelID);
+    audioManager->pauseChannel(boostStartChannelID);
+    audioManager->pauseChannel(boostEndChannelID);
+    audioManager->pauseChannel(overheatChannelID);
+    audioManager->pauseChannel(apexVentChannelID);
+    audioManager->pauseChannel(engineEndChannelID); // pause engine fade out as well
+    boostPlaying = false;
+}
+
+// called from RacingGame to resume boost and engine audio
+void VehicleControlSystem::resumeBoostAndEngineAudio()
+{
+    if (!audioManager) return;
+    audioManager->resumeChannel(boostStartChannelID);
+    audioManager->resumeChannel(boostEndChannelID);
+    audioManager->resumeChannel(overheatChannelID);
+    audioManager->resumeChannel(apexVentChannelID);
+    // no need to deal with main boost sound, it is handled by key press per frame
+    audioManager->resumeChannel(engineEndChannelID); // resume engine fade out as well
 }

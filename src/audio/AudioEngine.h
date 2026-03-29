@@ -61,6 +61,7 @@ public:
     int playSounds(const string& strSoundName, const Vector3& vPos = Vector3{ 0, 0, 0 }, float fVolumeDB = 0.0f);
     void pauseChannel(int nChannelId);
     void resumeChannel(int nChannelId);
+    void stopChannel(int nChannelId);
     void setChannel3dPosition(int nChannelId, const Vector3& vPos);
     void set3dListenerAndOrientation(const Vector3& vPos = Vector3{ 0, 0, 0 }, float fVolumeDB = 0.0f);
     void setChannelVolume(int nChannelId, float fVolumeDB);

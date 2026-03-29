@@ -25,26 +25,11 @@ void AISystem::update(float deltaTime)
     for (auto const& entity : mEntities) {
         auto& aiRacer = gCoordinator.GetComponent<Racer>(entity);
         auto& aiTransf = gCoordinator.GetComponent<PhysxTransform>(entity);
-        auto& aiVehicle = gCoordinator.GetComponent<VehicleComponent>(entity);
-        if (!aiVehicle.instance) {
+        auto& aiVehicleComponent = gCoordinator.GetComponent<VehicleComponent>(entity);
+        if (!aiVehicleComponent.instance) {
             continue;
         }
-
-        /*
-        // Handling Boost System
-        if (aiVehicle.engineHeat < 0.1f || (aiVehicle.engineHeat <= 0.98f && aiVehicle.isBoosting)) {
-            aiVehicle.isBoosting = true;
-            if (aiVehicle.timeSinceLastBoost > 0.1f) {
-                aiVehicle.engineHeat = std::min(1.0f, aiVehicle.engineHeat + aiVehicle.boostHeatInstantCost);
-            }
-        }
-        else if (aiVehicle.engineHeat > 0.98f) {
-            aiVehicle.isBoosting = false;
-        }
-        else {
-            aiVehicle.isBoosting = false;
-        }
-        */
+        auto& aiVehicle = *aiVehicleComponent.instance;
 
         // --- Handling Boost System with Risk Factor ---
 
@@ -60,20 +45,18 @@ void AISystem::update(float deltaTime)
         }
 
         // 3. Apply Boost Logic
-        if (aiVehicle.engineHeat < 0.1f || (aiVehicle.engineHeat <= safetyThreshold && aiVehicle.isBoosting)) {
-            aiVehicle.isBoosting = true;
+        if (aiVehicleComponent.engineHeat < 0.1f || (aiVehicleComponent.engineHeat <= safetyThreshold && aiVehicleComponent.isBoosting)) {
+            aiVehicleComponent.isBoosting = true;
 
             // Apply instant heat cost if enough time has passed since the last burst
-            if (aiVehicle.timeSinceLastBoost > 0.1f) {
-                aiVehicle.engineHeat = std::min(1.0f, aiVehicle.engineHeat + aiVehicle.boostHeatInstantCost());
+            if (aiVehicleComponent.timeSinceLastBoost > 0.1f) {
+                aiVehicleComponent.engineHeat = std::min(1.0f, aiVehicleComponent.engineHeat + aiVehicleComponent.boostHeatInstantCost());
             }
         }
         else {
             // Stop boosting if threshold reached or safety triggered
-            aiVehicle.isBoosting = false;
+            aiVehicleComponent.isBoosting = false;
         }
-
-        // Handling Look-ahead target
         if (!aiRacer.targetGate) continue;
 
         // 1. Calculate direction vectors
@@ -91,51 +74,45 @@ void AISystem::update(float deltaTime)
         // 3. Steering direction (Left or Right)
         glm::vec3 crossResult = glm::cross(forward, toTarget);
         float steerDirection = (crossResult.y > 0.0f) ? 1.0f : -1.0f;
-        aiVehicle.steer = glm::clamp(angle * steerDirection * 2.0f, -1.0f, 1.0f);
-        aiVehicle.visualSteer = aiVehicle.steer;
+        float steer = glm::clamp(angle * steerDirection * 2.0f, -1.0f, 1.0f);
+
+        aiVehicleComponent.visualSteer = steer;
 
         // 4. Movement and Braking Logic
         float currentSpeed = aiVehicle.speed();
-        float throttle = aiVehicle.isBoosting? 1.0f: 0.7f;
+        float maxThrottle = aiVehicleComponent.isBoosting ? 1.0f : 0.7f;
         float angleDeg = glm::degrees(angle);
+        float throttle = 0.0f;
+        float brake = 0.0f;
+        bool forwardGearDesired = aiVehicle.forwardGearDesired();
 
-        if (aiVehicle.forwardGearDesired) {
+        if (forwardGearDesired) {
             if (angleDeg > 60.f) {
                 if (currentSpeed < 5.0f) { 
-                    aiVehicle.throttle = throttle;
-                    aiVehicle.brake = 0.0f;
+                    throttle = maxThrottle;
+                    brake = 0.0f;
                 }
                 else {
-                    aiVehicle.throttle = 0.2f;
-                    aiVehicle.brake = 0.5f;
+                    throttle = 0.2f;
+                    brake = 0.5f;
                 }
             }
             else if (angleDeg > 20.f) {
-                aiVehicle.brake = 0.0f;
                 float throttleFactor = glm::clamp(1.0f - (angleDeg / 60.0f), 0.4f, 1.0f);
-                aiVehicle.throttle = throttle * throttleFactor;
+                throttle = maxThrottle * throttleFactor;
+                brake = 0.0f;
             }
             else {
-                aiVehicle.brake = 0.0f;
-                aiVehicle.throttle = throttle;
+                throttle = maxThrottle;
+                brake = 0.0f;
             }
         }
 
-        // 5. Gear State Synchronization (Ensure PhysX gear matches intent)
-        if (!aiVehicle.hasGearDesired()) {
-            if (currentSpeed < 1.0f) {
-                aiVehicle.setGearDesired();
-            }
-            else {
-                // Must stop completely before shifting
-                aiVehicle.throttle = 0.0f;
-                aiVehicle.brake = 1.0f;
-            }
-        }
+        aiVehicle.applyDriveCommand(throttle, brake, steer, forwardGearDesired);
 
         if (shouldLog && false) {
             logger::info("AI {}: Gate {}, Angle: {:.2f}, Brake: {:.2f}, Throttle: {:.2f}, Forward: {}",
-                entity, aiRacer.targetGate->id, angle, aiVehicle.brake, aiVehicle.throttle, aiVehicle.forwardGearDesired);
+                entity, aiRacer.targetGate->id, angle, brake, throttle, forwardGearDesired);
         }
     }
 }

@@ -30,7 +30,6 @@ private:
     // State handlers
     void updateInGame();
     void updateInMenu(MenuAction actionButtons);
-    void handleMenuActions(MenuAction actionButtons);
     void updateMainMenu(MenuAction actionButtons);
     void updatePauseMenu(MenuAction actionButtons);
     void updateGameOverMenu(MenuAction actionButtons);
@@ -41,7 +40,7 @@ private:
     // Gameplay
     void updatePhysicsAndGameplayLoop();
     void updateInGameAudioState(float playerSpeed);
-    void updateInGameCameraTarget(float playerSpeed);
+    void updateInGameCameraTarget(glm::vec3 const& playerVelocity);
     void renderInGameHUD();
 
     // UI and utility
@@ -53,6 +52,7 @@ private:
     // Visual setup
     void setupSnowmobileVisuals(Entity vehicleEntity);
 
+    float raceStartCountdown = 3.0f; // seconds until race starts
     GameTime gameTime;
 
     std::shared_ptr<InputManager> inputManager;

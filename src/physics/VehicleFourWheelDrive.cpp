@@ -81,8 +81,6 @@
 // It is a good idea to record and playback with pvd (PhysX Visual Debugger).
 // ****************************************************************************
 
-#include <ctype.h>
-
 #include "VehicleFourWheelDrive.hpp"
 
 #include "common/Flags.hpp"
@@ -92,31 +90,6 @@
 using namespace physx;
 using namespace physx::vehicle2;
 using namespace snippetvehicle;
-
-//The vehicle with engine drivetrain
-EngineDriveVehicle mVehicle;
-
-//Commands are issued to the vehicle in a pre-choreographed sequence.
-struct Command
-{
-    PxF32 brake;
-    PxF32 throttle;
-    PxF32 steer;
-    PxU32 gear;
-    PxF32 duration;
-};
-const PxU32 gTargetGearCommand = PxVehicleEngineDriveTransmissionCommandState::eAUTOMATIC_GEAR;
-Command gCommands[] =
-{
-    {0.5f, 0.0f, 0.0f, gTargetGearCommand, 2.0f},	//brake on and come to rest for 2 seconds
-    {0.0f, 0.65f, 0.0f, gTargetGearCommand, 5.0f},	//throttle for 5 seconds
-    {0.5f, 0.0f, 0.0f, gTargetGearCommand, 5.0f},	//brake for 5 seconds
-    {0.0f, 0.75f, 0.0f, gTargetGearCommand, 5.0f},	//throttle for 5 seconds
-    {0.0f, 0.25f, 0.5f, gTargetGearCommand, 5.0f}	//light throttle and steer for 5 seconds.
-};
-const PxU32 gNbCommands = sizeof(gCommands) / sizeof(Command);
-PxReal gCommandTime = 0.0f;			//Time spent on current command
-PxU32 gCommandProgress = 0;			//The id of the current command.
 
 
 VehicleFourWheelDrive::VehicleFourWheelDrive(ConstructData info)
@@ -194,8 +167,8 @@ bool VehicleFourWheelDrive::initVehicle(ConstructData info)
 	mVehicle.mEngineDriveState.gearboxState.currentGear = mVehicle.mEngineDriveParams.gearBoxParams.neutralGear + 1;
 	mVehicle.mEngineDriveState.gearboxState.targetGear = mVehicle.mEngineDriveParams.gearBoxParams.neutralGear + 1;
 
-	//Set the vehicle to use the automatic gearbox.
-	mVehicle.mTransmissionCommandState.targetGear = PxVehicleEngineDriveTransmissionCommandState::eAUTOMATIC_GEAR;
+    // Initialize gearbox drive command state
+    syncDesiredGear();
 
     // Collision filtering for the vehicle
     PxFilterData vehicleFilter(COLLISION_FLAG_CHASSIS, COLLISION_FLAG_CHASSIS_AGAINST, 0, 0);
@@ -267,3 +240,54 @@ physx::PxRigidActor* VehicleFourWheelDrive::getRigidActor()
 	return mVehicle.mPhysXState.physxActor.rigidBody;
 }
 
+void VehicleFourWheelDrive::setAnalogControls(float throttle, float brake, float steer)
+{
+    mCurrentThrottle = throttle;
+    mCurrentBrake = brake;
+    mCurrentSteer = steer;
+}
+
+void VehicleFourWheelDrive::applyDriveCommand(float throttle, float brake, float steer, bool forwardGearDesired)
+{
+    mForwardGearDesired = forwardGearDesired;
+
+    if (!hasDesiredGear()) {
+        if (speed() < 1.0f) {
+            syncDesiredGear();
+        }
+        else {
+            throttle = 0.0f;
+            brake = 1.0f;
+        }
+    }
+
+    setAnalogControls(throttle, brake, steer);
+}
+
+void VehicleFourWheelDrive::syncDesiredGear()
+{
+    mGearState = setTargetGear(
+        mForwardGearDesired
+            ? PxVehicleDirectDriveTransmissionCommandState::eFORWARD
+            : PxVehicleDirectDriveTransmissionCommandState::eREVERSE
+    );
+}
+
+bool VehicleFourWheelDrive::hasDesiredGear() const
+{
+    return mForwardGearDesired
+        ? mGearState == PxVehicleDirectDriveTransmissionCommandState::eFORWARD
+        : mGearState == PxVehicleDirectDriveTransmissionCommandState::eREVERSE;
+}
+
+float VehicleFourWheelDrive::speed() const
+{
+    return mVehicle.mPhysXState.physxActor.rigidBody->getLinearVelocity().magnitude();
+}
+
+PxVehicleDirectDriveTransmissionCommandState::Enum VehicleFourWheelDrive::setTargetGear(
+    PxVehicleDirectDriveTransmissionCommandState::Enum state)
+{
+    mVehicle.mTransmissionCommandState.targetGear = state;
+    return state;
+}

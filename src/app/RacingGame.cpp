@@ -267,8 +267,8 @@ RacingGame::RacingGame()
 
     // play ai racer sounds
     audioManager->loadSound("assets/audio/snowmobiles-1-trimmed.wav", false, true, true);
-    aiEngineChannelID1 = audioManager->playSounds("assets/audio/snowmobiles-1-trimmed.wav", { 0,0,0 }, -15.0f);
-    aiEngineChannelID2 = audioManager->playSounds("assets/audio/snowmobiles-1-trimmed.wav", { 0,0,0 }, -15.0f);
+    aiEngineChannelID1 = audioManager->playSounds("assets/audio/snowmobiles-1-trimmed.wav", { 0,0,0 }, -20.0f);
+    aiEngineChannelID2 = audioManager->playSounds("assets/audio/snowmobiles-1-trimmed.wav", { 0,0,0 }, -20.0f);
 
     // boost sounds
     audioManager->loadSound("assets/audio/apex-vent.mp3", false, false, false);
@@ -290,6 +290,7 @@ void RacingGame::run()
 
     while (!window->shouldClose())
     {
+        // logger::debug("{}", gameTime.toString());
         audioManager->update();
 
         // Keep checking for controller inputs and if menu actions are triggered
@@ -318,11 +319,17 @@ void RacingGame::updateInGame()
     audioManager->resumeChannel(avalancheChannelID);
 
     // Run fixed-step physics and game systems
-    updatePhysicsAndGameplayLoop();
+    // Skip gameplay updates until the race starts
+    if (0.1f < gameTime.gameTimeF() && gameTime.gameTimeF() < raceStartCountdown) {
+        gameTime.updatePause(glfwGetTime());
+    } else {
+        updatePhysicsAndGameplayLoop();
+    }
 
     // Get player state for audio and camera updates
     glm::vec3 playerPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
-    float speed = glm::length(gCoordinator.GetComponent<RigidBody>(playerVehicleEntity).linearVelocity);
+    glm::vec3 const playerVelocity = gCoordinator.GetComponent<RigidBody>(playerVehicleEntity).linearVelocity;
+    float const speed = glm::length(playerVelocity);
 
     // Update spatial audio (avalanche distance, engine speed gating, AI sounds)
     updateInGameAudioState(speed);
@@ -333,10 +340,10 @@ void RacingGame::updateInGame()
     }
 
     // Update camera to follow player
-    updateInGameCameraTarget(speed);
+    updateInGameCameraTarget(playerVelocity);
 
     // Render scene and UI
-    renderingSystem->update(gameTime.fpsF());
+    renderingSystem->update(gameTime.dtF());
     updateImGui();
     renderInGameHUD();
 }
@@ -345,8 +352,6 @@ void RacingGame::updateInMenu(MenuAction actionButtons)
 {
     // Reset to prevent big delta spike when returning to gameplay
     gameTime.updatePause(glfwGetTime());
-
-    handleMenuActions(actionButtons);
 
     if (gameState == GameState::MainMenu) {
         updateMainMenu(actionButtons);
@@ -363,24 +368,14 @@ void RacingGame::updateInMenu(MenuAction actionButtons)
     }
 }
 
-void RacingGame::handleMenuActions(MenuAction actionButtons)
-{
-    if (actionButtons == MenuAction::StartGame || actionButtons == MenuAction::ResumeGame) {
-        if (actionButtons == MenuAction::StartGame) {
-            gameTime.reset(glfwGetTime());
-            racingSystem->restart();
-        }
-        audioManager->resumeChannel(inGameMusicChannelID);
-        gameState = GameState::InGame;
-    }
-}
-
 void RacingGame::updateMainMenu(MenuAction actionButtons)
 {
     MenuAction actionCursor = menus->renderMainMenu();
 
     if (actionButtons == MenuAction::StartGame || actionCursor == MenuAction::StartGame) {
+        gameTime.reset(glfwGetTime());
         racingSystem->restart();
+        audioManager->resumeChannel(inGameMusicChannelID);
         gameState = GameState::InGame;
     }
     else if (actionButtons == MenuAction::GoToHelpMenu || actionCursor == MenuAction::GoToHelpMenu) {
@@ -395,6 +390,7 @@ void RacingGame::updatePauseMenu(MenuAction actionButtons)
     MenuAction actionCursor = menus->renderPauseMenu();
 
     if (actionButtons == MenuAction::ResumeGame || actionCursor == MenuAction::ResumeGame) {
+        audioManager->resumeChannel(inGameMusicChannelID);
         gameState = GameState::InGame;
     }
     else if (actionButtons == MenuAction::GoToMainMenu || actionCursor == MenuAction::GoToMainMenu) {
@@ -461,14 +457,8 @@ void RacingGame::updateKeyboardHelpMenu(MenuAction actionButtons)
 void RacingGame::updatePhysicsAndGameplayLoop()
 {
     // Physics System Loop, adaptive based on performance.
-    size_t maxPhysicsSteps = gameTime.maxPhysicsSteps();
     size_t physicsSteps = 0;
-
-    while (gameTime.accumulator >= gameTime.dt && physicsSteps < maxPhysicsSteps) {
-        if (gameTime.frameCount < 300 && gameTime.physicsFrameCount > maxPhysicsSteps) {
-            break; // Skip the first frames to avoid slow startup.
-        }
-
+    while (gameTime.accF() >= gameTime.dtF() && physicsSteps < gameTime.maxPhysicsSteps()) {
         vehicleControlSystem->update(gameTime.dtF());
         aiSystem->update(gameTime.dtF());
 
@@ -480,11 +470,6 @@ void RacingGame::updatePhysicsAndGameplayLoop()
         if (racingSystem->raceFinished) {
             gameState = GameState::GameOver;
         }
-    }
-
-    // Discard excess time when running slow to prevent spiral of death.
-    if (physicsSteps >= maxPhysicsSteps) {
-        gameTime.discardExcessTime();
     }
 }
 
@@ -502,9 +487,9 @@ void RacingGame::updateInGameAudioState(float playerSpeed)
     audioManager->setChannelVolume(avalancheChannelID, volumeInDB);
 
     // Player engine sound speed gating
-    if (playerSpeed > 1.0f) {
+    if (!vehicleControlSystem->stopPlayerEngine && playerSpeed > 1.0f) {
         if (!enginePlaying) {
-            engineChannelID = audioManager->playSounds("assets/audio/snowmobiles-4-trimmed.mp3", { 0,0,0 }, -15.0f);
+            engineChannelID = audioManager->playSounds("assets/audio/snowmobile-player.wav", { 0,0,0 }, -15.0f);
             enginePlaying = true;
         }
         else {
@@ -535,9 +520,12 @@ void RacingGame::updateInGameAudioState(float playerSpeed)
 
     audioManager->setChannelVolume(aiEngineChannelID1, volumeInDB1);
     audioManager->setChannelVolume(aiEngineChannelID2, volumeInDB2);
+
+    // resume boost related audios
+    vehicleControlSystem->resumeBoostAndEngineAudio();
 }
 
-void RacingGame::updateInGameCameraTarget(float playerSpeed)
+void RacingGame::updateInGameCameraTarget(glm::vec3 const& playerVelocity)
 {
     // If entity exists, update camera target to follow the player vehicle BEFORE rendering.
     // This prevents 1-frame lag that causes ghosting/phasing artifacts.
@@ -554,7 +542,7 @@ void RacingGame::updateInGameCameraTarget(float playerSpeed)
     targetPos.y += 2.f;
 
     glm::vec3 targetForward = transform.forward();
-    renderingSystem->updateCameraTarget(targetPos, targetForward, playerSpeed);
+    renderingSystem->updateCameraTarget(targetPos, targetForward, playerVelocity);
 }
 
 void RacingGame::renderInGameHUD()
@@ -576,7 +564,7 @@ void RacingGame::renderInGameHUD()
         { marginX, topY - 40.f, 0.40f }, { 0.5f, 0.2f, 0.8f });
 
     textSystem->renderText(
-        "Game FPS: " + std::to_string(static_cast<int>(1.0f / gameTime.fpsF())),
+        "Game FPS: " + std::to_string(static_cast<int>(gameTime.fpsF())),
         { marginX, topY - 75.f, 0.75f }, { 0.9f, 0.9f, 0.4f });
 
     // --- Leaderboard Section ---
@@ -769,6 +757,8 @@ void RacingGame::updateMenuAudioState()
     audioManager->pauseChannel(engineChannelID);
     audioManager->pauseChannel(aiEngineChannelID1);
     audioManager->pauseChannel(aiEngineChannelID2);
+    // no boost sound in menus
+    vehicleControlSystem->pauseBoostAndEngineAudio();
 }
 
 void RacingGame::updateImGui() {
