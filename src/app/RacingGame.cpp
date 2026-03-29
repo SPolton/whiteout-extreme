@@ -64,6 +64,7 @@ RacingGame::RacingGame()
     gCoordinator.RegisterComponent<Racer>();
     gCoordinator.RegisterComponent<AI>();
     gCoordinator.RegisterComponent<SnowEmitter>();
+    gCoordinator.RegisterComponent<SnowEmitterGridBox>();
 
     // 2.Create Systems and Set Signatures
     // RENDERING SYSTEM: Requires Transform AND <Renderable OR ModelRenderable>
@@ -244,13 +245,23 @@ RacingGame::RacingGame()
     auto avCubeRender = renderingSystem->getCubeRenderable("assets/textures/snowball.png");
     avCubeRender.hasRollingTexture = true;
     gCoordinator.AddComponent(AvalancheEntity, avCubeRender);
+
+    auto& avalancheInstance = gCoordinator.GetComponent<AvalancheComponent>(AvalancheEntity).instance;
+    const glm::vec3 avalancheSize = avalancheInstance ? avalancheInstance->mSize : glm::vec3(120.0f, 5.0f, 20.0f);
+
     gCoordinator.AddComponent(AvalancheEntity, SnowEmitter{
         .enabled = true,
         .preset = SnowEmitterPreset::AvalancheFront,
         .spawnRate = 250.0f,
         .particleLifetimeSec = 1.2f,
-        .particleSize = 5.0f,
-        .localOffset = glm::vec3(0.0f, 3.0f, -12.0f)
+        .particleSize = 3.0f
+    });
+    gCoordinator.AddComponent(AvalancheEntity, SnowEmitterGridBox{
+        .enabled = true,
+        .localBoxSize = glm::vec3(avalancheSize.x, 1.0f, avalancheSize.z),
+        .gridResolution = glm::ivec3(15, 2, 1),
+        .localOffset = glm::vec3(0.0f, 3.0f, -15.0f),
+        .pattern = SnowEmitterGridPattern::Checkerboard
     });
     logger::info("Avalanche entity created");
 

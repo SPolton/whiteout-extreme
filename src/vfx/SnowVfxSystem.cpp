@@ -96,7 +96,20 @@ void SnowVfxSystem::spawnParticles(float deltaTime)
 
 void SnowVfxSystem::spawnParticlesFromGridBox(Entity entity, float deltaTime)
 {
-    spawnParticlesFromEmitter(entity, deltaTime);
+    auto& emitter = gCoordinator.GetComponent<SnowEmitter>(entity);
+    auto& gridBox = gCoordinator.GetComponent<SnowEmitterGridBox>(entity);
+
+    if (!gridBox.isValid()) return;
+
+    // Generate grid spawn points in local space.
+    std::vector<glm::vec3> gridPoints = generateGridSpawnPoints(gridBox);
+
+    // Distribute spawns across grid points.
+    for (int i = 0; i < gridPoints.size(); ++i) {
+        const glm::vec3& gridLocalOffset = gridPoints[i % gridPoints.size()];
+        emitter.localOffset = gridLocalOffset;
+        spawnParticlesFromEmitter(entity, deltaTime);
+    }
 }
 
 void SnowVfxSystem::spawnParticlesFromEmitter(Entity entity, float deltaTime)
