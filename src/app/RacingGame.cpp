@@ -528,7 +528,7 @@ void RacingGame::updateInGameAudioState(float playerSpeed)
     audioManager->setChannelVolume(aiEngineChannelID2, volumeInDB2);
 
     // resume boost related audios
-    vehicleControlSystem->resumeBoostAudio();
+    vehicleControlSystem->resumeBoostAndEngineAudio();
 }
 
 void RacingGame::updateInGameCameraTarget(glm::vec3 const& playerVelocity)
@@ -764,7 +764,7 @@ void RacingGame::updateMenuAudioState()
     audioManager->pauseChannel(aiEngineChannelID1);
     audioManager->pauseChannel(aiEngineChannelID2);
     // no boost sound in menus
-    vehicleControlSystem->pauseBoostAudio();
+    vehicleControlSystem->pauseBoostAndEngineAudio();
 }
 
 void RacingGame::updateImGui() {

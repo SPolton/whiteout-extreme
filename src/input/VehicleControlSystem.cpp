@@ -257,7 +257,7 @@ void VehicleControlSystem::processControllerInput()
     // if the key is currently NOT pressed down and previously WAS, play the engine ending sound
     if (!throttleIsPressed && throttleWasPressedController) {
         // when ending acceleration, play fade out engine
-        audioManager->playSounds("assets/audio/snowmobile-player-end.wav", { 0,0,0 }, 5.f);
+        engineEndChannelID = audioManager->playSounds("assets/audio/snowmobile-player-end.wav", { 0,0,0 }, 5.f);
         // warn to stop looping engine sound
         stopPlayerEngine = true;
     }
@@ -337,7 +337,7 @@ void VehicleControlSystem::processKeyboardInput()
     // if the key is currently NOT pressed down and previously WAS, play the engine ending sound
     if (!throttleIsPressed && throttleWasPressedKeybaord) {
         // when ending acceleration, play fade out engine
-        audioManager->playSounds("assets/audio/snowmobile-player-end.wav", { 0,0,0 }, 5.f);
+        engineEndChannelID = audioManager->playSounds("assets/audio/snowmobile-player-end.wav", { 0,0,0 }, 5.f);
         // warn to stop looping engine sound
         stopPlayerEngine = true;
     }
@@ -563,8 +563,8 @@ void VehicleControlSystem::loadVehicleSounds()
     audioManager->loadSound("assets/audio/boost-end.wav", false, false, false);
 }
 
-// called from RacingGame to pause boost audio
-void VehicleControlSystem::pauseBoostAudio()
+// called from RacingGame to pause boost and engine audio
+void VehicleControlSystem::pauseBoostAndEngineAudio()
 {
     if (!audioManager) return;
     audioManager->pauseChannel(boostChannelID);
@@ -572,11 +572,12 @@ void VehicleControlSystem::pauseBoostAudio()
     audioManager->pauseChannel(boostEndChannelID);
     audioManager->pauseChannel(overheatChannelID);
     audioManager->pauseChannel(apexVentChannelID);
+    audioManager->pauseChannel(engineEndChannelID); // pause engine fade out as well
     boostPlaying = false;
 }
 
-// called from RacingGame to resume boost audio
-void VehicleControlSystem::resumeBoostAudio()
+// called from RacingGame to resume boost and engine audio
+void VehicleControlSystem::resumeBoostAndEngineAudio()
 {
     if (!audioManager) return;
     audioManager->resumeChannel(boostStartChannelID);
@@ -584,4 +585,5 @@ void VehicleControlSystem::resumeBoostAudio()
     audioManager->resumeChannel(overheatChannelID);
     audioManager->resumeChannel(apexVentChannelID);
     // no need to deal with main boost sound, it is handled by key press per frame
+    audioManager->resumeChannel(engineEndChannelID); // resume engine fade out as well
 }
