@@ -334,7 +334,7 @@ void RacingGame::updateInGame()
 
     // Run fixed-step physics and game systems
     // Skip gameplay updates until the race starts
-    if (0.1f < gameTime.gameTimeF() && gameTime.gameTimeF() < raceStartCountdown) {
+    if (0.2f < gameTime.gameTimeF() && gameTime.gameTimeF() < raceStartCountdown) {
         gameTime.updatePause(glfwGetTime());
     } else {
         updatePhysicsAndGameplayLoop();
@@ -351,12 +351,18 @@ void RacingGame::updateInGame()
     // Update camera to follow player
     updateInGameCameraTarget(playerVelocity);
 
+    // Render scene
+    snowVfxSystem->update(gameTime.dtF());
     renderingSystem->setSnowFrame(snowVfxSystem->snowFrame());
     renderingSystem->update(gameTime.dtF());
 
     // Render UI and HUD
     updateImGui();
     renderInGameHUD();
+
+    if (racingSystem->raceFinished) {
+        gameState = GameState::GameOver;
+    }
 }
 
 void RacingGame::updateInMenu(MenuAction actionButtons)
@@ -472,16 +478,11 @@ void RacingGame::updatePhysicsAndGameplayLoop()
     while (gameTime.accF() >= gameTime.dtF() && physicsSteps < gameTime.maxPhysicsSteps()) {
         vehicleControlSystem->update(gameTime.dtF());
         aiSystem->update(gameTime.dtF());
-        snowVfxSystem->update(gameTime.dtF());
-
         physicsSystem->update(gameTime.dtF());
+        racingSystem->update(gameTime.dtF()); // update after physics for latest positions
+    
         gameTime.physicsUpdate();
         physicsSteps++;
-
-        racingSystem->update(gameTime.dtF());
-        if (racingSystem->raceFinished) {
-            gameState = GameState::GameOver;
-        }
     }
 }
 
