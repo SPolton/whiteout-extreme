@@ -844,11 +844,6 @@ void RacingGame::setupSnowmobileVisuals(Entity vehicleEntity)
     vehicleComp.runnerLeftVisual = runnerLeft;
     vehicleComp.runnerRightVisual = runnerRight;
 
-    gCoordinator.AddComponent(chassis, PhysxTransform{});
-    gCoordinator.AddComponent(handle, PhysxTransform{});
-    gCoordinator.AddComponent(runnerLeft, PhysxTransform{});
-    gCoordinator.AddComponent(runnerRight, PhysxTransform{});
-
     auto& vehicleTransform = gCoordinator.GetComponent<PhysxTransform>(vehicleEntity);
     vehicleTransform.rot = glm::angleAxis(glm::radians(0.0f), glm::vec3(0.f, 1.f, 0.f));
     vehicleTransform.scale = glm::vec3(1.5f);
