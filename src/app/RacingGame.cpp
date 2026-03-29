@@ -49,6 +49,11 @@ RacingGame::RacingGame()
     imguiPanel = std::make_unique<ImGuiPanel>();
     logger::info("ImGui initialized");
 
+    #ifdef NDEBUG
+        imguiPanel->showDebugWindow = false;
+        imguiPanel->showSettingsWindow = false;
+    #endif
+
     ///---- START OF ECS SETUP ----///
     // 0.Global ECS Coordinator Initialization
     gCoordinator.Init();
@@ -569,6 +574,7 @@ void RacingGame::renderInGameHUD()
     float topY = screenHeight - 50.f;
 
     // --- Debug & System Info ---
+#ifndef NDEBUG
     textSystem->renderText(
         "Rendered Frames: " + std::to_string(gameTime.frameCount),
         { marginX, topY - 20.f, 0.40f }, { 0.2f, 0.5f, 0.8f });
@@ -576,7 +582,7 @@ void RacingGame::renderInGameHUD()
     textSystem->renderText(
         "Physics Frames: " + std::to_string(gameTime.physicsFrameCount),
         { marginX, topY - 40.f, 0.40f }, { 0.5f, 0.2f, 0.8f });
-
+#endif
     textSystem->renderText(
         "Game FPS: " + std::to_string(static_cast<int>(gameTime.fpsF())),
         { marginX, topY - 75.f, 0.75f }, { 0.9f, 0.9f, 0.4f });
@@ -785,6 +791,13 @@ void RacingGame::updateImGui() {
     // Check for quit input
     if (inputManager->isKeyPressedOnce(GLFW_KEY_ESCAPE)) {
         glfwSetWindowShouldClose(window->getGLFWwindow(), true);
+    }
+
+    // toggle panels visibility
+    if (inputManager->isKeyPressedOnce(GLFW_KEY_F1)) {
+        imguiPanel->showDebugWindow = !imguiPanel->showDebugWindow;
+    } else if (inputManager->isKeyPressedOnce(GLFW_KEY_F2)) {
+        imguiPanel->showSettingsWindow = !imguiPanel->showSettingsWindow;
     }
 
     // Apply wireframe mode if enabled
