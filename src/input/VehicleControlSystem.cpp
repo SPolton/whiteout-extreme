@@ -242,17 +242,17 @@ void VehicleControlSystem::processControllerInput()
 
     // check for throttle/braking
     // anything greater than 0 means it is pressed
-    bool throttleIsPressed = inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER);
+    float throttleIsPressed = inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER);
 
     // if the key is currently NOT pressed down and previously WAS, play the engine ending sound
-    if (!throttleIsPressed && throttleWasPressedController) {
+    if (!(throttleIsPressed > 0.0f) && (throttleWasPressedController > 0.0f)) {
         // when ending acceleration, play fade out engine
         engineEndChannelID = audioManager->playSounds("assets/audio/snowmobile-player-end.wav", { 0,0,0 }, 5.f);
         // warn to stop looping engine sound
         stopPlayerEngine = true;
     }
 
-    if (throttleIsPressed) {
+    if (throttleIsPressed > 0.0f) {
         accelerate();
     }
     else if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_LEFT_TRIGGER) > 0.0f) {

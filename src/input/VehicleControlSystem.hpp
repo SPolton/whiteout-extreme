@@ -70,7 +70,7 @@ private:
 
     // track throttle pressing state
     bool throttleWasPressedKeybaord = false;
-    bool throttleWasPressedController = false;
+    float throttleWasPressedController = 0.0f;
 
     // channels to pause all boost related sounds if on menus
     int boostStartChannelID = -1;
