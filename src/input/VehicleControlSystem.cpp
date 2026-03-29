@@ -252,7 +252,7 @@ void VehicleControlSystem::processControllerInput()
         stopPlayerEngine = true;
     }
 
-    if (throttleIsPressed > 0.0f) {
+    if (throttleIsPressed) {
         accelerate();
     }
     else if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_LEFT_TRIGGER) > 0.0f) {
