@@ -22,8 +22,8 @@ public:
     int channelID;
 
     // to control boost sound in RacingGame
-    void pauseBoostAudio();
-    void resumeBoostAudio();
+    void pauseBoostAndEngineAudio();
+    void resumeBoostAndEngineAudio();
 
     // controls whether player engine should loop
     bool stopPlayerEngine = true;
@@ -76,4 +76,6 @@ private:
     int boostEndChannelID = -1;
     int overheatChannelID = -1;
     int apexVentChannelID = -1;
+    // channel to pause engine fade out if on menus
+    int engineEndChannelID = -1;
 };
