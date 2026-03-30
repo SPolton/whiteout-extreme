@@ -24,7 +24,7 @@ void VertexBuffer::setupAttribute() {
 	glEnableVertexAttribArray(attributeIndex);
 }
 
-IndexBuffer::IndexBuffer(GLuint index, GLint size, GLenum dataType)
+IndexBuffer::IndexBuffer(GLuint /*index*/, GLint /*size*/, GLenum /*dataType*/)
     : bufferID{}
 {
     // Just create the buffer

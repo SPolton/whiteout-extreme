@@ -49,6 +49,11 @@ RacingGame::RacingGame()
     imguiPanel = std::make_unique<ImGuiPanel>();
     logger::info("ImGui initialized");
 
+    #ifdef NDEBUG
+        imguiPanel->showDebugWindow = false;
+        imguiPanel->showSettingsWindow = false;
+    #endif
+
     ///---- START OF ECS SETUP ----///
     // 0.Global ECS Coordinator Initialization
     gCoordinator.Init();
@@ -344,14 +349,9 @@ void RacingGame::updateInGame()
 {
     gameTime.update(glfwGetTime());
 
-    // Setup in-game audio channels
-    audioManager->pauseChannel(musicChannelID);
-    audioManager->resumeChannel(inGameMusicChannelID);
-    audioManager->resumeChannel(avalancheChannelID);
-
     // Run fixed-step physics and game systems
     // Skip gameplay updates until the race starts
-    if (0.1f < gameTime.gameTimeF() && gameTime.gameTimeF() < raceStartCountdown) {
+    if (0.2f < gameTime.gameTimeF() && gameTime.gameTimeF() < raceStartCountdown) {
         gameTime.updatePause(glfwGetTime());
     } else {
         updatePhysicsAndGameplayLoop();
@@ -362,23 +362,24 @@ void RacingGame::updateInGame()
     glm::vec3 const playerVelocity = gCoordinator.GetComponent<RigidBody>(playerVehicleEntity).linearVelocity;
     float const speed = glm::length(playerVelocity);
 
-    // Update spatial audio (avalanche distance, engine speed gating, AI sounds)
+    // Update spatial audio
     updateInGameAudioState(speed);
-
-    // Check for quit input
-    if (inputManager->isKeyPressedOnce(GLFW_KEY_ESCAPE)) {
-        glfwSetWindowShouldClose(window->getGLFWwindow(), true);
-    }
 
     // Update camera to follow player
     updateInGameCameraTarget(playerVelocity);
 
+    // Render scene
+    snowVfxSystem->update(gameTime.dtF());
     renderingSystem->setSnowFrame(snowVfxSystem->snowFrame());
-
-    // Render scene and UI
     renderingSystem->update(gameTime.dtF());
+
+    // Render UI and HUD
     updateImGui();
     renderInGameHUD();
+
+    if (racingSystem->raceFinished) {
+        gameState = GameState::GameOver;
+    }
 }
 
 void RacingGame::updateInMenu(MenuAction actionButtons)
@@ -494,16 +495,11 @@ void RacingGame::updatePhysicsAndGameplayLoop()
     while (gameTime.accF() >= gameTime.dtF() && physicsSteps < gameTime.maxPhysicsSteps()) {
         vehicleControlSystem->update(gameTime.dtF());
         aiSystem->update(gameTime.dtF());
-        snowVfxSystem->update(gameTime.dtF());
-
         physicsSystem->update(gameTime.dtF());
+        racingSystem->update(gameTime.dtF()); // update after physics for latest positions
+    
         gameTime.physicsUpdate();
         physicsSteps++;
-
-        racingSystem->update(gameTime.dtF());
-        if (racingSystem->raceFinished) {
-            gameState = GameState::GameOver;
-        }
     }
 
     // need to use to toggle nitro on and off
@@ -520,6 +516,10 @@ void RacingGame::updatePhysicsAndGameplayLoop()
 
 void RacingGame::updateInGameAudioState(float playerSpeed)
 {
+    audioManager->pauseChannel(musicChannelID);
+    audioManager->resumeChannel(inGameMusicChannelID);
+    audioManager->resumeChannel(avalancheChannelID);
+
     // Avalanche distance-based volume
     glm::vec3 avalanchePos = gCoordinator.GetComponent<PhysxTransform>(AvalancheEntity).pos;
     glm::vec3 playerPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
@@ -572,18 +572,15 @@ void RacingGame::updateInGameAudioState(float playerSpeed)
 
 void RacingGame::updateInGameCameraTarget(glm::vec3 const& playerVelocity)
 {
-    // If entity exists, update camera target to follow the player vehicle BEFORE rendering.
-    // This prevents 1-frame lag that causes ghosting/phasing artifacts.
+    // If entity exists, update camera target to follow the player vehicle.
     if (!gCoordinator.HasComponent<PhysxTransform>(playerVehicleEntity)) {
         return;
     }
 
     auto& transform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
-    auto& modelRenderable = gCoordinator.GetComponent<ModelRenderable>(playerVehicleEntity);
 
-    // Target the visual center, not the physics origin.
-    glm::vec3 visualOffset = transform.rot * modelRenderable.visualOffsetPos;
-    glm::vec3 targetPos = transform.pos + visualOffset;
+    // Target the approximate visual center, not the physics origin.
+    glm::vec3 targetPos = transform.pos;
     targetPos.y += 2.f;
 
     glm::vec3 targetForward = transform.forward();
@@ -600,6 +597,7 @@ void RacingGame::renderInGameHUD()
     float topY = screenHeight - 50.f;
 
     // --- Debug & System Info ---
+#ifndef NDEBUG
     textSystem->renderText(
         "Rendered Frames: " + std::to_string(gameTime.frameCount),
         { marginX, topY - 20.f, 0.40f }, { 0.2f, 0.5f, 0.8f });
@@ -607,7 +605,7 @@ void RacingGame::renderInGameHUD()
     textSystem->renderText(
         "Physics Frames: " + std::to_string(gameTime.physicsFrameCount),
         { marginX, topY - 40.f, 0.40f }, { 0.5f, 0.2f, 0.8f });
-
+#endif
     textSystem->renderText(
         "Game FPS: " + std::to_string(static_cast<int>(gameTime.fpsF())),
         { marginX, topY - 75.f, 0.75f }, { 0.9f, 0.9f, 0.4f });
@@ -813,6 +811,18 @@ void RacingGame::updateImGui() {
     // Set viewport
     glViewport(0, 0, window->getWidth(), window->getHeight());
 
+    // Check for quit input
+    if (inputManager->isKeyPressedOnce(GLFW_KEY_ESCAPE)) {
+        glfwSetWindowShouldClose(window->getGLFWwindow(), true);
+    }
+
+    // toggle panels visibility
+    if (inputManager->isKeyPressedOnce(GLFW_KEY_F1)) {
+        imguiPanel->showDebugWindow = !imguiPanel->showDebugWindow;
+    } else if (inputManager->isKeyPressedOnce(GLFW_KEY_F2)) {
+        imguiPanel->showSettingsWindow = !imguiPanel->showSettingsWindow;
+    }
+
     // Apply wireframe mode if enabled
     if (imguiPanel->showWireframe) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -866,11 +876,6 @@ void RacingGame::setupSnowmobileVisuals(Entity vehicleEntity)
     vehicleComp.handleVisual = handle;
     vehicleComp.runnerLeftVisual = runnerLeft;
     vehicleComp.runnerRightVisual = runnerRight;
-
-    gCoordinator.AddComponent(chassis, PhysxTransform{});
-    gCoordinator.AddComponent(handle, PhysxTransform{});
-    gCoordinator.AddComponent(runnerLeft, PhysxTransform{});
-    gCoordinator.AddComponent(runnerRight, PhysxTransform{});
 
     auto& vehicleTransform = gCoordinator.GetComponent<PhysxTransform>(vehicleEntity);
     vehicleTransform.rot = glm::angleAxis(glm::radians(0.0f), glm::vec3(0.f, 1.f, 0.f));
