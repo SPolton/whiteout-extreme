@@ -40,6 +40,7 @@ private:
 
     // Gameplay
     void updatePhysicsAndGameplayLoop();
+    void updateParticles();
     void updateInGameAudioState(float playerSpeed);
     void updateInGameCameraTarget(glm::vec3 const& playerVelocity);
     void renderInGameHUD();

@@ -241,6 +241,32 @@ RacingGame::RacingGame()
     gCoordinator.AddComponent(aiVehicleEntity2, Racer{});
     gCoordinator.AddComponent(aiVehicleEntity2, AI{});
 
+    // add particle emmitter to player vehicle to act as nitro
+    SnowEmitter nitroPreset = {
+        .enabled = false,
+        .preset = SnowEmitterPreset::Nitro,
+        .spawnRate = 150.0f,
+        .particleLifetimeSec = 0.175f,
+        .particleSize = 1.2f,
+        .color = glm::vec3(1.0f, 0.5f, 0.0f), // bright orange
+    };
+
+    // need two emitters because we have two exhaust positions
+    SnowEmitterGridBox boostGridPreset = {
+        .enabled = true,
+        .localBoxSize = glm::vec3(3.4f, 0.1f, 0.1f),
+        .gridResolution = glm::ivec3(2, 1, 1),
+        .localOffset = glm::vec3(0.0f, 0.6f, -2.5f),
+        .pattern = SnowEmitterGridPattern::All
+    };
+
+    gCoordinator.AddComponent(playerVehicleEntity, nitroPreset);
+    gCoordinator.AddComponent(playerVehicleEntity, boostGridPreset);
+    gCoordinator.AddComponent(aiVehicleEntity1, nitroPreset);
+    gCoordinator.AddComponent(aiVehicleEntity1, boostGridPreset);
+    gCoordinator.AddComponent(aiVehicleEntity2, nitroPreset);
+    gCoordinator.AddComponent(aiVehicleEntity2, boostGridPreset);
+
     // 4.You can modify Component Data for entities
     
     // Create the avalanche entity (appears far behind the starting position)
@@ -259,7 +285,8 @@ RacingGame::RacingGame()
         .preset = SnowEmitterPreset::AvalancheFront,
         .spawnRate = 250.0f,
         .particleLifetimeSec = 1.2f,
-        .particleSize = 3.0f
+        .particleSize = 3.0f,
+        .color = glm::vec3(0.95f, 0.97f, 1.0f) // white
     });
     gCoordinator.AddComponent(AvalancheEntity, SnowEmitterGridBox{
         .enabled = true,
@@ -368,6 +395,7 @@ void RacingGame::updateInGame()
     updateInGameCameraTarget(playerVelocity);
 
     // Render scene
+    updateParticles();
     snowVfxSystem->update(gameTime.dtF());
     renderingSystem->setSnowFrame(snowVfxSystem->snowFrame());
     renderingSystem->update(gameTime.dtF());
@@ -500,6 +528,21 @@ void RacingGame::updatePhysicsAndGameplayLoop()
         gameTime.physicsUpdate();
         physicsSteps++;
     }
+}
+
+void RacingGame::updateParticles()
+{
+    // Need to use to toggle nitro particle effects on and off
+    auto& nitroEmitter = gCoordinator.GetComponent<SnowEmitter>(playerVehicleEntity);
+    nitroEmitter.enabled = vehicleControlSystem->isBoosting;
+
+    auto& aiEmitter1 = gCoordinator.GetComponent<SnowEmitter>(aiVehicleEntity1);
+    auto& aiVehicle1 = gCoordinator.GetComponent<VehicleComponent>(aiVehicleEntity1);
+    aiEmitter1.enabled = aiVehicle1.isBoosting;
+
+    auto& aiEmitter2 = gCoordinator.GetComponent<SnowEmitter>(aiVehicleEntity2);
+    auto& aiVehicle2 = gCoordinator.GetComponent<VehicleComponent>(aiVehicleEntity2);
+    aiEmitter2.enabled = aiVehicle2.isBoosting;
 }
 
 void RacingGame::updateInGameAudioState(float playerSpeed)

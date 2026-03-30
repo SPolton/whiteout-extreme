@@ -139,19 +139,30 @@ void SnowVfxSystem::spawnParticlesFromEmitter(Entity entity, float deltaTime)
 
 void SnowVfxSystem::spawnParticleAt(SnowEmitter const& emitter, PhysxTransform const& transform)
 {
-    std::size_t idx = firstUnusedParticle();
-    SnowParticle& particle = particles[idx];
+    SnowParticle& particle = particles[firstUnusedParticle()];
 
-    const float jitterX = math::random::RandomFloat(-jitterAmount, jitterAmount);
-    const float jitterZ = math::random::RandomFloat(-jitterAmount, jitterAmount);
-    const float upVelocity = math::random::RandomFloat(upVelocityMin, upVelocityMax);
-    const float driftVelocityX = math::random::RandomFloat(driftVelocityMin, driftVelocityMax);
-    const float driftVelocityZ = math::random::RandomFloat(driftVelocityMin, driftVelocityMax);
-
-    particle.position = transform.pos + (transform.rot * emitter.localOffset) + glm::vec3(jitterX, 0.0f, jitterZ);
-    particle.velocity = transform.rot * glm::vec3(driftVelocityX, upVelocity, driftVelocityZ);
+    particle.position = transform.pos + (transform.rot * emitter.localOffset);
     particle.lifeSec = emitter.particleLifetimeSec;
     particle.size = std::max(emitter.particleSize, 0.05f);
+    particle.color = emitter.color;
+
+    // Apply template-specific overrides for certain presets.
+    if (emitter.preset == SnowEmitterPreset::Nitro) {
+        const glm::vec3 forward = transform.rot * glm::vec3(0, 0, 1);
+        const float speed = 3.5f;
+
+        particle.velocity = (-forward * speed);
+    }
+    else if (emitter.preset == SnowEmitterPreset::AvalancheFront) {
+        const float jitterX = math::random::RandomFloat(-jitterAmount, jitterAmount);
+        const float jitterZ = math::random::RandomFloat(-jitterAmount, jitterAmount);
+        const float upVelocity = math::random::RandomFloat(upVelocityMin, upVelocityMax);
+        const float driftVelocityX = math::random::RandomFloat(driftVelocityMin, driftVelocityMax);
+        const float driftVelocityZ = math::random::RandomFloat(driftVelocityMin, driftVelocityMax);
+
+        particle.position = transform.pos + (transform.rot * emitter.localOffset) + glm::vec3(jitterX, 0.0f, jitterZ);
+        particle.velocity = transform.rot * glm::vec3(driftVelocityX, upVelocity, driftVelocityZ);
+    }
 }
 
 void SnowVfxSystem::updateParticles(float deltaTime)

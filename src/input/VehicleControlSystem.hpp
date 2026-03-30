@@ -28,6 +28,9 @@ public:
     // controls whether player engine should loop
     bool stopPlayerEngine = true;
 
+    // to know when to toggle nitro emitter
+    bool isBoosting = false;
+
 private:
     // Input management
     std::shared_ptr<InputManager> inputManager;
