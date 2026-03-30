@@ -22,4 +22,48 @@ struct SnowEmitter {
 
     glm::vec3 localOffset{0.0f, 0.0f, 0.0f};
     glm::vec3 localOffset2{0.0f, 0.0f, 0.0f}; // used for nitro (we have two exhuast pipes)
+
+    bool isValid() const {
+        return enabled && spawnRate > 0.0f &&
+            particleLifetimeSec > 0.0f && particleSize > 0.0f;
+    }
+};
+
+// Grid pattern selection for boxed emitter layouts.
+enum class SnowEmitterGridPattern {
+    All,            // Emit from every grid cell.
+    Checkerboard,   // Emit from alternating cells.
+    Border          // Emit only from boundary cells.
+};
+
+// Optional particle overrides for boxed-grid emitters.
+struct SnowEmitterParticleOverrides {
+    bool enabled = false;
+
+    float spawnRate = 0.0f;
+    float particleLifetimeSec = 0.0f;
+    float particleSize = 0.0f;
+};
+
+// Single ECS component describing a box and grid of logical emitter points.
+struct SnowEmitterGridBox {
+    bool enabled = true;
+
+    // Dimensions of the local-space box volume (meters).
+    glm::vec3 localBoxSize{1.0f, 1.0f, 1.0f};
+
+    // Number of grid cells across each local axis.
+    glm::ivec3 gridResolution{1, 1, 1};
+
+    // Local-space offset from owning entity origin.
+    glm::vec3 localOffset{0.0f, 0.0f, 0.0f};
+
+    SnowEmitterGridPattern pattern = SnowEmitterGridPattern::Checkerboard;
+    SnowEmitterParticleOverrides particleOverrides{};
+
+    bool isValid() const {
+        return enabled &&
+            gridResolution.x >= 1 && gridResolution.y >= 1 && gridResolution.z >= 1 &&
+            localBoxSize.x > 0.0f && localBoxSize.y > 0.0f && localBoxSize.z > 0.0f;
+    }
 };
