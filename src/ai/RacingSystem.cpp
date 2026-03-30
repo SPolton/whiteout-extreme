@@ -47,6 +47,9 @@ void RacingSystem::update(float deltaTime)
 
         if(!racer.engulfed) checkRacerEngulfment(racer, racerTransf);
         if (racer.engulfed) {
+            if (entity == playerVehicleEntity) {
+                raceFinished = true;
+            }
             continue;
         }
 
