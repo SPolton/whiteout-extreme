@@ -9,6 +9,10 @@ struct SnowParticle {
     glm::vec3 velocity{0.0f, 0.0f, 0.0f};
     float lifeSec = 0.0f;
     float size = 0.0f;
+
+    bool isValid() const {
+        return lifeSec > 0.0f && size > 0.0f;
+    }
 };
 
 struct SnowFrame {

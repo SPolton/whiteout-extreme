@@ -2,6 +2,9 @@
 
 #include "SnowParticle.hpp"
 #include "TerrainSnowSampler.hpp"
+
+#include "components/SnowEmitter.h"
+#include "components/Transform.h"
 #include "ecs/System.hpp"
 
 #include <glm/glm.hpp>
@@ -35,6 +38,16 @@ private:
     void spawnParticles(float deltaTime);
     void updateParticles(float deltaTime);
     void rebuildSnowFrame();
+
+    // Emit particles from components
+    void spawnParticlesFromEmitter(Entity entity, float deltaTime);
+    void spawnParticlesFromGridBox(Entity entity, float deltaTime);
+
+    // Create and initialize a single particle at given local offset
+    void spawnParticleAt(SnowEmitter const& emitter, PhysxTransform const& transform);
+
+    // Generate deterministic grid spawn points from box parameters.
+    static std::vector<glm::vec3> generateGridSpawnPoints(SnowEmitterGridBox const& gridBox);
 
     float jitterAmount = 3.5f;
     float upVelocityMin = 1.0f;
