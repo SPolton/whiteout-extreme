@@ -2,6 +2,8 @@
 #include "utils/logger.h"
 //#include "app/RacingGame.cpp"
 
+#include "gameplay/SnowBallisticSystem.hpp"
+
 #include <GLFW/glfw3.h>
 
 extern Coordinator gCoordinator;
@@ -369,7 +371,7 @@ void VehicleControlSystem::processControllerInput()
         }
     }
     else if (inputManager->isControllerButtonPressed(GLFW_GAMEPAD_BUTTON_X)) {
-        throwSnowball();
+        gCoordinator.GetSystem<SnowBallisticSystem>()->throwSnowball(playerVehicleEntity);
     }
 
     // update state to track for next frame
@@ -449,7 +451,7 @@ void VehicleControlSystem::processKeyboardInput()
         }
     }
     else if (inputManager->isKeyPressed(GLFW_KEY_SPACE) || inputManager->isKeyPressed(GLFW_KEY_E)) {
-        throwSnowball();
+        gCoordinator.GetSystem<SnowBallisticSystem>()->throwSnowball(playerVehicleEntity);
     }
 
     // update state to track for next frame
@@ -531,82 +533,6 @@ void VehicleControlSystem::boost()
     if (vehicle.isBoosting && vehicle.timeSinceLastBoost > 0.1f) {
         vehicle.engineHeat = std::min(1.0f, vehicle.engineHeat + vehicle.boostHeatInstantCost());
     }
-}
-
-void VehicleControlSystem::throwSnowball()
-{
-    auto& vehicleComponent = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity);
-    if (vehicleComponent.snowBallCooldown > 0.f) return;
-
-    auto& vehicleTransform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
-    /* Prints position and orientation of vehicle*/
-    std::cout << "{";
-    std::cout << "{" << vehicleTransform.pos.x << "f, "
-        << vehicleTransform.pos.y << "f, "
-        << vehicleTransform.pos.z << "f},"  << std::endl;
-    std::cout << "{" << vehicleTransform.rot.w << "f, "
-        << vehicleTransform.rot.x << "f, "
-        << vehicleTransform.rot.y << "f, "
-        << vehicleTransform.rot.z << "f}";
-    std::cout << "}," << std::endl;
-    
-
-    // 1. Safety Check: Ensure the player entity is valid
-    if (!gCoordinator.HasComponent<VehicleComponent>(playerVehicleEntity)) return;
-
-    //  ...and that the snow ball cool down is finished
-    // auto& vehicleComponent = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity);
-    if (vehicleComponent.snowBallCooldown > 0.f) return;
-
-    // play sound of throwing snowball
-    audioManager->playSounds("assets/audio/snowball-hit-01.mp3", { 0,0,0 }, 2.0f);
-    //logger::info("Throwing snowball...");
-
-    // Calculate the Forward direction based on the vehicle's current rotation
-    // In many coordinate systems, (0, 0, 1) is the local forward axis
-    glm::vec3 forward = vehicleTransform.forward(); //renderingSystem->getCameraForward();
-    glm::vec3 up = vehicleTransform.up();
-
-
-    float tiltAmount = 0.06f; // 0.05 - 0.3
-    glm::vec3 tiltedForward = forward - (up * tiltAmount);
-    glm::vec3 forwardTilted = glm::normalize(tiltedForward);
-
-
-    // Calculate Spawn Position: 
-    // Offset the snowball so it doesn't spawn inside the car's collision box
-    glm::vec3 spawnPos = vehicleTransform.pos + (forward * 4.0f) + glm::vec3(0, 1.0f, 0);
-
-    // 3. Create Visual Entity
-    Entity snowball = renderingSystem->createSphereEntity("assets/textures/snowball.png");
-
-    auto& ballTrans = gCoordinator.GetComponent<PhysxTransform>(snowball);
-    ballTrans.pos = spawnPos;
-    ballTrans.rot = vehicleTransform.rot; // Align snowball orientation with the car
-
-    // 4. Setup Physics
-    float snowballRadius = 0.7f;
-    ballTrans.scale = glm::vec3(snowballRadius);
-
-    // Create the RigidBody and add it to the ECS
-    gCoordinator.AddComponent(snowball, physicsSystem->createRigidBodyFromSphere(snowball, snowballRadius));
-
-    // 5. Apply Initial Velocity
-    physx::PxRigidDynamic* dynamicActor = gCoordinator.GetComponent<RigidBody>(snowball).actor->is<physx::PxRigidDynamic>();
-    if (dynamicActor) {
-        float launchSpeed = 120.f; // Meters per second
-        glm::vec3 velocity = forwardTilted * launchSpeed;
-
-        dynamicActor->setLinearDamping(0.41f);
-
-        // Enable CCD (Continuous Collision Detection)
-        dynamicActor->setRigidBodyFlag(physx::PxRigidBodyFlag::eENABLE_CCD, true);
-
-        // Pass the velocity vector to PhysX
-        dynamicActor->setLinearVelocity(physx::PxVec3(velocity.x, velocity.y, velocity.z));
-        dynamicActor->setMass(dynamicActor->getMass() * 2);
-    }
-    vehicleComponent.snowBallCooldown = 3.0f;
 }
 
 // load basic vehicle sounds

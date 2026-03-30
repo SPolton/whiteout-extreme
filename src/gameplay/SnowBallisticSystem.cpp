@@ -12,9 +12,11 @@ extern Entity playerVehicleEntity;
 
 
 SnowBallisticSystem::SnowBallisticSystem(
+    std::shared_ptr<AudioEngine> audioManager,
     std::shared_ptr<RenderingSystem> renderingSystem,
     std::shared_ptr<VehicleControlSystem> vehicleControlSystem)
-    : renderingSystem(renderingSystem),
+    : audioManager(audioManager),
+    renderingSystem(renderingSystem),
     vehicleControlSystem(vehicleControlSystem)
 {
 }
@@ -69,6 +71,99 @@ float SnowBallisticSystem::getDistSqToStream(const glm::vec3& p, const PhysxTran
     glm::vec3 closestPoint = trans.pos + (dir * projection);
     glm::vec3 distVec = p - closestPoint;
     return glm::dot(distVec, distVec);
+}
+
+void SnowBallisticSystem::throwSnowball(Entity throwerEntity)
+{
+    auto& vehicleComponent = gCoordinator.GetComponent<VehicleComponent>(throwerEntity);
+    if (vehicleComponent.snowBallCooldown > 0.f) return;
+
+    auto& vehicleTransform = gCoordinator.GetComponent<PhysxTransform>(throwerEntity);
+    /* Prints position and orientation of vehicle
+    std::cout << "{";
+    std::cout << "{" << vehicleTransform.pos.x << "f, "
+        << vehicleTransform.pos.y << "f, "
+        << vehicleTransform.pos.z << "f},"  << std::endl;
+    std::cout << "{" << vehicleTransform.rot.w << "f, "
+        << vehicleTransform.rot.x << "f, "
+        << vehicleTransform.rot.y << "f, "
+        << vehicleTransform.rot.z << "f}";
+    std::cout << "}," << std::endl;
+    */
+
+    // 1. Safety Check: Ensure the player entity is valid
+    if (!gCoordinator.HasComponent<VehicleComponent>(throwerEntity)) return;
+
+    //  ...and that the snow ball cool down is finished
+    // auto& vehicleComponent = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity);
+    if (vehicleComponent.snowBallCooldown > 0.f) return;
+
+    // play sound of throwing snowball
+    audioManager->playSounds("assets/audio/snowball-hit-01.mp3", { 0,0,0 }, 2.0f);
+    //logger::info("Throwing snowball...");
+
+    // Calculate the Forward direction based on the vehicle's current rotation
+    // In many coordinate systems, (0, 0, 1) is the local forward axis
+    glm::vec3 forward = vehicleTransform.forward(); //renderingSystem->getCameraForward();
+    glm::vec3 up = vehicleTransform.up();
+
+
+    float tiltAmount = 0.06f; // 0.05 - 0.3
+    glm::vec3 tiltedForward = forward - (up * tiltAmount);
+    glm::vec3 forwardTilted = glm::normalize(tiltedForward);
+
+
+    // Calculate Spawn Position: 
+    // Offset the snowball so it doesn't spawn inside the car's collision box
+    glm::vec3 spawnPos = vehicleTransform.pos + (forward * 4.0f) + glm::vec3(0, 1.0f, 0);
+
+    // 3. Create Visual Entity
+    Entity snowball = renderingSystem->createSphereEntity("assets/textures/snowball.png");
+
+    auto& ballTrans = gCoordinator.GetComponent<PhysxTransform>(snowball);
+    ballTrans.pos = spawnPos;
+    ballTrans.rot = vehicleTransform.rot; // Align snowball orientation with the car
+
+    // 4. Setup Physics
+    float snowballRadius = 0.7f;
+    ballTrans.scale = glm::vec3(snowballRadius);
+
+    // Create the RigidBody and add it to the ECS
+    gCoordinator.AddComponent(snowball, gCoordinator.GetSystem<PhysicsSystem>()->createRigidBodyFromSphere(snowball, snowballRadius));
+
+    // 5. Apply Initial Velocity
+    physx::PxRigidDynamic* dynamicActor = gCoordinator.GetComponent<RigidBody>(snowball).actor->is<physx::PxRigidDynamic>();
+    if (dynamicActor) {
+        float launchSpeed = 120.f; // Meters per second
+        glm::vec3 velocity = forwardTilted * launchSpeed;
+
+        dynamicActor->setLinearDamping(0.41f);
+
+        // Enable CCD (Continuous Collision Detection)
+        dynamicActor->setRigidBodyFlag(physx::PxRigidBodyFlag::eENABLE_CCD, true);
+
+        // Pass the velocity vector to PhysX
+        dynamicActor->setLinearVelocity(physx::PxVec3(velocity.x, velocity.y, velocity.z));
+        dynamicActor->setMass(dynamicActor->getMass() * 2);
+    }
+
+    gCoordinator.AddComponent(snowball,
+        SnowBall{
+            .launcher = throwerEntity,
+            .spawnPos = ballTrans.pos
+        });
+
+    SnowEmitter snowballPreset = {
+        .enabled = true,
+        .preset = SnowEmitterPreset::SnowBall,
+        .spawnRate = 200.0f,
+        .particleLifetimeSec = 0.275f,
+        .particleSize = 1.8f,
+        .color = glm::vec3(0.8f, 0.95f, 1.0f),
+    };
+    gCoordinator.AddComponent(snowball, snowballPreset);
+
+    vehicleComponent.snowBallCooldown = 3.0f;
 }
 
 /// =========== SETUP Functions ===============

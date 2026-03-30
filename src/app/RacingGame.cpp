@@ -169,6 +169,7 @@ RacingGame::RacingGame()
 
     // SNOW BALLISTC SYSTEM: Requires Transform AND either SnowCannon OR SnowBallComponent
     snowBallisticSystem = gCoordinator.RegisterSystem<SnowBallisticSystem>(
+        audioManager,
         gCoordinator.GetSystem<RenderingSystem>(),
         gCoordinator.GetSystem<VehicleControlSystem>());
     {
@@ -178,7 +179,7 @@ RacingGame::RacingGame()
         gCoordinator.SetSystemSignature<SnowBallisticSystem>(signature1);
 
         Signature signature2;
-        signature1.set(gCoordinator.GetComponentType<PhysxTransform>());
+        signature2.set(gCoordinator.GetComponentType<PhysxTransform>());
         signature2.set(gCoordinator.GetComponentType<SnowBall>());
         gCoordinator.SetSystemSignature<SnowBallisticSystem>(signature2);
     }

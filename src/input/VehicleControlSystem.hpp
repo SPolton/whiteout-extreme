@@ -8,6 +8,8 @@
 #include "physics/PhysicsSystem.hpp"
 #include "audio/AudioEngine.h"
 
+class SnowBallisticSystem;
+
 class VehicleControlSystem : public System {
 public:
     VehicleControlSystem(std::shared_ptr<InputManager> inputManager,
@@ -61,7 +63,6 @@ private:
 
     // Skills
     void boost();
-    void throwSnowball();
 
     // keep track of boost sound playing state
     int boostChannelID = -1;

@@ -5,6 +5,7 @@
 
 #include "core/RenderingSystem.hpp"
 #include "input/VehicleControlSystem.hpp"
+#include "audio/AudioEngine.h"
 
 #include "components/VehicleComponent.h"
 #include "components/SnowCannon.h"
@@ -14,13 +15,17 @@
 
 class SnowBallisticSystem : public System {
 public:
-    SnowBallisticSystem(std::shared_ptr<RenderingSystem> renderingSystem,
+    SnowBallisticSystem(
+        std::shared_ptr<AudioEngine> audioManager,
+        std::shared_ptr<RenderingSystem> renderingSystem,
         std::shared_ptr<VehicleControlSystem> vehicleControlSystem);
 
     void init();
     void update(float deltaTime);
+    void throwSnowball(Entity throwerEntity);
 
 private:
+    std::shared_ptr<AudioEngine> audioManager;
     std::shared_ptr<RenderingSystem> renderingSystem;
     std::shared_ptr<VehicleControlSystem> vehicleControlSystem;
 
