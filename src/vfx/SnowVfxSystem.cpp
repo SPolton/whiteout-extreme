@@ -190,6 +190,9 @@ std::vector<glm::vec3> SnowVfxSystem::generateGridSpawnPoints(SnowEmitterGridBox
     // Compute cell dimensions.
     const glm::vec3 cellSize = gridBox.localBoxSize / glm::vec3(gridBox.gridResolution);
     const glm::vec3 halfBox = gridBox.localBoxSize * 0.5f;
+    const int maxX = gridBox.gridResolution.x - 1;
+    const int maxY = gridBox.gridResolution.y - 1;
+    const int maxZ = gridBox.gridResolution.z - 1;
 
     // Generate grid cell centers in local space, origin at box center.
     for (int x = 0; x < gridBox.gridResolution.x; ++x) {
@@ -202,6 +205,9 @@ std::vector<glm::vec3> SnowVfxSystem::generateGridSpawnPoints(SnowEmitterGridBox
                     break;
                 case SnowEmitterGridPattern::Checkerboard:
                     includeCell = ((x + y + z) % 2 == 0);
+                    break;
+                case SnowEmitterGridPattern::Border:
+                    includeCell = (x == 0 || x == maxX || y == 0 || y == maxY || z == 0 || z == maxZ);
                     break;
                 default:
                     includeCell = true;

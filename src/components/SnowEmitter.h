@@ -29,8 +29,9 @@ struct SnowEmitter {
 
 // Grid pattern selection for boxed emitter layouts.
 enum class SnowEmitterGridPattern {
-    All,
-    Checkerboard
+    All,            // Emit from every grid cell.
+    Checkerboard,   // Emit from alternating cells.
+    Border          // Emit only from boundary cells.
 };
 
 // Optional particle overrides for boxed-grid emitters.
