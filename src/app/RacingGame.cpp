@@ -236,16 +236,22 @@ RacingGame::RacingGame()
     imguiPanel->setVehicle(playerVehicle);
 
     // add particle emmitter to player vehicle to act as nitro
-    // need two offsets because we have two exhaust positions
     gCoordinator.AddComponent(playerVehicleEntity, SnowEmitter{
         .enabled = false,
-        .preset = SnowEmitterPreset::Nitro,
+        .preset = SnowEmitterPreset::Custom,
         .spawnRate = 150.0f,
         .particleLifetimeSec = 0.175f,
         .particleSize = 1.2f,
         .color = glm::vec3(1.0f, 0.5f, 0.0f), // bright orange
-        .localOffset = glm::vec3(0.85f, 0.6f, -2.2f),
-        .localOffset2 = glm::vec3(-0.85f, 0.6f, -2.2f)
+    });
+
+    // need two emitters because we have two exhaust positions
+    gCoordinator.AddComponent(playerVehicleEntity, SnowEmitterGridBox{
+        .enabled = true,
+        .localBoxSize = glm::vec3(3.4f, 0.1f, 0.1f),
+        .gridResolution = glm::ivec3(2, 1, 1),
+        .localOffset = glm::vec3(0.0f, 0.6f, -2.5f),
+        .pattern = SnowEmitterGridPattern::All
     });
 
     gCoordinator.AddComponent(aiVehicleEntity1, Racer{});
