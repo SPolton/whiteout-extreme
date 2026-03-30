@@ -341,7 +341,7 @@ void VehicleControlSystem::processControllerInput()
         boost();
 
         // if no throttle, don't play engine
-        if (!throttleIsPressed) {
+        if (!(throttleIsPressed > 0.0f)) {
             stopPlayerEngine = true;
         }
     }
