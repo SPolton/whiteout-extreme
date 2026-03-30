@@ -14,6 +14,7 @@
 
 #include <PxPhysicsAPI.h>
 #include <iostream>
+#include <memory>
 #include <vector>
 
 extern Coordinator gCoordinator;
@@ -58,8 +59,5 @@ private:
     //A ground plane to drive on.
     physx::PxRigidStatic* mGroundPlane = NULL;
 
-    ContactReportCallback* mContactReportCallback = NULL;
-
-    // Box position tracker
-    physx::PxVec3 lastBoxPos;
+    std::unique_ptr<ContactReportCallback> mContactReportCallback;
 };
