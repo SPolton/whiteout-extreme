@@ -195,11 +195,21 @@ std::vector<glm::vec3> SnowVfxSystem::generateGridSpawnPoints(SnowEmitterGridBox
     for (int x = 0; x < gridBox.gridResolution.x; ++x) {
         for (int y = 0; y < gridBox.gridResolution.y; ++y) {
             for (int z = 0; z < gridBox.gridResolution.z; ++z) {
-                // Check pattern filter.
-                if (gridBox.pattern == SnowEmitterGridPattern::Checkerboard) {
-                    if ((x + y + z) % 2 != 0) {
-                        continue;
-                    }
+                bool includeCell = true;
+                switch (gridBox.pattern) {
+                case SnowEmitterGridPattern::All:
+                    includeCell = true;
+                    break;
+                case SnowEmitterGridPattern::Checkerboard:
+                    includeCell = ((x + y + z) % 2 == 0);
+                    break;
+                default:
+                    includeCell = true;
+                    break;
+                }
+
+                if (!includeCell) {
+                    continue;
                 }
 
                 // Compute cell center.
