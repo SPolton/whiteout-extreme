@@ -395,6 +395,7 @@ void RacingGame::updateInGame()
     updateInGameCameraTarget(playerVelocity);
 
     // Render scene
+    updateParticles();
     snowVfxSystem->update(gameTime.dtF());
     renderingSystem->setSnowFrame(snowVfxSystem->snowFrame());
     renderingSystem->update(gameTime.dtF());
@@ -527,17 +528,21 @@ void RacingGame::updatePhysicsAndGameplayLoop()
         gameTime.physicsUpdate();
         physicsSteps++;
     }
+}
 
-    // need to use to toggle nitro on and off
+void RacingGame::updateParticles()
+{
+    // Need to use to toggle nitro particle effects on and off
     auto& nitroEmitter = gCoordinator.GetComponent<SnowEmitter>(playerVehicleEntity);
-    // if boosting, enable emitter
-    if (vehicleControlSystem->isBoosting) {
-        nitroEmitter.enabled = true;
-    }
-    // otherwise turn emitter off
-    else {
-        nitroEmitter.enabled = false;
-    }
+    nitroEmitter.enabled = vehicleControlSystem->isBoosting;
+
+    auto& aiEmitter1 = gCoordinator.GetComponent<SnowEmitter>(aiVehicleEntity1);
+    auto& aiVehicle1 = gCoordinator.GetComponent<VehicleComponent>(aiVehicleEntity1);
+    aiEmitter1.enabled = aiVehicle1.isBoosting;
+
+    auto& aiEmitter2 = gCoordinator.GetComponent<SnowEmitter>(aiVehicleEntity2);
+    auto& aiVehicle2 = gCoordinator.GetComponent<VehicleComponent>(aiVehicleEntity2);
+    aiEmitter2.enabled = aiVehicle2.isBoosting;
 }
 
 void RacingGame::updateInGameAudioState(float playerSpeed)
