@@ -36,10 +36,10 @@ void SnowBallisticSystem::setupSnowCannonEntity(glm::vec3 position, glm::quat ro
     auto& snowCannonTrans = gCoordinator.GetComponent<PhysxTransform>(snowCannonEnity);
 
     //Scale
-    snowCannonTrans.scale = glm::vec3(2.2f);
+    snowCannonTrans.scale = glm::vec3(4.0f);
 
     //Position
-    glm::vec3 offset = glm::vec3(0.f, 1.47f, 0.f);
+    glm::vec3 offset = glm::vec3(0.f, 2.67f, 0.f);
     snowCannonTrans.pos = position + offset;
 
     //Rotation

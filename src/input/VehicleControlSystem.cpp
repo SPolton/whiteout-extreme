@@ -513,11 +513,18 @@ void VehicleControlSystem::throwSnowball()
     if (vehicleComponent.snowBallCooldown > 0.f) return;
 
     auto& vehicleTransform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
+    /* Prints position and orientation of vehicle
+    std::cout << "{";
     std::cout << "{" << vehicleTransform.pos.x << "f, "
         << vehicleTransform.pos.y << "f, "
-        << vehicleTransform.pos.z << "f}" << std::endl;
+        << vehicleTransform.pos.z << "f},"  << std::endl;
+    std::cout << "{" << vehicleTransform.rot.w << "f, "
+        << vehicleTransform.rot.x << "f, "
+        << vehicleTransform.rot.y << "f, "
+        << vehicleTransform.rot.z << "f}";
+    std::cout << "}," << std::endl;
+    */
 
-    
     // 1. Safety Check: Ensure the player entity is valid
     if (!gCoordinator.HasComponent<VehicleComponent>(playerVehicleEntity)) return;
 
