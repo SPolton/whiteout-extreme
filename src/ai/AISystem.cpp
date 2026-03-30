@@ -22,6 +22,8 @@ void AISystem::update(float deltaTime)
     bool shouldLog = (logTimer >= 4.f);
     if (shouldLog) logTimer = 0.0f;
 
+    const auto& vehicles = gCoordinator.GetSystem<VehicleControlSystem>()->mEntities;
+
     for (auto const& entity : mEntities) {
         auto& aiRacer = gCoordinator.GetComponent<Racer>(entity);
         auto& aiTransf = gCoordinator.GetComponent<PhysxTransform>(entity);
@@ -31,7 +33,30 @@ void AISystem::update(float deltaTime)
         }
         auto& aiVehicle = *aiVehicleComponent.instance;
 
-        // --- Handling Boost System with Risk Factor ---
+        /// --- Handling SnowBall Throw Logic ---
+        if (aiVehicleComponent.snowBallCooldown <= 0.0f) {
+            for (auto const& vehicle : vehicles) {
+                if (entity == vehicle) continue;
+                auto& vTrans = gCoordinator.GetComponent<PhysxTransform>(vehicle);
+                glm::vec3 relPos = vTrans.pos - aiTransf.pos;
+
+                // 1. Quick sphere check (40m^2 = 1600)
+                float d2 = glm::dot(relPos, relPos);
+                if (d2 > 3600.f) continue;
+
+                // 1. Front/Back check (Dot product)
+                if (glm::dot(relPos, aiTransf.forward()) < 0) continue;
+
+                // 2. Lateral stream check (10m^2 = 100)
+                if (getDistSqToThrowAxis(vTrans.pos, aiTransf) < 16.f) {
+                    gCoordinator.GetSystem<SnowBallisticSystem>()->throwSnowball(entity);
+                    aiVehicleComponent.isBoosting = false;
+                    break;
+                }
+            }
+        }
+        
+        /// --- Handling Boost System with Risk Factor ---
 
         // 1. Default safety threshold (AI normally stops at 95%)
         float safetyThreshold = 0.95f;
@@ -39,7 +64,7 @@ void AISystem::update(float deltaTime)
         // 2. Introduce a "Rare Mistake" chance
         // We check this every frame, so we use a very small probability (e.g., 2 in 1000)
         // This simulates a momentary lapse in judgment or "tunnel vision"
-        if (rand() % 1000 < 2) {
+        if (rand() % 1000 < 900) {
             // AI becomes reckless and won't stop boosting until it's too late
             safetyThreshold = 1.2f;
         }
@@ -59,6 +84,7 @@ void AISystem::update(float deltaTime)
         }
         if (!aiRacer.targetGate) continue;
 
+        /// --- Handling Movement and Commands ---
         // 1. Calculate direction vectors
         //glm::vec3 targetPos = aiRacer.getTargetPosition();
         glm::vec3 targetPos = aiRacer.getLookAheadTarget(20.f);
@@ -113,6 +139,16 @@ void AISystem::update(float deltaTime)
         if (shouldLog && false) {
             logger::info("AI {}: Gate {}, Angle: {:.2f}, Brake: {:.2f}, Throttle: {:.2f}, Forward: {}",
                 entity, aiRacer.targetGate->id, angle, brake, throttle, forwardGearDesired);
-        }
+        }        
     }
+}
+
+float AISystem::getDistSqToThrowAxis(const glm::vec3& p, const PhysxTransform& trans) {
+    glm::vec3 dir = trans.forward();
+    glm::vec3 v = p - trans.pos;
+    float projection = glm::dot(v, dir);
+    // Projection distance along the throw line axis
+    glm::vec3 closestPoint = trans.pos + (dir * projection);
+    glm::vec3 distVec = p - closestPoint;
+    return glm::dot(distVec, distVec);
 }
