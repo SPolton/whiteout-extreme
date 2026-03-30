@@ -545,6 +545,7 @@ void RacingGame::updatePhysicsAndGameplayLoop()
     while (gameTime.accF() >= gameTime.dtF() && physicsSteps < gameTime.maxPhysicsSteps()) {
         vehicleControlSystem->update(gameTime.dtF());
         aiSystem->update(gameTime.dtF());
+        snowBallisticSystem->update(gameTime.dtF());
         physicsSystem->update(gameTime.dtF());
         racingSystem->update(gameTime.dtF()); // update after physics for latest positions
     
@@ -703,7 +704,7 @@ void RacingGame::renderInGameHUD()
     // -- Engine Heat Logic --
     float heat = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).engineHeat; // 0.0 to 1.
     bool engineOverheated = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).isOverheated;
-    bool engineFreezing = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).engineFreezing;
+    bool engineFreezing = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).engineFreezing || gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).inSnowStream;
     int maxBars = 25; // Total gauge segments
     int currentBarsCount = static_cast<int>(heat * maxBars);
 

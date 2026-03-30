@@ -9,6 +9,7 @@
 #include "components/VehicleComponent.h"
 #include "components/SnowCannon.h"
 #include "components/SnowBall.h"
+#include "components/SnowEmitter.h"
 
 
 class SnowBallisticSystem : public System {
@@ -23,18 +24,29 @@ private:
     std::shared_ptr<RenderingSystem> renderingSystem;
     std::shared_ptr<VehicleControlSystem> vehicleControlSystem;
 
+    float getDistSqToStream(const glm::vec3& vehiclePos, const PhysxTransform& snowCannonTransf);
+
     void setupSnowCannonsFromPosAndRot();
     void setupSnowCannonEntity(glm::vec3 position, glm::quat rotation);
 
     std::vector<SnowCannon> snowCannons;
 
     std::vector<std::pair<glm::vec3, glm::quat>> snowCannonsInitialPosAndRot = {
+        //{{-653.902f, 641.589f, -320.796f}, //0
+        //{0.998513f, -0.0288207f, -0.0297904f, -0.0354078f}},
+
+        {{-562.087f, 636.525f, -359.947f},
+        {0.353397f, 0.0224098f, 0.934413f, 0.0384883f}},
+        {{-592.307f, 636.361f, -265.729f},
+        {0.987129f, -0.0334663f, -0.150962f, -0.0408338f}},
+
         {{-293.824f, 611.567f, -279.847f}, //1
         {0.752773f, -0.0136276f, 0.65799f, -0.0139685f}},
         {{-396.285f, 589.239f, -389.207f}, //2
         {-0.929244f, 0.0926873f, 0.351035f, -0.0684793f}},
         {{-581.787f, 556.707f, -571.819f}, //3
         {0.252806f, -0.0274139f, -0.967111f, 0.00579301f}},
+        
         {{-409.932f, 536.539f, -641.265f}, //4
         {-0.350299f, -0.0438172f, -0.935238f, -0.0264539f}},
         {{-148.029f, 505.572f, -393.93f}, //5
@@ -65,5 +77,6 @@ private:
         {-0.369061f, -0.0312248f, -0.928262f, -0.0338999f}},
         {{10.1303f, 155.399f, 174.775f}, //18
         {-0.45224f, -0.215606f, -0.863206f, -0.0621973f}}
+        //*/
     };
 };

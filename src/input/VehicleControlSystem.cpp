@@ -163,12 +163,35 @@ void VehicleControlSystem::update(float deltaTime)
         }
 
         // LOGIC FREEZING
-        if (vehicle.engineFreezing) {
+        if (vehicle.engineFreezing || vehicle.inSnowStream) {
             vehicle.engineHeat = std::clamp(vehicle.engineHeat - deltaTime * 0.08f, 0.0f, 1.0f);
             //if (entity == playerVehicleEntity) {
                 //logger::warn("Avalanche is cooling down the engine");
             //}
         }
+
+        // LOGIC IN SNOW STREAM
+        if (vehicle.inSnowStream) {
+            if (!vehicle.isBoosting) {
+                vehicle.timeSinceLastBoost = glm::max(1.5f, vehicle.timeSinceLastBoost);
+            }
+
+            if (vehicle.timeInSnowStream == 0.0f) {
+                vehicle.engineHeat -= 0.3f;
+            }
+
+            float burst = 0.27f; // (0.3 - 0.03)
+            float decay = glm::exp(-2.0f * vehicle.timeInSnowStream); // fades in ~2sec
+            float coolingPower = (burst * decay) + 0.03f;
+
+            vehicle.engineHeat -= coolingPower * deltaTime; // always multiply by dt for frame-rate independence
+            vehicle.timeInSnowStream += deltaTime;
+        }
+        else {
+            vehicle.timeInSnowStream = 0.0f;
+        }
+        vehicle.inSnowStream = false;
+
 
         if (vehicle.snowBallCooldown > 0.f) vehicle.snowBallCooldown -= deltaTime;
 
@@ -516,7 +539,7 @@ void VehicleControlSystem::throwSnowball()
     if (vehicleComponent.snowBallCooldown > 0.f) return;
 
     auto& vehicleTransform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
-    /* Prints position and orientation of vehicle
+    /* Prints position and orientation of vehicle*/
     std::cout << "{";
     std::cout << "{" << vehicleTransform.pos.x << "f, "
         << vehicleTransform.pos.y << "f, "
@@ -526,7 +549,7 @@ void VehicleControlSystem::throwSnowball()
         << vehicleTransform.rot.y << "f, "
         << vehicleTransform.rot.z << "f}";
     std::cout << "}," << std::endl;
-    */
+    
 
     // 1. Safety Check: Ensure the player entity is valid
     if (!gCoordinator.HasComponent<VehicleComponent>(playerVehicleEntity)) return;
@@ -545,14 +568,14 @@ void VehicleControlSystem::throwSnowball()
     glm::vec3 up = vehicleTransform.up();
 
 
-    float tiltAmount = 0.17f; // 0.05 - 0.3
+    float tiltAmount = 0.06f; // 0.05 - 0.3
     glm::vec3 tiltedForward = forward - (up * tiltAmount);
     glm::vec3 forwardTilted = glm::normalize(tiltedForward);
 
 
     // Calculate Spawn Position: 
     // Offset the snowball so it doesn't spawn inside the car's collision box
-    glm::vec3 spawnPos = vehicleTransform.pos + (forward * 3.0f) + glm::vec3(0, 1.0f, 0);
+    glm::vec3 spawnPos = vehicleTransform.pos + (forward * 4.0f) + glm::vec3(0, 1.0f, 0);
 
     // 3. Create Visual Entity
     Entity snowball = renderingSystem->createSphereEntity("assets/textures/snowball.png");
@@ -571,17 +594,17 @@ void VehicleControlSystem::throwSnowball()
     // 5. Apply Initial Velocity
     physx::PxRigidDynamic* dynamicActor = gCoordinator.GetComponent<RigidBody>(snowball).actor->is<physx::PxRigidDynamic>();
     if (dynamicActor) {
-        float launchSpeed = 93.f; // Meters per second
+        float launchSpeed = 120.f; // Meters per second
         glm::vec3 velocity = forwardTilted * launchSpeed;
 
-        dynamicActor->setLinearDamping(0.61f);
+        dynamicActor->setLinearDamping(0.41f);
 
         // Enable CCD (Continuous Collision Detection)
         dynamicActor->setRigidBodyFlag(physx::PxRigidBodyFlag::eENABLE_CCD, true);
 
         // Pass the velocity vector to PhysX
         dynamicActor->setLinearVelocity(physx::PxVec3(velocity.x, velocity.y, velocity.z));
-        dynamicActor->setMass(dynamicActor->getMass() * 10);
+        dynamicActor->setMass(dynamicActor->getMass() * 2);
     }
     vehicleComponent.snowBallCooldown = 3.0f;
 }
