@@ -9,6 +9,7 @@ enum class SnowEmitterPreset {
     WheelSplash,
     Nitro,
     SnowCannon,
+    SnowBall,
     Custom
 };
 

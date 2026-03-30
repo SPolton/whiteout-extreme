@@ -149,8 +149,8 @@ void SnowVfxSystem::spawnParticleAt(SnowEmitter const& emitter, PhysxTransform c
     // Apply template-specific overrides for certain presets.
     if (emitter.preset == SnowEmitterPreset::SnowCannon) {
         glm::quat extraRotationY_180deg = glm::angleAxis(glm::radians(180.0f), glm::vec3(0, 1, 0));
-        glm::quat extraRotationX_45deg = glm::angleAxis(glm::radians(-5.0f), glm::vec3(1, 0, 0));
-        glm::vec3 forward = transform.rot * extraRotationY_180deg * extraRotationX_45deg * glm::vec3(0, 0, 1);
+        glm::quat extraRotationX_5deg = glm::angleAxis(glm::radians(-5.0f), glm::vec3(1, 0, 0));
+        glm::vec3 forward = transform.rot * extraRotationY_180deg * extraRotationX_5deg * glm::vec3(0, 0, 1);
 
         float spread = 0.08f;
         glm::vec3 jitter = transform.rot * glm::vec3(
@@ -160,6 +160,12 @@ void SnowVfxSystem::spawnParticleAt(SnowEmitter const& emitter, PhysxTransform c
         );
         float muzzleVelocity = 45.0f;
         particle.velocity = (forward + jitter) * muzzleVelocity;
+    }
+    else if (emitter.preset == SnowEmitterPreset::SnowBall) {
+        const glm::vec3 forward = transform.rot * glm::vec3(0, 0, 1);
+        const float speed = 3.5f;
+
+        particle.velocity = (-forward * speed);
     }
     else if (emitter.preset == SnowEmitterPreset::Nitro) {
         const glm::vec3 forward = transform.rot * glm::vec3(0, 0, 1);
