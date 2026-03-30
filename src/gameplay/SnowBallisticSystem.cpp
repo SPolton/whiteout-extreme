@@ -183,17 +183,18 @@ void SnowBallisticSystem::throwSnowball(Entity throwerEntity)
     // 5. Apply Initial Velocity
     physx::PxRigidDynamic* dynamicActor = gCoordinator.GetComponent<RigidBody>(snowball).actor->is<physx::PxRigidDynamic>();
     if (dynamicActor) {
-        float launchSpeed = 120.f; // Meters per second
+        float launchSpeed = 140.f; // Meters per second
         glm::vec3 velocity = forwardTilted * launchSpeed;
 
         dynamicActor->setLinearDamping(0.41f);
 
         // Enable CCD (Continuous Collision Detection)
         dynamicActor->setRigidBodyFlag(physx::PxRigidBodyFlag::eENABLE_CCD, true);
+        //dynamicActor->setActorFlag(physx::PxActorFlag::eDISABLE_GRAVITY, true);
 
         // Pass the velocity vector to PhysX
         dynamicActor->setLinearVelocity(physx::PxVec3(velocity.x, velocity.y, velocity.z));
-        dynamicActor->setMass(dynamicActor->getMass() * 2);
+        dynamicActor->setMass(dynamicActor->getMass() * 0.001);
     }
 
     gCoordinator.AddComponent(snowball,
