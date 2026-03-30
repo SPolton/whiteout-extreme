@@ -8,6 +8,8 @@
 #include "components/SnowEmitter.h"
 #include "components/Transform.h"
 #include "components/VehicleComponent.h"
+#include "components/SnowCannon.h"
+#include "components/SnowBall.h"
 #include "ecs/Coordinator.hpp"
 
 // test FMOD initialization
@@ -64,6 +66,8 @@ RacingGame::RacingGame()
     gCoordinator.RegisterComponent<Racer>();
     gCoordinator.RegisterComponent<AI>();
     gCoordinator.RegisterComponent<SnowEmitter>();
+    gCoordinator.RegisterComponent<SnowCannon>();
+    gCoordinator.RegisterComponent<SnowBall>();
 
     // 2.Create Systems and Set Signatures
     // RENDERING SYSTEM: Requires Transform AND <Renderable OR ModelRenderable>
@@ -155,6 +159,22 @@ RacingGame::RacingGame()
         signature.set(gCoordinator.GetComponentType<PhysxTransform>());
         signature.set(gCoordinator.GetComponentType<SnowEmitter>());
         gCoordinator.SetSystemSignature<SnowVfxSystem>(signature);
+    }
+
+    // SNOW BALLISTC SYSTEM: Requires Transform AND either SnowCannon OR SnowBallComponent
+    snowBallisticSystem = gCoordinator.RegisterSystem<SnowBallisticSystem>(
+        gCoordinator.GetSystem<RenderingSystem>(),
+        gCoordinator.GetSystem<VehicleControlSystem>());
+    {
+        Signature signature1;
+        signature1.set(gCoordinator.GetComponentType<PhysxTransform>());
+        signature1.set(gCoordinator.GetComponentType<SnowCannon>());
+        gCoordinator.SetSystemSignature<SnowBallisticSystem>(signature1);
+
+        Signature signature2;
+        signature1.set(gCoordinator.GetComponentType<PhysxTransform>());
+        signature2.set(gCoordinator.GetComponentType<SnowBall>());
+        gCoordinator.SetSystemSignature<SnowBallisticSystem>(signature2);
     }
 
     // 3.Create Entities and add Components to them:
@@ -258,6 +278,9 @@ RacingGame::RacingGame()
 
     racingSystem->init(Avalanche);
     logger::info("Loaded gates and avalanche for the race");
+
+    snowBallisticSystem->init();
+    logger::info("Loaded snow cannons on the map");
 
     ///---- END OF ECS SETUP ----///
 
