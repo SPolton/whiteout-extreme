@@ -824,7 +824,7 @@ void RacingGame::renderInGameHUD()
     
 
     // --- Crosshair / Center UI ---
-    textSystem->renderText("+", { centerX - 5.f, centerY - 5.f, 0.75f }, { 1.f, 1.f, 1.f });
+    textSystem->renderText("^", { centerX - 7.f, centerY - 7.f, 1.25f }, { 0.35f, 0.50f, 0.6f });
 
     // --- Input Controls Info (Top Right) ---
     float controlX = centerX * 1.4f;
