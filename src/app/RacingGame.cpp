@@ -243,6 +243,7 @@ RacingGame::RacingGame()
         .spawnRate = 150.0f,
         .particleLifetimeSec = 0.175f,
         .particleSize = 1.2f,
+        .color = glm::vec3(1.0f, 0.5f, 0.0f), // bright orange
         .localOffset = glm::vec3(0.85f, 0.6f, -2.2f),
         .localOffset2 = glm::vec3(-0.85f, 0.6f, -2.2f)
     });
@@ -271,7 +272,8 @@ RacingGame::RacingGame()
         .preset = SnowEmitterPreset::AvalancheFront,
         .spawnRate = 250.0f,
         .particleLifetimeSec = 1.2f,
-        .particleSize = 3.0f
+        .particleSize = 3.0f,
+        .color = glm::vec3(0.95f, 0.97f, 1.0f) // white
     });
     gCoordinator.AddComponent(AvalancheEntity, SnowEmitterGridBox{
         .enabled = true,

@@ -19,6 +19,7 @@ struct SnowEmitter {
     float spawnRate = 0.0f;
     float particleLifetimeSec = 0.0f;
     float particleSize = 0.0f;
+    glm::vec3 color = glm::vec3(1.0f); // default white
 
     glm::vec3 localOffset{0.0f, 0.0f, 0.0f};
     glm::vec3 localOffset2{0.0f, 0.0f, 0.0f}; // used for nitro (we have two exhuast pipes)

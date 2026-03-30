@@ -162,7 +162,7 @@ void SnowVfxSystem::spawnParticlesFromEmitter(Entity entity, float deltaTime)
             // set the other particle attributes
             particle.lifeSec = emitter.particleLifetimeSec;
             particle.size = std::max(emitter.particleSize, 0.05f);
-            particle.color = glm::vec3(0.8f, 0.2f, 0.0f); // orange
+            particle.color = emitter.color;
         }
     }
     else {
@@ -188,6 +188,7 @@ void SnowVfxSystem::spawnParticleAt(SnowEmitter const& emitter, PhysxTransform c
     particle.velocity = transform.rot * glm::vec3(driftVelocityX, upVelocity, driftVelocityZ);
     particle.lifeSec = emitter.particleLifetimeSec;
     particle.size = std::max(emitter.particleSize, 0.05f);
+    particle.color = emitter.color;
 }
 
 void SnowVfxSystem::updateParticles(float deltaTime)
