@@ -51,6 +51,11 @@ RacingGame::RacingGame()
     imguiPanel = std::make_unique<ImGuiPanel>();
     logger::info("ImGui initialized");
 
+    #ifdef NDEBUG
+        imguiPanel->showDebugWindow = false;
+        imguiPanel->showSettingsWindow = false;
+    #endif
+
     ///---- START OF ECS SETUP ----///
     // 0.Global ECS Coordinator Initialization
     gCoordinator.Init();
@@ -66,6 +71,7 @@ RacingGame::RacingGame()
     gCoordinator.RegisterComponent<Racer>();
     gCoordinator.RegisterComponent<AI>();
     gCoordinator.RegisterComponent<SnowEmitter>();
+    gCoordinator.RegisterComponent<SnowEmitterGridBox>();
     gCoordinator.RegisterComponent<SnowCannon>();
     gCoordinator.RegisterComponent<SnowBall>();
 
@@ -255,6 +261,32 @@ RacingGame::RacingGame()
     gCoordinator.AddComponent(aiVehicleEntity2, Racer{});
     gCoordinator.AddComponent(aiVehicleEntity2, AI{});
 
+    // add particle emmitter to player vehicle to act as nitro
+    SnowEmitter nitroPreset = {
+        .enabled = false,
+        .preset = SnowEmitterPreset::Nitro,
+        .spawnRate = 150.0f,
+        .particleLifetimeSec = 0.175f,
+        .particleSize = 1.2f,
+        .color = glm::vec3(1.0f, 0.5f, 0.0f), // bright orange
+    };
+
+    // need two emitters because we have two exhaust positions
+    SnowEmitterGridBox boostGridPreset = {
+        .enabled = true,
+        .localBoxSize = glm::vec3(3.4f, 0.1f, 0.1f),
+        .gridResolution = glm::ivec3(2, 1, 1),
+        .localOffset = glm::vec3(0.0f, 0.6f, -2.5f),
+        .pattern = SnowEmitterGridPattern::All
+    };
+
+    gCoordinator.AddComponent(playerVehicleEntity, nitroPreset);
+    gCoordinator.AddComponent(playerVehicleEntity, boostGridPreset);
+    gCoordinator.AddComponent(aiVehicleEntity1, nitroPreset);
+    gCoordinator.AddComponent(aiVehicleEntity1, boostGridPreset);
+    gCoordinator.AddComponent(aiVehicleEntity2, nitroPreset);
+    gCoordinator.AddComponent(aiVehicleEntity2, boostGridPreset);
+
     // 4.You can modify Component Data for entities
     
     // Create the avalanche entity (appears far behind the starting position)
@@ -264,13 +296,24 @@ RacingGame::RacingGame()
     auto avCubeRender = renderingSystem->getCubeRenderable("assets/textures/snowball.png");
     avCubeRender.hasRollingTexture = true;
     gCoordinator.AddComponent(AvalancheEntity, avCubeRender);
+
+    auto& avalancheInstance = gCoordinator.GetComponent<AvalancheComponent>(AvalancheEntity).instance;
+    const glm::vec3 avalancheSize = avalancheInstance ? avalancheInstance->mSize : glm::vec3(120.0f, 5.0f, 20.0f);
+
     gCoordinator.AddComponent(AvalancheEntity, SnowEmitter{
         .enabled = true,
         .preset = SnowEmitterPreset::AvalancheFront,
         .spawnRate = 250.0f,
         .particleLifetimeSec = 1.2f,
-        .particleSize = 5.0f,
-        .localOffset = glm::vec3(0.0f, 3.0f, -12.0f)
+        .particleSize = 3.0f,
+        .color = glm::vec3(0.95f, 0.97f, 1.0f) // white
+    });
+    gCoordinator.AddComponent(AvalancheEntity, SnowEmitterGridBox{
+        .enabled = true,
+        .localBoxSize = glm::vec3(avalancheSize.x, 1.0f, avalancheSize.z),
+        .gridResolution = glm::ivec3(15, 2, 1),
+        .localOffset = glm::vec3(0.0f, 3.0f, -15.0f),
+        .pattern = SnowEmitterGridPattern::Checkerboard
     });
     logger::info("Avalanche entity created");
 
@@ -355,14 +398,9 @@ void RacingGame::updateInGame()
 {
     gameTime.update(glfwGetTime());
 
-    // Setup in-game audio channels
-    audioManager->pauseChannel(musicChannelID);
-    audioManager->resumeChannel(inGameMusicChannelID);
-    audioManager->resumeChannel(avalancheChannelID);
-
     // Run fixed-step physics and game systems
     // Skip gameplay updates until the race starts
-    if (0.1f < gameTime.gameTimeF() && gameTime.gameTimeF() < raceStartCountdown) {
+    if (0.2f < gameTime.gameTimeF() && gameTime.gameTimeF() < raceStartCountdown) {
         gameTime.updatePause(glfwGetTime());
     } else {
         updatePhysicsAndGameplayLoop();
@@ -373,23 +411,25 @@ void RacingGame::updateInGame()
     glm::vec3 const playerVelocity = gCoordinator.GetComponent<RigidBody>(playerVehicleEntity).linearVelocity;
     float const speed = glm::length(playerVelocity);
 
-    // Update spatial audio (avalanche distance, engine speed gating, AI sounds)
+    // Update spatial audio
     updateInGameAudioState(speed);
-
-    // Check for quit input
-    if (inputManager->isKeyPressedOnce(GLFW_KEY_ESCAPE)) {
-        glfwSetWindowShouldClose(window->getGLFWwindow(), true);
-    }
 
     // Update camera to follow player
     updateInGameCameraTarget(playerVelocity);
 
+    // Render scene
+    updateParticles();
+    snowVfxSystem->update(gameTime.dtF());
     renderingSystem->setSnowFrame(snowVfxSystem->snowFrame());
-
-    // Render scene and UI
     renderingSystem->update(gameTime.dtF());
+
+    // Render UI and HUD
     updateImGui();
     renderInGameHUD();
+
+    if (racingSystem->raceFinished) {
+        gameState = GameState::GameOver;
+    }
 }
 
 void RacingGame::updateInMenu(MenuAction actionButtons)
@@ -505,21 +545,35 @@ void RacingGame::updatePhysicsAndGameplayLoop()
     while (gameTime.accF() >= gameTime.dtF() && physicsSteps < gameTime.maxPhysicsSteps()) {
         vehicleControlSystem->update(gameTime.dtF());
         aiSystem->update(gameTime.dtF());
-        snowVfxSystem->update(gameTime.dtF());
-
         physicsSystem->update(gameTime.dtF());
+        racingSystem->update(gameTime.dtF()); // update after physics for latest positions
+    
         gameTime.physicsUpdate();
         physicsSteps++;
-
-        racingSystem->update(gameTime.dtF());
-        if (racingSystem->raceFinished) {
-            gameState = GameState::GameOver;
-        }
     }
+}
+
+void RacingGame::updateParticles()
+{
+    // Need to use to toggle nitro particle effects on and off
+    auto& nitroEmitter = gCoordinator.GetComponent<SnowEmitter>(playerVehicleEntity);
+    nitroEmitter.enabled = vehicleControlSystem->isBoosting;
+
+    auto& aiEmitter1 = gCoordinator.GetComponent<SnowEmitter>(aiVehicleEntity1);
+    auto& aiVehicle1 = gCoordinator.GetComponent<VehicleComponent>(aiVehicleEntity1);
+    aiEmitter1.enabled = aiVehicle1.isBoosting;
+
+    auto& aiEmitter2 = gCoordinator.GetComponent<SnowEmitter>(aiVehicleEntity2);
+    auto& aiVehicle2 = gCoordinator.GetComponent<VehicleComponent>(aiVehicleEntity2);
+    aiEmitter2.enabled = aiVehicle2.isBoosting;
 }
 
 void RacingGame::updateInGameAudioState(float playerSpeed)
 {
+    audioManager->pauseChannel(musicChannelID);
+    audioManager->resumeChannel(inGameMusicChannelID);
+    audioManager->resumeChannel(avalancheChannelID);
+
     // Avalanche distance-based volume
     glm::vec3 avalanchePos = gCoordinator.GetComponent<PhysxTransform>(AvalancheEntity).pos;
     glm::vec3 playerPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
@@ -572,18 +626,15 @@ void RacingGame::updateInGameAudioState(float playerSpeed)
 
 void RacingGame::updateInGameCameraTarget(glm::vec3 const& playerVelocity)
 {
-    // If entity exists, update camera target to follow the player vehicle BEFORE rendering.
-    // This prevents 1-frame lag that causes ghosting/phasing artifacts.
+    // If entity exists, update camera target to follow the player vehicle.
     if (!gCoordinator.HasComponent<PhysxTransform>(playerVehicleEntity)) {
         return;
     }
 
     auto& transform = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity);
-    auto& modelRenderable = gCoordinator.GetComponent<ModelRenderable>(playerVehicleEntity);
 
-    // Target the visual center, not the physics origin.
-    glm::vec3 visualOffset = transform.rot * modelRenderable.visualOffsetPos;
-    glm::vec3 targetPos = transform.pos + visualOffset;
+    // Target the approximate visual center, not the physics origin.
+    glm::vec3 targetPos = transform.pos;
     targetPos.y += 2.f;
 
     glm::vec3 targetForward = transform.forward();
@@ -600,6 +651,7 @@ void RacingGame::renderInGameHUD()
     float topY = screenHeight - 50.f;
 
     // --- Debug & System Info ---
+#ifndef NDEBUG
     textSystem->renderText(
         "Rendered Frames: " + std::to_string(gameTime.frameCount),
         { marginX, topY - 20.f, 0.40f }, { 0.2f, 0.5f, 0.8f });
@@ -607,7 +659,7 @@ void RacingGame::renderInGameHUD()
     textSystem->renderText(
         "Physics Frames: " + std::to_string(gameTime.physicsFrameCount),
         { marginX, topY - 40.f, 0.40f }, { 0.5f, 0.2f, 0.8f });
-
+#endif
     textSystem->renderText(
         "Game FPS: " + std::to_string(static_cast<int>(gameTime.fpsF())),
         { marginX, topY - 75.f, 0.75f }, { 0.9f, 0.9f, 0.4f });
@@ -813,6 +865,18 @@ void RacingGame::updateImGui() {
     // Set viewport
     glViewport(0, 0, window->getWidth(), window->getHeight());
 
+    // Check for quit input
+    if (inputManager->isKeyPressedOnce(GLFW_KEY_ESCAPE)) {
+        glfwSetWindowShouldClose(window->getGLFWwindow(), true);
+    }
+
+    // toggle panels visibility
+    if (inputManager->isKeyPressedOnce(GLFW_KEY_F1)) {
+        imguiPanel->showDebugWindow = !imguiPanel->showDebugWindow;
+    } else if (inputManager->isKeyPressedOnce(GLFW_KEY_F2)) {
+        imguiPanel->showSettingsWindow = !imguiPanel->showSettingsWindow;
+    }
+
     // Apply wireframe mode if enabled
     if (imguiPanel->showWireframe) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -866,11 +930,6 @@ void RacingGame::setupSnowmobileVisuals(Entity vehicleEntity)
     vehicleComp.handleVisual = handle;
     vehicleComp.runnerLeftVisual = runnerLeft;
     vehicleComp.runnerRightVisual = runnerRight;
-
-    gCoordinator.AddComponent(chassis, PhysxTransform{});
-    gCoordinator.AddComponent(handle, PhysxTransform{});
-    gCoordinator.AddComponent(runnerLeft, PhysxTransform{});
-    gCoordinator.AddComponent(runnerRight, PhysxTransform{});
 
     auto& vehicleTransform = gCoordinator.GetComponent<PhysxTransform>(vehicleEntity);
     vehicleTransform.rot = glm::angleAxis(glm::radians(0.0f), glm::vec3(0.f, 1.f, 0.f));

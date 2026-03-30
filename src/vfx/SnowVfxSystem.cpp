@@ -1,7 +1,5 @@
 #include "SnowVfxSystem.hpp"
 
-#include "components/SnowEmitter.h"
-#include "components/Transform.h"
 #include "ecs/Coordinator.hpp"
 #include "utils/math.hpp"
 
@@ -87,58 +85,93 @@ void SnowVfxSystem::cleanupEmitterAccumulators()
 void SnowVfxSystem::spawnParticles(float deltaTime)
 {
     for (auto const& entity : mEntities) {
-        auto& emitter = gCoordinator.GetComponent<SnowEmitter>(entity);
-        auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
-
-        if (!emitter.enabled || emitter.spawnRate <= 0.0f || emitter.particleLifetimeSec <= 0.0f) {
-            continue;
+        bool hasGridBox = gCoordinator.HasComponent<SnowEmitterGridBox>(entity);
+        if (hasGridBox) {
+            spawnParticlesFromGridBox(entity, deltaTime);
+        } else {
+            spawnParticlesFromEmitter(entity, deltaTime);
         }
+    }
+}
 
-        float& accumulator = emitterSpawnAccumulator[entity];
-        accumulator += emitter.spawnRate * deltaTime;
+void SnowVfxSystem::spawnParticlesFromGridBox(Entity entity, float deltaTime)
+{
+    auto& emitter = gCoordinator.GetComponent<SnowEmitter>(entity);
+    auto& gridBox = gCoordinator.GetComponent<SnowEmitterGridBox>(entity);
 
-        int spawnCount = static_cast<int>(accumulator);
-        if (spawnCount <= 0) {
-            continue;
-        }
+    if (!gridBox.isValid()) return;
 
-        if (spawnCount > kMaxSpawnPerEmitterPerStep) {
-            spawnCount = kMaxSpawnPerEmitterPerStep;
-            accumulator = 0.0f;
-        }
+    // Generate grid spawn points in local space.
+    std::vector<glm::vec3> gridPoints = generateGridSpawnPoints(gridBox);
 
-        accumulator -= static_cast<float>(spawnCount);
+    // Distribute spawns across grid points.
+    for (int i = 0; i < gridPoints.size(); ++i) {
+        const glm::vec3& gridLocalOffset = gridPoints[i % gridPoints.size()];
+        emitter.localOffset = gridLocalOffset;
+        spawnParticlesFromEmitter(entity, deltaTime);
+    }
+}
 
-        for (int i = 0; i < spawnCount; ++i) {
-            std::size_t idx = firstUnusedParticle();
-            SnowParticle& particle = particles[idx];
+void SnowVfxSystem::spawnParticlesFromEmitter(Entity entity, float deltaTime)
+{
+    auto& emitter = gCoordinator.GetComponent<SnowEmitter>(entity);
+    auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
 
-            const float jitterX = math::random::RandomFloat(-jitterAmount, jitterAmount);
-            const float jitterZ = math::random::RandomFloat(-jitterAmount, jitterAmount);
-            const float upVelocity = math::random::RandomFloat(upVelocityMin, upVelocityMax);
-            const float driftVelocityX = math::random::RandomFloat(driftVelocityMin, driftVelocityMax);
-            const float driftVelocityZ = math::random::RandomFloat(driftVelocityMin, driftVelocityMax);
+    if (!emitter.isValid()) return;
 
-            particle.position = transform.pos + (transform.rot * emitter.localOffset) + glm::vec3(jitterX, 0.0f, jitterZ);
-            particle.velocity = transform.rot * glm::vec3(driftVelocityX, upVelocity, driftVelocityZ);
-            particle.lifeSec = emitter.particleLifetimeSec;
-            particle.size = std::max(emitter.particleSize, 0.05f);
-        }
+    float& accumulator = emitterSpawnAccumulator[entity];
+    accumulator += emitter.spawnRate * deltaTime;
+
+    int spawnCount = static_cast<int>(accumulator);
+    if (spawnCount <= 0) return;
+
+    if (spawnCount > kMaxSpawnPerEmitterPerStep) {
+        spawnCount = kMaxSpawnPerEmitterPerStep;
+        accumulator = 0.0f;
+    }
+
+    accumulator -= static_cast<float>(spawnCount);
+
+    for (int i = 0; i < spawnCount; ++i) {
+        spawnParticleAt(emitter, transform);
+    }
+}
+
+void SnowVfxSystem::spawnParticleAt(SnowEmitter const& emitter, PhysxTransform const& transform)
+{
+    SnowParticle& particle = particles[firstUnusedParticle()];
+
+    particle.position = transform.pos + (transform.rot * emitter.localOffset);
+    particle.lifeSec = emitter.particleLifetimeSec;
+    particle.size = std::max(emitter.particleSize, 0.05f);
+    particle.color = emitter.color;
+
+    // Apply template-specific overrides for certain presets.
+    if (emitter.preset == SnowEmitterPreset::Nitro) {
+        const glm::vec3 forward = transform.rot * glm::vec3(0, 0, 1);
+        const float speed = 3.5f;
+
+        particle.velocity = (-forward * speed);
+    }
+    else if (emitter.preset == SnowEmitterPreset::AvalancheFront) {
+        const float jitterX = math::random::RandomFloat(-jitterAmount, jitterAmount);
+        const float jitterZ = math::random::RandomFloat(-jitterAmount, jitterAmount);
+        const float upVelocity = math::random::RandomFloat(upVelocityMin, upVelocityMax);
+        const float driftVelocityX = math::random::RandomFloat(driftVelocityMin, driftVelocityMax);
+        const float driftVelocityZ = math::random::RandomFloat(driftVelocityMin, driftVelocityMax);
+
+        particle.position = transform.pos + (transform.rot * emitter.localOffset) + glm::vec3(jitterX, 0.0f, jitterZ);
+        particle.velocity = transform.rot * glm::vec3(driftVelocityX, upVelocity, driftVelocityZ);
     }
 }
 
 void SnowVfxSystem::updateParticles(float deltaTime)
 {
     for (SnowParticle& particle : particles) {
-        if (particle.lifeSec <= 0.0f) {
-            continue;
-        }
+        if (!particle.isValid()) continue;
 
         particle.lifeSec -= deltaTime;
-        if (particle.lifeSec <= 0.0f) {
-            particle.lifeSec = 0.0f;
-            continue;
-        }
+        if (!particle.isValid()) continue;
 
         particle.velocity += glm::vec3(0.0f, -9.81f, 0.0f) * deltaTime * 0.25f;
         particle.position += particle.velocity * deltaTime;
@@ -151,10 +184,57 @@ void SnowVfxSystem::rebuildSnowFrame()
     currentSnowFrame.particles.reserve(aliveParticleCount());
 
     for (const SnowParticle& particle : particles) {
-        if (particle.lifeSec <= 0.0f) {
-            continue;
-        }
+        if (!particle.isValid()) continue;
 
         currentSnowFrame.particles.push_back(particle);
     }
+}
+
+std::vector<glm::vec3> SnowVfxSystem::generateGridSpawnPoints(SnowEmitterGridBox const& gridBox)
+{
+    std::vector<glm::vec3> points;
+
+    if (!gridBox.isValid()) {
+        return points;
+    }
+
+    // Compute cell dimensions.
+    const glm::vec3 cellSize = gridBox.localBoxSize / glm::vec3(gridBox.gridResolution);
+    const glm::vec3 halfBox = gridBox.localBoxSize * 0.5f;
+    const int maxX = gridBox.gridResolution.x - 1;
+    const int maxY = gridBox.gridResolution.y - 1;
+    const int maxZ = gridBox.gridResolution.z - 1;
+
+    // Generate grid cell centers in local space, origin at box center.
+    for (int x = 0; x < gridBox.gridResolution.x; ++x) {
+        for (int y = 0; y < gridBox.gridResolution.y; ++y) {
+            for (int z = 0; z < gridBox.gridResolution.z; ++z) {
+                bool includeCell = true;
+                switch (gridBox.pattern) {
+                case SnowEmitterGridPattern::All:
+                    includeCell = true;
+                    break;
+                case SnowEmitterGridPattern::Checkerboard:
+                    includeCell = ((x + y + z) % 2 == 0);
+                    break;
+                case SnowEmitterGridPattern::Border:
+                    includeCell = (x == 0 || x == maxX || y == 0 || y == maxY || z == 0 || z == maxZ);
+                    break;
+                default:
+                    includeCell = true;
+                    break;
+                }
+
+                if (!includeCell) {
+                    continue;
+                }
+
+                // Compute cell center.
+                const glm::vec3 cellCenter = -halfBox + cellSize * glm::vec3(x + 0.5f, y + 0.5f, z + 0.5f);
+                points.push_back(gridBox.localOffset + cellCenter);
+            }
+        }
+    }
+
+    return points;
 }

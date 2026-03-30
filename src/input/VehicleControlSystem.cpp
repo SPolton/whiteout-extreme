@@ -258,6 +258,9 @@ void VehicleControlSystem::update(float deltaTime)
             runnerRTrans.rot = vehicleTransform.rot * glm::angleAxis(steeringAngle, glm::vec3(0, 1, 0));
             runnerRTrans.scale = vehicleTransform.scale;
         }
+
+        // update boost state
+        isBoosting = vehicle.isBoosting;
     }
 }
 
@@ -338,7 +341,7 @@ void VehicleControlSystem::processControllerInput()
         boost();
 
         // if no throttle, don't play engine
-        if (!throttleIsPressed) {
+        if (!(throttleIsPressed > 0.0f)) {
             stopPlayerEngine = true;
         }
     }

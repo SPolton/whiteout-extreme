@@ -14,6 +14,7 @@ struct SnowGpuVertex {
     glm::vec3 position{0.0f, 0.0f, 0.0f};
     float size = 1.0f;
     float lifeSec = 1.0f;
+    glm::vec3 color{0.95, 0.97, 1.0}; // default snow color
 };
 
 class SnowRenderer {

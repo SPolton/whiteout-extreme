@@ -2,6 +2,7 @@
 
 in float vLife;
 in vec2 vUv;
+in vec3 vColor;
 out vec4 FragColor;
 
 void main()
@@ -15,6 +16,5 @@ void main()
     float softEdge = smoothstep(0.5, 0.05, radius);
     float lifeAlpha = clamp(vLife, 0.0, 1.0);
 
-    vec3 color = vec3(0.95, 0.97, 1.0);
-    FragColor = vec4(color, softEdge * lifeAlpha);
+    FragColor = vec4(vColor, softEdge * lifeAlpha);
 }
