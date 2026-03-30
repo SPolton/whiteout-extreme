@@ -10,6 +10,7 @@
 #include "audio/AudioEngine.h"
 #include "ui/GameMenus.hpp"
 #include "vfx/SnowVfxSystem.hpp"
+#include "gameplay/SnowBallisticSystem.hpp"
 #include "GameState.hpp"
 #include "input/glfw/Window.hpp"
 #include "input/glfw/InputManager.hpp"
@@ -53,6 +54,7 @@ private:
 
     // Visual setup
     void setupSnowmobileVisuals(Entity vehicleEntity);
+    void setupSnowCannonEntity(glm::vec3 position, glm::quat rotation);
 
     float raceStartCountdown = 3.0f; // seconds until race starts
     GameTime gameTime;
@@ -69,6 +71,7 @@ private:
     std::shared_ptr<RacingSystem> racingSystem;
     std::shared_ptr<AISystem> aiSystem;
     std::shared_ptr<SnowVfxSystem> snowVfxSystem;
+    std::shared_ptr<SnowBallisticSystem> snowBallisticSystem;
 
     std::unique_ptr<Text> textSystem;
 

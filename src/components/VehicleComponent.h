@@ -28,6 +28,8 @@ struct VehicleComponent {
     float heatCooldownTimer = 0.0f; // for 1s delay befor cooldown
     bool isOverheated = false;      // optional : to block boost at 100%
     bool engineFreezing = false;
+    bool inSnowStream = false;
+    float timeInSnowStream = 0.0f;
     bool boostMaster = false;
     float timeSinceBoostMaster = 0.0f;
     float boostMasterBonus = 0.0f;

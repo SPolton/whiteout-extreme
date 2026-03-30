@@ -8,6 +8,8 @@
 #include "components/SnowEmitter.h"
 #include "components/Transform.h"
 #include "components/VehicleComponent.h"
+#include "components/SnowCannon.h"
+#include "components/SnowBall.h"
 #include "ecs/Coordinator.hpp"
 
 // test FMOD initialization
@@ -70,6 +72,8 @@ RacingGame::RacingGame()
     gCoordinator.RegisterComponent<AI>();
     gCoordinator.RegisterComponent<SnowEmitter>();
     gCoordinator.RegisterComponent<SnowEmitterGridBox>();
+    gCoordinator.RegisterComponent<SnowCannon>();
+    gCoordinator.RegisterComponent<SnowBall>();
 
     // 2.Create Systems and Set Signatures
     // RENDERING SYSTEM: Requires Transform AND <Renderable OR ModelRenderable>
@@ -161,6 +165,23 @@ RacingGame::RacingGame()
         signature.set(gCoordinator.GetComponentType<PhysxTransform>());
         signature.set(gCoordinator.GetComponentType<SnowEmitter>());
         gCoordinator.SetSystemSignature<SnowVfxSystem>(signature);
+    }
+
+    // SNOW BALLISTC SYSTEM: Requires Transform AND either SnowCannon OR SnowBallComponent
+    snowBallisticSystem = gCoordinator.RegisterSystem<SnowBallisticSystem>(
+        audioManager,
+        gCoordinator.GetSystem<RenderingSystem>(),
+        gCoordinator.GetSystem<VehicleControlSystem>());
+    {
+        Signature signature1;
+        signature1.set(gCoordinator.GetComponentType<PhysxTransform>());
+        signature1.set(gCoordinator.GetComponentType<SnowCannon>());
+        gCoordinator.SetSystemSignature<SnowBallisticSystem>(signature1);
+
+        Signature signature2;
+        signature2.set(gCoordinator.GetComponentType<PhysxTransform>());
+        signature2.set(gCoordinator.GetComponentType<SnowBall>());
+        gCoordinator.SetSystemSignature<SnowBallisticSystem>(signature2);
     }
 
     // 3.Create Entities and add Components to them:
@@ -301,6 +322,9 @@ RacingGame::RacingGame()
 
     racingSystem->init(Avalanche);
     logger::info("Loaded gates and avalanche for the race");
+
+    snowBallisticSystem->init();
+    logger::info("Loaded snow cannons on the map");
 
     ///---- END OF ECS SETUP ----///
 
@@ -522,6 +546,7 @@ void RacingGame::updatePhysicsAndGameplayLoop()
     while (gameTime.accF() >= gameTime.dtF() && physicsSteps < gameTime.maxPhysicsSteps()) {
         vehicleControlSystem->update(gameTime.dtF());
         aiSystem->update(gameTime.dtF());
+        snowBallisticSystem->update(gameTime.dtF());
         physicsSystem->update(gameTime.dtF());
         racingSystem->update(gameTime.dtF()); // update after physics for latest positions
     
@@ -680,7 +705,7 @@ void RacingGame::renderInGameHUD()
     // -- Engine Heat Logic --
     float heat = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).engineHeat; // 0.0 to 1.
     bool engineOverheated = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).isOverheated;
-    bool engineFreezing = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).engineFreezing;
+    bool engineFreezing = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).engineFreezing || gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).inSnowStream;
     int maxBars = 25; // Total gauge segments
     int currentBarsCount = static_cast<int>(heat * maxBars);
 
@@ -799,7 +824,7 @@ void RacingGame::renderInGameHUD()
     
 
     // --- Crosshair / Center UI ---
-    textSystem->renderText("+", { centerX - 5.f, centerY - 5.f, 0.75f }, { 1.f, 1.f, 1.f });
+    textSystem->renderText("^", { centerX - 7.f, centerY - 7.f, 1.25f }, { 0.35f, 0.50f, 0.6f });
 
     // --- Input Controls Info (Top Right) ---
     float controlX = centerX * 1.4f;

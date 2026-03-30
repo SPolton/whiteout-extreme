@@ -23,7 +23,7 @@ public:
     const SnowFrame& snowFrame() const;
 
 private:
-    static constexpr std::size_t kMaxParticles = 4096;
+    static constexpr std::size_t kMaxParticles = 16384;
     static constexpr int kMaxSpawnPerEmitterPerStep = 128;
 
     std::vector<SnowParticle> particles;
