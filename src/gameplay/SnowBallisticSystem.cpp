@@ -26,38 +26,87 @@ SnowBallisticSystem::SnowBallisticSystem(
 void SnowBallisticSystem::update(float dt) {
     const auto& vehicles = vehicleControlSystem->mEntities;
 
-    for (auto const& cannon : mEntities) {
-        auto& cTrans = gCoordinator.GetComponent<PhysxTransform>(cannon);
-        auto& cData = gCoordinator.GetComponent<SnowCannon>(cannon);
+    for (auto const& entity : mEntities) {
+        auto& cTrans = gCoordinator.GetComponent<PhysxTransform>(entity);
 
-        // 1. Update Oscillation
-        cData.oscillationTimer += dt;
+        if (gCoordinator.HasComponent<SnowCannon>(entity)) {
+            auto& cData = gCoordinator.GetComponent<SnowCannon>(entity);
 
-        // Speed: 1.0f (can be adjusted), Range: +/- 20 degrees
-        float angle = glm::sin(cData.oscillationTimer * 1.5f) * glm::radians(20.0f);
+            // 1. Update Oscillation
+            cData.oscillationTimer += dt;
 
-        // Apply rotation on Y axis relative to initial orientation
-        // Note: Assuming you store restRotation or rotate current local Y
-        glm::quat extraRot = glm::angleAxis(angle, glm::vec3(0, 1, 0));
-        cTrans.rot = cData.restRotation * extraRot; // Apply to base rotation
-        glm::vec3 cPos = cTrans.pos;
-        glm::vec3 cForward = cTrans.forward();
+            // Speed: 1.0f (can be adjusted), Range: +/- 20 degrees
+            float angle = glm::sin(cData.oscillationTimer * 1.5f) * glm::radians(20.0f);
 
-        for (auto const& vehicle : vehicles) {
-            auto& vTrans = gCoordinator.GetComponent<PhysxTransform>(vehicle);
-            auto& vComp = gCoordinator.GetComponent<VehicleComponent>(vehicle);
-            glm::vec3 relPos = vTrans.pos - cPos;
+            // Apply rotation on Y axis relative to initial orientation
+            // Note: Assuming you store restRotation or rotate current local Y
+            glm::quat extraRot = glm::angleAxis(angle, glm::vec3(0, 1, 0));
+            cTrans.rot = cData.restRotation * extraRot; // Apply to base rotation
+            glm::vec3 cPos = cTrans.pos;
+            glm::vec3 cForward = cTrans.forward();
 
-            // 1. Quick sphere check (40m^2 = 1600)
-            float d2 = glm::dot(relPos, relPos);
-            if (d2 > 1600.f) continue;
+            for (auto const& vehicle : vehicles) {
+                auto& vTrans = gCoordinator.GetComponent<PhysxTransform>(vehicle);
+                auto& vComp = gCoordinator.GetComponent<VehicleComponent>(vehicle);
+                glm::vec3 relPos = vTrans.pos - cPos;
 
-            // 2. Front/Back check (Dot product)
-            if (glm::dot(relPos, cForward) > 0) continue;
+                // 1. Quick sphere check (40m^2 = 1600)
+                float d2 = glm::dot(relPos, relPos);
+                if (d2 > 1600.f) continue;
 
-            // 3. Lateral stream check (10m^2 = 100)
-            if (getDistSqToStream(vTrans.pos, cTrans) < 100.f) {
-                vComp.inSnowStream = true;
+                // 2. Front/Back check (Dot product)
+                if (glm::dot(relPos, cForward) > 0) continue;
+
+                // 3. Lateral stream check (10m^2 = 100)
+                if (getDistSqToStream(vTrans.pos, cTrans) < 100.f) {
+                    vComp.inSnowStream = true;
+                }
+            }
+        }
+        else if (gCoordinator.HasComponent<SnowBall>(entity)) {
+            auto& bTrans = gCoordinator.GetComponent<PhysxTransform>(entity);
+            auto& bData = gCoordinator.GetComponent<SnowBall>(entity);
+
+            if (glm::length(bTrans.pos - bData.spawnPos) > bData.maxDistance) {
+                gCoordinator.DestroyEntity(entity);
+                //logger::error("snowball reached max distance, will be destroyed");
+                continue;
+            }
+
+            for (auto const& vehicle : vehicles) {
+                if (bData.launcher == vehicle) continue;
+
+                auto& vTrans = gCoordinator.GetComponent<PhysxTransform>(vehicle);
+                auto& vComp = gCoordinator.GetComponent<VehicleComponent>(vehicle);
+
+                // Sphere check for collision
+                glm::vec3 relPos = vTrans.pos - bTrans.pos;
+                float d2 = glm::dot(relPos, relPos);
+
+                if (d2 <= 12.0f) {
+                    gCoordinator.DestroyEntity(entity);
+
+                    if (gCoordinator.HasComponent<RigidBody>(vehicle)) {
+                        auto& rb = gCoordinator.GetComponent<RigidBody>(vehicle);
+                        auto* dynamicActor = rb.actor->is<physx::PxRigidDynamic>();
+
+                        if (dynamicActor) {
+                            float spinImpulse = 9500.0f;
+                            float sideSelect = (rand() % 2 == 0) ? 1.0f : -1.0f;
+                            dynamicActor->addTorque(physx::PxVec3(0, spinImpulse * sideSelect, 0), physx::PxForceMode::eIMPULSE);
+
+                            physx::PxTransform pose = dynamicActor->getGlobalPose();
+                            physx::PxVec3 backwardDir = -pose.q.rotate(physx::PxVec3(0, 0, 1));
+
+                            float hitForce = 9000.0f;
+                            physx::PxVec3 frontHitImpulse = (backwardDir * hitForce) + physx::PxVec3(0, 1000.0f, 0);
+
+                            dynamicActor->addForce(frontHitImpulse, physx::PxForceMode::eIMPULSE);
+
+                        }
+                    }
+                    //logger::error("RACER HIT BY SNOWBALL!");
+                }
             }
         }
     }
