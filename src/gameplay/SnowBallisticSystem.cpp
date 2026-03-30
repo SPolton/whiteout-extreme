@@ -213,7 +213,7 @@ void SnowBallisticSystem::throwSnowball(Entity throwerEntity)
     };
     gCoordinator.AddComponent(snowball, snowballPreset);
 
-    vehicleComponent.snowBallCooldown = 3.0f;
+    vehicleComponent.snowBallCooldown = 4.0f;
 }
 
 /// =========== SETUP Functions ===============
