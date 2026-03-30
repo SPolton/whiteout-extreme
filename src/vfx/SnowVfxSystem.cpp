@@ -132,9 +132,6 @@ void SnowVfxSystem::spawnParticlesFromEmitter(Entity entity, float deltaTime)
 
     accumulator -= static_cast<float>(spawnCount);
 
-    // Spawn two sets: one per exhaust offset.
-    const int nitroSpawnCount = spawnCount * 2;
-
     for (int i = 0; i < spawnCount; ++i) {
         spawnParticleAt(emitter, transform);
     }

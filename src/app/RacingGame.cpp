@@ -235,30 +235,37 @@ RacingGame::RacingGame()
     auto& playerVehicle = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).instance;
     imguiPanel->setVehicle(playerVehicle);
 
-    // add particle emmitter to player vehicle to act as nitro
-    gCoordinator.AddComponent(playerVehicleEntity, SnowEmitter{
-        .enabled = false,
-        .preset = SnowEmitterPreset::Custom,
-        .spawnRate = 150.0f,
-        .particleLifetimeSec = 0.175f,
-        .particleSize = 1.2f,
-        .color = glm::vec3(1.0f, 0.5f, 0.0f), // bright orange
-    });
-
-    // need two emitters because we have two exhaust positions
-    gCoordinator.AddComponent(playerVehicleEntity, SnowEmitterGridBox{
-        .enabled = true,
-        .localBoxSize = glm::vec3(3.4f, 0.1f, 0.1f),
-        .gridResolution = glm::ivec3(2, 1, 1),
-        .localOffset = glm::vec3(0.0f, 0.6f, -2.5f),
-        .pattern = SnowEmitterGridPattern::All
-    });
-
     gCoordinator.AddComponent(aiVehicleEntity1, Racer{});
     gCoordinator.AddComponent(aiVehicleEntity1, AI{});
 
     gCoordinator.AddComponent(aiVehicleEntity2, Racer{});
     gCoordinator.AddComponent(aiVehicleEntity2, AI{});
+
+    // add particle emmitter to player vehicle to act as nitro
+    SnowEmitter nitroPreset = {
+        .enabled = false,
+        .preset = SnowEmitterPreset::Nitro,
+        .spawnRate = 150.0f,
+        .particleLifetimeSec = 0.175f,
+        .particleSize = 1.2f,
+        .color = glm::vec3(1.0f, 0.5f, 0.0f), // bright orange
+    };
+
+    // need two emitters because we have two exhaust positions
+    SnowEmitterGridBox boostGridPreset = {
+        .enabled = true,
+        .localBoxSize = glm::vec3(3.4f, 0.1f, 0.1f),
+        .gridResolution = glm::ivec3(2, 1, 1),
+        .localOffset = glm::vec3(0.0f, 0.6f, -2.5f),
+        .pattern = SnowEmitterGridPattern::All
+    };
+
+    gCoordinator.AddComponent(playerVehicleEntity, nitroPreset);
+    gCoordinator.AddComponent(playerVehicleEntity, boostGridPreset);
+    gCoordinator.AddComponent(aiVehicleEntity1, nitroPreset);
+    gCoordinator.AddComponent(aiVehicleEntity1, boostGridPreset);
+    gCoordinator.AddComponent(aiVehicleEntity2, nitroPreset);
+    gCoordinator.AddComponent(aiVehicleEntity2, boostGridPreset);
 
     // 4.You can modify Component Data for entities
     
