@@ -235,10 +235,10 @@ RacingGame::RacingGame()
         .enabled = false,
         .preset = SnowEmitterPreset::Nitro,
         .spawnRate = 150.0f,
-        .particleLifetimeSec = 0.23f,
+        .particleLifetimeSec = 0.175f,
         .particleSize = 1.2f,
-        .localOffset = glm::vec3(0.85f, 0.6f, -2.0f),
-        .localOffset2 = glm::vec3(-0.85f, 0.6f, -2.0f)
+        .localOffset = glm::vec3(0.85f, 0.6f, -2.2f),
+        .localOffset2 = glm::vec3(-0.85f, 0.6f, -2.2f)
     });
 
     gCoordinator.AddComponent(aiVehicleEntity1, Racer{});

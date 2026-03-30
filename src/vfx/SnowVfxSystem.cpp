@@ -121,8 +121,8 @@ void SnowVfxSystem::spawnParticles(float deltaTime)
 
                 // forward position of vehicle
                 glm::vec3 forward = transform.rot * glm::vec3(0, 0, 1);
-                // make particles really fast
-                const float speed = 15.0f;
+                // make particles travel quickly
+                const float speed = 3.5f;
                 // nitro particles moves in opposite direction (of forward) with specified speed
                 particle.velocity = (-forward * speed);
 
