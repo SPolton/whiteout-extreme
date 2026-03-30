@@ -459,12 +459,14 @@ void RacingSystem::initGatesFromPoints() {
             gate.prevGate = &gates.at(i - 1);
         }
 
-        std::string tex = (i == 0 || i == gates.size() - 1) ? "assets/textures/2k_mars.jpg" : "assets/textures/snowball.png";
-        renderingSystem->createBoxEntity(tex, render::BoxConfig{
-            gate.position,
-            math::transform::quatFromDirection(gate.forward, gate.up),
-            glm::vec3(gate.width, 0.1f, 0.1f)
-        });
+        //std::string tex = (i == 0 || i == gates.size() - 1) ? "assets/textures/2k_mars.jpg" : "assets/textures/snowball.png";
+        if (i == 0 || i == gates.size() - 1) {
+            renderingSystem->createBoxEntity("assets/textures/2k_mars.jpg", render::BoxConfig{
+                gate.position,
+                math::transform::quatFromDirection(gate.forward, gate.up),
+                glm::vec3(gate.width, 0.2f, 0.2f)
+                });
+        }
     }
 }
 
