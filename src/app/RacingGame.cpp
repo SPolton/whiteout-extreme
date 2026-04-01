@@ -26,10 +26,32 @@ Entity aiVehicleEntity2;
 
 RacingGame::RacingGame()
 {
-    ///---- Input Manager and Window ----/// 
+    if (!initPlatformAndWindow()) {
+        return;
+    }
+
+    initEcsAndSystems();
+    createWorldEntities();
+    initUiSystems();
+    initAudio();
+    initImGui();
+}
+
+RacingGame::~RacingGame()
+{
+    logger::info("Shutting down systems...");
+    
+    // shut down audio engine
+    audioManager->shutdown();
+}
+
+// ----- Initialization ----- //
+
+bool RacingGame::initPlatformAndWindow()
+{
     if (!glfwInit()) {
         logger::error("GLFW Init Failed");
-        return;
+        return false;
     }
 
     audioManager = std::make_shared<AudioEngine>();
@@ -40,27 +62,18 @@ RacingGame::RacingGame()
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         logger::error("GLAD Init Failed");
-        return;
+        return false;
     }
 
-    ///---- Imgui Wrapper and Panel ----/// 
-    imguiWrapper = std::make_unique<ImGuiWrapper>();
-    if (!imguiWrapper->init(window->getGLFWwindow())) {
-        logger::error("ImGui Init Failed");
-    }
-    imguiPanel = std::make_unique<ImGuiPanel>();
-    logger::info("ImGui initialized");
+    return true;
+}
 
-    #ifdef NDEBUG
-        imguiPanel->showDebugWindow = false;
-        imguiPanel->showSettingsWindow = false;
-    #endif
-
-    ///---- START OF ECS SETUP ----///
-    // 0.Global ECS Coordinator Initialization
+void RacingGame::initEcsAndSystems()
+{
+    // 0. Global ECS Coordinator Initialization
     gCoordinator.Init();
 
-    // 1.Register Components
+    // 1. Register Components
     //gCoordinator.RegisterComponent<CameraComponent>();
     gCoordinator.RegisterComponent<Renderable>();
     gCoordinator.RegisterComponent<ModelRenderable>();
@@ -75,7 +88,7 @@ RacingGame::RacingGame()
     gCoordinator.RegisterComponent<SnowCannon>();
     gCoordinator.RegisterComponent<SnowBall>();
 
-    // 2.Create Systems and Set Signatures
+    // 2. Create Systems and Set Signatures
     // RENDERING SYSTEM: Requires Transform AND <Renderable OR ModelRenderable>
     renderingSystem = gCoordinator.RegisterSystem<RenderingSystem>(inputManager);
     {
@@ -184,8 +197,10 @@ RacingGame::RacingGame()
         gCoordinator.SetSystemSignature<SnowBallisticSystem>(signature2);
     }
 
-    // 3.Create Entities and add Components to them:
+}
 
+void RacingGame::createWorldEntities()
+{
     // Create the player vehicle entity with physics components
     //physx::PxVec3 spawnPos(-730.0f, 670.4f, -400.0f);
     aiVehicleEntity1 = physicsSystem->createVehicleEntity("VehicleAI1", physx::PxVec3(20.f, 0.f, 0.f));
@@ -197,7 +212,6 @@ RacingGame::RacingGame()
     playerVehicleEntity = physicsSystem->createVehicleEntity("VehiclePlayer1", physx::PxVec3(10.0f, 0.f, 0.f));
     gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).playerID = 0;
 
-    
     // Create Skybox first (if texture is available)
     render::SphereConfig skyboxConfig;
     skyboxConfig.radius = 100.0f;
@@ -241,20 +255,7 @@ RacingGame::RacingGame()
     setupSnowmobileVisuals(aiVehicleEntity2);
     logger::info("Loaded snowmobile models for ai vehicles");
 
-    /*
-    auto& aiVehicleTransform = gCoordinator.GetComponent<PhysxTransform>(aiVehicleEntity1);
-    aiVehicleTransform.rot = glm::angleAxis(glm::radians(0.0f), glm::vec3(0.f, 1.f, 0.f));
-    aiVehicleTransform.scale = glm::vec3(1.5f);  // Uniform scale instead of stretched box scale
-
-    auto& aiVehicleTransform2 = gCoordinator.GetComponent<PhysxTransform>(aiVehicleEntity2);
-    aiVehicleTransform2.rot = glm::angleAxis(glm::radians(0.0f), glm::vec3(0.f, 1.f, 0.f));
-    aiVehicleTransform2.scale = glm::vec3(1.5f);  // Uniform scale instead of stretched box scale
-
-    */
-
     gCoordinator.AddComponent(playerVehicleEntity, Racer{});
-    auto& playerVehicle = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).instance;
-    imguiPanel->setVehicle(playerVehicle);
 
     gCoordinator.AddComponent(aiVehicleEntity1, Racer{});
     gCoordinator.AddComponent(aiVehicleEntity1, AI{});
@@ -288,8 +289,6 @@ RacingGame::RacingGame()
     gCoordinator.AddComponent(aiVehicleEntity2, nitroPreset);
     gCoordinator.AddComponent(aiVehicleEntity2, boostGridPreset);
 
-    // 4.You can modify Component Data for entities
-    
     // Create the avalanche entity (appears far behind the starting position)
     AvalancheEntity = physicsSystem->createAvalancheEntity(glm::vec3(0.f, 15.f, -200.f), 15.0f);
     
@@ -325,17 +324,19 @@ RacingGame::RacingGame()
 
     snowBallisticSystem->init();
     logger::info("Loaded snow cannons on the map");
+}
 
-    ///---- END OF ECS SETUP ----///
-
+void RacingGame::initUiSystems()
+{
     textSystem = std::make_unique<Text>();
-
     textSystem->setProjection(1440.0f, 1440.0f);
 
     menus = std::make_unique<GameMenus>(textSystem.get(), inputManager.get(), audioManager.get(), window.get(), gameState);
     menus->init();
+}
 
-   // intiailize audio engine
+void RacingGame::initAudio()
+{
     audioManager->init();
     // load the main menu game music
     audioManager->loadSound("assets/audio/game-music-loop-12.mp3", false, true, true);
@@ -361,13 +362,30 @@ RacingGame::RacingGame()
     audioManager->loadSound("assets/audio/overheat.mp3", false, false, false);
 }
 
-RacingGame::~RacingGame()
+void RacingGame::initImGui()
 {
-    logger::info("Shutting down systems...");
-    
-    // shut down audio engine
-    audioManager->shutdown();
+    imguiWrapper = std::make_unique<ImGuiWrapper>();
+    if (!imguiWrapper->init(window->getGLFWwindow())) {
+        logger::error("ImGui Init Failed");
+    }
+    imguiPanel = std::make_unique<ImGuiPanel>();
+    logger::info("ImGui initialized");
+
+#ifdef NDEBUG
+    imguiPanel->showDebugWindow = false;
+    imguiPanel->showSettingsWindow = false;
+#endif
+
+    // To tune the vehicle parameters in real-time
+    auto& playerVehicle = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).instance;
+    if (playerVehicle) {
+        imguiPanel->setVehicle(playerVehicle);
+    } else {
+        logger::error("ImGui player vehicle instance is null!");
+    }
 }
+
+/// ----- Public methods ----- ///
 
 /// Main game loop
 void RacingGame::run()
