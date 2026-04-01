@@ -4,6 +4,8 @@
 #include <glm/gtc/constants.hpp>
 #include <glm/gtx/projection.hpp>
 
+#include <vector>
+
 #include <GLFW/glfw3.h>
 
 extern Coordinator gCoordinator;
@@ -25,6 +27,7 @@ SnowBallisticSystem::SnowBallisticSystem(
 
 void SnowBallisticSystem::update(float dt) {
     const auto& vehicles = vehicleControlSystem->mEntities;
+    std::vector<Entity> entitiesToDestroy;
 
     for (auto const& entity : mEntities) {
         auto& cTrans = gCoordinator.GetComponent<PhysxTransform>(entity);
@@ -66,11 +69,11 @@ void SnowBallisticSystem::update(float dt) {
         else if (gCoordinator.HasComponent<SnowBall>(entity)) {
             auto& bTrans = gCoordinator.GetComponent<PhysxTransform>(entity);
             auto& bData = gCoordinator.GetComponent<SnowBall>(entity);
+            bool shouldDestroySnowball = false;
 
             if (glm::length(bTrans.pos - bData.spawnPos) > bData.maxDistance) {
-                gCoordinator.DestroyEntity(entity);
+                shouldDestroySnowball = true;
                 //logger::error("snowball reached max distance, will be destroyed");
-                continue;
             }
 
             for (auto const& vehicle : vehicles) {
@@ -84,7 +87,7 @@ void SnowBallisticSystem::update(float dt) {
                 float d2 = glm::dot(relPos, relPos);
 
                 if (d2 <= 12.0f) {
-                    gCoordinator.DestroyEntity(entity);
+                    shouldDestroySnowball = true;
 
                     if (gCoordinator.HasComponent<RigidBody>(vehicle)) {
                         auto& rb = gCoordinator.GetComponent<RigidBody>(vehicle);
@@ -106,8 +109,20 @@ void SnowBallisticSystem::update(float dt) {
                         }
                     }
                     //logger::error("RACER HIT BY SNOWBALL!");
+
+                    break;
                 }
             }
+
+            if (shouldDestroySnowball) {
+                entitiesToDestroy.push_back(entity);
+            }
+        }
+    }
+
+    for (Entity entity : entitiesToDestroy) {
+        if (gCoordinator.HasComponent<SnowBall>(entity)) {
+            gCoordinator.DestroyEntity(entity);
         }
     }
 }
