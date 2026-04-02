@@ -305,6 +305,9 @@ MenuAction GameMenus::renderMainMenu()
     // get scaling factor
     glm::vec2 scalingFactor = getScale();
 
+    // always take the smaller scaling factor
+    float finalScale = std::min(scalingFactor.x, scalingFactor.y);
+
     textSystem->beginText();
 
     textSystem->loadFont("LuckiestGuy-Regular.ttf", 120);
@@ -321,14 +324,24 @@ MenuAction GameMenus::renderMainMenu()
     glUniform1i(glGetUniformLocation(*shader, "sample"), 0);
 
     // static model to pass to shader, renders png as is
-    glm::mat4 baseModel = glm::mat4(
-        1.f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.f, 0.0f, 0.0f,
-        0.f, 0.0f, 1.f, 0.0f,
+    glm::mat4 backgroundModel = glm::mat4(
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 0.f, 1.0f
     );
 
-    glUniformMatrix4fv(glGetUniformLocation(*shader, "model"), 1, GL_FALSE, glm::value_ptr(baseModel));
+    // base matrix
+    glm::mat4 backgroundProj = glm::mat4(
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    );
+
+    // pass matrices to shaders
+    glUniformMatrix4fv(glGetUniformLocation(*shader, "model"), 1, GL_FALSE, glm::value_ptr(backgroundModel));
+    glUniformMatrix4fv(glGetUniformLocation(*shader, "projection"), 1, GL_FALSE, glm::value_ptr(backgroundProj));
 
     // bind vao
     gpuQuadBackground.bind();
@@ -351,14 +364,27 @@ MenuAction GameMenus::renderMainMenu()
     float translateY = 0.25f;
 
     // static model to pass to shader, renders png as is
-    glm::mat4 model = glm::mat4(
-        1.f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.f, 0.0f, 0.0f,
-        0.f, 0.0f, 1.f, 0.0f,
+    glm::mat4 logoModel = glm::mat4(
+        finalScale, 0.0f, 0.0f, 0.0f,
+        0.0f, finalScale, 0.0f, 0.0f,
+        0.f, 0.0f, 1.0f, 0.0f,
         0.0f, translateY, 0.f, 1.0f
     );
 
-    glUniformMatrix4fv(glGetUniformLocation(*shader, "model"), 1, GL_FALSE, glm::value_ptr(model));
+    // get aspect ratio of current window size, cast to float since they are ints
+    float aspectRatio = (float)window->getWidth() / (float)window->getHeight();
+
+    // orthogonal projection for logo to keep it from stretching past its' original size ratio
+    glm::mat4 logoProj = glm::mat4(
+        1.0f / aspectRatio, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    );
+
+    // pass matrices to shader
+    glUniformMatrix4fv(glGetUniformLocation(*shader, "model"), 1, GL_FALSE, glm::value_ptr(logoModel));
+    glUniformMatrix4fv(glGetUniformLocation(*shader, "projection"), 1, GL_FALSE, glm::value_ptr(logoProj));
 
     // bind vao
     gpuQuad.bind();
