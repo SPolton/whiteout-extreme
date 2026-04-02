@@ -67,7 +67,7 @@ void GameMenus::init()
     // pre-load the texture for the help menu keyboard controls
     try
     {
-        keyboardTexture = assetManager.loadTexture("assets/ui/Keyboard_controls_1.jpeg");
+        keyboardTexture = assetManager.loadTexture("assets/ui/Keyboard_Controls_1.jpeg");
         logger::info("Keyboard controls texture loaded successfully");
     }
     catch (const std::exception& e)
@@ -78,7 +78,7 @@ void GameMenus::init()
     // pre-load the texture for the help menu controller controls
     try
     {
-        controllerTexture = assetManager.loadTexture("assets/ui/Controller_controls_1.jpeg");
+        controllerTexture = assetManager.loadTexture("assets/ui/Controller_Controls_1.jpeg");
         logger::info("Controller controls texture loaded successfully");
     }
     catch (const std::exception& e)
