@@ -841,7 +841,7 @@ MenuAction GameMenus::renderControllerHelp()
         }
     }
 
-    // create vao to draw menu logo
+    // create vao to draw image
     GPU_Geometry gpuQuad;
     gpuQuad.Update2D(quad); // update it with our basic quad info
 
@@ -852,15 +852,27 @@ MenuAction GameMenus::renderControllerHelp()
     controllerTexture->bind();
     glUniform1i(glGetUniformLocation(*shader, "sample"), 0);
 
+    // get aspect ratio of current window size, cast to float since they are ints
+    float aspectRatio = (float)window->getWidth() / (float)window->getHeight();
+
     // static model to pass to shader, renders png as is
     glm::mat4 model = glm::mat4(
         0.8f, 0.0f, 0.0f, 0.0f,
         0.0f, 0.8f, 0.0f, 0.0f,
-        0.f, 0.0f, 0.8f, 0.0f,
+        0.f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.15f, 0.f, 1.0f
     );
 
+    // base matrix
+    glm::mat4 proj = glm::mat4(
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    );
+
     glUniformMatrix4fv(glGetUniformLocation(*shader, "model"), 1, GL_FALSE, glm::value_ptr(model));
+    glUniformMatrix4fv(glGetUniformLocation(*shader, "projection"), 1, GL_FALSE, glm::value_ptr(proj));
 
     // bind vao
     gpuQuad.bind();
@@ -921,7 +933,7 @@ MenuAction GameMenus::renderKeyboardHelp()
         }
     }
 
-    // create vao to draw menu logo
+    // create vao to draw image
     GPU_Geometry gpuQuad;
     gpuQuad.Update2D(quad); // update it with our basic quad info
 
@@ -932,15 +944,27 @@ MenuAction GameMenus::renderKeyboardHelp()
     keyboardTexture->bind();
     glUniform1i(glGetUniformLocation(*shader, "sample"), 0);
 
+    // get aspect ratio of current window size, cast to float since they are ints
+    float aspectRatio = (float)window->getWidth() / (float)window->getHeight();
+
     // static model to pass to shader, renders png as is
     glm::mat4 model = glm::mat4(
         0.8f, 0.0f, 0.0f, 0.0f,
         0.0f, 0.8f, 0.0f, 0.0f,
-        0.f, 0.0f, 0.8f, 0.0f,
+        0.f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.15f, 0.f, 1.0f
     );
 
+    // base matrix
+    glm::mat4 proj = glm::mat4(
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    );
+
     glUniformMatrix4fv(glGetUniformLocation(*shader, "model"), 1, GL_FALSE, glm::value_ptr(model));
+    glUniformMatrix4fv(glGetUniformLocation(*shader, "projection"), 1, GL_FALSE, glm::value_ptr(proj));
 
     // bind vao
     gpuQuad.bind();
