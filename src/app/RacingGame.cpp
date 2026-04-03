@@ -120,7 +120,7 @@ void RacingGame::initEcsAndSystems()
 
 
     // PHYSICS SYSTEM : Requires Transform AND RigidBody
-     physicsSystem = gCoordinator.RegisterSystem<PhysicsSystem>(audioManager);
+     physicsSystem = gCoordinator.RegisterSystem<PhysicsSystem>(inputManager, audioManager);
     {
         Signature signature;
         signature.set(gCoordinator.GetComponentType<PhysxTransform>());

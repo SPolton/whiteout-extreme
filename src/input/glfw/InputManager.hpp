@@ -49,6 +49,12 @@ public:
 
     bool isControllerButtonPressedOnce(int const controllerButton);
 
+    // Vibrate the gamepad (0.0f to cancel, 1.0f max speed)
+    void rumble(float motorValue = 0.0f);
+
+    // check for rumble status
+    bool isRumbling();
+
 private:
 
     void keyCallback(
@@ -82,4 +88,8 @@ private:
     std::unordered_map<int, bool> controllerButtonConsumed{};
     std::unordered_map<int, float> controllerAxes;
     bool controllerConnected = false;
+
+    // controller rumble state
+    float mLeftMotor = 0.0f;
+    float mRightMotor = 0.0f;
 };

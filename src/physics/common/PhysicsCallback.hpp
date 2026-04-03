@@ -2,10 +2,17 @@
 #include "utils/logger.h"
 
 #include "audio/AudioEngine.h"
+#include "input/glfw/InputManager.hpp"
 
 class ContactReportCallback : public physx::PxSimulationEventCallback {
 public:
-    ContactReportCallback(std::shared_ptr<AudioEngine> audioManager, float* gameTime) : audioManager(audioManager), gameTime(gameTime) {}
+    ContactReportCallback(
+        std::shared_ptr<InputManager> inputManager,
+        std::shared_ptr<AudioEngine> audioManager,
+        float* gameTime)
+        : inputManager(inputManager),
+        audioManager(audioManager),
+        gameTime(gameTime) {}
 
     void onContact(const physx::PxContactPairHeader& pairHeader, const physx::PxContactPair* pairs, physx::PxU32 nbPairs)
     {
@@ -28,6 +35,9 @@ public:
             if (v1Name == "VehiclePlayer1" || v2Name == "VehiclePlayer1") {
                 // play crash sound on vehicle-to-vehicle contact
                 audioManager->playSounds("assets/audio/snowmobile-crash.mp3", { 0,0,0 }, -6.0f);
+
+                // send vibration feedback for crash
+                inputManager->rumble(1.0f);
 
                 // update time
                 lastCrashTime = currentTime;
@@ -59,8 +69,9 @@ public:
     }
 
 private:
-    // audio pointer
+    // audio and input pointer
     std::shared_ptr<AudioEngine> audioManager;
+    std::shared_ptr<InputManager> inputManager;
 
     float* gameTime = nullptr;
 

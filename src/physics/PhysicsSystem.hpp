@@ -10,6 +10,9 @@
 #include "components/RigidBody.h"
 #include "components/VehicleComponent.h"
 
+#include "input/glfw/InputManager.hpp"
+#include "audio/AudioEngine.h"
+
 #include "ecs/Coordinator.hpp"
 
 #include <PxPhysicsAPI.h>
@@ -21,7 +24,7 @@ extern Coordinator gCoordinator;
 
 class PhysicsSystem : public System {
 public:
-    PhysicsSystem(std::shared_ptr<AudioEngine> audioManager);
+    PhysicsSystem(std::shared_ptr<InputManager> inputManager, std::shared_ptr<AudioEngine> audioManager);
     ~PhysicsSystem();
 
     void update(float deltaTime);
@@ -61,9 +64,14 @@ private:
 
     std::unique_ptr<ContactReportCallback> mContactReportCallback;
 
-    // audio pointer
+    // audio and input pointer
     std::shared_ptr<AudioEngine> audioManager;
+    std::shared_ptr<InputManager> inputManager;
 
     // local physics game time to share with callback
     float mGameTime = 0.0f;
+
+    // rumble for set amount of time
+    float mRumbleDuration = 0.15f;
+    float mRumbleTime = 0.0f;
 };

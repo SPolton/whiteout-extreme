@@ -7,7 +7,11 @@
 // OK in cpp files, not in headers
 using namespace physx;
 
-PhysicsSystem::PhysicsSystem(std::shared_ptr<AudioEngine> audioManager) : audioManager(audioManager)
+PhysicsSystem::PhysicsSystem(
+    std::shared_ptr<InputManager> inputManager,
+    std::shared_ptr<AudioEngine> audioManager)
+    : inputManager(inputManager),
+    audioManager(audioManager)
 {
     // Core PhysX Initialization only (Foundation, PVD, Physics, Scene)
     initPhysX();
@@ -52,7 +56,7 @@ void PhysicsSystem::initPhysX()
     sceneDesc.filterShader = snippetvehicle::VehicleFilterShader;
 
     // Create callback with RAII
-    mContactReportCallback = std::make_unique<ContactReportCallback>(audioManager, &mGameTime);
+    mContactReportCallback = std::make_unique<ContactReportCallback>(inputManager, audioManager, &mGameTime);
     sceneDesc.simulationEventCallback = mContactReportCallback.get();
 
     mScene = mPhysics->createScene(sceneDesc);
@@ -180,6 +184,17 @@ void PhysicsSystem::update(float deltaTime)
     }
 
     mGameTime += deltaTime; // add to lcoal game time
+
+    // if rumble just started, start counting time
+    if (inputManager->isRumbling() && mRumbleTime == 0.0f) {
+        mRumbleTime = mGameTime;
+    }
+    // if rumble has exceeded max duration, stop rumble
+    if (inputManager->isRumbling() && mGameTime - mRumbleTime > mRumbleDuration) {
+        inputManager->rumble(0.0f); // stop rumble by sending 0
+        mRumbleTime = 0.0f;
+    }
+
 }
 
 Entity PhysicsSystem::createVehicleEntity(const char* name, physx::PxVec3 spawnPos)

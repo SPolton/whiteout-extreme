@@ -94,6 +94,11 @@ include(cmake/physx.cmake)
 # FMOD
 include(cmake/fmod.cmake)
 
+# XInput (Windows only)
+if (WIN32)
+    target_link_libraries(${APP_NAME} PRIVATE Xinput9_1_0)
+endif()
+
 # --------------------------------------------------
 # Enable Hot Reload for MSVC compilers if supported.
 # if (POLICY CMP0141)
