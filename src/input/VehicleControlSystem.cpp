@@ -361,7 +361,6 @@ void VehicleControlSystem::processControllerInput()
     }
 
     // if top button pressed, activate boost
-    // if left button pressed, throw projectile
     if (boostIsPressed) {
         boost();
 
@@ -370,7 +369,11 @@ void VehicleControlSystem::processControllerInput()
             stopPlayerEngine = true;
         }
     }
-    else if (inputManager->isControllerButtonPressed(GLFW_GAMEPAD_BUTTON_X)) {
+
+    // if X (left button) or B (right button) is pressed, throw projectile
+    bool xPressed = inputManager->isControllerButtonPressed(GLFW_GAMEPAD_BUTTON_X);
+    bool bPressed = inputManager->isControllerButtonPressed(GLFW_GAMEPAD_BUTTON_B);
+    if (xPressed || bPressed) {
         gCoordinator.GetSystem<SnowBallisticSystem>()->throwSnowball(playerVehicleEntity);
     }
 
