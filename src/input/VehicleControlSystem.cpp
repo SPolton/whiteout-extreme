@@ -308,8 +308,8 @@ void VehicleControlSystem::processControllerInput()
     * Right Trigger = accelerate
     * Left Trigger = brake
     * Left Stick = steering
-    * X (switch) = Y (Xbox) = Nitro
-    * Y (switch) = X (Xbox) = Throw Snowball (assuming auto aim for now...otherwise right stick input needed?)
+    * Y, A, left bumper (Xbox) = Nitro
+    * X, B (Xbox) = Throw Snowball
     */
 
     // check for throttle/braking
@@ -348,7 +348,13 @@ void VehicleControlSystem::processControllerInput()
     }
 
     // get current state of boost button
-    bool boostIsPressed = inputManager->isControllerButtonPressed(GLFW_GAMEPAD_BUTTON_Y);
+    // boost can be triggered by Y (top), A (bottom), and left bumper
+    bool yPressed = inputManager->isControllerButtonPressed(GLFW_GAMEPAD_BUTTON_Y);
+    bool aPressed = inputManager->isControllerButtonPressed(GLFW_GAMEPAD_BUTTON_A);
+    bool leftBumperPressed = inputManager->isControllerButtonPressed(GLFW_GAMEPAD_BUTTON_LEFT_BUMPER);
+
+    // single variable to test if any of the three buttons are pressed
+    bool boostIsPressed = (yPressed || aPressed || leftBumperPressed);
 
     // if the button is currently pressed down and previously wasn't, play the nitro starting sound
     if (boostIsPressed && !boostWasPressedController) {
@@ -360,8 +366,7 @@ void VehicleControlSystem::processControllerInput()
         boostEndChannelID = audioManager->playSounds("assets/audio/boost-end.wav", { 0,0,0 }, -7.f);
     }
 
-    // if top button pressed, activate boost
-    // if left button pressed, throw projectile
+    // if boost button(s) pressed, activate boost
     if (boostIsPressed) {
         boost();
 
@@ -370,7 +375,11 @@ void VehicleControlSystem::processControllerInput()
             stopPlayerEngine = true;
         }
     }
-    else if (inputManager->isControllerButtonPressed(GLFW_GAMEPAD_BUTTON_X)) {
+
+    // if X (left button) or B (right button) is pressed, throw projectile
+    bool xPressed = inputManager->isControllerButtonPressed(GLFW_GAMEPAD_BUTTON_X);
+    bool bPressed = inputManager->isControllerButtonPressed(GLFW_GAMEPAD_BUTTON_B);
+    if (xPressed || bPressed) {
         gCoordinator.GetSystem<SnowBallisticSystem>()->throwSnowball(playerVehicleEntity);
     }
 
@@ -441,7 +450,7 @@ void VehicleControlSystem::processKeyboardInput()
         boostEndChannelID = audioManager->playSounds("assets/audio/boost-end.wav", { 0,0,0 }, -7.f);
     }
 
-    // let us just assume we use one skill at a time
+    // can boost and throw at the same time
     if (boostIsPressed) {
         boost();
 
@@ -450,7 +459,8 @@ void VehicleControlSystem::processKeyboardInput()
             stopPlayerEngine = true;
         }
     }
-    else if (inputManager->isKeyPressed(GLFW_KEY_SPACE) || inputManager->isKeyPressed(GLFW_KEY_E)) {
+
+    if (inputManager->isKeyPressed(GLFW_KEY_SPACE) || inputManager->isKeyPressed(GLFW_KEY_E)) {
         gCoordinator.GetSystem<SnowBallisticSystem>()->throwSnowball(playerVehicleEntity);
     }
 
