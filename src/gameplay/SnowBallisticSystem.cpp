@@ -14,10 +14,12 @@ extern Entity playerVehicleEntity;
 
 
 SnowBallisticSystem::SnowBallisticSystem(
+    std::shared_ptr<InputManager> inputManager,
     std::shared_ptr<AudioEngine> audioManager,
     std::shared_ptr<RenderingSystem> renderingSystem,
     std::shared_ptr<VehicleControlSystem> vehicleControlSystem)
-    : audioManager(audioManager),
+    : inputManager(inputManager),
+    audioManager(audioManager),
     renderingSystem(renderingSystem),
     vehicleControlSystem(vehicleControlSystem)
 {
@@ -111,6 +113,12 @@ void SnowBallisticSystem::update(float dt) {
 
                     // play sound of getting hit by snowball (play at position of snowball)
                     audioManager->playSounds("assets/audio/snowball-hit.wav", { bTrans.pos.x, bTrans.pos.y, bTrans.pos.z }, -8.0f);
+
+                    // if player got hit
+                    if (vComp.playerID == 0) {
+                        // send vibration feedback for getting hit
+                        inputManager->rumble(1.0f);
+                    }
 
                     //logger::error("RACER HIT BY SNOWBALL!");
 

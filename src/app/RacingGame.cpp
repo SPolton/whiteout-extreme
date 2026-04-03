@@ -182,6 +182,7 @@ void RacingGame::initEcsAndSystems()
 
     // SNOW BALLISTC SYSTEM: Requires Transform AND either SnowCannon OR SnowBallComponent
     snowBallisticSystem = gCoordinator.RegisterSystem<SnowBallisticSystem>(
+        inputManager,
         audioManager,
         gCoordinator.GetSystem<RenderingSystem>(),
         gCoordinator.GetSystem<VehicleControlSystem>());

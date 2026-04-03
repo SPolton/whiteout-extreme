@@ -16,6 +16,7 @@
 class SnowBallisticSystem : public System {
 public:
     SnowBallisticSystem(
+        std::shared_ptr<InputManager> inputManager,
         std::shared_ptr<AudioEngine> audioManager,
         std::shared_ptr<RenderingSystem> renderingSystem,
         std::shared_ptr<VehicleControlSystem> vehicleControlSystem);
@@ -25,6 +26,7 @@ public:
     void throwSnowball(Entity throwerEntity);
 
 private:
+    std::shared_ptr<InputManager> inputManager;
     std::shared_ptr<AudioEngine> audioManager;
     std::shared_ptr<RenderingSystem> renderingSystem;
     std::shared_ptr<VehicleControlSystem> vehicleControlSystem;
