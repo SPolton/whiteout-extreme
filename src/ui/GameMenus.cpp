@@ -67,7 +67,7 @@ void GameMenus::init()
     // pre-load the texture for the help menu keyboard controls
     try
     {
-        keyboardTexture = assetManager.loadTexture("assets/ui/Keyboard_controls_1.jpeg");
+        keyboardTexture = assetManager.loadTexture("assets/ui/Keyboard_Controls_1.jpeg");
         logger::info("Keyboard controls texture loaded successfully");
     }
     catch (const std::exception& e)
@@ -78,7 +78,7 @@ void GameMenus::init()
     // pre-load the texture for the help menu controller controls
     try
     {
-        controllerTexture = assetManager.loadTexture("assets/ui/Controller_controls_1.jpeg");
+        controllerTexture = assetManager.loadTexture("assets/ui/Controller_Controls_1.jpeg");
         logger::info("Controller controls texture loaded successfully");
     }
     catch (const std::exception& e)
@@ -305,6 +305,9 @@ MenuAction GameMenus::renderMainMenu()
     // get scaling factor
     glm::vec2 scalingFactor = getScale();
 
+    // always take the smaller scaling factor
+    float finalScale = std::min(scalingFactor.x, scalingFactor.y);
+
     textSystem->beginText();
 
     textSystem->loadFont("LuckiestGuy-Regular.ttf", 120);
@@ -321,14 +324,24 @@ MenuAction GameMenus::renderMainMenu()
     glUniform1i(glGetUniformLocation(*shader, "sample"), 0);
 
     // static model to pass to shader, renders png as is
-    glm::mat4 baseModel = glm::mat4(
-        1.f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.f, 0.0f, 0.0f,
-        0.f, 0.0f, 1.f, 0.0f,
+    glm::mat4 backgroundModel = glm::mat4(
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 0.f, 1.0f
     );
 
-    glUniformMatrix4fv(glGetUniformLocation(*shader, "model"), 1, GL_FALSE, glm::value_ptr(baseModel));
+    // base matrix
+    glm::mat4 backgroundProj = glm::mat4(
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    );
+
+    // pass matrices to shaders
+    glUniformMatrix4fv(glGetUniformLocation(*shader, "model"), 1, GL_FALSE, glm::value_ptr(backgroundModel));
+    glUniformMatrix4fv(glGetUniformLocation(*shader, "projection"), 1, GL_FALSE, glm::value_ptr(backgroundProj));
 
     // bind vao
     gpuQuadBackground.bind();
@@ -351,14 +364,27 @@ MenuAction GameMenus::renderMainMenu()
     float translateY = 0.25f;
 
     // static model to pass to shader, renders png as is
-    glm::mat4 model = glm::mat4(
-        1.f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.f, 0.0f, 0.0f,
-        0.f, 0.0f, 1.f, 0.0f,
+    glm::mat4 logoModel = glm::mat4(
+        finalScale, 0.0f, 0.0f, 0.0f,
+        0.0f, finalScale, 0.0f, 0.0f,
+        0.f, 0.0f, 1.0f, 0.0f,
         0.0f, translateY, 0.f, 1.0f
     );
 
-    glUniformMatrix4fv(glGetUniformLocation(*shader, "model"), 1, GL_FALSE, glm::value_ptr(model));
+    // get aspect ratio of current window size, cast to float since they are ints
+    float aspectRatio = window->getAspectRatio();
+
+    // orthogonal projection for logo to keep it from stretching past its' original size ratio
+    glm::mat4 logoProj = glm::mat4(
+        1.0f / aspectRatio, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    );
+
+    // pass matrices to shader
+    glUniformMatrix4fv(glGetUniformLocation(*shader, "model"), 1, GL_FALSE, glm::value_ptr(logoModel));
+    glUniformMatrix4fv(glGetUniformLocation(*shader, "projection"), 1, GL_FALSE, glm::value_ptr(logoProj));
 
     // bind vao
     gpuQuad.bind();
@@ -380,13 +406,13 @@ MenuAction GameMenus::renderMainMenu()
         // add "deadzone" (since most controllers won't return back to 0.0 exactly)
         float deadZone = 0.2f;
 
-        // check for right stick movement to scroll through menu options
+        // check for left stick movement to scroll through menu options
         // if negative, it is scrolling up
         // if positive, it is scrolling down
-        if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_Y) < -deadZone) {
+        if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_LEFT_Y) < -deadZone) {
             selectedMenuOption = 0; // if scrolled up, "start" button selected. save state
         }
-        else if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_Y) > deadZone) {
+        else if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_LEFT_Y) > deadZone) {
             selectedMenuOption = 1; // if scrolled down, "help" button selected. save state
         }
 
@@ -481,13 +507,13 @@ MenuAction GameMenus::renderPauseMenu() {
         // add "deadzone" (since most controllers won't return back to 0.0 exactly)
         float deadZone = 0.2f;
 
-        // check for right stick movement to scroll through menu options
+        // check for left stick movement to scroll through menu options
         // if negative, it is scrolling up
         // if positive, it is scrolling down
-        if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_Y) < -deadZone) {
+        if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_LEFT_Y) < -deadZone) {
             selectedPauseMenuOption = 0; // if scrolled up, "resume" button selected. save state
         }
-        else if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_Y) > deadZone) {
+        else if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_LEFT_Y) > deadZone) {
             selectedPauseMenuOption = 1; // if scrolled down, "quit" button selected. save state
         }
 
@@ -661,10 +687,10 @@ MenuAction GameMenus::renderHelpMenu()
         // add "deadzone" (since most controllers won't return back to 0.0 exactly)
         float deadZone = 0.2f;
 
-        // get the current (right) stick position in y-direction
-        float currentStickPosition = inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_Y);
+        // get the current (left) stick position in y-direction
+        float currentStickPosition = inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_LEFT_Y);
 
-        // check for right stick movement to scroll through menu options
+        // check for left stick movement to scroll through menu options
         // if negative, it is scrolling up
         // if positive, it is scrolling down
 
@@ -815,7 +841,7 @@ MenuAction GameMenus::renderControllerHelp()
         }
     }
 
-    // create vao to draw menu logo
+    // create vao to draw image
     GPU_Geometry gpuQuad;
     gpuQuad.Update2D(quad); // update it with our basic quad info
 
@@ -830,11 +856,20 @@ MenuAction GameMenus::renderControllerHelp()
     glm::mat4 model = glm::mat4(
         0.8f, 0.0f, 0.0f, 0.0f,
         0.0f, 0.8f, 0.0f, 0.0f,
-        0.f, 0.0f, 0.8f, 0.0f,
+        0.f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.15f, 0.f, 1.0f
     );
 
+    // base matrix
+    glm::mat4 proj = glm::mat4(
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    );
+
     glUniformMatrix4fv(glGetUniformLocation(*shader, "model"), 1, GL_FALSE, glm::value_ptr(model));
+    glUniformMatrix4fv(glGetUniformLocation(*shader, "projection"), 1, GL_FALSE, glm::value_ptr(proj));
 
     // bind vao
     gpuQuad.bind();
@@ -895,7 +930,7 @@ MenuAction GameMenus::renderKeyboardHelp()
         }
     }
 
-    // create vao to draw menu logo
+    // create vao to draw image
     GPU_Geometry gpuQuad;
     gpuQuad.Update2D(quad); // update it with our basic quad info
 
@@ -910,11 +945,20 @@ MenuAction GameMenus::renderKeyboardHelp()
     glm::mat4 model = glm::mat4(
         0.8f, 0.0f, 0.0f, 0.0f,
         0.0f, 0.8f, 0.0f, 0.0f,
-        0.f, 0.0f, 0.8f, 0.0f,
+        0.f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.15f, 0.f, 1.0f
     );
 
+    // base matrix
+    glm::mat4 proj = glm::mat4(
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    );
+
     glUniformMatrix4fv(glGetUniformLocation(*shader, "model"), 1, GL_FALSE, glm::value_ptr(model));
+    glUniformMatrix4fv(glGetUniformLocation(*shader, "projection"), 1, GL_FALSE, glm::value_ptr(proj));
 
     // bind vao
     gpuQuad.bind();
