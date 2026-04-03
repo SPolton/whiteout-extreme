@@ -450,7 +450,7 @@ void VehicleControlSystem::processKeyboardInput()
         boostEndChannelID = audioManager->playSounds("assets/audio/boost-end.wav", { 0,0,0 }, -7.f);
     }
 
-    // let us just assume we use one skill at a time
+    // can boost and throw at the same time
     if (boostIsPressed) {
         boost();
 
@@ -459,7 +459,8 @@ void VehicleControlSystem::processKeyboardInput()
             stopPlayerEngine = true;
         }
     }
-    else if (inputManager->isKeyPressed(GLFW_KEY_SPACE) || inputManager->isKeyPressed(GLFW_KEY_E)) {
+
+    if (inputManager->isKeyPressed(GLFW_KEY_SPACE) || inputManager->isKeyPressed(GLFW_KEY_E)) {
         gCoordinator.GetSystem<SnowBallisticSystem>()->throwSnowball(playerVehicleEntity);
     }
 
