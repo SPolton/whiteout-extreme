@@ -360,6 +360,9 @@ void RacingGame::initAudio()
     // boost sounds
     audioManager->loadSound("assets/audio/apex-vent.mp3", false, false, false);
     audioManager->loadSound("assets/audio/overheat.mp3", false, false, false);
+
+    // collision sounds
+    audioManager->loadSound("assets/audio/snowball-hit.wav", false, false, false);
 }
 
 void RacingGame::initImGui()
