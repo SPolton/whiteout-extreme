@@ -67,7 +67,7 @@ void GameMenus::init()
     // pre-load the texture for the help menu keyboard controls
     try
     {
-        keyboardTexture = assetManager.loadTexture("assets/ui/Keyboard_controls_1.jpeg");
+        keyboardTexture = assetManager.loadTexture("assets/ui/Keyboard_Controls_1.jpeg");
         logger::info("Keyboard controls texture loaded successfully");
     }
     catch (const std::exception& e)
@@ -78,7 +78,7 @@ void GameMenus::init()
     // pre-load the texture for the help menu controller controls
     try
     {
-        controllerTexture = assetManager.loadTexture("assets/ui/Controller_controls_1.jpeg");
+        controllerTexture = assetManager.loadTexture("assets/ui/Controller_Controls_1.jpeg");
         logger::info("Controller controls texture loaded successfully");
     }
     catch (const std::exception& e)
@@ -406,13 +406,13 @@ MenuAction GameMenus::renderMainMenu()
         // add "deadzone" (since most controllers won't return back to 0.0 exactly)
         float deadZone = 0.2f;
 
-        // check for right stick movement to scroll through menu options
+        // check for left stick movement to scroll through menu options
         // if negative, it is scrolling up
         // if positive, it is scrolling down
-        if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_Y) < -deadZone) {
+        if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_LEFT_Y) < -deadZone) {
             selectedMenuOption = 0; // if scrolled up, "start" button selected. save state
         }
-        else if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_Y) > deadZone) {
+        else if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_LEFT_Y) > deadZone) {
             selectedMenuOption = 1; // if scrolled down, "help" button selected. save state
         }
 
@@ -507,13 +507,13 @@ MenuAction GameMenus::renderPauseMenu() {
         // add "deadzone" (since most controllers won't return back to 0.0 exactly)
         float deadZone = 0.2f;
 
-        // check for right stick movement to scroll through menu options
+        // check for left stick movement to scroll through menu options
         // if negative, it is scrolling up
         // if positive, it is scrolling down
-        if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_Y) < -deadZone) {
+        if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_LEFT_Y) < -deadZone) {
             selectedPauseMenuOption = 0; // if scrolled up, "resume" button selected. save state
         }
-        else if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_Y) > deadZone) {
+        else if (inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_LEFT_Y) > deadZone) {
             selectedPauseMenuOption = 1; // if scrolled down, "quit" button selected. save state
         }
 
@@ -687,10 +687,10 @@ MenuAction GameMenus::renderHelpMenu()
         // add "deadzone" (since most controllers won't return back to 0.0 exactly)
         float deadZone = 0.2f;
 
-        // get the current (right) stick position in y-direction
-        float currentStickPosition = inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_Y);
+        // get the current (left) stick position in y-direction
+        float currentStickPosition = inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_LEFT_Y);
 
-        // check for right stick movement to scroll through menu options
+        // check for left stick movement to scroll through menu options
         // if negative, it is scrolling up
         // if positive, it is scrolling down
 
