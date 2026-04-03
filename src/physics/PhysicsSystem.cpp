@@ -7,7 +7,7 @@
 // OK in cpp files, not in headers
 using namespace physx;
 
-PhysicsSystem::PhysicsSystem()
+PhysicsSystem::PhysicsSystem(std::shared_ptr<AudioEngine> audioManager) : audioManager(audioManager)
 {
     // Core PhysX Initialization only (Foundation, PVD, Physics, Scene)
     initPhysX();
@@ -52,7 +52,7 @@ void PhysicsSystem::initPhysX()
     sceneDesc.filterShader = snippetvehicle::VehicleFilterShader;
 
     // Create callback with RAII
-    mContactReportCallback = std::make_unique<ContactReportCallback>();
+    mContactReportCallback = std::make_unique<ContactReportCallback>(audioManager, &mGameTime);
     sceneDesc.simulationEventCallback = mContactReportCallback.get();
 
     mScene = mPhysics->createScene(sceneDesc);
@@ -178,6 +178,8 @@ void PhysicsSystem::update(float deltaTime)
             rb.linearVelocity = glm::vec3(pxVelocity.x, pxVelocity.y, pxVelocity.z);
         }
     }
+
+    mGameTime += deltaTime; // add to lcoal game time
 }
 
 Entity PhysicsSystem::createVehicleEntity(const char* name, physx::PxVec3 spawnPos)

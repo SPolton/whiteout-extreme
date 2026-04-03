@@ -120,7 +120,7 @@ void RacingGame::initEcsAndSystems()
 
 
     // PHYSICS SYSTEM : Requires Transform AND RigidBody
-     physicsSystem = gCoordinator.RegisterSystem<PhysicsSystem>();
+     physicsSystem = gCoordinator.RegisterSystem<PhysicsSystem>(audioManager);
     {
         Signature signature;
         signature.set(gCoordinator.GetComponentType<PhysxTransform>());
@@ -363,6 +363,7 @@ void RacingGame::initAudio()
 
     // collision sounds
     audioManager->loadSound("assets/audio/snowball-hit.wav", false, false, false);
+    audioManager->loadSound("assets/audio/snowmobile-crash.mp3", false, false, false);
 }
 
 void RacingGame::initImGui()

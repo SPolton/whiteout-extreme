@@ -21,7 +21,7 @@ extern Coordinator gCoordinator;
 
 class PhysicsSystem : public System {
 public:
-    PhysicsSystem();
+    PhysicsSystem(std::shared_ptr<AudioEngine> audioManager);
     ~PhysicsSystem();
 
     void update(float deltaTime);
@@ -60,4 +60,10 @@ private:
     physx::PxRigidStatic* mGroundPlane = NULL;
 
     std::unique_ptr<ContactReportCallback> mContactReportCallback;
+
+    // audio pointer
+    std::shared_ptr<AudioEngine> audioManager;
+
+    // local physics game time to share with callback
+    float mGameTime = 0.0f;
 };

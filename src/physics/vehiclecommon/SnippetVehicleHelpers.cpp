@@ -73,6 +73,12 @@ PxPairFlags& pairFlags, const void* constantBlock, PxU32 constantBlockSize)
         logger::debug("Collision detected between OBSTACLE and CHASSIS");
     }
 
+    // Special notification for chassis-chassis collisions
+    if (filterData0.word0 == COLLISION_FLAG_CHASSIS && filterData1.word0 == COLLISION_FLAG_CHASSIS) {
+        pairFlags |= physx::PxPairFlag::eNOTIFY_TOUCH_FOUND;
+        logger::debug("Collision detected between CHASSIS and CHASSIS");
+    }
+
     // Apply additional pair flags from word2 (enums are bitwise)
     pairFlags |= physx::PxPairFlags(physx::PxU16(filterData0.word2 | filterData1.word2));
     
