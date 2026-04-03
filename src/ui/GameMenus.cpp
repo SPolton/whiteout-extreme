@@ -372,7 +372,7 @@ MenuAction GameMenus::renderMainMenu()
     );
 
     // get aspect ratio of current window size, cast to float since they are ints
-    float aspectRatio = (float)window->getWidth() / (float)window->getHeight();
+    float aspectRatio = window->getAspectRatio();
 
     // orthogonal projection for logo to keep it from stretching past its' original size ratio
     glm::mat4 logoProj = glm::mat4(
@@ -852,9 +852,6 @@ MenuAction GameMenus::renderControllerHelp()
     controllerTexture->bind();
     glUniform1i(glGetUniformLocation(*shader, "sample"), 0);
 
-    // get aspect ratio of current window size, cast to float since they are ints
-    float aspectRatio = (float)window->getWidth() / (float)window->getHeight();
-
     // static model to pass to shader, renders png as is
     glm::mat4 model = glm::mat4(
         0.8f, 0.0f, 0.0f, 0.0f,
@@ -943,9 +940,6 @@ MenuAction GameMenus::renderKeyboardHelp()
     glActiveTexture(GL_TEXTURE0);
     keyboardTexture->bind();
     glUniform1i(glGetUniformLocation(*shader, "sample"), 0);
-
-    // get aspect ratio of current window size, cast to float since they are ints
-    float aspectRatio = (float)window->getWidth() / (float)window->getHeight();
 
     // static model to pass to shader, renders png as is
     glm::mat4 model = glm::mat4(
