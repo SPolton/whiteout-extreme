@@ -27,7 +27,7 @@ public:
             // if contact with player vehicle
             if (v1Name == "VehiclePlayer1" || v2Name == "VehiclePlayer1") {
                 // play crash sound on vehicle-to-vehicle contact
-                audioManager->playSounds("assets/audio/snowmobile-crash.mp3", { 0,0,0 }, -5.0f);
+                audioManager->playSounds("assets/audio/snowmobile-crash.mp3", { 0,0,0 }, -6.0f);
 
                 // update time
                 lastCrashTime = currentTime;
