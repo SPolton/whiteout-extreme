@@ -51,6 +51,7 @@ public:
 
     // Vibrate the gamepad (0.0f to cancel, 1.0f max speed)
     void rumble(float motorValue = 0.0f);
+    void rumble(float leftMotor, float rightMotor);
 
     // check for rumble status
     bool isRumbling();
