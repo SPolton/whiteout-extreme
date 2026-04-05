@@ -553,7 +553,7 @@ void VehicleControlSystem::loadVehicleSounds()
     // for deceleration
     audioManager->loadSound("assets/audio/snowmobile-player-end.wav", false, false, false);
     // for throwing snowball
-    audioManager->loadSound("assets/audio/snowball-hit-01.mp3", false, false, false);
+    audioManager->loadSound("assets/audio/snowball-throw.mp3", false, false, false);
     // for boost
     audioManager->loadSound("assets/audio/boost.wav", false, true, true);
     audioManager->loadSound("assets/audio/nitro-start.wav", false, false, false);

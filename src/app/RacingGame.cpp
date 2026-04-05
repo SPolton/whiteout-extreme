@@ -120,7 +120,7 @@ void RacingGame::initEcsAndSystems()
 
 
     // PHYSICS SYSTEM : Requires Transform AND RigidBody
-     physicsSystem = gCoordinator.RegisterSystem<PhysicsSystem>();
+     physicsSystem = gCoordinator.RegisterSystem<PhysicsSystem>(inputManager, audioManager);
     {
         Signature signature;
         signature.set(gCoordinator.GetComponentType<PhysxTransform>());
@@ -182,6 +182,7 @@ void RacingGame::initEcsAndSystems()
 
     // SNOW BALLISTC SYSTEM: Requires Transform AND either SnowCannon OR SnowBallComponent
     snowBallisticSystem = gCoordinator.RegisterSystem<SnowBallisticSystem>(
+        inputManager,
         audioManager,
         gCoordinator.GetSystem<RenderingSystem>(),
         gCoordinator.GetSystem<VehicleControlSystem>());
@@ -360,6 +361,10 @@ void RacingGame::initAudio()
     // boost sounds
     audioManager->loadSound("assets/audio/apex-vent.mp3", false, false, false);
     audioManager->loadSound("assets/audio/overheat.mp3", false, false, false);
+
+    // collision sounds
+    audioManager->loadSound("assets/audio/snowball-hit.wav", false, false, false);
+    audioManager->loadSound("assets/audio/snowmobile-crash.mp3", false, false, false);
 }
 
 void RacingGame::initImGui()

@@ -1,17 +1,48 @@
 #include <PxSimulationEventCallback.h>
 #include "utils/logger.h"
 
+#include "audio/AudioEngine.h"
+#include "input/glfw/InputManager.hpp"
+
 class ContactReportCallback : public physx::PxSimulationEventCallback {
+public:
+    ContactReportCallback(
+        std::shared_ptr<InputManager> inputManager,
+        std::shared_ptr<AudioEngine> audioManager,
+        float* gameTime)
+        : inputManager(inputManager),
+        audioManager(audioManager),
+        gameTime(gameTime) {}
+
     void onContact(const physx::PxContactPairHeader& pairHeader, const physx::PxContactPair* pairs, physx::PxU32 nbPairs)
     {
         PX_UNUSED(pairHeader);
         PX_UNUSED(pairs);
         PX_UNUSED(nbPairs);
 
-        logger::debug("Contact reported between actors {} and {}", 
-            pairHeader.actors[0]->getName() ? pairHeader.actors[0]->getName() : "Unnamed",
-            pairHeader.actors[1]->getName() ? pairHeader.actors[1]->getName() : "Unnamed"
-        );
+        // get name of colliding vehicles
+        std::string v1Name = pairHeader.actors[0]->getName() ? pairHeader.actors[0]->getName() : "Unnamed";
+        std::string v2Name = pairHeader.actors[1]->getName() ? pairHeader.actors[1]->getName() : "Unnamed";
+
+        logger::debug("Contact reported between actors {} and {}", v1Name, v2Name);
+
+        // get current game time
+        float currentTime = *gameTime;
+
+        // only play crash sound if not already recently played
+        if ((currentTime - lastCrashTime) > crashCooldown) {
+            // if contact with player vehicle
+            if (v1Name == "VehiclePlayer1" || v2Name == "VehiclePlayer1") {
+                // play crash sound on vehicle-to-vehicle contact
+                audioManager->playSounds("assets/audio/snowmobile-crash.mp3", { 0,0,0 }, -6.0f);
+
+                // send vibration feedback for crash
+                inputManager->rumble(1.0f);
+
+                // update time
+                lastCrashTime = currentTime;
+            }
+        }
     }
     void onConstraintBreak(physx::PxConstraintInfo* constraints, physx::PxU32 count) {
         PX_UNUSED(constraints);
@@ -36,4 +67,15 @@ class ContactReportCallback : public physx::PxSimulationEventCallback {
         PX_UNUSED(poseBuffer);
         logger::trace("Advance reported, count: {}", count);
     }
+
+private:
+    // audio and input pointer
+    std::shared_ptr<AudioEngine> audioManager;
+    std::shared_ptr<InputManager> inputManager;
+
+    float* gameTime = nullptr;
+
+    // cooldown for crash sound
+    float lastCrashTime = 0.0f;
+    float crashCooldown = 0.5f;
 };

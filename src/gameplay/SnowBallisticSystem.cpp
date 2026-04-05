@@ -14,10 +14,12 @@ extern Entity playerVehicleEntity;
 
 
 SnowBallisticSystem::SnowBallisticSystem(
+    std::shared_ptr<InputManager> inputManager,
     std::shared_ptr<AudioEngine> audioManager,
     std::shared_ptr<RenderingSystem> renderingSystem,
     std::shared_ptr<VehicleControlSystem> vehicleControlSystem)
-    : audioManager(audioManager),
+    : inputManager(inputManager),
+    audioManager(audioManager),
     renderingSystem(renderingSystem),
     vehicleControlSystem(vehicleControlSystem)
 {
@@ -108,6 +110,16 @@ void SnowBallisticSystem::update(float dt) {
 
                         }
                     }
+
+                    // play sound of getting hit by snowball (play at position of snowball)
+                    audioManager->playSounds("assets/audio/snowball-hit.wav", { bTrans.pos.x, bTrans.pos.y, bTrans.pos.z }, -8.0f);
+
+                    // if player got hit
+                    if (vComp.playerID == 0) {
+                        // send vibration feedback for getting hit
+                        inputManager->rumble(1.0f);
+                    }
+
                     //logger::error("RACER HIT BY SNOWBALL!");
 
                     break;
@@ -162,8 +174,8 @@ void SnowBallisticSystem::throwSnowball(Entity throwerEntity)
     // auto& vehicleComponent = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity);
     if (vehicleComponent.snowBallCooldown > 0.f) return;
 
-    // play sound of throwing snowball
-    audioManager->playSounds("assets/audio/snowball-hit-01.mp3", { 0,0,0 }, 2.0f);
+    // play sound of throwing snowball (play sound at vehicle that is throwing)
+    audioManager->playSounds("assets/audio/snowball-throw.mp3", { vehicleTransform.pos.x, vehicleTransform.pos.y, vehicleTransform.pos.z }, 8.0f);
     //logger::info("Throwing snowball...");
 
     // Calculate the Forward direction based on the vehicle's current rotation

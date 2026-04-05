@@ -3,6 +3,9 @@
 #include "utils/logger.h"
 #include <utility>
 
+#include <Windows.h>
+#include <Xinput.h>
+
 InputManager::InputManager(
     ResizeCallback resizeCallback,
     MouseWheelCallback mouseWheelCallback
@@ -220,4 +223,37 @@ bool InputManager::isControllerButtonPressedOnce(int const controllerButton)
         }
     }
     return false;
+}
+
+void InputManager::rumble(float motorValue)
+{
+    rumble(motorValue, motorValue);
+}
+
+// send vibration feedback to the controller (values of 0.0f to 1.0f only)
+void InputManager::rumble(float leftMotorValue, float rightMotorValue)
+{
+    // initialize variable to store vibration values
+    XINPUT_VIBRATION vibration = {};
+
+    // calculate vibration values with static amplification (same on both sides)
+    float amplifier = 65535.0f;
+    int leftMotor  = int(leftMotorValue * amplifier);
+    int rightMotor = int(rightMotorValue * amplifier);
+
+    // set vibration values
+    vibration.wLeftMotorSpeed = WORD(leftMotor);
+    vibration.wRightMotorSpeed = WORD(rightMotor);
+
+    // store values in input manager
+    mLeftMotor = WORD(leftMotor);
+    mRightMotor = WORD(rightMotor);
+
+    // send vibration feedback to controller 0
+    XInputSetState(0, &vibration);
+}
+
+// check whether controller is rumbling
+bool InputManager::isRumbling() {
+    return (mLeftMotor > 0.0f || mRightMotor > 0.0f);
 }
