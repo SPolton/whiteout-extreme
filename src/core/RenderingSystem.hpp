@@ -120,6 +120,11 @@ private:
 
     void processInput(float deltaTime);
     void processCameraInput(float deltaTime);
+    void updateSkyboxFollow();
+
+    void renderRenderableEntity(Entity entity, const glm::mat4& view, const glm::mat4& projection);
+    void renderModelEntity(Entity entity, const glm::mat4& view, const glm::mat4& projection);
+    void renderParticles(const glm::mat4& view, const glm::mat4& projection);
 
     void toggleCamera();
     void render();

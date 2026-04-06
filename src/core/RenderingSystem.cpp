@@ -301,152 +301,159 @@ void RenderingSystem::render()
     {
         if (gCoordinator.HasComponent<Renderable>(entity))
         {
-            statsData.startGeometryPass();
-
-            auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
-            auto& renderable = gCoordinator.GetComponent<Renderable>(entity);
-
-            renderable.updateRollingTexture(transform.pos);
-
-            // Apply special rendering settings for skybox
-            if (renderable.isSkybox) {
-                glDepthMask(GL_FALSE);  // Don't write to depth buffer
-                glFrontFace(GL_CW);     // Reverse winding order to see inside
-            }
-
-            glm::vec3 visualPos = transform.pos;
-
-            // If entity has VehicleComponent, apply offset for red brick model rendering
-            if (gCoordinator.HasComponent<VehicleComponent>(entity)) {
-                glm::vec3 localOffset(0.0f, 0.75f, 2.0f);
-                glm::vec3 rotatedOffset = transform.rot * localOffset;
-                visualPos += rotatedOffset;
-            }
-
-            renderable.shader->use();
-
-            glActiveTexture(GL_TEXTURE0);
-            renderable.texture->bind();
-            glUniform1i(
-                glGetUniformLocation(*renderable.shader, "baseColorTexture"),
-                0
-            );
-
-            // Pass texture scroll offsets to shader for rolling textures
-            glUniform2fv(
-                glGetUniformLocation(*renderable.shader, "textureScrollOffset"),
-                1,
-                glm::value_ptr(renderable.textureScrollOffset)
-            );
-
-            glm::mat4 modelMatrix =
-                glm::translate(glm::mat4(1.f), visualPos)
-                * glm::toMat4(transform.rot)
-                * glm::scale(glm::mat4(1.f), transform.scale);
-
-            glUniformMatrix4fv(
-                glGetUniformLocation(*renderable.shader, "model"),
-                1, GL_FALSE, &modelMatrix[0][0]
-            );
-
-            glUniformMatrix4fv(
-                glGetUniformLocation(*renderable.shader, "view"),
-                1, GL_FALSE, &view[0][0]
-            );
-
-            glUniformMatrix4fv(
-                glGetUniformLocation(*renderable.shader, "projection"),
-                1, GL_FALSE, &projection[0][0]
-            );
-
-            renderable.geometry->bind();
-
-            if (!renderable.cpuData->indices.empty()) {
-                glDrawElements(
-                    GL_TRIANGLES,
-                    static_cast<GLsizei>(renderable.cpuData->indices.size()),
-                    GL_UNSIGNED_INT,
-                    nullptr
-                );
-            }
-            else {
-                glDrawArrays(
-                    GL_TRIANGLES,
-                    0,
-                    static_cast<GLsizei>(renderable.cpuData->positions.size())
-                );
-            }
-
-            statsData.addRenderableDraw();
-
-            // Restore normal rendering state if this was skybox
-            if (renderable.isSkybox) {
-                glDepthMask(GL_TRUE);
-                glFrontFace(GL_CCW);
-            }
-
-            statsData.endGeometryPass();
+            renderRenderableEntity(entity, view, projection);
         }
 
         else if (gCoordinator.HasComponent<ModelRenderable>(entity))
         {
-            statsData.startModelPass();
-
-            auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
-            auto& modelRenderable = gCoordinator.GetComponent<ModelRenderable>(entity);
-
-            if (modelRenderable.modelLoader && modelRenderable.shader) {
-                modelRenderable.shader->use();
-
-                // --- COMPUTE NEW MATRIX WITH OFFSET FOR SNOWMOBILES ---
-                glm::vec3 offsetInWorldSpace = transform.rot * modelRenderable.visualOffsetPos;
-
-                glm::mat4 modelMatrix =
-                    glm::translate(glm::mat4(1.0f), transform.pos + offsetInWorldSpace)
-                    * glm::toMat4(transform.rot)
-                    * glm::scale(glm::mat4(1.0f), transform.scale);
-                // ------------------------------------------
-
-                // Set up view and projection matrices
-                glUniformMatrix4fv(
-                    glGetUniformLocation(*modelRenderable.shader, "view"),
-                    1, GL_FALSE, &view[0][0]
-                );
-
-                glUniformMatrix4fv(
-                    glGetUniformLocation(*modelRenderable.shader, "projection"),
-                    1, GL_FALSE, &projection[0][0]
-                );
-
-                // Set model matrix using the entity's transform
-                glUniformMatrix4fv(
-                    glGetUniformLocation(*modelRenderable.shader, "model"),
-                    1, GL_FALSE, &modelMatrix[0][0]
-                );
-
-                // Set lighting uniforms for the model shader
-                glm::vec3 lightPos(0.0f, 20.0f, 0.0f);
-                glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
-                glm::vec3 viewPos = activeCamera->position();
-                
-                glUniform3fv(glGetUniformLocation(*modelRenderable.shader, "lightPos"), 1, &lightPos[0]);
-                glUniform3fv(glGetUniformLocation(*modelRenderable.shader, "lightColor"), 1, &lightColor[0]);
-                glUniform3fv(glGetUniformLocation(*modelRenderable.shader, "viewPos"), 1, &viewPos[0]);
-
-                // Draw the model (handles multiple meshes internally)
-                modelRenderable.modelLoader->draw(*modelRenderable.shader);
-                statsData.addModelDraw();
-            }
-
-            statsData.endModelPass();
+            renderModelEntity(entity, view, projection);
         }
     }
 
-    statsData.startParticlePass();
+    renderParticles(view, projection);
+    statsData.endFrame();
+}
 
+void RenderingSystem::renderRenderableEntity(Entity entity, const glm::mat4& view, const glm::mat4& projection)
+{
+    statsData.startGeometryPass();
+
+    auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
+    auto& renderable = gCoordinator.GetComponent<Renderable>(entity);
+
+    renderable.updateRollingTexture(transform.pos);
+
+    if (renderable.isSkybox) {
+        glDepthMask(GL_FALSE); // Don't write to depth buffer
+        glFrontFace(GL_CW);    // Reverse winding order to see inside
+    }
+
+    glm::vec3 visualPos = transform.pos;
+
+    // If entity has VehicleComponent, apply offset for red brick model rendering
+    if (gCoordinator.HasComponent<VehicleComponent>(entity)) {
+        glm::vec3 localOffset(0.0f, 0.75f, 2.0f);
+        glm::vec3 rotatedOffset = transform.rot * localOffset;
+        visualPos += rotatedOffset;
+    }
+
+    renderable.shader->use();
+
+    glActiveTexture(GL_TEXTURE0);
+    renderable.texture->bind();
+    glUniform1i(
+        glGetUniformLocation(*renderable.shader, "baseColorTexture"),
+        0
+    );
+
+    // Pass texture scroll offsets to shader for rolling textures
+    glUniform2fv(
+        glGetUniformLocation(*renderable.shader, "textureScrollOffset"),
+        1,
+        glm::value_ptr(renderable.textureScrollOffset)
+    );
+
+    glm::mat4 modelMatrix =
+        glm::translate(glm::mat4(1.f), visualPos)
+        * glm::toMat4(transform.rot)
+        * glm::scale(glm::mat4(1.f), transform.scale);
+
+    glUniformMatrix4fv(
+        glGetUniformLocation(*renderable.shader, "model"),
+        1, GL_FALSE, &modelMatrix[0][0]
+    );
+
+    glUniformMatrix4fv(
+        glGetUniformLocation(*renderable.shader, "view"),
+        1, GL_FALSE, &view[0][0]
+    );
+
+    glUniformMatrix4fv(
+        glGetUniformLocation(*renderable.shader, "projection"),
+        1, GL_FALSE, &projection[0][0]
+    );
+
+    renderable.geometry->bind();
+
+    if (!renderable.cpuData->indices.empty()) {
+        glDrawElements(
+            GL_TRIANGLES,
+            static_cast<GLsizei>(renderable.cpuData->indices.size()),
+            GL_UNSIGNED_INT,
+            nullptr
+        );
+    }
+    else {
+        glDrawArrays(
+            GL_TRIANGLES,
+            0,
+            static_cast<GLsizei>(renderable.cpuData->positions.size())
+        );
+    }
+
+    statsData.addRenderableDraw();
+
+    // Restore normal rendering state
+    if (renderable.isSkybox) {
+        glDepthMask(GL_TRUE);
+        glFrontFace(GL_CCW);
+    }
+
+    statsData.endGeometryPass();
+}
+
+void RenderingSystem::renderModelEntity(Entity entity, const glm::mat4& view, const glm::mat4& projection)
+{
+    statsData.startModelPass();
+
+    auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
+    auto& modelRenderable = gCoordinator.GetComponent<ModelRenderable>(entity);
+
+    if (modelRenderable.modelLoader && modelRenderable.shader) {
+        modelRenderable.shader->use();
+
+        glm::vec3 offsetInWorldSpace = transform.rot * modelRenderable.visualOffsetPos;
+
+        glm::mat4 modelMatrix =
+            glm::translate(glm::mat4(1.0f), transform.pos + offsetInWorldSpace)
+            * glm::toMat4(transform.rot)
+            * glm::scale(glm::mat4(1.0f), transform.scale);
+
+        glUniformMatrix4fv(
+            glGetUniformLocation(*modelRenderable.shader, "view"),
+            1, GL_FALSE, &view[0][0]
+        );
+
+        glUniformMatrix4fv(
+            glGetUniformLocation(*modelRenderable.shader, "projection"),
+            1, GL_FALSE, &projection[0][0]
+        );
+
+        glUniformMatrix4fv(
+            glGetUniformLocation(*modelRenderable.shader, "model"),
+            1, GL_FALSE, &modelMatrix[0][0]
+        );
+
+        glm::vec3 lightPos(0.0f, 20.0f, 0.0f);
+        glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
+        glm::vec3 viewPos = activeCamera->position();
+
+        glUniform3fv(glGetUniformLocation(*modelRenderable.shader, "lightPos"), 1, &lightPos[0]);
+        glUniform3fv(glGetUniformLocation(*modelRenderable.shader, "lightColor"), 1, &lightColor[0]);
+        glUniform3fv(glGetUniformLocation(*modelRenderable.shader, "viewPos"), 1, &viewPos[0]);
+
+        modelRenderable.modelLoader->draw(*modelRenderable.shader);
+        statsData.addModelDraw();
+    }
+
+    statsData.endModelPass();
+}
+
+void RenderingSystem::renderParticles(const glm::mat4& view, const glm::mat4& projection)
+{
+    statsData.startParticlePass();
     snowRenderer.render(view, projection);
     statsData.endParticlePass();
-    statsData.endFrame();
 }
 
 glm::mat4 RenderingSystem::getProjectionMatrix() const
@@ -469,18 +476,26 @@ void RenderingSystem::update(float deltaTime)
 
     processInput(deltaTime);
 
-    // center skybox on camera
-    for (auto const& entity : mEntities) {
-        if (gCoordinator.HasComponent<Renderable>(entity)) {
-            auto& renderable = gCoordinator.GetComponent<Renderable>(entity);
-            if (renderable.isSkybox) {
-                auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
-                transform.pos = activeCamera->position();
-            }
-        }
-    }
+    updateSkyboxFollow();
     
     render();
+}
+
+void RenderingSystem::updateSkyboxFollow()
+{
+    for (auto const& entity : mEntities) {
+        if (!gCoordinator.HasComponent<Renderable>(entity)) {
+            continue;
+        }
+
+        auto& renderable = gCoordinator.GetComponent<Renderable>(entity);
+        if (!renderable.isSkybox) {
+            continue;
+        }
+
+        auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
+        transform.pos = activeCamera->position();
+    }
 }
 
 void RenderingSystem::onMouseWheelChange(double xOffset, double yOffset)
