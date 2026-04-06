@@ -328,13 +328,9 @@ void RenderingSystem::renderRenderableEntity(Entity entity, const glm::mat4& vie
         glFrontFace(GL_CW);    // Reverse winding order to see inside
     }
 
-    glm::vec3 visualPos = transform.pos;
-
-    // If entity has VehicleComponent, apply offset for red brick model rendering
+    glm::vec3 localOffset(0.0f);
     if (gCoordinator.HasComponent<VehicleComponent>(entity)) {
-        glm::vec3 localOffset(0.0f, 0.75f, 2.0f);
-        glm::vec3 rotatedOffset = transform.rot * localOffset;
-        visualPos += rotatedOffset;
+        localOffset = glm::vec3(0.0f, 0.75f, 2.0f);
     }
 
     renderable.shader->use();
@@ -353,25 +349,8 @@ void RenderingSystem::renderRenderableEntity(Entity entity, const glm::mat4& vie
         glm::value_ptr(renderable.textureScrollOffset)
     );
 
-    glm::mat4 modelMatrix =
-        glm::translate(glm::mat4(1.f), visualPos)
-        * glm::toMat4(transform.rot)
-        * glm::scale(glm::mat4(1.f), transform.scale);
-
-    glUniformMatrix4fv(
-        glGetUniformLocation(*renderable.shader, "model"),
-        1, GL_FALSE, &modelMatrix[0][0]
-    );
-
-    glUniformMatrix4fv(
-        glGetUniformLocation(*renderable.shader, "view"),
-        1, GL_FALSE, &view[0][0]
-    );
-
-    glUniformMatrix4fv(
-        glGetUniformLocation(*renderable.shader, "projection"),
-        1, GL_FALSE, &projection[0][0]
-    );
+    glm::mat4 const modelMatrix = buildModelMatrix(transform, localOffset);
+    uploadCommonMatrices(renderable.shader, modelMatrix, view, projection);
 
     renderable.geometry->bind();
 
@@ -412,35 +391,9 @@ void RenderingSystem::renderModelEntity(Entity entity, const glm::mat4& view, co
     if (modelRenderable.modelLoader && modelRenderable.shader) {
         modelRenderable.shader->use();
 
-        glm::vec3 offsetInWorldSpace = transform.rot * modelRenderable.visualOffsetPos;
-
-        glm::mat4 modelMatrix =
-            glm::translate(glm::mat4(1.0f), transform.pos + offsetInWorldSpace)
-            * glm::toMat4(transform.rot)
-            * glm::scale(glm::mat4(1.0f), transform.scale);
-
-        glUniformMatrix4fv(
-            glGetUniformLocation(*modelRenderable.shader, "view"),
-            1, GL_FALSE, &view[0][0]
-        );
-
-        glUniformMatrix4fv(
-            glGetUniformLocation(*modelRenderable.shader, "projection"),
-            1, GL_FALSE, &projection[0][0]
-        );
-
-        glUniformMatrix4fv(
-            glGetUniformLocation(*modelRenderable.shader, "model"),
-            1, GL_FALSE, &modelMatrix[0][0]
-        );
-
-        glm::vec3 lightPos(0.0f, 20.0f, 0.0f);
-        glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
-        glm::vec3 viewPos = activeCamera->position();
-
-        glUniform3fv(glGetUniformLocation(*modelRenderable.shader, "lightPos"), 1, &lightPos[0]);
-        glUniform3fv(glGetUniformLocation(*modelRenderable.shader, "lightColor"), 1, &lightColor[0]);
-        glUniform3fv(glGetUniformLocation(*modelRenderable.shader, "viewPos"), 1, &viewPos[0]);
+        glm::mat4 const modelMatrix = buildModelMatrix(transform, modelRenderable.visualOffsetPos);
+        uploadCommonMatrices(modelRenderable.shader, modelMatrix, view, projection);
+        uploadModelLightingUniforms(modelRenderable.shader);
 
         modelRenderable.modelLoader->draw(*modelRenderable.shader);
         statsData.addModelDraw();
@@ -459,10 +412,52 @@ void RenderingSystem::renderParticles(const glm::mat4& view, const glm::mat4& pr
 glm::mat4 RenderingSystem::getProjectionMatrix() const
 {
     float const aspectRatio = static_cast<float>(vWidth) / static_cast<float>(vHeight);
+    float const nearPlane = 0.1f;
+    float const farPlane = 5000.0f;
     
     // Perspective projection for active camera
     // FOV is already in radians, no conversion needed
-    return glm::perspective(activeCamera->fov(), aspectRatio, 0.1f, 5000.0f);
+    return glm::perspective(activeCamera->fov(), aspectRatio, nearPlane, farPlane);
+}
+
+glm::mat4 RenderingSystem::buildModelMatrix(const PhysxTransform& transform, const glm::vec3& localOffset) const
+{
+    glm::vec3 const offsetInWorldSpace = transform.rot * localOffset;
+    glm::vec3 const visualPos = transform.pos + offsetInWorldSpace;
+
+    return glm::translate(glm::mat4(1.0f), visualPos)
+        * glm::toMat4(transform.rot)
+        * glm::scale(glm::mat4(1.0f), transform.scale);
+}
+
+void RenderingSystem::uploadCommonMatrices(const std::shared_ptr<ShaderProgram>& shader,
+    const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection) const
+{
+    glUniformMatrix4fv(
+        glGetUniformLocation(*shader, "model"),
+        1, GL_FALSE, &model[0][0]
+    );
+
+    glUniformMatrix4fv(
+        glGetUniformLocation(*shader, "view"),
+        1, GL_FALSE, &view[0][0]
+    );
+
+    glUniformMatrix4fv(
+        glGetUniformLocation(*shader, "projection"),
+        1, GL_FALSE, &projection[0][0]
+    );
+}
+
+void RenderingSystem::uploadModelLightingUniforms(const std::shared_ptr<ShaderProgram>& shader) const
+{
+    glm::vec3 const lightPos(0.0f, 20.0f, 0.0f);
+    glm::vec3 const lightColor(1.0f, 1.0f, 1.0f);
+    glm::vec3 const viewPos = activeCamera->position();
+
+    glUniform3fv(glGetUniformLocation(*shader, "lightPos"), 1, &lightPos[0]);
+    glUniform3fv(glGetUniformLocation(*shader, "lightColor"), 1, &lightColor[0]);
+    glUniform3fv(glGetUniformLocation(*shader, "viewPos"), 1, &viewPos[0]);
 }
 
 void RenderingSystem::update(float deltaTime)

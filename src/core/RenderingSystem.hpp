@@ -129,4 +129,8 @@ private:
     void toggleCamera();
     void render();
     glm::mat4 getProjectionMatrix() const;
+    glm::mat4 buildModelMatrix(const PhysxTransform& transform, const glm::vec3& localOffset = glm::vec3(0.0f)) const;
+    void uploadCommonMatrices(const std::shared_ptr<ShaderProgram>& shader,
+            const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection) const;
+    void uploadModelLightingUniforms(const std::shared_ptr<ShaderProgram>& shader) const;
 };
