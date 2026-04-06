@@ -24,29 +24,6 @@ bool RenderingSystem::init()
     logger::info("OpenGL Version: {0}", (const char*)glGetString(GL_VERSION));
     logger::info("OpenGL Renderer: {0}", (const char*)glGetString(GL_RENDERER));
 
-    try
-    {
-        assetManager.loadShader("textured");
-        logger::info("Textured shader loaded successfully");
-    }
-    catch (const std::exception& e)
-    {
-        logger::error("Failed to load textured shader: {0}", e.what());
-        return false;
-    }
-
-    // Load model shader
-    try
-    {
-        assetManager.loadShader("model");
-        logger::info("Model shader loaded successfully");
-    }
-    catch (const std::exception& e)
-    {
-        logger::error("Failed to load model shader: {0}", e.what());
-        return false;
-    }
-
     // Create object tracking transform for camera (vehicle tracking)
     targetTransform = std::make_unique<SceneTransform>();
     targetTransform->setPosition(glm::vec3(0.f, 0.f, 0.f));
