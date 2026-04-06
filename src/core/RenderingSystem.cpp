@@ -246,6 +246,8 @@ void RenderingSystem::renderRenderableEntity(Entity entity, const glm::mat4& vie
     auto& renderable = gCoordinator.GetComponent<Renderable>(entity);
 
     renderable.updateRollingTexture(transform.pos);
+    auto materialState = buildMaterialState(renderable);
+    materialState.textureScrollOffset = renderable.textureScrollOffset;
 
     if (renderable.isSkybox) {
         glDepthMask(GL_FALSE); // Don't write to depth buffer
@@ -257,24 +259,10 @@ void RenderingSystem::renderRenderableEntity(Entity entity, const glm::mat4& vie
         localOffset = glm::vec3(0.0f, 0.75f, 2.0f);
     }
 
-    renderable.shader->use();
-
-    glActiveTexture(GL_TEXTURE0);
-    renderable.texture->bind();
-    glUniform1i(
-        glGetUniformLocation(*renderable.shader, "baseColorTexture"),
-        0
-    );
-
-    // Pass texture scroll offsets to shader for rolling textures
-    glUniform2fv(
-        glGetUniformLocation(*renderable.shader, "textureScrollOffset"),
-        1,
-        glm::value_ptr(renderable.textureScrollOffset)
-    );
+    bindMaterialState(materialState);
 
     glm::mat4 const modelMatrix = buildModelMatrix(transform, localOffset);
-    uploadCommonMatrices(renderable.shader, modelMatrix, view, projection);
+    uploadCommonMatrices(materialState.shader, modelMatrix, view, projection);
 
     renderable.geometry->bind();
 
@@ -311,15 +299,19 @@ void RenderingSystem::renderModelEntity(Entity entity, const glm::mat4& view, co
 
     auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
     auto& modelRenderable = gCoordinator.GetComponent<ModelRenderable>(entity);
+    auto const materialState = buildMaterialState(modelRenderable);
 
-    if (modelRenderable.modelLoader && modelRenderable.shader) {
-        modelRenderable.shader->use();
+    if (modelRenderable.modelLoader && materialState.shader) {
+        bindMaterialState(materialState);
 
         glm::mat4 const modelMatrix = buildModelMatrix(transform, modelRenderable.visualOffsetPos);
-        uploadCommonMatrices(modelRenderable.shader, modelMatrix, view, projection);
-        uploadModelLightingUniforms(modelRenderable.shader);
+        uploadCommonMatrices(materialState.shader, modelMatrix, view, projection);
 
-        modelRenderable.modelLoader->draw(*modelRenderable.shader);
+        if (materialState.useModelLighting) {
+            uploadModelLightingUniforms(materialState.shader);
+        }
+
+        modelRenderable.modelLoader->draw(*materialState.shader);
         statsData.addModelDraw();
     }
 
@@ -334,6 +326,52 @@ void RenderingSystem::renderParticles(const glm::mat4& view, const glm::mat4& pr
 }
 
 /* ----- Render helpers ----- */
+
+RenderingSystem::RenderMaterialState RenderingSystem::buildMaterialState(const Renderable& renderable) const
+{
+    RenderMaterialState materialState;
+    materialState.shader = renderable.shader;
+    materialState.baseColorTexture = renderable.texture;
+    materialState.textureScrollOffset = renderable.textureScrollOffset;
+    materialState.useTextureScroll = true;
+    materialState.useModelLighting = false;
+    return materialState;
+}
+
+RenderingSystem::RenderMaterialState RenderingSystem::buildMaterialState(const ModelRenderable& modelRenderable) const
+{
+    RenderMaterialState materialState;
+    materialState.shader = modelRenderable.shader;
+    materialState.useTextureScroll = false;
+    materialState.useModelLighting = true;
+    return materialState;
+}
+
+void RenderingSystem::bindMaterialState(const RenderMaterialState& materialState) const
+{
+    if (!materialState.shader) {
+        return;
+    }
+
+    materialState.shader->use();
+
+    if (materialState.baseColorTexture) {
+        glActiveTexture(GL_TEXTURE0);
+        materialState.baseColorTexture->bind();
+        glUniform1i(
+            glGetUniformLocation(*materialState.shader, "baseColorTexture"),
+            0
+        );
+    }
+
+    if (materialState.useTextureScroll) {
+        glUniform2fv(
+            glGetUniformLocation(*materialState.shader, "textureScrollOffset"),
+            1,
+            glm::value_ptr(materialState.textureScrollOffset)
+        );
+    }
+}
 
 glm::mat4 RenderingSystem::getProjectionMatrix() const
 {
