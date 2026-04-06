@@ -19,86 +19,6 @@ RenderingSystem::RenderingSystem(
     }
 }
 
-void RenderingSystem::processInput(float deltaTime)
-{
-    // Handle camera toggle with F key
-    if (inputManager->isKeyPressedOnce(GLFW_KEY_F)) {
-        toggleCamera();
-    }
-
-    processCameraInput(deltaTime);
-}
-
-// Camera Input Processing
-void RenderingSystem::processCameraInput(float deltaTime)
-{
-    auto const cursorPosition = inputManager->cursorPosition();
-
-    // Check if we're using FreeCamera
-    if (activeCamera == freeCamera.get())
-    {
-        // FreeCamera uses mouse movement when right mouse button is held
-        if (inputManager->isMousePressed(GLFW_MOUSE_BUTTON_RIGHT)) {
-            if (cursorPositionIsSetOnce) {
-                auto const deltaPosition = cursorPosition - previousCursorPosition;
-                freeCamera->processMouseMovement(
-                    static_cast<float>(deltaPosition.x),
-                    static_cast<float>(-deltaPosition.y)  // Invert Y for natural feel
-                );
-            }
-        }
-
-        // IJKL/UO controls for FreeCamera movement (don't interfere with WASD game controls)
-        if (inputManager->isKeyPressed(GLFW_KEY_I))
-            freeCamera->processKeyboard(FreeCamera::Movement::FORWARD, deltaTime);
-        if (inputManager->isKeyPressed(GLFW_KEY_K))
-            freeCamera->processKeyboard(FreeCamera::Movement::BACKWARD, deltaTime);
-        if (inputManager->isKeyPressed(GLFW_KEY_J))
-            freeCamera->processKeyboard(FreeCamera::Movement::LEFT, deltaTime);
-        if (inputManager->isKeyPressed(GLFW_KEY_L))
-            freeCamera->processKeyboard(FreeCamera::Movement::RIGHT, deltaTime);
-        if (inputManager->isKeyPressed(GLFW_KEY_U))
-            freeCamera->processKeyboard(FreeCamera::Movement::UP, deltaTime);
-        if (inputManager->isKeyPressed(GLFW_KEY_O))
-            freeCamera->processKeyboard(FreeCamera::Movement::DOWN, deltaTime);
-    }
-    else if (activeCamera == turntableCamera.get())
-    {
-        // poll controller state first
-        inputManager->pollControllerInputs();
-
-        // TurnTableCamera uses right-click drag
-        if (inputManager->isMousePressed(GLFW_MOUSE_BUTTON_RIGHT)) {
-            if (cursorPositionIsSetOnce) {
-                float const aspectRatio = static_cast<float>(vWidth) / static_cast<float>(vHeight);
-                auto const deltaPosition = cursorPosition - previousCursorPosition;
-                turntableCamera->adjustTheta(-static_cast<float>(deltaPosition.x) * deltaTime * this->camSpeed * (1 / aspectRatio));
-                turntableCamera->adjustPhi(-static_cast<float>(deltaPosition.y) * deltaTime * this->camSpeed);
-            }
-        }
-        else if (inputManager->isControllerConnected())
-        {
-            float rx = inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_X);
-            float ry = inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_Y);
-
-            const float deadzone = 0.20f;
-            if (std::abs(rx) < deadzone) rx = 0.0f;
-            if (std::abs(ry) < deadzone) ry = 0.0f;
-
-            if (rx != 0.0f || ry != 0.0f) {
-                float const aspectRatio = static_cast<float>(vWidth) / static_cast<float>(vHeight);
-                float sensitivity = 2.0f;
-                turntableCamera->adjustTheta(-rx * deltaTime * this->camSpeed * sensitivity * (1.0f / aspectRatio));
-                turntableCamera->adjustPhi(-ry * deltaTime * this->camSpeed * sensitivity);
-            }
-        }
-    }
-
-    // Always update cursor position tracking
-    cursorPositionIsSetOnce = true;
-    previousCursorPosition = cursorPosition;
-}
-
 bool RenderingSystem::init()
 {
     logger::info("OpenGL Version: {0}", (const char*)glGetString(GL_VERSION));
@@ -146,6 +66,8 @@ bool RenderingSystem::init()
 
     return true;
 }
+
+/* ----- Entity creation ----- */
 
 Renderable RenderingSystem::getCubeRenderable(const std::string& texturePath)
 {
@@ -286,6 +208,8 @@ Entity RenderingSystem::createModelEntity(const std::string& modelPath, const Mo
     return model;
 }
 
+/* ----- Render step ----- */
+
 void RenderingSystem::render()
 {
     statsData.startFrame();
@@ -409,12 +333,14 @@ void RenderingSystem::renderParticles(const glm::mat4& view, const glm::mat4& pr
     statsData.endParticlePass();
 }
 
+/* ----- Render helpers ----- */
+
 glm::mat4 RenderingSystem::getProjectionMatrix() const
 {
     float const aspectRatio = static_cast<float>(vWidth) / static_cast<float>(vHeight);
     float const nearPlane = 0.1f;
     float const farPlane = 5000.0f;
-    
+
     // Perspective projection for active camera
     // FOV is already in radians, no conversion needed
     return glm::perspective(activeCamera->fov(), aspectRatio, nearPlane, farPlane);
@@ -460,6 +386,8 @@ void RenderingSystem::uploadModelLightingUniforms(const std::shared_ptr<ShaderPr
     glUniform3fv(glGetUniformLocation(*shader, "viewPos"), 1, &viewPos[0]);
 }
 
+/* ----- Update step ----- */
+
 void RenderingSystem::update(float deltaTime)
 {
     if (freeCamera) {
@@ -476,6 +404,85 @@ void RenderingSystem::update(float deltaTime)
     render();
 }
 
+void RenderingSystem::processInput(float deltaTime)
+{
+    // Handle camera toggle with F key
+    if (inputManager->isKeyPressedOnce(GLFW_KEY_F)) {
+        toggleCamera();
+    }
+
+    processCameraInput(deltaTime);
+}
+
+void RenderingSystem::processCameraInput(float deltaTime)
+{
+    auto const cursorPosition = inputManager->cursorPosition();
+
+    // Check if we're using FreeCamera
+    if (activeCamera == freeCamera.get())
+    {
+        // FreeCamera uses mouse movement when right mouse button is held
+        if (inputManager->isMousePressed(GLFW_MOUSE_BUTTON_RIGHT)) {
+            if (cursorPositionIsSetOnce) {
+                auto const deltaPosition = cursorPosition - previousCursorPosition;
+                freeCamera->processMouseMovement(
+                    static_cast<float>(deltaPosition.x),
+                    static_cast<float>(-deltaPosition.y)  // Invert Y for natural feel
+                );
+            }
+        }
+
+        // IJKL/UO controls for FreeCamera movement (don't interfere with WASD game controls)
+        if (inputManager->isKeyPressed(GLFW_KEY_I))
+            freeCamera->processKeyboard(FreeCamera::Movement::FORWARD, deltaTime);
+        if (inputManager->isKeyPressed(GLFW_KEY_K))
+            freeCamera->processKeyboard(FreeCamera::Movement::BACKWARD, deltaTime);
+        if (inputManager->isKeyPressed(GLFW_KEY_J))
+            freeCamera->processKeyboard(FreeCamera::Movement::LEFT, deltaTime);
+        if (inputManager->isKeyPressed(GLFW_KEY_L))
+            freeCamera->processKeyboard(FreeCamera::Movement::RIGHT, deltaTime);
+        if (inputManager->isKeyPressed(GLFW_KEY_U))
+            freeCamera->processKeyboard(FreeCamera::Movement::UP, deltaTime);
+        if (inputManager->isKeyPressed(GLFW_KEY_O))
+            freeCamera->processKeyboard(FreeCamera::Movement::DOWN, deltaTime);
+    }
+    else if (activeCamera == turntableCamera.get())
+    {
+        // poll controller state first
+        inputManager->pollControllerInputs();
+
+        // TurnTableCamera uses right-click drag
+        if (inputManager->isMousePressed(GLFW_MOUSE_BUTTON_RIGHT)) {
+            if (cursorPositionIsSetOnce) {
+                float const aspectRatio = static_cast<float>(vWidth) / static_cast<float>(vHeight);
+                auto const deltaPosition = cursorPosition - previousCursorPosition;
+                turntableCamera->adjustTheta(-static_cast<float>(deltaPosition.x) * deltaTime * this->camSpeed * (1 / aspectRatio));
+                turntableCamera->adjustPhi(-static_cast<float>(deltaPosition.y) * deltaTime * this->camSpeed);
+            }
+        }
+        else if (inputManager->isControllerConnected())
+        {
+            float rx = inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_X);
+            float ry = inputManager->getControllerAxis(GLFW_GAMEPAD_AXIS_RIGHT_Y);
+
+            const float deadzone = 0.20f;
+            if (std::abs(rx) < deadzone) rx = 0.0f;
+            if (std::abs(ry) < deadzone) ry = 0.0f;
+
+            if (rx != 0.0f || ry != 0.0f) {
+                float const aspectRatio = static_cast<float>(vWidth) / static_cast<float>(vHeight);
+                float sensitivity = 2.0f;
+                turntableCamera->adjustTheta(-rx * deltaTime * this->camSpeed * sensitivity * (1.0f / aspectRatio));
+                turntableCamera->adjustPhi(-ry * deltaTime * this->camSpeed * sensitivity);
+            }
+        }
+    }
+
+    // Always update cursor position tracking
+    cursorPositionIsSetOnce = true;
+    previousCursorPosition = cursorPosition;
+}
+
 void RenderingSystem::updateSkyboxFollow()
 {
     for (auto const& entity : mEntities) {
@@ -490,19 +497,6 @@ void RenderingSystem::updateSkyboxFollow()
 
         auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
         transform.pos = activeCamera->position();
-    }
-}
-
-void RenderingSystem::onMouseWheelChange(double xOffset, double yOffset)
-{
-    (void)xOffset;
-    float scroll = -static_cast<float>(yOffset) * this->camZoomSpeed * 0.016f;
-
-    if (activeCamera == freeCamera.get()) {
-        freeCamera->adjustFov(scroll);
-    }
-    else if (activeCamera == turntableCamera.get()) {
-        turntableCamera->adjustDistance(scroll);
     }
 }
 
@@ -534,6 +528,19 @@ void RenderingSystem::updateCameraTarget(const glm::vec3& position, const glm::v
 
     if (racingCamera) {
         racingCamera->updateTarget(position, forward, velocity);
+    }
+}
+
+void RenderingSystem::onMouseWheelChange(double xOffset, double yOffset)
+{
+    (void)xOffset;
+    float scroll = -static_cast<float>(yOffset) * this->camZoomSpeed * 0.016f;
+
+    if (activeCamera == freeCamera.get()) {
+        freeCamera->adjustFov(scroll);
+    }
+    else if (activeCamera == turntableCamera.get()) {
+        turntableCamera->adjustDistance(scroll);
     }
 }
 

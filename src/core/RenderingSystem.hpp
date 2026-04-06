@@ -67,7 +67,6 @@ private:
 class RenderingSystem : public System {
 public:
     RenderingSystem(std::shared_ptr<InputManager> inputManager);
-    void cleanup();
 
     void update(float deltaTime);
 
@@ -79,7 +78,9 @@ public:
 
     Renderable getCubeRenderable(const std::string& texturePath);
 
+    void toggleCamera();
     void updateCameraTarget(const glm::vec3& position, const glm::vec3& forward, const glm::vec3& velocity);
+    void onMouseWheelChange(double xOffset, double yOffset);
     void setSnowFrame(const SnowFrame& frame);
 
     void enableStats(bool isEnabled) { statsData.isEnabled = isEnabled; }
@@ -96,9 +97,6 @@ public:
     // Parameters window dimension resized on callback
     int vWidth;
     int vHeight;
-
-    void onMouseWheelChange(double xOffset, double yOffset);
-    bool init();
 
 private:
     RenderingStats statsData{};
@@ -118,19 +116,19 @@ private:
     bool cursorPositionIsSetOnce = false;
     float lastFrameDeltaTime = 1.0f / 60.0f;
 
-    void processInput(float deltaTime);
-    void processCameraInput(float deltaTime);
-    void updateSkyboxFollow();
-
+    bool init();
+    void render();
     void renderRenderableEntity(Entity entity, const glm::mat4& view, const glm::mat4& projection);
     void renderModelEntity(Entity entity, const glm::mat4& view, const glm::mat4& projection);
     void renderParticles(const glm::mat4& view, const glm::mat4& projection);
 
-    void toggleCamera();
-    void render();
     glm::mat4 getProjectionMatrix() const;
     glm::mat4 buildModelMatrix(const PhysxTransform& transform, const glm::vec3& localOffset = glm::vec3(0.0f)) const;
     void uploadCommonMatrices(const std::shared_ptr<ShaderProgram>& shader,
             const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection) const;
     void uploadModelLightingUniforms(const std::shared_ptr<ShaderProgram>& shader) const;
+
+    void processInput(float deltaTime);
+    void processCameraInput(float deltaTime);
+    void updateSkyboxFollow();
 };
