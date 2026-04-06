@@ -223,38 +223,78 @@ Entity RenderingSystem::createModelEntity(const std::string& modelPath, const Mo
 
 /* ----- Render step ----- */
 
+RenderFrameContext RenderingSystem::buildFrameContext() const
+{
+    const float fov = activeCamera->fov();
+    const float aspectRatio = static_cast<float>(vWidth) / static_cast<float>(vHeight);
+    const float nearPlane = 0.1f;
+    const float farPlane = 5000.0f;
+
+    RenderFrameContext frameContext{};
+    frameContext.view = activeCamera->viewMatrix();
+    frameContext.projection = glm::perspective(fov, aspectRatio, nearPlane, farPlane);
+    frameContext.cameraPosition = activeCamera->position();
+    frameContext.viewportSize = glm::vec2(static_cast<float>(vWidth), static_cast<float>(vHeight));
+
+    return frameContext;
+}
+
 void RenderingSystem::render()
 {
     statsData.startFrame();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glm::mat4 view = activeCamera->viewMatrix();
-    glm::mat4 projection = getProjectionMatrix();
+    RenderFrameContext const frameContext = buildFrameContext();
 
     snowRenderer.beginFrame();
+
+    renderGeometryPass(frameContext);
+    renderModelsPass(frameContext);
+    renderParticlesPass(frameContext);
+
+    statsData.endFrame();
+}
+
+void RenderingSystem::renderGeometryPass(const RenderFrameContext& frameContext)
+{
+    statsData.startGeometryPass();
 
     for (auto const& entity : mEntities)
     {
         if (gCoordinator.HasComponent<Renderable>(entity))
         {
-            renderRenderableEntity(entity, view, projection);
-        }
-
-        else if (gCoordinator.HasComponent<ModelRenderable>(entity))
-        {
-            renderModelEntity(entity, view, projection);
+            renderRenderableEntity(entity, frameContext);
+            statsData.addRenderableDraw();
         }
     }
-
-    renderParticles(view, projection);
-    statsData.endFrame();
+    statsData.endGeometryPass();
 }
 
-void RenderingSystem::renderRenderableEntity(Entity entity, const glm::mat4& view, const glm::mat4& projection)
+void RenderingSystem::renderModelsPass(const RenderFrameContext& frameContext)
 {
-    statsData.startGeometryPass();
+    statsData.startModelPass();
 
+    for (auto const& entity : mEntities)
+    {
+        if (gCoordinator.HasComponent<ModelRenderable>(entity))
+        {
+            renderModelEntity(entity, frameContext);
+            statsData.addModelDraw();
+        }
+    }
+    statsData.endModelPass();
+}
+
+void RenderingSystem::renderParticlesPass(const RenderFrameContext& frameContext)
+{
+    statsData.startParticlePass();
+    snowRenderer.render(frameContext.view, frameContext.projection);
+    statsData.endParticlePass();
+}
+
+void RenderingSystem::renderRenderableEntity(Entity entity, const RenderFrameContext& frameContext)
+{
     auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
     auto& renderable = gCoordinator.GetComponent<Renderable>(entity);
 
@@ -273,7 +313,7 @@ void RenderingSystem::renderRenderableEntity(Entity entity, const glm::mat4& vie
     bindMaterial(renderable.material);
 
     glm::mat4 const modelMatrix = buildModelMatrix(transform, localOffset);
-    uploadCommonMatrices(renderable.material.shader, modelMatrix, view, projection);
+    uploadCommonMatrices(renderable.material.shader, modelMatrix, frameContext.view, frameContext.projection);
 
     renderable.geometry->bind();
 
@@ -293,21 +333,15 @@ void RenderingSystem::renderRenderableEntity(Entity entity, const glm::mat4& vie
         );
     }
 
-    statsData.addRenderableDraw();
-
     // Restore normal rendering state
     if (renderable.isSkybox) {
         glDepthMask(GL_TRUE);
         glFrontFace(GL_CCW);
     }
-
-    statsData.endGeometryPass();
 }
 
-void RenderingSystem::renderModelEntity(Entity entity, const glm::mat4& view, const glm::mat4& projection)
+void RenderingSystem::renderModelEntity(Entity entity, const RenderFrameContext& frameContext)
 {
-    statsData.startModelPass();
-
     auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
     auto& modelRenderable = gCoordinator.GetComponent<ModelRenderable>(entity);
     auto const material = modelRenderable.material;
@@ -316,24 +350,14 @@ void RenderingSystem::renderModelEntity(Entity entity, const glm::mat4& view, co
         bindMaterial(material);
 
         glm::mat4 const modelMatrix = buildModelMatrix(transform, modelRenderable.visualOffsetPos);
-        uploadCommonMatrices(material.shader, modelMatrix, view, projection);
+        uploadCommonMatrices(material.shader, modelMatrix, frameContext.view, frameContext.projection);
 
         if (material.useModelLighting) {
             uploadModelLightingUniforms(material.shader);
         }
 
         modelRenderable.modelLoader->draw(*material.shader);
-        statsData.addModelDraw();
     }
-
-    statsData.endModelPass();
-}
-
-void RenderingSystem::renderParticles(const glm::mat4& view, const glm::mat4& projection)
-{
-    statsData.startParticlePass();
-    snowRenderer.render(view, projection);
-    statsData.endParticlePass();
 }
 
 /* ----- Render helpers ----- */
@@ -353,22 +377,15 @@ void RenderingSystem::bindMaterial(const RenderMaterial& material) const
         );
     }
 
+    glm::vec2 const textureScrollOffset = material.useTextureScroll
+        ? material.textureScrollOffset
+        : glm::vec2(0.0f);
+
     glUniform2fv(
         glGetUniformLocation(*material.shader, "textureScrollOffset"),
         1,
-        glm::value_ptr(material.textureScrollOffset)
+        glm::value_ptr(textureScrollOffset)
     );
-}
-
-glm::mat4 RenderingSystem::getProjectionMatrix() const
-{
-    float const aspectRatio = static_cast<float>(vWidth) / static_cast<float>(vHeight);
-    float const nearPlane = 0.1f;
-    float const farPlane = 5000.0f;
-
-    // Perspective projection for active camera
-    // FOV is already in radians, no conversion needed
-    return glm::perspective(activeCamera->fov(), aspectRatio, nearPlane, farPlane);
 }
 
 glm::mat4 RenderingSystem::buildModelMatrix(const PhysxTransform& transform, const glm::vec3& localOffset) const

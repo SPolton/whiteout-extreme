@@ -33,6 +33,13 @@
 
 extern Coordinator gCoordinator;
 
+struct RenderFrameContext {
+    glm::mat4 view{};
+    glm::mat4 projection{};
+    glm::vec3 cameraPosition{};
+    glm::vec2 viewportSize{};
+};
+
 struct RenderingStats {
     bool isEnabled = false;
     float frameMs = 0.0f;
@@ -117,12 +124,15 @@ private:
 
     bool init();
     void render();
-    void renderRenderableEntity(Entity entity, const glm::mat4& view, const glm::mat4& projection);
-    void renderModelEntity(Entity entity, const glm::mat4& view, const glm::mat4& projection);
-    void renderParticles(const glm::mat4& view, const glm::mat4& projection);
+
+    RenderFrameContext buildFrameContext() const;
+    void renderGeometryPass(const RenderFrameContext& frameContext);
+    void renderModelsPass(const RenderFrameContext& frameContext);
+    void renderParticlesPass(const RenderFrameContext& frameContext);
+    void renderRenderableEntity(Entity entity, const RenderFrameContext& frameContext);
+    void renderModelEntity(Entity entity, const RenderFrameContext& frameContext);
 
     void bindMaterial(const RenderMaterial& materialState) const;
-    glm::mat4 getProjectionMatrix() const;
     glm::mat4 buildModelMatrix(const PhysxTransform& transform, const glm::vec3& localOffset = glm::vec3(0.0f)) const;
     void uploadCommonMatrices(const std::shared_ptr<ShaderProgram>& shader,
             const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection) const;
