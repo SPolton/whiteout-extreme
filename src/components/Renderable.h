@@ -6,26 +6,33 @@
 #include "core/render/ShaderProgram.hpp"
 #include <memory>
 
+// Shared material
+struct RenderMaterial {
+    std::shared_ptr<ShaderProgram> shader;
+    std::shared_ptr<Texture> baseTexture;
+    glm::vec2 textureScrollOffset{};
+    bool useTextureScroll = false;
+    bool useModelLighting = false;
+};
+
 struct Renderable {
     std::shared_ptr<GPU_Geometry> geometry;
     std::shared_ptr<CPU_Geometry> cpuData;
-    std::shared_ptr<ShaderProgram> shader;
-    std::shared_ptr<Texture> texture;
+    RenderMaterial material;
     bool isSkybox = false;
 
     // For rolling texture effect
-    bool hasRollingTexture = false;
     float scrollScale = 0.1f; // Adjust this to control scroll speed
-    glm::vec2 textureScrollOffset{};
 
     // Update rolling texture based on position
+    // Only calculates offset if material.useTextureScroll is enabled
     void updateRollingTexture(glm::vec3 position) {
-        if (!hasRollingTexture) return;
+        if (!material.useTextureScroll) return;
 
         position = position * scrollScale;
 
-        textureScrollOffset.x = position.x * scrollScale;
-        textureScrollOffset.y = position.z * scrollScale;
+        material.textureScrollOffset.x = position.x * scrollScale;
+        material.textureScrollOffset.y = position.z * scrollScale;
     }
 };
 
@@ -34,7 +41,7 @@ struct Renderable {
 // this component owns a loaded Model with multiple meshes and textures
 struct ModelRenderable {
     std::shared_ptr<ModelLoader> modelLoader;  // Shared ownership
-    std::shared_ptr<ShaderProgram> shader;     // Shared ownership
+    RenderMaterial material;
 
     glm::vec3 visualOffsetPos = glm::vec3(0.0f);
 };

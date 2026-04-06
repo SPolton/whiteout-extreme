@@ -74,8 +74,10 @@ Renderable RenderingSystem::getCubeRenderable(const std::string& texturePath)
     return Renderable{
         .geometry = assetManager.loadGeometry("cube", ShapeGenerator::cube()),
         .cpuData = assetManager.getCPUGeometry("cube"),
-        .shader = assetManager.loadShader("textured"),
-        .texture = assetManager.loadTexture(texturePath, GL_LINEAR)
+        .material = RenderMaterial{
+            .shader = assetManager.loadShader("textured"),
+            .baseTexture = assetManager.loadTexture(texturePath, GL_LINEAR),
+        }
     };
 }
 
@@ -110,8 +112,10 @@ Entity RenderingSystem::createPlaneEntity(const std::string& texturePath, const 
         Renderable{
             .geometry = assetManager.loadGeometry(geomKey, planeCPU),
             .cpuData = assetManager.getCPUGeometry(geomKey),
-            .shader = assetManager.loadShader("textured"),
-            .texture = assetManager.loadTexture(texturePath, config.textureFilterMode, config.textureWrapMode)
+            .material = RenderMaterial{
+                .shader = assetManager.loadShader("textured"),
+                .baseTexture = assetManager.loadTexture(texturePath, config.textureFilterMode, config.textureWrapMode),
+            }
         }
     );
 
@@ -164,8 +168,10 @@ Entity RenderingSystem::createSphereEntity(const std::string& texturePath, const
         Renderable{
             .geometry = assetManager.loadGeometry(geomKey, sphereCPU),
             .cpuData = assetManager.getCPUGeometry(geomKey),
-            .shader = assetManager.loadShader("textured"),
-            .texture = assetManager.loadTexture(texturePath, config.textureFilterMode, config.textureWrapMode),
+            .material = RenderMaterial{
+                .shader = assetManager.loadShader("textured"),
+                .baseTexture = assetManager.loadTexture(texturePath, config.textureFilterMode, config.textureWrapMode),
+            },
             .isSkybox = config.isSkybox
         }
     );
@@ -195,7 +201,14 @@ Entity RenderingSystem::createModelEntity(const std::string& modelPath, const Mo
         
         gCoordinator.AddComponent(
             model,
-            ModelRenderable{modelLoader, assetManager.loadShader("model")}
+            ModelRenderable{
+                .modelLoader = modelLoader,
+                .material = RenderMaterial{
+                    .shader = assetManager.loadShader("model"),
+                    .useTextureScroll = false,
+                    .useModelLighting = true
+                }
+            }
         );
     }
     catch (const std::exception& e) {
@@ -246,8 +259,6 @@ void RenderingSystem::renderRenderableEntity(Entity entity, const glm::mat4& vie
     auto& renderable = gCoordinator.GetComponent<Renderable>(entity);
 
     renderable.updateRollingTexture(transform.pos);
-    auto materialState = buildMaterialState(renderable);
-    materialState.textureScrollOffset = renderable.textureScrollOffset;
 
     if (renderable.isSkybox) {
         glDepthMask(GL_FALSE); // Don't write to depth buffer
@@ -259,10 +270,10 @@ void RenderingSystem::renderRenderableEntity(Entity entity, const glm::mat4& vie
         localOffset = glm::vec3(0.0f, 0.75f, 2.0f);
     }
 
-    bindMaterialState(materialState);
+    bindMaterial(renderable.material);
 
     glm::mat4 const modelMatrix = buildModelMatrix(transform, localOffset);
-    uploadCommonMatrices(materialState.shader, modelMatrix, view, projection);
+    uploadCommonMatrices(renderable.material.shader, modelMatrix, view, projection);
 
     renderable.geometry->bind();
 
@@ -299,19 +310,19 @@ void RenderingSystem::renderModelEntity(Entity entity, const glm::mat4& view, co
 
     auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
     auto& modelRenderable = gCoordinator.GetComponent<ModelRenderable>(entity);
-    auto const materialState = buildMaterialState(modelRenderable);
+    auto const material = modelRenderable.material;
 
-    if (modelRenderable.modelLoader && materialState.shader) {
-        bindMaterialState(materialState);
+    if (modelRenderable.modelLoader && material.shader) {
+        bindMaterial(material);
 
         glm::mat4 const modelMatrix = buildModelMatrix(transform, modelRenderable.visualOffsetPos);
-        uploadCommonMatrices(materialState.shader, modelMatrix, view, projection);
+        uploadCommonMatrices(material.shader, modelMatrix, view, projection);
 
-        if (materialState.useModelLighting) {
-            uploadModelLightingUniforms(materialState.shader);
+        if (material.useModelLighting) {
+            uploadModelLightingUniforms(material.shader);
         }
 
-        modelRenderable.modelLoader->draw(*materialState.shader);
+        modelRenderable.modelLoader->draw(*material.shader);
         statsData.addModelDraw();
     }
 
@@ -327,50 +338,26 @@ void RenderingSystem::renderParticles(const glm::mat4& view, const glm::mat4& pr
 
 /* ----- Render helpers ----- */
 
-RenderingSystem::RenderMaterialState RenderingSystem::buildMaterialState(const Renderable& renderable) const
+void RenderingSystem::bindMaterial(const RenderMaterial& material) const
 {
-    RenderMaterialState materialState;
-    materialState.shader = renderable.shader;
-    materialState.baseColorTexture = renderable.texture;
-    materialState.textureScrollOffset = renderable.textureScrollOffset;
-    materialState.useTextureScroll = true;
-    materialState.useModelLighting = false;
-    return materialState;
-}
+    if (!material.shader) return;
 
-RenderingSystem::RenderMaterialState RenderingSystem::buildMaterialState(const ModelRenderable& modelRenderable) const
-{
-    RenderMaterialState materialState;
-    materialState.shader = modelRenderable.shader;
-    materialState.useTextureScroll = false;
-    materialState.useModelLighting = true;
-    return materialState;
-}
+    material.shader->use();
 
-void RenderingSystem::bindMaterialState(const RenderMaterialState& materialState) const
-{
-    if (!materialState.shader) {
-        return;
-    }
-
-    materialState.shader->use();
-
-    if (materialState.baseColorTexture) {
+    if (material.baseTexture) {
         glActiveTexture(GL_TEXTURE0);
-        materialState.baseColorTexture->bind();
+        material.baseTexture->bind();
         glUniform1i(
-            glGetUniformLocation(*materialState.shader, "baseColorTexture"),
+            glGetUniformLocation(*material.shader, "baseColorTexture"),
             0
         );
     }
 
-    if (materialState.useTextureScroll) {
-        glUniform2fv(
-            glGetUniformLocation(*materialState.shader, "textureScrollOffset"),
-            1,
-            glm::value_ptr(materialState.textureScrollOffset)
-        );
-    }
+    glUniform2fv(
+        glGetUniformLocation(*material.shader, "textureScrollOffset"),
+        1,
+        glm::value_ptr(material.textureScrollOffset)
+    );
 }
 
 glm::mat4 RenderingSystem::getProjectionMatrix() const

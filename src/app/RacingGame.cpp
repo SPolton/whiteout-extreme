@@ -294,7 +294,7 @@ void RacingGame::createWorldEntities()
     
     // Add rendering to the avalanche
     auto avCubeRender = renderingSystem->getCubeRenderable("assets/textures/snowball.png");
-    avCubeRender.hasRollingTexture = true;
+    avCubeRender.material.useTextureScroll = true;
     gCoordinator.AddComponent(AvalancheEntity, avCubeRender);
 
     auto& avalancheInstance = gCoordinator.GetComponent<AvalancheComponent>(AvalancheEntity).instance;

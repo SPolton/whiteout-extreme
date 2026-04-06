@@ -98,14 +98,6 @@ public:
     int vHeight;
 
 private:
-    struct RenderMaterialState {
-        std::shared_ptr<ShaderProgram> shader;
-        std::shared_ptr<Texture> baseColorTexture;
-        glm::vec2 textureScrollOffset{};
-        bool useTextureScroll = false;
-        bool useModelLighting = false;
-    };
-
     RenderingStats statsData{};
     AssetManager& assetManager = AssetManager::getInstance();
     SnowRenderer snowRenderer;
@@ -129,10 +121,7 @@ private:
     void renderModelEntity(Entity entity, const glm::mat4& view, const glm::mat4& projection);
     void renderParticles(const glm::mat4& view, const glm::mat4& projection);
 
-    RenderMaterialState buildMaterialState(const Renderable& renderable) const;
-    RenderMaterialState buildMaterialState(const ModelRenderable& modelRenderable) const;
-    void bindMaterialState(const RenderMaterialState& materialState) const;
-
+    void bindMaterial(const RenderMaterial& materialState) const;
     glm::mat4 getProjectionMatrix() const;
     glm::mat4 buildModelMatrix(const PhysxTransform& transform, const glm::vec3& localOffset = glm::vec3(0.0f)) const;
     void uploadCommonMatrices(const std::shared_ptr<ShaderProgram>& shader,
