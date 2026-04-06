@@ -33,11 +33,20 @@
 
 extern Coordinator gCoordinator;
 
+struct LightingState {
+    glm::vec3 lightPosition = glm::vec3(0.0f, 20.0f, 0.0f);
+    glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    glm::vec3 lightDirection = glm::vec3(-0.2f, -1.0f, -0.3f);
+    bool shadowsEnabled = false;
+    glm::mat4 lightViewProjection = glm::mat4(1.0f);
+};
+
 struct RenderFrameContext {
     glm::mat4 view{};
     glm::mat4 projection{};
     glm::vec3 cameraPosition{};
     glm::vec2 viewportSize{};
+    LightingState lighting{};
 };
 
 struct RenderingStats {
@@ -106,6 +115,7 @@ public:
 
 private:
     RenderingStats statsData{};
+    LightingState lightingState{};
     AssetManager& assetManager = AssetManager::getInstance();
     SnowRenderer snowRenderer;
 
@@ -136,7 +146,7 @@ private:
     glm::mat4 buildModelMatrix(const PhysxTransform& transform, const glm::vec3& localOffset = glm::vec3(0.0f)) const;
     void uploadCommonMatrices(const std::shared_ptr<ShaderProgram>& shader,
             const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection) const;
-    void uploadModelLightingUniforms(const std::shared_ptr<ShaderProgram>& shader) const;
+    void uploadLightingUniforms(const std::shared_ptr<ShaderProgram>& shader, const RenderFrameContext& frameContext) const;
     
     void processInput(float deltaTime);
     void processCameraInput(float deltaTime);

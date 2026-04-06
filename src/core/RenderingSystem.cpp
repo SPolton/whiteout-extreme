@@ -235,6 +235,7 @@ RenderFrameContext RenderingSystem::buildFrameContext() const
     frameContext.projection = glm::perspective(fov, aspectRatio, nearPlane, farPlane);
     frameContext.cameraPosition = activeCamera->position();
     frameContext.viewportSize = glm::vec2(static_cast<float>(vWidth), static_cast<float>(vHeight));
+    frameContext.lighting = lightingState;
 
     return frameContext;
 }
@@ -328,8 +329,7 @@ void RenderingSystem::renderRenderableEntity(Entity entity, const RenderFrameCon
     else {
         glDrawArrays(
             GL_TRIANGLES,
-            0,
-            static_cast<GLsizei>(renderable.cpuData->positions.size())
+            0, static_cast<GLsizei>(renderable.cpuData->positions.size())
         );
     }
 
@@ -353,7 +353,7 @@ void RenderingSystem::renderModelEntity(Entity entity, const RenderFrameContext&
         uploadCommonMatrices(material.shader, modelMatrix, frameContext.view, frameContext.projection);
 
         if (material.useModelLighting) {
-            uploadModelLightingUniforms(material.shader);
+            uploadLightingUniforms(material.shader, frameContext);
         }
 
         modelRenderable.modelLoader->draw(*material.shader);
@@ -369,6 +369,7 @@ void RenderingSystem::bindMaterial(const RenderMaterial& material) const
     material.shader->use();
 
     if (material.baseTexture) {
+        // Explicitly bind base texture to slot 0 to match textured shader sampler layout.
         glActiveTexture(GL_TEXTURE0);
         material.baseTexture->bind();
         glUniform1i(
@@ -383,8 +384,7 @@ void RenderingSystem::bindMaterial(const RenderMaterial& material) const
 
     glUniform2fv(
         glGetUniformLocation(*material.shader, "textureScrollOffset"),
-        1,
-        glm::value_ptr(textureScrollOffset)
+        1, glm::value_ptr(textureScrollOffset)
     );
 }
 
@@ -417,15 +417,27 @@ void RenderingSystem::uploadCommonMatrices(const std::shared_ptr<ShaderProgram>&
     );
 }
 
-void RenderingSystem::uploadModelLightingUniforms(const std::shared_ptr<ShaderProgram>& shader) const
+void RenderingSystem::uploadLightingUniforms(
+    const std::shared_ptr<ShaderProgram>& shader,
+    const RenderFrameContext& frameContext) const
 {
-    glm::vec3 const lightPos(0.0f, 20.0f, 0.0f);
-    glm::vec3 const lightColor(1.0f, 1.0f, 1.0f);
-    glm::vec3 const viewPos = activeCamera->position();
+    // glGetUniformLocation may return -1 for shaders that optimize out optional fields
+    // glUniform* then becomes a no-op (nothing happens)
+    // This lets generic uploads work with shader versions without branching
+    glUniform3fv(
+        glGetUniformLocation(*shader, "lightPos"),
+        1, glm::value_ptr(frameContext.lighting.lightPosition)
+    );
 
-    glUniform3fv(glGetUniformLocation(*shader, "lightPos"), 1, &lightPos[0]);
-    glUniform3fv(glGetUniformLocation(*shader, "lightColor"), 1, &lightColor[0]);
-    glUniform3fv(glGetUniformLocation(*shader, "viewPos"), 1, &viewPos[0]);
+    glUniform3fv(
+        glGetUniformLocation(*shader, "lightColor"),
+        1, glm::value_ptr(frameContext.lighting.lightColor)
+    );
+
+    glUniform3fv(
+        glGetUniformLocation(*shader, "viewPos"),
+        1, glm::value_ptr(frameContext.cameraPosition)
+    );
 }
 
 /* ----- Update step ----- */
