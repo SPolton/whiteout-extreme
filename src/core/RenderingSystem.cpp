@@ -135,6 +135,7 @@ bool RenderingSystem::init()
     racingCamera = std::make_unique<RacingCamera>();
     turntableCamera = std::make_unique<TurnTableCamera>(*targetTransform);
     turntableCamera->adjustTheta(glm::radians(180.f));
+    turntableCamera->adjustDistance(3.f);
     freeCamera = std::make_unique<FreeCamera>();
     activeCamera = racingCamera.get();  // Non-owning raw pointer to camera
     
@@ -287,6 +288,8 @@ Entity RenderingSystem::createModelEntity(const std::string& modelPath, const Mo
 
 void RenderingSystem::render()
 {
+    statsData.startFrame();
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glm::mat4 view = activeCamera->viewMatrix();
@@ -294,21 +297,13 @@ void RenderingSystem::render()
 
     snowRenderer.beginFrame();
 
-    // Iterate through all entities that the RenderingSystem tracks
-    // (entities with Transform component)
     for (auto const& entity : mEntities)
     {
-        auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
-        
-        // Calculate model matrix from transform
-        glm::mat4 modelMatrix =
-            glm::translate(glm::mat4(1.f), transform.pos)
-            * glm::toMat4(transform.rot)
-            * glm::scale(glm::mat4(1.f), transform.scale);
-
-        // Check if entity has a simple Renderable component (sphere, cube, etc.)
         if (gCoordinator.HasComponent<Renderable>(entity))
         {
+            statsData.startGeometryPass();
+
+            auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
             auto& renderable = gCoordinator.GetComponent<Renderable>(entity);
 
             renderable.updateRollingTexture(transform.pos);
@@ -344,14 +339,14 @@ void RenderingSystem::render()
                 glm::value_ptr(renderable.textureScrollOffset)
             );
 
-            glm::mat4 model =
+            glm::mat4 modelMatrix =
                 glm::translate(glm::mat4(1.f), visualPos)
                 * glm::toMat4(transform.rot)
                 * glm::scale(glm::mat4(1.f), transform.scale);
 
             glUniformMatrix4fv(
                 glGetUniformLocation(*renderable.shader, "model"),
-                1, GL_FALSE, &model[0][0]
+                1, GL_FALSE, &modelMatrix[0][0]
             );
 
             glUniformMatrix4fv(
@@ -382,16 +377,22 @@ void RenderingSystem::render()
                 );
             }
 
+            statsData.addRenderableDraw();
+
             // Restore normal rendering state if this was skybox
             if (renderable.isSkybox) {
                 glDepthMask(GL_TRUE);
                 glFrontFace(GL_CCW);
             }
+
+            statsData.endGeometryPass();
         }
 
-        // Check if entity has a ModelRenderable component (complex 3D models)
         else if (gCoordinator.HasComponent<ModelRenderable>(entity))
         {
+            statsData.startModelPass();
+
+            auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
             auto& modelRenderable = gCoordinator.GetComponent<ModelRenderable>(entity);
 
             if (modelRenderable.modelLoader && modelRenderable.shader) {
@@ -400,7 +401,7 @@ void RenderingSystem::render()
                 // --- COMPUTE NEW MATRIX WITH OFFSET FOR SNOWMOBILES ---
                 glm::vec3 offsetInWorldSpace = transform.rot * modelRenderable.visualOffsetPos;
 
-                glm::mat4 correctedModelMatrix =
+                glm::mat4 modelMatrix =
                     glm::translate(glm::mat4(1.0f), transform.pos + offsetInWorldSpace)
                     * glm::toMat4(transform.rot)
                     * glm::scale(glm::mat4(1.0f), transform.scale);
@@ -420,7 +421,7 @@ void RenderingSystem::render()
                 // Set model matrix using the entity's transform
                 glUniformMatrix4fv(
                     glGetUniformLocation(*modelRenderable.shader, "model"),
-                    1, GL_FALSE, &correctedModelMatrix[0][0]
+                    1, GL_FALSE, &modelMatrix[0][0]
                 );
 
                 // Set lighting uniforms for the model shader
@@ -434,11 +435,18 @@ void RenderingSystem::render()
 
                 // Draw the model (handles multiple meshes internally)
                 modelRenderable.modelLoader->draw(*modelRenderable.shader);
+                statsData.addModelDraw();
             }
+
+            statsData.endModelPass();
         }
     }
 
+    statsData.startParticlePass();
+
     snowRenderer.render(view, projection);
+    statsData.endParticlePass();
+    statsData.endFrame();
 }
 
 glm::mat4 RenderingSystem::getProjectionMatrix() const

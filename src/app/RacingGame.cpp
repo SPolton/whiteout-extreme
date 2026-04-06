@@ -925,7 +925,8 @@ void RacingGame::updateImGui() {
 void RacingGame::syncImgui() {
     renderingSystem->camSpeed = imguiPanel->camSpeed;
     renderingSystem->camZoomSpeed = imguiPanel->camZoomSpeed;
-    //renderingSystem->wireframeMode = imguiPanel->showWireframe;
+    renderingSystem->enableStats(imguiPanel->showDebugWindow);
+    imguiPanel->renderInfo = renderingSystem->renderStats().toString();
 
     // Sync particles enabled state
     gCoordinator.GetComponent<SnowEmitter>(AvalancheEntity).enabled = imguiPanel->isParticlesEnabled;

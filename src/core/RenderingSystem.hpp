@@ -27,15 +27,47 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include <chrono>
 #include <memory>
+#include <string>
 #include <vector>
 
 extern Coordinator gCoordinator;
 
+struct RenderingStats {
+    bool isEnabled = false;
+    float frameMs = 0.0f;
+    float geometryMs = 0.0f;
+    float modelMs = 0.0f;
+    float particlesMs = 0.0f;
+    uint32_t renderableDrawCalls = 0;
+    uint32_t modelDrawCalls = 0;
+
+    std::string toString() const;
+
+    void startFrame();
+    void startGeometryPass();
+    void endGeometryPass();
+    void startModelPass();
+    void endModelPass();
+    void startParticlePass();
+    void endParticlePass();
+    void endFrame();
+    void addRenderableDraw() { if (isEnabled) { ++renderableDrawCalls; } }
+    void addModelDraw() { if (isEnabled) { ++modelDrawCalls; } }
+private:
+    std::chrono::steady_clock::time_point geometryStart{};
+    std::chrono::steady_clock::time_point modelStart{};
+    std::chrono::steady_clock::time_point particlesStart{};
+    bool geometryPassActive = false;
+    bool modelPassActive = false;
+    bool particlePassActive = false;
+};
+
 class RenderingSystem : public System {
 public:
-RenderingSystem(std::shared_ptr<InputManager> inputManager);
-void cleanup();
+    RenderingSystem(std::shared_ptr<InputManager> inputManager);
+    void cleanup();
 
     void update(float deltaTime);
 
@@ -49,6 +81,10 @@ void cleanup();
 
     void updateCameraTarget(const glm::vec3& position, const glm::vec3& forward, const glm::vec3& velocity);
     void setSnowFrame(const SnowFrame& frame);
+
+    void enableStats(bool isEnabled) { statsData.isEnabled = isEnabled; }
+    const RenderingStats& renderStats() const { return statsData; }
+
     glm::vec3 getCameraForward() const { return activeCamera->forward(); };
     glm::vec3 getCameraRight() const { return activeCamera->right(); };
     std::string getActiveCameraInfo() const { return activeCamera->toString(); };
@@ -65,6 +101,7 @@ void cleanup();
     bool init();
 
 private:
+    RenderingStats statsData{};
     AssetManager& assetManager = AssetManager::getInstance();
     SnowRenderer snowRenderer;
 
