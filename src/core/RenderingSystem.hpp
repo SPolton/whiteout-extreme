@@ -12,7 +12,6 @@
 #include "core/scene/RacingCamera.hpp"
 #include "core/scene/Transform.hpp"
 
-#include "components/Model.h"
 #include "components/Renderable.h"
 
 #include "ecs/Coordinator.hpp"

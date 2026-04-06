@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/assets/ModelLoader.hpp"
 #include "core/assets/Texture.hpp"
 #include "core/buffer/Geometry.hpp"
 #include "core/render/ShaderProgram.hpp"
@@ -26,4 +27,14 @@ struct Renderable {
         textureScrollOffset.x = position.x * scrollScale;
         textureScrollOffset.y = position.z * scrollScale;
     }
+};
+
+// Component for entities that render complex 3D models (loaded from OBJ and FBX)
+// Unlike the simple Renderable component which uses pre-generated geometry,
+// this component owns a loaded Model with multiple meshes and textures
+struct ModelRenderable {
+    std::shared_ptr<ModelLoader> modelLoader;  // Shared ownership
+    std::shared_ptr<ShaderProgram> shader;     // Shared ownership
+
+    glm::vec3 visualOffsetPos = glm::vec3(0.0f);
 };

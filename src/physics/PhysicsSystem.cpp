@@ -1,7 +1,6 @@
 #include "PhysicsSystem.hpp"
 #include "common/Flags.hpp"
 #include "common/PVD.h"
-#include "components/Model.h"
 #include "utils/logger.h"
 
 // OK in cpp files, not in headers
