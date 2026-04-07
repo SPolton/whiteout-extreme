@@ -19,6 +19,422 @@ RenderingSystem::RenderingSystem(
     }
 }
 
+bool RenderingSystem::init()
+{
+    logger::info("OpenGL Version: {0}", (const char*)glGetString(GL_VERSION));
+    logger::info("OpenGL Renderer: {0}", (const char*)glGetString(GL_RENDERER));
+
+    // Create object tracking transform for camera (vehicle tracking)
+    targetTransform = std::make_unique<SceneTransform>();
+    targetTransform->setPosition(glm::vec3(0.f, 0.f, 0.f));
+
+    // Create cameras
+    racingCamera = std::make_unique<RacingCamera>();
+    turntableCamera = std::make_unique<TurnTableCamera>(*targetTransform);
+    turntableCamera->adjustTheta(glm::radians(180.f));
+    turntableCamera->adjustDistance(3.f);
+    freeCamera = std::make_unique<FreeCamera>();
+    activeCamera = racingCamera.get();  // Non-owning raw pointer to camera
+    
+    logger::info("Camera initialized");
+
+    // Enable depth testing
+    glEnable(GL_DEPTH_TEST);
+
+    return true;
+}
+
+/* ----- Entity creation ----- */
+
+Renderable RenderingSystem::getCubeRenderable(const std::string& texturePath)
+{
+    return Renderable{
+        .geometry = assetManager.loadGeometry("cube", ShapeGenerator::cube()),
+        .cpuData = assetManager.getCPUGeometry("cube"),
+        .material = RenderMaterial{
+            .shader = assetManager.loadShader("textured"),
+            .baseTexture = assetManager.loadTexture(texturePath, GL_LINEAR),
+        }
+    };
+}
+
+Entity RenderingSystem::createPlaneEntity(const std::string& texturePath, const PlaneConfig& config)
+{
+    Entity plane = gCoordinator.CreateEntity();
+
+    gCoordinator.AddComponent(
+        plane,
+        PhysxTransform{
+            config.position,
+            config.rotation,
+            config.scale
+        }
+    );
+
+    std::string geomKey;
+    CPU_Geometry planeCPU;
+    
+    if (config.isInfinite) {
+        geomKey = "infinite_plane";
+        planeCPU = ShapeGenerator::infinitePlane(config.infinitePlaneSize, config.uvRepeat);
+        logger::info("Infinite plane entity created with UV repeat: {}", config.uvRepeat);
+    } else {
+        geomKey = "plane";
+        planeCPU = ShapeGenerator::plane(config.size);
+        logger::info("Plane entity created with size: {}", config.size);
+    }
+
+    gCoordinator.AddComponent(
+        plane,
+        Renderable{
+            .geometry = assetManager.loadGeometry(geomKey, planeCPU),
+            .cpuData = assetManager.getCPUGeometry(geomKey),
+            .material = RenderMaterial{
+                .shader = assetManager.loadShader("textured"),
+                .baseTexture = assetManager.loadTexture(texturePath, config.textureFilterMode, config.textureWrapMode),
+            }
+        }
+    );
+
+    return plane;
+}
+
+Entity RenderingSystem::createBoxEntity(const std::string& texturePath, const render::BoxConfig& config)
+{
+    Entity box = gCoordinator.CreateEntity();
+
+    gCoordinator.AddComponent(
+        box,
+        PhysxTransform{
+            config.position,
+            config.rotation,
+            config.scale
+        }
+    );
+
+    gCoordinator.AddComponent(
+        box,
+        getCubeRenderable(texturePath)
+    );
+
+    logger::info("Box entity created at ({}, {}, {})", config.position.x, config.position.y, config.position.z);
+    return box;
+}
+
+Entity RenderingSystem::createSphereEntity(const std::string& texturePath, const SphereConfig& config)
+{
+    Entity sphere = gCoordinator.CreateEntity();
+
+    gCoordinator.AddComponent(
+        sphere,
+        PhysxTransform{
+            config.position,
+            config.rotation,
+            config.scale
+        }
+    );
+
+    // Generate geometry key based on config
+    std::string geomKey = config.isSkybox ? "skybox" : "sphere";
+    
+    // Create geometry with specified parameters
+    CPU_Geometry sphereCPU = ShapeGenerator::sphere(config.radius, config.slices, config.stacks);
+    
+    gCoordinator.AddComponent(
+        sphere,
+        Renderable{
+            .geometry = assetManager.loadGeometry(geomKey, sphereCPU),
+            .cpuData = assetManager.getCPUGeometry(geomKey),
+            .material = RenderMaterial{
+                .shader = assetManager.loadShader("textured"),
+                .baseTexture = assetManager.loadTexture(texturePath, config.textureFilterMode, config.textureWrapMode),
+            },
+            .isSkybox = config.isSkybox
+        }
+    );
+
+    logger::info("Sphere entity created (radius={}, skybox={}) with texture: {}", 
+                 config.radius, config.isSkybox, texturePath);
+
+    return sphere;
+}
+
+Entity RenderingSystem::createModelEntity(const std::string& modelPath, const ModelConfig& config)
+{
+    Entity model = gCoordinator.CreateEntity();
+
+    gCoordinator.AddComponent(
+        model,
+        PhysxTransform{
+            config.position,
+            config.rotation,
+            config.scale
+        }
+    );
+
+    try {
+        auto modelLoader = std::make_shared<ModelLoader>(modelPath, false);
+        logger::info("Model loaded successfully: {} with {} meshes", modelPath, modelLoader->getMeshCount());
+        
+        gCoordinator.AddComponent(
+            model,
+            ModelRenderable{
+                .modelLoader = modelLoader,
+                .material = RenderMaterial{
+                    .shader = assetManager.loadShader("model"),
+                    .useTextureScroll = false,
+                    .useModelLighting = true
+                }
+            }
+        );
+    }
+    catch (const std::exception& e) {
+        logger::error("Failed to load model {}: {}", modelPath, e.what());
+        throw;
+    }
+
+    logger::info("Model entity created: {}", modelPath);
+
+    return model;
+}
+
+/* ----- Render step ----- */
+
+RenderFrameContext RenderingSystem::buildFrameContext() const
+{
+    const float fov = activeCamera->fov();
+    const float aspectRatio = static_cast<float>(vWidth) / static_cast<float>(vHeight);
+    const float nearPlane = 0.1f;
+    const float farPlane = 5000.0f;
+
+    RenderFrameContext frameContext{};
+    frameContext.view = activeCamera->viewMatrix();
+    frameContext.projection = glm::perspective(fov, aspectRatio, nearPlane, farPlane);
+    frameContext.cameraPosition = activeCamera->position();
+    frameContext.viewportSize = glm::vec2(static_cast<float>(vWidth), static_cast<float>(vHeight));
+    frameContext.lighting = lightingState;
+
+    return frameContext;
+}
+
+void RenderingSystem::render()
+{
+    statsData.startFrame();
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    RenderFrameContext const frameContext = buildFrameContext();
+
+    snowRenderer.beginFrame();
+
+    renderGeometryPass(frameContext);
+    renderModelsPass(frameContext);
+    renderParticlesPass(frameContext);
+
+    statsData.endFrame();
+}
+
+void RenderingSystem::renderGeometryPass(const RenderFrameContext& frameContext)
+{
+    statsData.startGeometryPass();
+
+    for (auto const& entity : mEntities)
+    {
+        if (gCoordinator.HasComponent<Renderable>(entity))
+        {
+            renderRenderableEntity(entity, frameContext);
+            statsData.addRenderableDraw();
+        }
+    }
+    statsData.endGeometryPass();
+}
+
+void RenderingSystem::renderModelsPass(const RenderFrameContext& frameContext)
+{
+    statsData.startModelPass();
+
+    for (auto const& entity : mEntities)
+    {
+        if (gCoordinator.HasComponent<ModelRenderable>(entity))
+        {
+            renderModelEntity(entity, frameContext);
+            statsData.addModelDraw();
+        }
+    }
+    statsData.endModelPass();
+}
+
+void RenderingSystem::renderParticlesPass(const RenderFrameContext& frameContext)
+{
+    statsData.startParticlePass();
+    snowRenderer.render(frameContext.view, frameContext.projection);
+    statsData.endParticlePass();
+}
+
+void RenderingSystem::renderRenderableEntity(Entity entity, const RenderFrameContext& frameContext)
+{
+    auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
+    auto& renderable = gCoordinator.GetComponent<Renderable>(entity);
+
+    renderable.updateRollingTexture(transform.pos);
+
+    if (renderable.isSkybox) {
+        glDepthMask(GL_FALSE); // Don't write to depth buffer
+        glFrontFace(GL_CW);    // Reverse winding order to see inside
+    }
+
+    glm::vec3 localOffset(0.0f);
+    if (gCoordinator.HasComponent<VehicleComponent>(entity)) {
+        localOffset = glm::vec3(0.0f, 0.75f, 2.0f);
+    }
+
+    bindMaterial(renderable.material);
+
+    glm::mat4 const modelMatrix = buildModelMatrix(transform, localOffset);
+    uploadCommonMatrices(renderable.material.shader, modelMatrix, frameContext.view, frameContext.projection);
+
+    renderable.geometry->bind();
+
+    if (!renderable.cpuData->indices.empty()) {
+        glDrawElements(
+            GL_TRIANGLES,
+            static_cast<GLsizei>(renderable.cpuData->indices.size()),
+            GL_UNSIGNED_INT,
+            nullptr
+        );
+    }
+    else {
+        glDrawArrays(
+            GL_TRIANGLES,
+            0, static_cast<GLsizei>(renderable.cpuData->positions.size())
+        );
+    }
+
+    // Restore normal rendering state
+    if (renderable.isSkybox) {
+        glDepthMask(GL_TRUE);
+        glFrontFace(GL_CCW);
+    }
+}
+
+void RenderingSystem::renderModelEntity(Entity entity, const RenderFrameContext& frameContext)
+{
+    auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
+    auto& modelRenderable = gCoordinator.GetComponent<ModelRenderable>(entity);
+    auto const material = modelRenderable.material;
+
+    if (modelRenderable.modelLoader && material.shader) {
+        bindMaterial(material);
+
+        glm::mat4 const modelMatrix = buildModelMatrix(transform, modelRenderable.visualOffsetPos);
+        uploadCommonMatrices(material.shader, modelMatrix, frameContext.view, frameContext.projection);
+
+        if (material.useModelLighting) {
+            uploadLightingUniforms(material.shader, frameContext);
+        }
+
+        modelRenderable.modelLoader->draw(*material.shader);
+    }
+}
+
+/* ----- Render helpers ----- */
+
+void RenderingSystem::bindMaterial(const RenderMaterial& material) const
+{
+    if (!material.shader) return;
+
+    material.shader->use();
+
+    if (material.baseTexture) {
+        // Explicitly bind base texture to slot 0 to match textured shader sampler layout.
+        glActiveTexture(GL_TEXTURE0);
+        material.baseTexture->bind();
+        glUniform1i(
+            glGetUniformLocation(*material.shader, "baseColorTexture"),
+            0
+        );
+    }
+
+    glm::vec2 const textureScrollOffset = material.useTextureScroll
+        ? material.textureScrollOffset
+        : glm::vec2(0.0f);
+
+    glUniform2fv(
+        glGetUniformLocation(*material.shader, "textureScrollOffset"),
+        1, glm::value_ptr(textureScrollOffset)
+    );
+}
+
+glm::mat4 RenderingSystem::buildModelMatrix(const PhysxTransform& transform, const glm::vec3& localOffset) const
+{
+    glm::vec3 const offsetInWorldSpace = transform.rot * localOffset;
+    glm::vec3 const visualPos = transform.pos + offsetInWorldSpace;
+
+    return glm::translate(glm::mat4(1.0f), visualPos)
+        * glm::toMat4(transform.rot)
+        * glm::scale(glm::mat4(1.0f), transform.scale);
+}
+
+void RenderingSystem::uploadCommonMatrices(const std::shared_ptr<ShaderProgram>& shader,
+    const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection) const
+{
+    glUniformMatrix4fv(
+        glGetUniformLocation(*shader, "model"),
+        1, GL_FALSE, &model[0][0]
+    );
+
+    glUniformMatrix4fv(
+        glGetUniformLocation(*shader, "view"),
+        1, GL_FALSE, &view[0][0]
+    );
+
+    glUniformMatrix4fv(
+        glGetUniformLocation(*shader, "projection"),
+        1, GL_FALSE, &projection[0][0]
+    );
+}
+
+void RenderingSystem::uploadLightingUniforms(
+    const std::shared_ptr<ShaderProgram>& shader,
+    const RenderFrameContext& frameContext) const
+{
+    // glGetUniformLocation may return -1 for shaders that optimize out optional fields
+    // glUniform* then becomes a no-op (nothing happens)
+    // This lets generic uploads work with shader versions without branching
+    glUniform3fv(
+        glGetUniformLocation(*shader, "lightPos"),
+        1, glm::value_ptr(frameContext.lighting.lightPosition)
+    );
+
+    glUniform3fv(
+        glGetUniformLocation(*shader, "lightColor"),
+        1, glm::value_ptr(frameContext.lighting.lightColor)
+    );
+
+    glUniform3fv(
+        glGetUniformLocation(*shader, "viewPos"),
+        1, glm::value_ptr(frameContext.cameraPosition)
+    );
+}
+
+/* ----- Update step ----- */
+
+void RenderingSystem::update(float deltaTime)
+{
+    if (freeCamera) {
+        freeCamera->movementSpeed(camSpeed * 10.f);
+    }
+    if (racingCamera) {
+        racingCamera->update(deltaTime);
+    }
+
+    processInput(deltaTime);
+
+    updateSkyboxFollow();
+    
+    render();
+}
+
 void RenderingSystem::processInput(float deltaTime)
 {
     // Handle camera toggle with F key
@@ -29,7 +445,6 @@ void RenderingSystem::processInput(float deltaTime)
     processCameraInput(deltaTime);
 }
 
-// Camera Input Processing
 void RenderingSystem::processCameraInput(float deltaTime)
 {
     auto const cursorPosition = inputManager->cursorPosition();
@@ -99,392 +514,20 @@ void RenderingSystem::processCameraInput(float deltaTime)
     previousCursorPosition = cursorPosition;
 }
 
-bool RenderingSystem::init()
+void RenderingSystem::updateSkyboxFollow()
 {
-    logger::info("OpenGL Version: {0}", (const char*)glGetString(GL_VERSION));
-    logger::info("OpenGL Renderer: {0}", (const char*)glGetString(GL_RENDERER));
-
-    try
-    {
-        assetManager.loadShader("textured");
-        logger::info("Textured shader loaded successfully");
-    }
-    catch (const std::exception& e)
-    {
-        logger::error("Failed to load textured shader: {0}", e.what());
-        return false;
-    }
-
-    // Load model shader
-    try
-    {
-        assetManager.loadShader("model");
-        logger::info("Model shader loaded successfully");
-    }
-    catch (const std::exception& e)
-    {
-        logger::error("Failed to load model shader: {0}", e.what());
-        return false;
-    }
-
-    // Create object tracking transform for camera (vehicle tracking)
-    targetTransform = std::make_unique<SceneTransform>();
-    targetTransform->setPosition(glm::vec3(0.f, 0.f, 0.f));
-
-    // Create cameras
-    racingCamera = std::make_unique<RacingCamera>();
-    turntableCamera = std::make_unique<TurnTableCamera>(*targetTransform);
-    turntableCamera->adjustTheta(glm::radians(180.f));
-    freeCamera = std::make_unique<FreeCamera>();
-    activeCamera = racingCamera.get();  // Non-owning raw pointer to camera
-    
-    logger::info("Camera initialized");
-
-    // Enable depth testing
-    glEnable(GL_DEPTH_TEST);
-
-    return true;
-}
-
-Renderable RenderingSystem::getCubeRenderable(const std::string& texturePath)
-{
-    return Renderable{
-        .geometry = assetManager.loadGeometry("cube", ShapeGenerator::cube()),
-        .cpuData = assetManager.getCPUGeometry("cube"),
-        .shader = assetManager.loadShader("textured"),
-        .texture = assetManager.loadTexture(texturePath, GL_LINEAR)
-    };
-}
-
-Entity RenderingSystem::createPlaneEntity(const std::string& texturePath, const PlaneConfig& config)
-{
-    Entity plane = gCoordinator.CreateEntity();
-
-    gCoordinator.AddComponent(
-        plane,
-        PhysxTransform{
-            config.position,
-            config.rotation,
-            config.scale
-        }
-    );
-
-    std::string geomKey;
-    CPU_Geometry planeCPU;
-    
-    if (config.isInfinite) {
-        geomKey = "infinite_plane";
-        planeCPU = ShapeGenerator::infinitePlane(config.infinitePlaneSize, config.uvRepeat);
-        logger::info("Infinite plane entity created with UV repeat: {}", config.uvRepeat);
-    } else {
-        geomKey = "plane";
-        planeCPU = ShapeGenerator::plane(config.size);
-        logger::info("Plane entity created with size: {}", config.size);
-    }
-
-    gCoordinator.AddComponent(
-        plane,
-        Renderable{
-            .geometry = assetManager.loadGeometry(geomKey, planeCPU),
-            .cpuData = assetManager.getCPUGeometry(geomKey),
-            .shader = assetManager.loadShader("textured"),
-            .texture = assetManager.loadTexture(texturePath, config.textureFilterMode, config.textureWrapMode)
-        }
-    );
-
-    return plane;
-}
-
-Entity RenderingSystem::createBoxEntity(const std::string& texturePath, const render::BoxConfig& config)
-{
-    Entity box = gCoordinator.CreateEntity();
-
-    gCoordinator.AddComponent(
-        box,
-        PhysxTransform{
-            config.position,
-            config.rotation,
-            config.scale
-        }
-    );
-
-    gCoordinator.AddComponent(
-        box,
-        getCubeRenderable(texturePath)
-    );
-
-    logger::info("Box entity created at ({}, {}, {})", config.position.x, config.position.y, config.position.z);
-    return box;
-}
-
-Entity RenderingSystem::createSphereEntity(const std::string& texturePath, const SphereConfig& config)
-{
-    Entity sphere = gCoordinator.CreateEntity();
-
-    gCoordinator.AddComponent(
-        sphere,
-        PhysxTransform{
-            config.position,
-            config.rotation,
-            config.scale
-        }
-    );
-
-    // Generate geometry key based on config
-    std::string geomKey = config.isSkybox ? "skybox" : "sphere";
-    
-    // Create geometry with specified parameters
-    CPU_Geometry sphereCPU = ShapeGenerator::sphere(config.radius, config.slices, config.stacks);
-    
-    gCoordinator.AddComponent(
-        sphere,
-        Renderable{
-            .geometry = assetManager.loadGeometry(geomKey, sphereCPU),
-            .cpuData = assetManager.getCPUGeometry(geomKey),
-            .shader = assetManager.loadShader("textured"),
-            .texture = assetManager.loadTexture(texturePath, config.textureFilterMode, config.textureWrapMode),
-            .isSkybox = config.isSkybox
-        }
-    );
-
-    logger::info("Sphere entity created (radius={}, skybox={}) with texture: {}", 
-                 config.radius, config.isSkybox, texturePath);
-
-    return sphere;
-}
-
-Entity RenderingSystem::createModelEntity(const std::string& modelPath, const ModelConfig& config)
-{
-    Entity model = gCoordinator.CreateEntity();
-
-    gCoordinator.AddComponent(
-        model,
-        PhysxTransform{
-            config.position,
-            config.rotation,
-            config.scale
-        }
-    );
-
-    try {
-        auto modelLoader = std::make_shared<ModelLoader>(modelPath, false);
-        logger::info("Model loaded successfully: {} with {} meshes", modelPath, modelLoader->getMeshCount());
-        
-        gCoordinator.AddComponent(
-            model,
-            ModelRenderable{modelLoader, assetManager.loadShader("model")}
-        );
-    }
-    catch (const std::exception& e) {
-        logger::error("Failed to load model {}: {}", modelPath, e.what());
-        throw;
-    }
-
-    logger::info("Model entity created: {}", modelPath);
-
-    return model;
-}
-
-void RenderingSystem::render()
-{
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    glm::mat4 view = activeCamera->viewMatrix();
-    glm::mat4 projection = getProjectionMatrix();
-
-    snowRenderer.beginFrame();
-
-    // Iterate through all entities that the RenderingSystem tracks
-    // (entities with Transform component)
-    for (auto const& entity : mEntities)
-    {
-        auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
-        
-        // Calculate model matrix from transform
-        glm::mat4 modelMatrix =
-            glm::translate(glm::mat4(1.f), transform.pos)
-            * glm::toMat4(transform.rot)
-            * glm::scale(glm::mat4(1.f), transform.scale);
-
-        // Check if entity has a simple Renderable component (sphere, cube, etc.)
-        if (gCoordinator.HasComponent<Renderable>(entity))
-        {
-            auto& renderable = gCoordinator.GetComponent<Renderable>(entity);
-
-            renderable.updateRollingTexture(transform.pos);
-
-            // Apply special rendering settings for skybox
-            if (renderable.isSkybox) {
-                glDepthMask(GL_FALSE);  // Don't write to depth buffer
-                glFrontFace(GL_CW);     // Reverse winding order to see inside
-            }
-
-            glm::vec3 visualPos = transform.pos;
-
-            // If entity has VehicleComponent, apply offset for red brick model rendering
-            if (gCoordinator.HasComponent<VehicleComponent>(entity)) {
-                glm::vec3 localOffset(0.0f, 0.75f, 2.0f);
-                glm::vec3 rotatedOffset = transform.rot * localOffset;
-                visualPos += rotatedOffset;
-            }
-
-            renderable.shader->use();
-
-            glActiveTexture(GL_TEXTURE0);
-            renderable.texture->bind();
-            glUniform1i(
-                glGetUniformLocation(*renderable.shader, "baseColorTexture"),
-                0
-            );
-
-            // Pass texture scroll offsets to shader for rolling textures
-            glUniform2fv(
-                glGetUniformLocation(*renderable.shader, "textureScrollOffset"),
-                1,
-                glm::value_ptr(renderable.textureScrollOffset)
-            );
-
-            glm::mat4 model =
-                glm::translate(glm::mat4(1.f), visualPos)
-                * glm::toMat4(transform.rot)
-                * glm::scale(glm::mat4(1.f), transform.scale);
-
-            glUniformMatrix4fv(
-                glGetUniformLocation(*renderable.shader, "model"),
-                1, GL_FALSE, &model[0][0]
-            );
-
-            glUniformMatrix4fv(
-                glGetUniformLocation(*renderable.shader, "view"),
-                1, GL_FALSE, &view[0][0]
-            );
-
-            glUniformMatrix4fv(
-                glGetUniformLocation(*renderable.shader, "projection"),
-                1, GL_FALSE, &projection[0][0]
-            );
-
-            renderable.geometry->bind();
-
-            if (!renderable.cpuData->indices.empty()) {
-                glDrawElements(
-                    GL_TRIANGLES,
-                    static_cast<GLsizei>(renderable.cpuData->indices.size()),
-                    GL_UNSIGNED_INT,
-                    nullptr
-                );
-            }
-            else {
-                glDrawArrays(
-                    GL_TRIANGLES,
-                    0,
-                    static_cast<GLsizei>(renderable.cpuData->positions.size())
-                );
-            }
-
-            // Restore normal rendering state if this was skybox
-            if (renderable.isSkybox) {
-                glDepthMask(GL_TRUE);
-                glFrontFace(GL_CCW);
-            }
-        }
-
-        // Check if entity has a ModelRenderable component (complex 3D models)
-        else if (gCoordinator.HasComponent<ModelRenderable>(entity))
-        {
-            auto& modelRenderable = gCoordinator.GetComponent<ModelRenderable>(entity);
-
-            if (modelRenderable.modelLoader && modelRenderable.shader) {
-                modelRenderable.shader->use();
-
-                // --- COMPUTE NEW MATRIX WITH OFFSET FOR SNOWMOBILES ---
-                glm::vec3 offsetInWorldSpace = transform.rot * modelRenderable.visualOffsetPos;
-
-                glm::mat4 correctedModelMatrix =
-                    glm::translate(glm::mat4(1.0f), transform.pos + offsetInWorldSpace)
-                    * glm::toMat4(transform.rot)
-                    * glm::scale(glm::mat4(1.0f), transform.scale);
-                // ------------------------------------------
-
-                // Set up view and projection matrices
-                glUniformMatrix4fv(
-                    glGetUniformLocation(*modelRenderable.shader, "view"),
-                    1, GL_FALSE, &view[0][0]
-                );
-
-                glUniformMatrix4fv(
-                    glGetUniformLocation(*modelRenderable.shader, "projection"),
-                    1, GL_FALSE, &projection[0][0]
-                );
-
-                // Set model matrix using the entity's transform
-                glUniformMatrix4fv(
-                    glGetUniformLocation(*modelRenderable.shader, "model"),
-                    1, GL_FALSE, &correctedModelMatrix[0][0]
-                );
-
-                // Set lighting uniforms for the model shader
-                glm::vec3 lightPos(0.0f, 20.0f, 0.0f);
-                glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
-                glm::vec3 viewPos = activeCamera->position();
-                
-                glUniform3fv(glGetUniformLocation(*modelRenderable.shader, "lightPos"), 1, &lightPos[0]);
-                glUniform3fv(glGetUniformLocation(*modelRenderable.shader, "lightColor"), 1, &lightColor[0]);
-                glUniform3fv(glGetUniformLocation(*modelRenderable.shader, "viewPos"), 1, &viewPos[0]);
-
-                // Draw the model (handles multiple meshes internally)
-                modelRenderable.modelLoader->draw(*modelRenderable.shader);
-            }
-        }
-    }
-
-    snowRenderer.render(view, projection);
-}
-
-glm::mat4 RenderingSystem::getProjectionMatrix() const
-{
-    float const aspectRatio = static_cast<float>(vWidth) / static_cast<float>(vHeight);
-    
-    // Perspective projection for active camera
-    // FOV is already in radians, no conversion needed
-    return glm::perspective(activeCamera->fov(), aspectRatio, 0.1f, 5000.0f);
-}
-
-void RenderingSystem::update(float deltaTime)
-{
-    if (freeCamera) {
-        freeCamera->movementSpeed(camSpeed * 10.f);
-    }
-    if (racingCamera) {
-        racingCamera->update(deltaTime);
-    }
-
-    processInput(deltaTime);
-
-    // center skybox on camera
     for (auto const& entity : mEntities) {
-        if (gCoordinator.HasComponent<Renderable>(entity)) {
-            auto& renderable = gCoordinator.GetComponent<Renderable>(entity);
-            if (renderable.isSkybox) {
-                auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
-                transform.pos = activeCamera->position();
-            }
+        if (!gCoordinator.HasComponent<Renderable>(entity)) {
+            continue;
         }
-    }
-    
-    render();
-}
 
-void RenderingSystem::onMouseWheelChange(double xOffset, double yOffset)
-{
-    (void)xOffset;
-    float scroll = -static_cast<float>(yOffset) * this->camZoomSpeed * 0.016f;
+        auto& renderable = gCoordinator.GetComponent<Renderable>(entity);
+        if (!renderable.isSkybox) {
+            continue;
+        }
 
-    if (activeCamera == freeCamera.get()) {
-        freeCamera->adjustFov(scroll);
-    }
-    else if (activeCamera == turntableCamera.get()) {
-        turntableCamera->adjustDistance(scroll);
+        auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
+        transform.pos = activeCamera->position();
     }
 }
 
@@ -516,6 +559,19 @@ void RenderingSystem::updateCameraTarget(const glm::vec3& position, const glm::v
 
     if (racingCamera) {
         racingCamera->updateTarget(position, forward, velocity);
+    }
+}
+
+void RenderingSystem::onMouseWheelChange(double xOffset, double yOffset)
+{
+    (void)xOffset;
+    float scroll = -static_cast<float>(yOffset) * this->camZoomSpeed * 0.016f;
+
+    if (activeCamera == freeCamera.get()) {
+        freeCamera->adjustFov(scroll);
+    }
+    else if (activeCamera == turntableCamera.get()) {
+        turntableCamera->adjustDistance(scroll);
     }
 }
 

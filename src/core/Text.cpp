@@ -13,8 +13,8 @@ Text::Text()
 Text::Text(const std::string& vertexPath, const std::string& fragmentPath)
     : textShader(vertexPath, fragmentPath)
 {
-    // default use arial
-    characters = initFont("assets/fonts/Arial.ttf", 48);
+    // Preload a default font atlas.
+    loadFont("Arial.ttf", 48);
     
     glBindVertexArray(textVAO);
     glBindBuffer(GL_ARRAY_BUFFER, textVBO);
@@ -26,7 +26,10 @@ Text::Text(const std::string& vertexPath, const std::string& fragmentPath)
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     
-    logger::info("Text renderer initialized with {} characters", characters.size());
+    logger::info(
+        "Text renderer initialized with {} characters",
+        activeCharacters ? activeCharacters->size() : 0
+    );
 }
 
 charMap Text::initFont(const char* fontName, int size) {
@@ -109,6 +112,10 @@ void Text::setProjection(float width, float height)
 
 void Text::renderText(const std::string& text, TextPosition pos, glm::vec3 color)
 {
+    if (!activeCharacters) {
+        return;
+    }
+
     // activate corresponding render state	
     textShader.use();
     glUniform3f(glGetUniformLocation(textShader, "textColor"), color.x, color.y, color.z);
@@ -119,7 +126,11 @@ void Text::renderText(const std::string& text, TextPosition pos, glm::vec3 color
     // iterate through all characters
     for (char c : text)
     {
-        const Character& ch = characters[c];
+        const auto it = activeCharacters->find(c);
+        if (it == activeCharacters->end()) {
+            continue;
+        }
+        const Character& ch = it->second;
 
         float xpos = pos.x + ch.bearing.x * pos.scale;
         float ypos = pos.y - (ch.size.y - ch.bearing.y) * pos.scale;
@@ -168,6 +179,23 @@ void Text::endText() {
 
 void Text::loadFont(const std::string& fontName, int size)
 {
-    std::string fontPath = "assets/fonts/" + fontName;
-    characters = initFont(fontPath.c_str(), size);
+    const FontKey key{fontName, size};
+    if (activeCharacters && activeFontKey == key) {
+        return;
+    }
+
+    const auto cached = fontCache.find(key);
+    if (cached != fontCache.end()) {
+        activeCharacters = cached->second.get();
+        activeFontKey = key;
+        return;
+    }
+
+    const std::string fontPath = "assets/fonts/" + fontName;
+    auto atlas = std::make_unique<charMap>(initFont(fontPath.c_str(), size));
+    auto* atlasPtr = atlas.get();
+    fontCache.emplace(key, std::move(atlas));
+
+    activeCharacters = atlasPtr;
+    activeFontKey = key;
 }

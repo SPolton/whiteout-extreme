@@ -45,8 +45,8 @@ void ImGuiPanel::renderDebugInfo()
     ImGui::Separator();
     
     // Renderer info
+    ImGui::TextUnformatted(renderInfo.c_str());
     ImGui::Text("Renderer: OpenGL");
-    ImGui::Text("Triangles rendered: 1"); // Simple for now
     
     ImGui::End();
 }

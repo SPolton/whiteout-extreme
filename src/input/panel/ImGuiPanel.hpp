@@ -35,6 +35,8 @@ public:
     float camSpeed = 2.0f;
     float camZoomSpeed = 10.0f;
 
+    std::string renderInfo;
+
     // VFX settings
     bool isParticlesEnabled = true;
 

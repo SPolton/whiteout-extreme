@@ -2,7 +2,6 @@
 
 
 //#include "components/CameraComponent.h"
-#include "components/Model.h"
 #include "components/Physics.hpp"
 #include "components/Renderable.h"
 #include "components/SnowEmitter.h"
@@ -295,7 +294,7 @@ void RacingGame::createWorldEntities()
     
     // Add rendering to the avalanche
     auto avCubeRender = renderingSystem->getCubeRenderable("assets/textures/snowball.png");
-    avCubeRender.hasRollingTexture = true;
+    avCubeRender.material.useTextureScroll = true;
     gCoordinator.AddComponent(AvalancheEntity, avCubeRender);
 
     auto& avalancheInstance = gCoordinator.GetComponent<AvalancheComponent>(AvalancheEntity).instance;
@@ -925,7 +924,8 @@ void RacingGame::updateImGui() {
 void RacingGame::syncImgui() {
     renderingSystem->camSpeed = imguiPanel->camSpeed;
     renderingSystem->camZoomSpeed = imguiPanel->camZoomSpeed;
-    //renderingSystem->wireframeMode = imguiPanel->showWireframe;
+    renderingSystem->enableStats(imguiPanel->showDebugWindow);
+    imguiPanel->renderInfo = renderingSystem->renderStats().toString();
 
     // Sync particles enabled state
     gCoordinator.GetComponent<SnowEmitter>(AvalancheEntity).enabled = imguiPanel->isParticlesEnabled;

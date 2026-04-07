@@ -12,7 +12,6 @@
 #include "core/scene/RacingCamera.hpp"
 #include "core/scene/Transform.hpp"
 
-#include "components/Model.h"
 #include "components/Renderable.h"
 
 #include "ecs/Coordinator.hpp"
@@ -27,15 +26,62 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include <chrono>
 #include <memory>
+#include <string>
 #include <vector>
 
 extern Coordinator gCoordinator;
 
+struct LightingState {
+    glm::vec3 lightPosition = glm::vec3(0.0f, 20.0f, 0.0f);
+    glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    glm::vec3 lightDirection = glm::vec3(-0.2f, -1.0f, -0.3f);
+    bool shadowsEnabled = false;
+    glm::mat4 lightViewProjection = glm::mat4(1.0f);
+};
+
+struct RenderFrameContext {
+    glm::mat4 view{};
+    glm::mat4 projection{};
+    glm::vec3 cameraPosition{};
+    glm::vec2 viewportSize{};
+    LightingState lighting{};
+};
+
+struct RenderingStats {
+    bool isEnabled = false;
+    float frameMs = 0.0f;
+    float geometryMs = 0.0f;
+    float modelMs = 0.0f;
+    float particlesMs = 0.0f;
+    uint32_t renderableDrawCalls = 0;
+    uint32_t modelDrawCalls = 0;
+
+    std::string toString() const;
+
+    void startFrame();
+    void startGeometryPass();
+    void endGeometryPass();
+    void startModelPass();
+    void endModelPass();
+    void startParticlePass();
+    void endParticlePass();
+    void endFrame();
+    void addRenderableDraw() { if (isEnabled) { ++renderableDrawCalls; } }
+    void addModelDraw() { if (isEnabled) { ++modelDrawCalls; } }
+private:
+    std::chrono::steady_clock::time_point geometryStart{};
+    std::chrono::steady_clock::time_point modelStart{};
+    std::chrono::steady_clock::time_point particlesStart{};
+    bool geometryPassActive = false;
+    bool modelPassActive = false;
+    bool particlePassActive = false;
+};
+
 class RenderingSystem : public System {
 public:
-RenderingSystem(std::shared_ptr<InputManager> inputManager);
-void cleanup();
+    RenderingSystem(std::shared_ptr<InputManager> inputManager);
 
     void update(float deltaTime);
 
@@ -47,8 +93,14 @@ void cleanup();
 
     Renderable getCubeRenderable(const std::string& texturePath);
 
+    void toggleCamera();
     void updateCameraTarget(const glm::vec3& position, const glm::vec3& forward, const glm::vec3& velocity);
+    void onMouseWheelChange(double xOffset, double yOffset);
     void setSnowFrame(const SnowFrame& frame);
+
+    void enableStats(bool isEnabled) { statsData.isEnabled = isEnabled; }
+    const RenderingStats& renderStats() const { return statsData; }
+
     glm::vec3 getCameraForward() const { return activeCamera->forward(); };
     glm::vec3 getCameraRight() const { return activeCamera->right(); };
     std::string getActiveCameraInfo() const { return activeCamera->toString(); };
@@ -61,10 +113,9 @@ void cleanup();
     int vWidth;
     int vHeight;
 
-    void onMouseWheelChange(double xOffset, double yOffset);
-    bool init();
-
 private:
+    RenderingStats statsData{};
+    LightingState lightingState{};
     AssetManager& assetManager = AssetManager::getInstance();
     SnowRenderer snowRenderer;
 
@@ -81,10 +132,23 @@ private:
     bool cursorPositionIsSetOnce = false;
     float lastFrameDeltaTime = 1.0f / 60.0f;
 
+    bool init();
+    void render();
+
+    RenderFrameContext buildFrameContext() const;
+    void renderGeometryPass(const RenderFrameContext& frameContext);
+    void renderModelsPass(const RenderFrameContext& frameContext);
+    void renderParticlesPass(const RenderFrameContext& frameContext);
+    void renderRenderableEntity(Entity entity, const RenderFrameContext& frameContext);
+    void renderModelEntity(Entity entity, const RenderFrameContext& frameContext);
+
+    void bindMaterial(const RenderMaterial& materialState) const;
+    glm::mat4 buildModelMatrix(const PhysxTransform& transform, const glm::vec3& localOffset = glm::vec3(0.0f)) const;
+    void uploadCommonMatrices(const std::shared_ptr<ShaderProgram>& shader,
+            const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection) const;
+    void uploadLightingUniforms(const std::shared_ptr<ShaderProgram>& shader, const RenderFrameContext& frameContext) const;
+    
     void processInput(float deltaTime);
     void processCameraInput(float deltaTime);
-
-    void toggleCamera();
-    void render();
-    glm::mat4 getProjectionMatrix() const;
+    void updateSkyboxFollow();
 };
