@@ -85,6 +85,9 @@ public:
 
     void update(float deltaTime);
 
+    void drawFullscreenQuad(GLuint textureID);
+    void initVideo();
+
     // Flexible entity creation methods
     Entity createBoxEntity(const std::string& texturePath, const render::BoxConfig& config = {});
     Entity createSphereEntity(const std::string& texturePath, const render::SphereConfig& config = {});
@@ -151,4 +154,8 @@ private:
     void processInput(float deltaTime);
     void processCameraInput(float deltaTime);
     void updateSkyboxFollow();
+
+    std::shared_ptr<ShaderProgram> videoShader;
+    GPU_Geometry videoQuadGPU;
+    bool videoSystemsInitialized = false;
 };

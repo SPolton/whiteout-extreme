@@ -435,6 +435,45 @@ void RenderingSystem::update(float deltaTime)
     render();
 }
 
+void RenderingSystem::initVideo() {
+    videoShader = std::make_shared<ShaderProgram>("assets/shaders/video.vert", "assets/shaders/video.frag");
+
+    CPU_Geometry cpuQuad;
+    cpuQuad.positions = { {-1,1,0}, {-1,-1,0}, {1,-1,0}, {1,1,0} };
+    cpuQuad.uvs = { {0,1}, {0,0}, {1,0}, {1,1} };
+    cpuQuad.indices = { 0, 1, 2, 0, 2, 3 };
+
+    cpuQuad.colors.resize(4, glm::vec3(1.0f));
+    cpuQuad.normals.resize(4, glm::vec3(0, 0, 1));
+
+    videoQuadGPU.Update(cpuQuad);
+    videoSystemsInitialized = true;
+}
+
+void RenderingSystem::drawFullscreenQuad(GLuint textureID) {
+    if (!videoSystemsInitialized) initVideo();
+
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+
+    videoShader->use();
+
+    GLuint progID = (GLuint)*videoShader;
+
+    GLint texLoc = glGetUniformLocation(progID, "videoTexture");
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+
+    glUniform1i(texLoc, 0);
+
+    videoQuadGPU.bind();
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+    glEnable(GL_DEPTH_TEST);
+}
+
+
 void RenderingSystem::processInput(float deltaTime)
 {
     // Handle camera toggle with F key
