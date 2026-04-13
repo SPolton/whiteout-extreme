@@ -1,6 +1,7 @@
 #pragma once
 
 enum class GameState {
+    Intro,
     MainMenu,
     InGame,
     Pause,

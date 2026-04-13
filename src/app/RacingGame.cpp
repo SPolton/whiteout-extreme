@@ -1,4 +1,5 @@
 ﻿#include "RacingGame.hpp"
+#define PL_MPEG_IMPLEMENTATION
 
 
 //#include "components/CameraComponent.h"
@@ -29,6 +30,7 @@ RacingGame::RacingGame()
         return;
     }
 
+    initVideo();
     initEcsAndSystems();
     createWorldEntities();
     initUiSystems();
@@ -65,6 +67,13 @@ bool RacingGame::initPlatformAndWindow()
     }
 
     return true;
+}
+
+void RacingGame::initVideo() {
+    introPlayer = std::make_unique<VideoPlayer>();
+    if (!introPlayer->load("assets/video/intro_cinematic_v2.mpeg")) {
+        logger::error("Failed to load intro video!");
+    }
 }
 
 void RacingGame::initEcsAndSystems()
@@ -338,6 +347,9 @@ void RacingGame::initUiSystems()
 void RacingGame::initAudio()
 {
     audioManager->init();
+    // load intro cinematic sound
+    audioManager->loadSound("assets/audio/intro_cinematic_v2.mp3", false, true, true);
+    introChannelID = audioManager->playSounds("assets/audio/intro_cinematic_v2.mp3", { 0,0,0 }, -5.0f);
     // load the main menu game music
     audioManager->loadSound("assets/audio/game-music-loop-12.mp3", false, true, true);
     musicChannelID = audioManager->playSounds("assets/audio/game-music-loop-12.mp3", { 0,0,0 }, -8.0f);
@@ -457,22 +469,49 @@ void RacingGame::updateInGame()
 
 void RacingGame::updateInMenu(MenuAction actionButtons)
 {
-    // Reset to prevent big delta spike when returning to gameplay
-    gameTime.updatePause(glfwGetTime());
-
-    if (gameState == GameState::MainMenu) {
-        updateMainMenu(actionButtons);
-    } else if (gameState == GameState::Pause) {
-        updatePauseMenu(actionButtons);
-    } else if (gameState == GameState::GameOver) {
-        updateGameOverMenu(actionButtons);
-    } else if (gameState == GameState::HelpMenu) {
-        updateHelpMenu(actionButtons);
-    } else if (gameState == GameState::ControllerHelp) {
-        updateControllerHelpMenu(actionButtons);
-    } else if (gameState == GameState::KeyboardHelp) {
-        updateKeyboardHelpMenu(actionButtons);
+    if (gameState == GameState::Intro) {
+        updateIntro(actionButtons);
     }
+    else {
+        // Reset to prevent big delta spike when returning to gameplay
+        gameTime.updatePause(glfwGetTime());
+
+        if (gameState == GameState::MainMenu) {
+            updateMainMenu(actionButtons);
+        }
+        else if (gameState == GameState::Pause) {
+            updatePauseMenu(actionButtons);
+        }
+        else if (gameState == GameState::GameOver) {
+            updateGameOverMenu(actionButtons);
+        }
+        else if (gameState == GameState::HelpMenu) {
+            updateHelpMenu(actionButtons);
+        }
+        else if (gameState == GameState::ControllerHelp) {
+            updateControllerHelpMenu(actionButtons);
+        }
+        else if (gameState == GameState::KeyboardHelp) {
+            updateKeyboardHelpMenu(actionButtons);
+        }
+    }
+}
+
+void RacingGame::updateIntro(MenuAction actionButtons) {
+    gameTime.update(glfwGetTime());
+    introPlayer->update(gameTime.frameTimeF());
+
+    renderingSystem->drawFullscreenQuad(introPlayer->getTextureID());
+
+    audioManager->resumeChannel(introChannelID);
+
+    if (introPlayer->isFinished() || actionButtons == MenuAction::GoToMainMenu) {
+        audioManager->pauseChannel(introChannelID);
+        audioManager->resumeChannel(musicChannelID);
+        gameState = GameState::MainMenu;
+    }
+
+    updateMenuAudioState();
 }
 
 void RacingGame::updateMainMenu(MenuAction actionButtons)
@@ -880,6 +919,14 @@ void RacingGame::updateMenuAudioState()
     audioManager->pauseChannel(aiEngineChannelID2);
     // no boost sound in menus
     vehicleControlSystem->pauseBoostAndEngineAudio();
+
+    if (gameState == GameState::Intro) {
+        audioManager->pauseChannel(musicChannelID);
+    }
+    else {
+        audioManager->resumeChannel(musicChannelID);
+        audioManager->pauseChannel(introChannelID);
+    }
 }
 
 void RacingGame::updateImGui() {

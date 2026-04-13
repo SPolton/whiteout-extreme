@@ -117,8 +117,11 @@ MenuAction GameMenus::pollInputs() {
     if (inputSystem == 1) {
         // triggers pause menu
         if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_START)) {
+            if (gameState == GameState::Intro) {
+                return MenuAction::GoToMainMenu;
+            }
             // if in game, render pause menu
-            if (gameState == GameState::InGame) {
+            else if (gameState == GameState::InGame) {
                 gameState = GameState::Pause;
                 // play UI button clicked sound
                 audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
@@ -222,8 +225,11 @@ MenuAction GameMenus::pollInputs() {
     // otherwise keyboard input works too
     // triggers pause menu
     if (inputManager->isKeyPressedOnce(GLFW_KEY_P)) {
+        if (gameState == GameState::Intro) {
+            return MenuAction::GoToMainMenu;
+        }
         // if paused, then resume game
-        if (gameState == GameState::Pause) {
+        else if (gameState == GameState::Pause) {
             // play an "entering game" sound when button clicked
             audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
             return MenuAction::ResumeGame;
