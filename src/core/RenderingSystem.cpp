@@ -223,8 +223,8 @@ RenderFrameContext RenderingSystem::buildFrameContext() const
     const float aspectRatio = static_cast<float>(vWidth) / static_cast<float>(vHeight);
     const float nearPlane = 0.1f;
     const float farPlane = 5000.0f;
-    const float kMinShadowNear = 0.01f;
-    const float kMinShadowDepthSpan = 0.1f;
+    const float kMinShadowRange = 1.0f;
+    const float kShadowDepthNear = 0.1f;
 
     RenderFrameContext frameContext{};
     frameContext.view = activeCamera->viewMatrix();
@@ -234,16 +234,16 @@ RenderFrameContext RenderingSystem::buildFrameContext() const
     frameContext.lighting = lightingState;
 
     if (frameContext.lighting.shadowsEnabled) {
-        float shadowNear = std::max(frameContext.lighting.shadowNearPlane, kMinShadowNear);
-        float shadowFar = std::max(frameContext.lighting.shadowFarPlane, shadowNear + kMinShadowDepthSpan);
+        float const range = std::max(frameContext.lighting.shadowOrthoRange, kMinShadowRange);
+        float const lightDistance = range;
+        float const shadowDepthFar = (2.0f * lightDistance) + kShadowDepthNear;
 
         glm::vec3 const lightDirection = glm::normalize(frameContext.lighting.lightDirection);
         glm::vec3 lightPosition = frameContext.lighting.lightPosition;
         glm::vec3 lightTarget = frameContext.cameraPosition;
 
         if (frameContext.lighting.directionalLight) {
-            // Directional light: center shadow depth span around camera to keep near/far sliders intuitive.
-            float const lightDistance = 0.5f * (shadowNear + shadowFar);
+            // Directional light: keep shadow frustum centered around camera using shadowOrthoRange.
             lightPosition = frameContext.cameraPosition - lightDirection * lightDistance;
             lightTarget = frameContext.cameraPosition;
         }
@@ -254,18 +254,16 @@ RenderFrameContext RenderingSystem::buildFrameContext() const
             glm::vec3(0.0f, 1.0f, 0.0f)
         );
 
-        float const range = frameContext.lighting.shadowOrthoRange;
         glm::mat4 const lightProjection = glm::ortho(
             -range,
             range,
             -range,
             range,
-            shadowNear,
-            shadowFar
+            kShadowDepthNear,
+            shadowDepthFar
         );
 
-        frameContext.lighting.shadowNearPlane = shadowNear;
-        frameContext.lighting.shadowFarPlane = shadowFar;
+        frameContext.lighting.shadowOrthoRange = range;
         frameContext.lighting.lightPosition = lightPosition;
         frameContext.lighting.lightViewProjection = lightProjection * lightView;
     }
@@ -618,15 +616,6 @@ void RenderingSystem::uploadLightingUniforms(
         1, GL_FALSE, glm::value_ptr(frameContext.lighting.lightViewProjection)
     );
 
-    glUniform1f(
-        glGetUniformLocation(*shader, "shadowNearPlane"),
-        frameContext.lighting.shadowNearPlane
-    );
-
-    glUniform1f(
-        glGetUniformLocation(*shader, "shadowFarPlane"),
-        frameContext.lighting.shadowFarPlane
-    );
 }
 
 void RenderingSystem::ensureShadowDepthResources(int width, int height)

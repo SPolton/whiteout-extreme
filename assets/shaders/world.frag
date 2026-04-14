@@ -18,8 +18,6 @@ uniform vec3 viewPos;
 uniform float shininess;
 uniform bool directionalLight;
 uniform bool shadowsEnabled;
-uniform float shadowNearPlane;
-uniform float shadowFarPlane;
 
 uniform float ambientStrength;
 uniform float specularStrength;

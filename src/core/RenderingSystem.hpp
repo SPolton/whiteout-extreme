@@ -41,8 +41,6 @@ struct LightingState {
     bool directionalLight = false;
     bool shadowsEnabled = false;
     int shadowMapResolution = 2048 * 2;
-    float shadowNearPlane = 1.0f;
-    float shadowFarPlane = 600.0f;
     float shadowOrthoRange = 200.0f;
     glm::mat4 lightViewProjection = glm::mat4(1.0f);
 };

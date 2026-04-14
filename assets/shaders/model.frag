@@ -17,8 +17,6 @@ uniform vec3 viewPos;
 uniform vec3 lightColor;
 uniform bool directionalLight;
 uniform bool shadowsEnabled;
-uniform float shadowNearPlane;
-uniform float shadowFarPlane;
 
 const float kProjCoordScale = 0.5;
 const float kProjCoordBias = 0.5;

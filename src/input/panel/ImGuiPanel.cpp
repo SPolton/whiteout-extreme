@@ -134,11 +134,6 @@ void ImGuiPanel::renderLightingSettings()
 
         if (lightingState->shadowsEnabled) {
             ImGui::SliderInt("Shadow Map Resolution", &lightingState->shadowMapResolution, 256, 8192);
-            ImGui::SliderFloat("Shadow Near Plane", &lightingState->shadowNearPlane, 0.01f, 500.0f);
-            ImGui::SliderFloat("Shadow Far Plane", &lightingState->shadowFarPlane, 10.0f, 10000.0f);
-            if (lightingState->shadowFarPlane <= lightingState->shadowNearPlane) {
-                lightingState->shadowFarPlane = lightingState->shadowNearPlane + 0.1f;
-            }
             ImGui::SliderFloat("Shadow Ortho Range", &lightingState->shadowOrthoRange, 10.0f, 5000.0f);
         }
     }
