@@ -23,10 +23,8 @@ void GameMenus::checkInputSystem() {
 
 void GameMenus::loadMenuSounds()
 {
-    // load sound to play when entering game
-    audioManager->loadSound("assets/audio/game-start.mp3", false, false, false);
-    // load sound for pressing menu buttons
-    audioManager->loadSound("assets/audio/menu-button.mp3", false, false, false);
+    // Ensure audio registry is loaded before menu actions trigger sounds.
+    audioManager->loadSoundRegistry();
 }
 
 void GameMenus::init()
@@ -121,12 +119,12 @@ MenuAction GameMenus::pollInputs() {
             if (gameState == GameState::InGame) {
                 gameState = GameState::Pause;
                 // play UI button clicked sound
-                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                audioManager->jsonSound("ui.menu.button");
                 return MenuAction::None;
             }
             else if (gameState == GameState::Pause) {
                 // play an "entering game" sound when button clicked
-                audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
+                audioManager->jsonSound("ui.game.start");
                 return MenuAction::ResumeGame;
             }
         }
@@ -136,58 +134,58 @@ MenuAction GameMenus::pollInputs() {
             // if on main menu and player selected "start", then start game
             if (gameState == GameState::MainMenu && selectedMenuOption == 0) {
                 // play an "entering game" sound when button clicked
-                audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
+                audioManager->jsonSound("ui.game.start");
                 return MenuAction::StartGame;
             }
             // if on main menu and player selected "help", then go to help menu
             else if (gameState == GameState::MainMenu && selectedMenuOption == 1) {
                 // play UI button clicked sound
-                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                audioManager->jsonSound("ui.menu.button");
                 return MenuAction::GoToHelpMenu;
             }
             // PAUSE MENU
             else if (gameState == GameState::Pause && selectedPauseMenuOption == 0) {
                 // play an "entering game" sound when button clicked
-                audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
+                audioManager->jsonSound("ui.game.start");
                 return MenuAction::ResumeGame;
             }
             else if (gameState == GameState::Pause && selectedPauseMenuOption == 1) {
                 // play UI button clicked sound
-                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                audioManager->jsonSound("ui.menu.button");
                 return MenuAction::GoToMainMenu;
             }
             else if (gameState == GameState::Pause) {
                 // play an "entering game" sound when button clicked
-                audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
+                audioManager->jsonSound("ui.game.start");
                 return MenuAction::ResumeGame;
             }
             // GAME OVER SCREEN
             else if (gameState == GameState::GameOver) {
                 // play UI button clicked sound
-                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                audioManager->jsonSound("ui.menu.button");
                 return MenuAction::GoToMainMenu;
             }
             // HELP MENU
             else if (gameState == GameState::HelpMenu && selectedHelpMenuOption == 0) {
                 // play UI button clicked sound
-                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                audioManager->jsonSound("ui.menu.button");
                 return MenuAction::GoToKeyboardHelp;
             }
             else if (gameState == GameState::HelpMenu && selectedHelpMenuOption == 1) {
                 // play UI button clicked sound
-                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                audioManager->jsonSound("ui.menu.button");
                 return MenuAction::GoToControllerHelp;
             }
             else if (gameState == GameState::HelpMenu && selectedHelpMenuOption == 2) {
                 // play UI button clicked sound
-                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                audioManager->jsonSound("ui.menu.button");
                 return MenuAction::GoToMainMenu;
             }
             // HELP MENU SUBPAGES
             // only one option to return to main menu, so it is auto selected
             else if (gameState == GameState::ControllerHelp || gameState == GameState::KeyboardHelp) {
                 // play UI button clicked sound
-                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                audioManager->jsonSound("ui.menu.button");
                 return MenuAction::GoToMainMenu;
             }
         }
@@ -197,23 +195,23 @@ MenuAction GameMenus::pollInputs() {
             if (gameState == GameState::Pause) {
                 gameState = GameState::MainMenu; // update game state
                 // play UI button clicked sound
-                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                audioManager->jsonSound("ui.menu.button");
                 return MenuAction::GoToMainMenu;
             }
             // HELP MENU
             else if (gameState == GameState::HelpMenu) {
                 // play UI button clicked sound
-                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                audioManager->jsonSound("ui.menu.button");
                 return MenuAction::GoToMainMenu;
             }
             else if (gameState == GameState::KeyboardHelp) {
                 // play UI button clicked sound
-                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                audioManager->jsonSound("ui.menu.button");
                 return MenuAction::GoToMainMenu;
             }
             else if (gameState == GameState::ControllerHelp) {
                 // play UI button clicked sound
-                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                audioManager->jsonSound("ui.menu.button");
                 return MenuAction::GoToMainMenu;
             }
         }
@@ -225,14 +223,14 @@ MenuAction GameMenus::pollInputs() {
         // if paused, then resume game
         if (gameState == GameState::Pause) {
             // play an "entering game" sound when button clicked
-            audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
+            audioManager->jsonSound("ui.game.start");
             return MenuAction::ResumeGame;
         }
         // if in game, render pause menu
         else if (gameState == GameState::InGame) {
             gameState = GameState::Pause;
             // play UI button clicked sound
-            audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+            audioManager->jsonSound("ui.menu.button");
             return MenuAction::None;
         }
     }
@@ -241,50 +239,50 @@ MenuAction GameMenus::pollInputs() {
         // if on main menu, then start game
         if (gameState == GameState::MainMenu) {
             // play an "entering game" sound when button clicked
-            audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
+            audioManager->jsonSound("ui.game.start");
             return MenuAction::StartGame;
         }
         else if (gameState == GameState::Pause) {
             // play UI button clicked sound
-            audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+            audioManager->jsonSound("ui.menu.button");
             return MenuAction::GoToMainMenu;
         }
         else if (gameState == GameState::GameOver) {
             // play UI button clicked sound
-            audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+            audioManager->jsonSound("ui.menu.button");
             return MenuAction::GoToMainMenu;
         }
         else if (gameState == GameState::HelpMenu) {
             // play UI button clicked sound
-            audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+            audioManager->jsonSound("ui.menu.button");
             return MenuAction::GoToMainMenu;
         }
         else if (gameState == GameState::ControllerHelp) {
             // play UI button clicked sound
-            audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+            audioManager->jsonSound("ui.menu.button");
             return MenuAction::GoToMainMenu;
         }
         else if (gameState == GameState::KeyboardHelp) {
             // play UI button clicked sound
-            audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+            audioManager->jsonSound("ui.menu.button");
             return MenuAction::GoToMainMenu;
         }
     }
     // triggers help menu (can only be navigated to from main menu)
     else if (inputManager->isKeyPressedOnce(GLFW_KEY_H) && gameState == GameState::MainMenu) {
-        audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+        audioManager->jsonSound("ui.menu.button");
         gameState = GameState::HelpMenu; // update game state to render help page
         return MenuAction::None; // no action taken
     }
     // triggers controller help menu (can only be navigated to from Help menu)
     else if (inputManager->isKeyPressedOnce(GLFW_KEY_J) && gameState == GameState::HelpMenu) {
-        audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+        audioManager->jsonSound("ui.menu.button");
         gameState = GameState::ControllerHelp; // update game state to render help page
         return MenuAction::None; // no action taken
     }
     // triggers keyboard help menu (can only be navigated to from Help menu)
     else if (inputManager->isKeyPressedOnce(GLFW_KEY_K) && gameState == GameState::HelpMenu) {
-        audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+        audioManager->jsonSound("ui.menu.button");
         gameState = GameState::KeyboardHelp; // update game state to render help page
         return MenuAction::None; // no action taken
     }
@@ -438,7 +436,7 @@ MenuAction GameMenus::renderMainMenu()
             // and check if the user clicks on the mouse while over the "Start" button
             if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
                 // play an "entering game" sound when button clicked
-                audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
+                audioManager->jsonSound("ui.game.start");
                 // if they do, toggle to NOT show the main menu
                 return MenuAction::StartGame;
             }
@@ -454,7 +452,7 @@ MenuAction GameMenus::renderMainMenu()
             // and check if the user clicks on the mouse while over the "Help" button
             if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
                 // play ui button sound when button clicked
-                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                audioManager->jsonSound("ui.menu.button");
                 // if they do, toggle to show the help menu
                 return MenuAction::GoToHelpMenu;
             }
@@ -539,7 +537,7 @@ MenuAction GameMenus::renderPauseMenu() {
             // and check if the user clicks on the mouse while over the "Resume" button
             if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
                 // play an "entering game" sound when button clicked
-                audioManager->playSounds("assets/audio/game-start.mp3", { 0,0,0 }, -8.0f);
+                audioManager->jsonSound("ui.game.start");
                 // if they do, resume the game
                 return MenuAction::ResumeGame;
             }
@@ -555,7 +553,7 @@ MenuAction GameMenus::renderPauseMenu() {
             // and check if the user clicks on the mouse while over the "Quit" button
             if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
                 // play UI button clicked sound
-                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                audioManager->jsonSound("ui.menu.button");
                 // and toggle to show the main menu
                 return MenuAction::GoToMainMenu;
             }
@@ -624,7 +622,7 @@ MenuAction GameMenus::renderGameOver(int rank, bool engulfed)
         // acknowledge game is over by clicking confirm (A)
         if (inputManager->isControllerButtonPressedOnce(GLFW_GAMEPAD_BUTTON_A)) {
             // play UI button clicked sound
-            audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+            audioManager->jsonSound("ui.menu.button");
             // if "A" is pressed (bottom button?), go to main menu
             return MenuAction::GoToMainMenu;
         }
@@ -639,7 +637,7 @@ MenuAction GameMenus::renderGameOver(int rank, bool engulfed)
             // and check if the user clicks on the mouse while over the "Return to menu" button
             if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
                 // play UI button clicked sound
-                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                audioManager->jsonSound("ui.menu.button");
                 // if they do, toggle to show the main menu
                 return MenuAction::GoToMainMenu;
             }
@@ -747,7 +745,7 @@ MenuAction GameMenus::renderHelpMenu()
             // and check if the user clicks on the mouse while over the "Controller" button
             if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
                 // play ui button sound when button clicked
-                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                audioManager->jsonSound("ui.menu.button");
                 // if they do, toggle to show the controller help menu
                 return MenuAction::GoToControllerHelp;
             }
@@ -762,7 +760,7 @@ MenuAction GameMenus::renderHelpMenu()
             // and check if the user clicks on the mouse while over the "Keyboard" button
             if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
                 // play ui button sound when button clicked
-                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                audioManager->jsonSound("ui.menu.button");
                 // if they do, toggle to show the keyboard help menu
                 return MenuAction::GoToKeyboardHelp;
             }
@@ -777,7 +775,7 @@ MenuAction GameMenus::renderHelpMenu()
             // and check if the user clicks on the mouse while over the "Back" button
             if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
                 // play ui button sound when button clicked
-                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                audioManager->jsonSound("ui.menu.button");
                 // if they do, toggle to show the main menu
                 return MenuAction::GoToMainMenu;
             }
@@ -834,7 +832,7 @@ MenuAction GameMenus::renderControllerHelp()
             // and check if the user clicks on the mouse while over the "return" button
             if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
                 // play ui button sound when button clicked
-                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                audioManager->jsonSound("ui.menu.button");
                 // if they do, toggle to show the main menu
                 return MenuAction::GoToMainMenu;
             }
@@ -923,7 +921,7 @@ MenuAction GameMenus::renderKeyboardHelp()
             // and check if the user clicks on the mouse while over the "return" button
             if (inputManager->isMousePressedOnce(GLFW_MOUSE_BUTTON_LEFT)) {
                 // play ui button sound when button clicked
-                audioManager->playSounds("assets/audio/menu-button.mp3", { 0,0,0 }, -8.0f);
+                audioManager->jsonSound("ui.menu.button");
                 // if they do, toggle to show the main menu
                 return MenuAction::GoToMainMenu;
             }
