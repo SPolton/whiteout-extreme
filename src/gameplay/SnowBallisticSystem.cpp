@@ -175,11 +175,8 @@ void SnowBallisticSystem::throwSnowball(Entity throwerEntity)
     if (vehicleComponent.snowBallCooldown > 0.f) return;
 
     // play sound of throwing snowball (play sound at vehicle that is throwing)
-<<<<<<< video-integration
     audioManager->jsonSound("gameplay.snowball.throw", { vehicleTransform.pos.x, vehicleTransform.pos.y, vehicleTransform.pos.z }, false);
-=======
-    audioManager->jsonSound("gameplay.snowball.throw", { vehicleTransform.pos.x, vehicleTransform.pos.y, vehicleTransform.pos.z });
->>>>>>> main
+
     //logger::info("Throwing snowball...");
 
     // Calculate the Forward direction based on the vehicle's current rotation
