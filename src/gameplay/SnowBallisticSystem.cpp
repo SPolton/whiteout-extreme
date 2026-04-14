@@ -112,7 +112,7 @@ void SnowBallisticSystem::update(float dt) {
                     }
 
                     // play sound of getting hit by snowball (play at position of snowball)
-                    audioManager->jsonSound("gameplay.snowball.hit", { bTrans.pos.x, bTrans.pos.y, bTrans.pos.z });
+                    audioManager->jsonSound("gameplay.snowball.hit", { bTrans.pos.x, bTrans.pos.y, bTrans.pos.z }, false);
 
                     // if player got hit
                     if (vComp.playerID == 0) {
@@ -175,7 +175,8 @@ void SnowBallisticSystem::throwSnowball(Entity throwerEntity)
     if (vehicleComponent.snowBallCooldown > 0.f) return;
 
     // play sound of throwing snowball (play sound at vehicle that is throwing)
-    audioManager->jsonSound("gameplay.snowball.throw", { vehicleTransform.pos.x, vehicleTransform.pos.y, vehicleTransform.pos.z });
+    audioManager->jsonSound("gameplay.snowball.throw", { vehicleTransform.pos.x, vehicleTransform.pos.y, vehicleTransform.pos.z }, false);
+
     //logger::info("Throwing snowball...");
 
     // Calculate the Forward direction based on the vehicle's current rotation

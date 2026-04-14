@@ -1,4 +1,5 @@
 ﻿#include "RacingGame.hpp"
+#define PL_MPEG_IMPLEMENTATION
 
 
 //#include "components/CameraComponent.h"
@@ -29,6 +30,7 @@ RacingGame::RacingGame()
         return;
     }
 
+    initVideos();
     initEcsAndSystems();
     createWorldEntities();
     initUiSystems();
@@ -65,6 +67,19 @@ bool RacingGame::initPlatformAndWindow()
     }
 
     return true;
+}
+
+void RacingGame::initVideos() {
+    introVideo = std::make_unique<VideoPlayer>();
+    introVideo->load("assets/video/intro_cinematic_v2.mpeg");
+    introVideo->setLoop(false);
+
+    menuVideo = std::make_unique<VideoPlayer>();
+    menuVideo->load("assets/video/menu_background_loop.mpeg");
+    menuVideo->setLoop(true);
+    menuVideo->setPaused(false);
+    menuVideo->update(0.001f);
+    menuVideo->setPaused(true);
 }
 
 void RacingGame::initEcsAndSystems()
@@ -340,9 +355,15 @@ void RacingGame::initAudio()
     audioManager->init();
     audioManager->loadSoundRegistry();
 
+    introChannelID = audioManager->jsonSound("menu.intro");
+    menuBackgroundChannelID = audioManager->jsonSound("menu.background");
     musicChannelID = audioManager->jsonSound("menu.music");
     inGameMusicChannelID = audioManager->jsonSound("game.music");
     avalancheChannelID = audioManager->jsonSound("race.avalanche.loop");
+    audioManager->pauseChannel(menuBackgroundChannelID);
+    audioManager->pauseChannel(musicChannelID);
+    audioManager->pauseChannel(inGameMusicChannelID);
+    audioManager->pauseChannel(avalancheChannelID);
 
     // call functions that will load sounds this component will use
     menus->loadMenuSounds();
@@ -351,6 +372,8 @@ void RacingGame::initAudio()
     // play ai racer sounds
     aiEngineChannelID1 = audioManager->jsonSound("race.ai.engine");
     aiEngineChannelID2 = audioManager->jsonSound("race.ai.engine");
+    audioManager->pauseChannel(aiEngineChannelID1);
+    audioManager->pauseChannel(aiEngineChannelID1);
 }
 
 void RacingGame::initImGui()
@@ -381,7 +404,7 @@ void RacingGame::initImGui()
 /// Main game loop
 void RacingGame::run()
 {
-    gameTime.reset(glfwGetTime());
+    gameTime.reset(glfwGetTime());    
 
     while (!window->shouldClose())
     {
@@ -444,26 +467,65 @@ void RacingGame::updateInGame()
 
 void RacingGame::updateInMenu(MenuAction actionButtons)
 {
-    // Reset to prevent big delta spike when returning to gameplay
-    gameTime.updatePause(glfwGetTime());
+    if (gameState == GameState::Intro) {
+        gameTime.update(glfwGetTime());
 
-    if (gameState == GameState::MainMenu) {
-        updateMainMenu(actionButtons);
-    } else if (gameState == GameState::Pause) {
-        updatePauseMenu(actionButtons);
-    } else if (gameState == GameState::GameOver) {
-        updateGameOverMenu(actionButtons);
-    } else if (gameState == GameState::HelpMenu) {
-        updateHelpMenu(actionButtons);
-    } else if (gameState == GameState::ControllerHelp) {
-        updateControllerHelpMenu(actionButtons);
-    } else if (gameState == GameState::KeyboardHelp) {
-        updateKeyboardHelpMenu(actionButtons);
+        menuVideo->setPaused(true);
+
+        introVideo->update(gameTime.frameTimeF());
+        renderingSystem->drawFullscreenQuad(introVideo->getTextureID());
+        updateIntro(actionButtons);
     }
+    else {
+       
+        // Reset to prevent big delta spike when returning to gameplay
+        gameTime.updatePause(glfwGetTime());
+
+        if (gameState == GameState::MainMenu) {
+            updateMainMenu(actionButtons);
+        }
+        else if (gameState == GameState::Pause) {
+            updatePauseMenu(actionButtons);
+        }
+        else if (gameState == GameState::GameOver) {
+            updateGameOverMenu(actionButtons);
+        }
+        else if (gameState == GameState::HelpMenu) {
+            updateHelpMenu(actionButtons);
+        }
+        else if (gameState == GameState::ControllerHelp) {
+            updateControllerHelpMenu(actionButtons);
+        }
+        else if (gameState == GameState::KeyboardHelp) {
+            updateKeyboardHelpMenu(actionButtons);
+        }
+    }
+}
+
+void RacingGame::updateIntro(MenuAction actionButtons) {
+   
+
+    audioManager->resumeChannel(introChannelID);
+
+    if (introVideo->isFinished() || actionButtons == MenuAction::GoToMainMenu) {
+        introVideo->setPaused(true);
+        audioManager->stopChannel(introChannelID);
+        audioManager->resumeChannel(musicChannelID);
+        menuVideo->setPaused(false);
+        menuVideo->rewind();
+        gameState = GameState::MainMenu;
+    }
+
+    updateMenuAudioState();
 }
 
 void RacingGame::updateMainMenu(MenuAction actionButtons)
 {
+    menuVideo->setPaused(false);
+    float videoDt = std::min(gameTime.getRealDeltaTime(glfwGetTime()), 0.033f);
+    menuVideo->update(videoDt);
+    renderingSystem->drawFullscreenQuad(menuVideo->getTextureID());
+
     MenuAction actionCursor = menus->renderMainMenu();
 
     if (actionButtons == MenuAction::StartGame || actionCursor == MenuAction::StartGame) {
@@ -471,9 +533,15 @@ void RacingGame::updateMainMenu(MenuAction actionButtons)
         racingSystem->restart();
         audioManager->resumeChannel(inGameMusicChannelID);
         gameState = GameState::InGame;
+        audioManager->pauseChannel(menuBackgroundChannelID);
+        menuVideo->rewind();
+        menuVideo->setPaused(true);
     }
     else if (actionButtons == MenuAction::GoToHelpMenu || actionCursor == MenuAction::GoToHelpMenu) {
         gameState = GameState::HelpMenu;
+        audioManager->pauseChannel(menuBackgroundChannelID);
+        menuVideo->rewind();
+        menuVideo->setPaused(true);
     }
 
     updateMenuAudioState();
@@ -661,6 +729,9 @@ void RacingGame::renderInGameHUD()
     float screenHeight = 1440.f;
     float topY = screenHeight - 50.f;
 
+    float centerX = screenHeight / 2.0f;
+    float centerY = screenHeight / 2.0f;
+
     // --- Debug & System Info ---
 #ifndef NDEBUG
     textSystem->renderText(
@@ -670,15 +741,63 @@ void RacingGame::renderInGameHUD()
     textSystem->renderText(
         "Physics Frames: " + std::to_string(gameTime.physicsFrameCount),
         { marginX, topY - 40.f, 0.40f }, { 0.5f, 0.2f, 0.8f });
-#endif
+
     textSystem->renderText(
         "Game FPS: " + std::to_string(static_cast<int>(gameTime.fpsF())),
         { marginX, topY - 75.f, 0.75f }, { 0.9f, 0.9f, 0.4f });
+#endif
+
+    float elapsed = gameTime.gameTimeF();
+
+    float fraction = elapsed - std::floor(elapsed);
+    float dynamicScale = 4.0f;
+
+    std::string displayString = "";
+    glm::vec3 textColor = { 1.0f, 1.0f, 1.0f };
+
+    if (elapsed < 3.0f) {
+        float fraction = elapsed - std::floor(elapsed);
+        dynamicScale = 4.0f + (1.0f - fraction) * 1.5f;
+
+        if (elapsed < 1.0f) {
+            displayString = "  3";
+            textColor = { 1.0f, 0.1f, 0.1f };
+        }
+        else if (elapsed < 2.0f) {
+            displayString = "  2";
+            textColor = { 1.0f, 0.5f, 0.0f }; 
+        }
+        else {
+            displayString = "  1";
+            textColor = { 1.0f, 0.9f, 0.0f }; 
+        }
+    }
+    else if (elapsed < 5.0f) {
+        displayString = "GO!";
+        textColor = { 0.0f, 1.0f, 0.4f }; 
+
+        float goFraction = (elapsed - 3.0f) / 2.0f;
+
+        dynamicScale = 4.0f + (1.0f - goFraction) * 3.0f;
+    }
+
+    if (!displayString.empty()) {
+        float offset = (displayString == "GO!") ? 50.f : 0.f;
+
+        textSystem->renderText(displayString,
+            { centerX - 170.f + offset, centerY + 115.f - 3.5f, dynamicScale * 1.025f },
+            { 1.0f, 1.0f, 1.0f });
+
+        textSystem->renderText(displayString,
+            { centerX - 170.f + offset, centerY + 115.f, dynamicScale },
+            textColor);
+    }
 
     // --- Leaderboard Section ---
-    float lbYStart = topY - 250.f;
-    textSystem->renderText("LEADERBOARD :", { marginX + 2.0f, lbYStart - 2.0f, 0.85f }, { 1.f, 1.f, 1.f });
-    textSystem->renderText("LEADERBOARD :", { marginX, lbYStart, 0.85f }, { 0.15f, 0.7f, 0.6f });
+    float lbXStart = centerX * 1.4f;
+    float lbYStart = topY - 25.f;
+    textSystem->renderText("LEADERBOARD", { lbXStart + 2.0f, lbYStart - 2.0f, 0.85f }, { 0.0f, 0.0f, 0.0f });
+    textSystem->renderText("LEADERBOARD", { lbXStart, lbYStart, 0.85f }, { 0.407f, 0.238f, 0.831f });
 
     for (size_t i = 0; i < racingSystem->leaderboard.size(); ++i) {
         Entity e = racingSystem->leaderboard[i];
@@ -690,7 +809,7 @@ void RacingGame::renderInGameHUD()
         std::string name = (vehicle.playerID == 0) ? "PLAYER" : "AI_" + std::to_string(e);
         std::string entry = std::to_string(i + 1) + ". " + name + (racer.engulfed ? " X engulfed" : "") + ", at " + std::to_string(static_cast<int>(racer.raceCompletion * 100)) + "%";
 
-        float textX = marginX;
+        float textX = lbXStart;
         float textY = lbYStart - 50.f - (i * 50.f);
         float scale = 0.75f;
 
@@ -699,16 +818,14 @@ void RacingGame::renderInGameHUD()
     }
 
     // -- Snowball throw --
-    float centerX = screenHeight / 2.0f;
-    float centerY = screenHeight / 2.0f;
-
     float snowballX = centerX * 1.4f;
     float snowballY = 275.f;
     float snowBallCoolDownPlayer = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).snowBallCooldown;
-    textSystem->renderText("SNOWBALL", {snowballX + 2.f, snowballY - 2.f, 1.0f}, {1.0f, 1.0f, 1.0f});
-    textSystem->renderText("SNOWBALL", { snowballX, snowballY, 1.0f }, { 0.05f, 0.55f, 0.65f });
-    textSystem->renderText((snowBallCoolDownPlayer > 0.f ? std::format(" in {:.1f}s", snowBallCoolDownPlayer) : " READY !"), { snowballX + 2.f + 10.f, snowballY - 2.f - 50.f, 1.0f }, { 1.0f, 1.0f, 1.0f });
-    textSystem->renderText((snowBallCoolDownPlayer > 0.f ? std::format(" in {:.1f}s", snowBallCoolDownPlayer) : " READY !"), { snowballX + 10.f, snowballY - 50.f, 1.0f }, { 0.05f, 0.55f, 0.65f });
+    glm::vec3 snowballColor = snowBallCoolDownPlayer > 0.f ? glm::vec3{ 1.0f, 0.55f, 0.0f } : glm::vec3{ 0.35f, 1.0f, 0.65f };
+    textSystem->renderText("SNOWBALL", {snowballX + 2.f, snowballY - 2.f, 1.0f}, {0.0f, 0.0f, 0.0f});
+    textSystem->renderText("SNOWBALL", { snowballX, snowballY, 1.0f }, snowballColor);
+    textSystem->renderText((snowBallCoolDownPlayer > 0.f ? std::format(" in {:.1f}s", snowBallCoolDownPlayer) : " READY !"), { snowballX + 2.f + 10.f, snowballY - 2.f - 50.f, 1.0f }, { 0.0f, 0.0f, 0.0f });
+    textSystem->renderText((snowBallCoolDownPlayer > 0.f ? std::format(" in {:.1f}s", snowBallCoolDownPlayer) : " READY !"), { snowballX + 10.f, snowballY - 50.f, 1.0f }, snowballColor);
 
     // -- BOOST GAUGE --
     // -- Engine Heat Logic --
@@ -833,8 +950,9 @@ void RacingGame::renderInGameHUD()
     
 
     // --- Crosshair / Center UI ---
-    textSystem->renderText("^", { centerX - 7.f, centerY - 7.f, 1.25f }, { 0.35f, 0.50f, 0.6f });
+    if(elapsed > 3.f) textSystem->renderText("^", { centerX - 15.f, centerY - 7.f, 1.25f }, { 0.35f, 0.50f, 0.6f });
 
+    /*
     // --- Input Controls Info (Top Right) ---
     float controlX = centerX * 1.4f;
     glm::vec3 controlsColor{ 0.35f, 0.55f, 0.10f };
@@ -847,6 +965,7 @@ void RacingGame::renderInGameHUD()
     textSystem->renderText("Boost: Y-Btn / SHIFT", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
     textSystem->renderText("Shoot: X-Btn / SPACE", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
     textSystem->renderText("Pause: Start / P", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
+    */
 
     textSystem->endText();
 }
@@ -867,6 +986,24 @@ void RacingGame::updateMenuAudioState()
     audioManager->pauseChannel(aiEngineChannelID2);
     // no boost sound in menus
     vehicleControlSystem->pauseBoostAndEngineAudio();
+
+    if (gameState == GameState::Intro) {
+        audioManager->pauseChannel(musicChannelID);
+    }
+    else {
+        audioManager->resumeChannel(musicChannelID);
+        audioManager->pauseChannel(introChannelID);
+    }
+
+    if (gameState == GameState::MainMenu) {
+        if (menuVideo->wasRewind) {
+            audioManager->resumeChannel(menuBackgroundChannelID);
+            audioManager->restartSound(menuBackgroundChannelID);
+            menuVideo->wasRewind = false;
+            menuVideo->setPaused(false);
+        }
+    }
+
 }
 
 void RacingGame::updateImGui() {

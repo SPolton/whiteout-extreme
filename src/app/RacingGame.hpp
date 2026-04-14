@@ -16,6 +16,7 @@
 #include "input/glfw/InputManager.hpp"
 #include "input/panel/ImGuiWrapper.hpp"
 #include "input/panel/ImGuiPanel.hpp"
+#include "video/VideoPlayer.hpp"
 
 #include <iostream>
 #include <memory>
@@ -31,6 +32,7 @@ public:
 private:
     // Constructor phase
     bool initPlatformAndWindow();
+    void initVideos();
     void initEcsAndSystems();
     void createWorldEntities();
     void initUiSystems();
@@ -39,6 +41,7 @@ private:
 
     // State handlers
     void updateInGame();
+    void updateIntro(MenuAction actionButtons);
     void updateInMenu(MenuAction actionButtons);
     void updateMainMenu(MenuAction actionButtons);
     void updatePauseMenu(MenuAction actionButtons);
@@ -86,7 +89,7 @@ private:
     // access UI menus
     std::unique_ptr<GameMenus> menus;
     // set default game state on main menu
-    GameState gameState = GameState::MainMenu;
+    GameState gameState = GameState::Intro;
 
     //Entity playerVehicleEntity;
     Entity GroundPlane = 0;
@@ -104,6 +107,11 @@ private:
 
     // sound
     std::shared_ptr<AudioEngine> audioManager;
+    std::unique_ptr<VideoPlayer> introVideo;
+    std::unique_ptr<VideoPlayer> menuVideo;
+
+    int introChannelID = -1;
+    int menuBackgroundChannelID = -1;
     int musicChannelID = -1;
     int inGameMusicChannelID = -1;
     int avalancheChannelID = -1;

@@ -567,3 +567,4 @@ $RECYCLE.BIN/
 !libraries/stb
 /libraries/stb/*
 !libraries/stb/stb_image.*
+!libraries/pl_mpeg
