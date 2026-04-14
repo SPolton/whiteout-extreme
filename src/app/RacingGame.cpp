@@ -363,16 +363,20 @@ void RacingGame::initAudio()
     // load the main menu game music
     //audioManager->loadSound("assets/audio/game-music-loop-12.mp3", false, true, true);
     //musicChannelID = audioManager->playSounds("assets/audio/game-music-loop-12.mp3", { 0,0,0 }, -8.0f);
-    audioManager->loadSound("assets/audio/incompetech/neolith.mp3", false, true, true);
-    musicChannelID = audioManager->playSounds("assets/audio/incompetech/neolith.mp3", { 0,0,0 }, -8.0f);
+    //audioManager->loadSound("assets/audio/incompetech/neolith.mp3", false, true, true);
+    //musicChannelID = audioManager->playSounds("assets/audio/incompetech/neolith.mp3", { 0,0,0 }, -8.0f);
+    audioManager->loadSound("assets/audio/incompetech/in-a-heartbeat.mp3", false, true, true);
+    musicChannelID = audioManager->playSounds("assets/audio/incompetech/in-a-heartbeat.mp3", { 0,0,0 }, -6.0f);
     audioManager->pauseChannel(musicChannelID);
 
     // load the in-game music
     audioManager->loadSound("assets/audio/in-game-music.mp3", false, true, true);
     inGameMusicChannelID = audioManager->playSounds("assets/audio/in-game-music.mp3", { 0,0,0 }, -15.0f);
+    audioManager->pauseChannel(inGameMusicChannelID);
     // load avalanche sound
     audioManager->loadSound("assets/audio/rock-avalanche-2.wav", false, true, true);
-    avalancheChannelID = audioManager->playSounds("assets/audio/rock-avalanche-2.wav", { 0,0,0 }, -20.0f);
+    avalancheChannelID = audioManager->playSounds("assets/audio/rock-avalanche-2.wav", { 0,0,0 }, -16.0f);
+    audioManager->pauseChannel(avalancheChannelID);
 
     // call functions that will load sounds this component will use
     menus->loadMenuSounds();
@@ -382,6 +386,8 @@ void RacingGame::initAudio()
     audioManager->loadSound("assets/audio/snowmobiles-1-trimmed.wav", false, true, true);
     aiEngineChannelID1 = audioManager->playSounds("assets/audio/snowmobiles-1-trimmed.wav", { 0,0,0 }, -20.0f);
     aiEngineChannelID2 = audioManager->playSounds("assets/audio/snowmobiles-1-trimmed.wav", { 0,0,0 }, -20.0f);
+    audioManager->pauseChannel(aiEngineChannelID1);
+    audioManager->pauseChannel(aiEngineChannelID2);
 
     // boost sounds
     audioManager->loadSound("assets/audio/apex-vent.mp3", false, false, false);
@@ -495,10 +501,7 @@ void RacingGame::updateInMenu(MenuAction actionButtons)
         updateIntro(actionButtons);
     }
     else {
-        menuVideo->setPaused(false);
-        float videoDt = std::min(gameTime.getRealDeltaTime(glfwGetTime()), 0.033f);
-        menuVideo->update(videoDt);
-        renderingSystem->drawFullscreenQuad(menuVideo->getTextureID());
+       
         // Reset to prevent big delta spike when returning to gameplay
         gameTime.updatePause(glfwGetTime());
 
@@ -542,6 +545,10 @@ void RacingGame::updateIntro(MenuAction actionButtons) {
 
 void RacingGame::updateMainMenu(MenuAction actionButtons)
 {
+    menuVideo->setPaused(false);
+    float videoDt = std::min(gameTime.getRealDeltaTime(glfwGetTime()), 0.033f);
+    menuVideo->update(videoDt);
+    renderingSystem->drawFullscreenQuad(menuVideo->getTextureID());
 
     MenuAction actionCursor = menus->renderMainMenu();
 
