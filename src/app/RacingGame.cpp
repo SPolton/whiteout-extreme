@@ -747,35 +747,51 @@ void RacingGame::renderInGameHUD()
         { marginX, topY - 75.f, 0.75f }, { 0.9f, 0.9f, 0.4f });
 #endif
 
-    float timeVal = gameTime.frameCount / 100.f;
+    float elapsed = gameTime.gameTimeF();
+
+    float fraction = elapsed - std::floor(elapsed);
+    float dynamicScale = 4.0f;
+
     std::string displayString = "";
+    glm::vec3 textColor = { 1.0f, 1.0f, 1.0f };
 
-    if (timeVal <= 0.0f) {
-        displayString = "";
+    if (elapsed < 3.0f) {
+        float fraction = elapsed - std::floor(elapsed);
+        dynamicScale = 4.0f + (1.0f - fraction) * 1.5f;
+
+        if (elapsed < 1.0f) {
+            displayString = "  3";
+            textColor = { 1.0f, 0.1f, 0.1f };
+        }
+        else if (elapsed < 2.0f) {
+            displayString = "  2";
+            textColor = { 1.0f, 0.5f, 0.0f }; 
+        }
+        else {
+            displayString = "  1";
+            textColor = { 1.0f, 0.9f, 0.0f }; 
+        }
     }
-    else if (timeVal < 2.0f) {
-        displayString = "  3";
-    }
-    else if (timeVal < 4.0f) {
-        displayString = "  2";
-    }
-    else if (timeVal < 6.0f) {
-        displayString = "  1";
-    }
-    else if (timeVal < 9.0f) {
+    else if (elapsed < 5.0f) {
         displayString = "GO!";
+        textColor = { 0.0f, 1.0f, 0.4f }; 
+
+        float goFraction = (elapsed - 3.0f) / 2.0f;
+
+        dynamicScale = 4.0f + (1.0f - goFraction) * 3.0f;
     }
 
-    textSystem->renderText(
-        displayString,
-        { centerX - 150.f, centerY + 115.f - 3.5f, 4.1f },
-        { 1.f, 1.f, 1.f }
-    );
-    textSystem->renderText(
-        displayString,
-        { centerX - 150.f, centerY + 115.f, 4.0f },
-        { 0.407f, 0.238f, 0.831f }
-    );
+    if (!displayString.empty()) {
+        float offset = (displayString == "GO!") ? 50.f : 0.f;
+
+        textSystem->renderText(displayString,
+            { centerX - 170.f + offset, centerY + 115.f - 3.5f, dynamicScale * 1.025f },
+            { 1.0f, 1.0f, 1.0f });
+
+        textSystem->renderText(displayString,
+            { centerX - 170.f + offset, centerY + 115.f, dynamicScale },
+            textColor);
+    }
 
     // --- Leaderboard Section ---
     float lbXStart = centerX * 1.4f;
@@ -934,7 +950,7 @@ void RacingGame::renderInGameHUD()
     
 
     // --- Crosshair / Center UI ---
-    if(timeVal > 6.f) textSystem->renderText("^", { centerX - 15.f, centerY - 7.f, 1.25f }, { 0.35f, 0.50f, 0.6f });
+    if(elapsed > 3.f) textSystem->renderText("^", { centerX - 15.f, centerY - 7.f, 1.25f }, { 0.35f, 0.50f, 0.6f });
 
     /*
     // --- Input Controls Info (Top Right) ---
