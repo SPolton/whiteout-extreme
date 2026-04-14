@@ -14,7 +14,7 @@
 			"3d": false,
 			"looping": true,
 			"stream": true,
-			"volumeDb": -15.0
+			"volumeDb": -8.0
 		},
 		{
 			"id": "race.avalanche.loop",
@@ -22,15 +22,15 @@
 			"3d": false,
 			"looping": true,
 			"stream": true,
-			"volumeDb": -20.0
+			"volumeDb": -18.0
 		},
 		{
 			"id": "race.ai.engine",
 			"file": "assets/audio/snowmobiles-1-trimmed.wav",
-			"3d": true,
+			"3d": false,
 			"looping": true,
 			"stream": true,
-			"volumeDb": -20.0
+			"volumeDb": -55.0
 		},
 		{
 			"id": "vehicle.boost.loop",
@@ -38,7 +38,7 @@
 			"3d": false,
 			"looping": true,
 			"stream": true,
-			"volumeDb": -7.0
+			"volumeDb": -8.0
 		},
 		{
 			"id": "vehicle.overheat",
@@ -54,7 +54,7 @@
 			"3d": false,
 			"looping": false,
 			"stream": false,
-			"volumeDb": -13.0
+			"volumeDb": -16.0
 		},
 		{
 			"id": "vehicle.engine.loop",
@@ -62,7 +62,7 @@
 			"3d": false,
 			"looping": true,
 			"stream": true,
-			"volumeDb": -15.0
+			"volumeDb": -12.0
 		},
 		{
 			"id": "vehicle.engine.end",
@@ -78,7 +78,7 @@
 			"3d": false,
 			"looping": false,
 			"stream": false,
-			"volumeDb": -8.0
+			"volumeDb": -10.0
 		},
 		{
 			"id": "vehicle.boost.end",
@@ -86,7 +86,7 @@
 			"3d": false,
 			"looping": false,
 			"stream": false,
-			"volumeDb": -7.0
+			"volumeDb": -10.0
 		},
 		{
 			"id": "ui.menu.button",
@@ -107,26 +107,26 @@
 		{
 			"id": "gameplay.snowball.throw",
 			"file": "assets/audio/snowball-throw.mp3",
-			"3d": true,
+			"3d": false,
 			"looping": false,
 			"stream": false,
-			"volumeDb": 8.0
+			"volumeDb": 0.0
 		},
 		{
 			"id": "gameplay.snowball.hit",
 			"file": "assets/audio/snowball-hit.wav",
-			"3d": true,
+			"3d": false,
 			"looping": false,
 			"stream": false,
-			"volumeDb": -8.0
+			"volumeDb": -10.0
 		},
 		{
 			"id": "physics.crash",
 			"file": "assets/audio/snowmobile-crash.mp3",
-			"3d": true,
+			"3d": false,
 			"looping": false,
 			"stream": false,
-			"volumeDb": -6.0
+			"volumeDb": -8.0
 		}
 	]
 }
