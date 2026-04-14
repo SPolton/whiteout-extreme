@@ -5,6 +5,8 @@
 #include <string>
 #include "physics/VehicleFourWheelDrive.hpp"
 
+struct LightingState;
+
 struct VehicleDefaultParams {
     snippetvehicle::BaseVehicleParams base;
     snippetvehicle::EngineDrivetrainParams engine;
@@ -45,9 +47,11 @@ public:
     bool showSettingsWindow = true;
 
     void setVehicle(std::shared_ptr<VehicleFourWheelDrive> v);
+    void setLightingState(LightingState* lighting);
 
 protected:
     VehicleFourWheelDrive* vehicle = nullptr;
+    LightingState* lightingState = nullptr;
     VehicleDefaultParams defaultParams;
 
     // Individual panel sections
@@ -55,6 +59,7 @@ protected:
     void renderRenderSettings();
     void renderCameraInfo();
     void renderControls();
+    void renderLightingSettings();
     void renderVehiclePhysx();
 
 private:
