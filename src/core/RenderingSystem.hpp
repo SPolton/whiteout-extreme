@@ -38,7 +38,18 @@ struct LightingState {
     glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
     glm::vec3 lightDirection = glm::vec3(-0.2f, -1.0f, -0.3f);
     bool shadowsEnabled = false;
+    int shadowMapResolution = 2048;
+    float shadowNearPlane = 1.0f;
+    float shadowFarPlane = 600.0f;
+    float shadowOrthoRange = 200.0f;
     glm::mat4 lightViewProjection = glm::mat4(1.0f);
+};
+
+struct ShadowDepthResources {
+    unsigned int framebuffer = 0;
+    unsigned int depthTexture = 0;
+    int width = 0;
+    int height = 0;
 };
 
 struct RenderFrameContext {
@@ -82,6 +93,7 @@ private:
 class RenderingSystem : public System {
 public:
     RenderingSystem(std::shared_ptr<InputManager> inputManager);
+    ~RenderingSystem();
 
     void update(float deltaTime);
 
@@ -119,6 +131,8 @@ public:
 private:
     RenderingStats statsData{};
     LightingState lightingState{};
+    ShadowDepthResources shadowDepthResources{};
+    std::shared_ptr<ShaderProgram> depthShader;
     AssetManager& assetManager = AssetManager::getInstance();
     SnowRenderer snowRenderer;
 
@@ -139,6 +153,7 @@ private:
     void render();
 
     RenderFrameContext buildFrameContext() const;
+    void renderShadowDepthPass(const RenderFrameContext& frameContext);
     void renderGeometryPass(const RenderFrameContext& frameContext);
     void renderModelsPass(const RenderFrameContext& frameContext);
     void renderParticlesPass(const RenderFrameContext& frameContext);
@@ -150,6 +165,9 @@ private:
     void uploadCommonMatrices(const std::shared_ptr<ShaderProgram>& shader,
             const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection) const;
     void uploadLightingUniforms(const std::shared_ptr<ShaderProgram>& shader, const RenderFrameContext& frameContext) const;
+
+    void ensureShadowDepthResources(int width, int height);
+    void releaseShadowDepthResources();
     
     void processInput(float deltaTime);
     void processCameraInput(float deltaTime);

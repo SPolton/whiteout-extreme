@@ -19,10 +19,27 @@ RenderingSystem::RenderingSystem(
     }
 }
 
+RenderingSystem::~RenderingSystem()
+{
+    releaseShadowDepthResources();
+}
+
 bool RenderingSystem::init()
 {
     logger::info("OpenGL Version: {0}", (const char*)glGetString(GL_VERSION));
     logger::info("OpenGL Renderer: {0}", (const char*)glGetString(GL_RENDERER));
+
+    // Load depth shader used by the shadow depth pass.
+    try
+    {
+        depthShader = assetManager.loadShader("depth");
+        logger::info("Depth shader loaded successfully");
+    }
+    catch (const std::exception& e)
+    {
+        logger::error("Failed to load depth shader: {0}", e.what());
+        return false;
+    }
 
     // Create object tracking transform for camera (vehicle tracking)
     targetTransform = std::make_unique<SceneTransform>();
@@ -214,6 +231,32 @@ RenderFrameContext RenderingSystem::buildFrameContext() const
     frameContext.viewportSize = glm::vec2(static_cast<float>(vWidth), static_cast<float>(vHeight));
     frameContext.lighting = lightingState;
 
+    if (frameContext.lighting.shadowsEnabled) {
+        glm::vec3 const lightDirection = glm::normalize(frameContext.lighting.lightDirection);
+        // Keep the sun shadow frustum anchored in world space (not camera space).
+        glm::vec3 const lightTarget = frameContext.lighting.lightPosition;
+        glm::vec3 const lightPosition = lightTarget - lightDirection * 150.0f;
+
+        glm::mat4 const lightView = glm::lookAt(
+            lightPosition,
+            lightTarget,
+            glm::vec3(0.0f, 1.0f, 0.0f)
+        );
+
+        float const range = frameContext.lighting.shadowOrthoRange;
+        glm::mat4 const lightProjection = glm::ortho(
+            -range,
+            range,
+            -range,
+            range,
+            frameContext.lighting.shadowNearPlane,
+            frameContext.lighting.shadowFarPlane
+        );
+
+        frameContext.lighting.lightPosition = lightPosition;
+        frameContext.lighting.lightViewProjection = lightProjection * lightView;
+    }
+
     return frameContext;
 }
 
@@ -227,11 +270,103 @@ void RenderingSystem::render()
 
     snowRenderer.beginFrame();
 
+    renderShadowDepthPass(frameContext);
     renderGeometryPass(frameContext);
     renderModelsPass(frameContext);
     renderParticlesPass(frameContext);
 
     statsData.endFrame();
+}
+
+void RenderingSystem::renderShadowDepthPass(const RenderFrameContext& frameContext)
+{
+    if (!frameContext.lighting.shadowsEnabled || !depthShader) {
+        return;
+    }
+
+    ensureShadowDepthResources(
+        frameContext.lighting.shadowMapResolution,
+        frameContext.lighting.shadowMapResolution
+    );
+
+    if (shadowDepthResources.framebuffer == 0 || shadowDepthResources.depthTexture == 0) {
+        return;
+    }
+
+    // Shadow map uses its own viewport resolution (usually square and higher than window size).
+    glViewport(0, 0, shadowDepthResources.width, shadowDepthResources.height);
+    glBindFramebuffer(GL_FRAMEBUFFER, shadowDepthResources.framebuffer);
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    depthShader->use();
+    // Depth pass only needs light-space transform + model matrix.
+    // No color outputs are written.
+    glUniformMatrix4fv(
+        glGetUniformLocation(*depthShader, "lightViewProjection"),
+        1, GL_FALSE, glm::value_ptr(frameContext.lighting.lightViewProjection)
+    );
+
+    for (auto const& entity : mEntities)
+    {
+        if (!gCoordinator.HasComponent<PhysxTransform>(entity)) {
+            continue;
+        }
+
+        auto& transform = gCoordinator.GetComponent<PhysxTransform>(entity);
+
+        if (gCoordinator.HasComponent<Renderable>(entity)) {
+            auto& renderable = gCoordinator.GetComponent<Renderable>(entity);
+
+            glm::vec3 localOffset(0.0f);
+            if (gCoordinator.HasComponent<VehicleComponent>(entity)) {
+                localOffset = glm::vec3(0.0f, 0.75f, 2.0f);
+            }
+
+            glm::mat4 const modelMatrix = buildModelMatrix(transform, localOffset);
+            glUniformMatrix4fv(
+                glGetUniformLocation(*depthShader, "model"),
+                1, GL_FALSE, glm::value_ptr(modelMatrix)
+            );
+
+            renderable.geometry->bind();
+
+            if (!renderable.cpuData->indices.empty()) {
+                glDrawElements(
+                    GL_TRIANGLES,
+                    static_cast<GLsizei>(renderable.cpuData->indices.size()),
+                    GL_UNSIGNED_INT,
+                    nullptr
+                );
+            }
+            else {
+                glDrawArrays(
+                    GL_TRIANGLES,
+                    0, static_cast<GLsizei>(renderable.cpuData->positions.size())
+                );
+            }
+
+            continue;
+        }
+
+        if (gCoordinator.HasComponent<ModelRenderable>(entity)) {
+            auto& modelRenderable = gCoordinator.GetComponent<ModelRenderable>(entity);
+            if (!modelRenderable.modelLoader) {
+                continue;
+            }
+
+            glm::mat4 const modelMatrix = buildModelMatrix(transform, modelRenderable.visualOffsetPos);
+            glUniformMatrix4fv(
+                glGetUniformLocation(*depthShader, "model"),
+                1, GL_FALSE, glm::value_ptr(modelMatrix)
+            );
+
+            modelRenderable.modelLoader->draw(*depthShader);
+        }
+    }
+
+    // Return to default framebuffer + window viewport for regular forward passes.
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, static_cast<int>(frameContext.viewportSize.x), static_cast<int>(frameContext.viewportSize.y));
 }
 
 void RenderingSystem::renderGeometryPass(const RenderFrameContext& frameContext)
@@ -415,6 +550,103 @@ void RenderingSystem::uploadLightingUniforms(
         glGetUniformLocation(*shader, "viewPos"),
         1, glm::value_ptr(frameContext.cameraPosition)
     );
+
+    // Shadow-related uniforms
+    glUniform3fv(
+        glGetUniformLocation(*shader, "lightDir"),
+        1, glm::value_ptr(frameContext.lighting.lightDirection)
+    );
+
+    glUniform1i(
+        glGetUniformLocation(*shader, "shadowsEnabled"),
+        frameContext.lighting.shadowsEnabled ? 1 : 0
+    );
+
+    glUniformMatrix4fv(
+        glGetUniformLocation(*shader, "lightViewProjection"),
+        1, GL_FALSE, glm::value_ptr(frameContext.lighting.lightViewProjection)
+    );
+}
+
+void RenderingSystem::ensureShadowDepthResources(int width, int height)
+{
+    if (width <= 0 || height <= 0) {
+        return;
+    }
+
+    if (shadowDepthResources.framebuffer != 0
+        && shadowDepthResources.depthTexture != 0
+        && shadowDepthResources.width == width
+        && shadowDepthResources.height == height) {
+        return;
+    }
+
+    releaseShadowDepthResources();
+
+    glGenFramebuffers(1, &shadowDepthResources.framebuffer);
+    glGenTextures(1, &shadowDepthResources.depthTexture);
+
+    glBindTexture(GL_TEXTURE_2D, shadowDepthResources.depthTexture);
+    // Allocate depth-only texture storage.
+    // nullptr means reserve GPU memory without CPU upload.
+    glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
+        GL_DEPTH_COMPONENT,
+        width,
+        height,
+        0,
+        GL_DEPTH_COMPONENT,
+        GL_FLOAT,
+        nullptr
+    );
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+    float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, shadowDepthResources.framebuffer);
+    glFramebufferTexture2D(
+        GL_FRAMEBUFFER,
+        GL_DEPTH_ATTACHMENT,
+        GL_TEXTURE_2D,
+        shadowDepthResources.depthTexture,
+        0
+    );
+    // This FBO is depth-only, so disable color writes/reads explicitly.
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        logger::error("Shadow depth framebuffer is incomplete");
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        releaseShadowDepthResources();
+        return;
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    shadowDepthResources.width = width;
+    shadowDepthResources.height = height;
+}
+
+void RenderingSystem::releaseShadowDepthResources()
+{
+    if (shadowDepthResources.depthTexture != 0) {
+        glDeleteTextures(1, &shadowDepthResources.depthTexture);
+        shadowDepthResources.depthTexture = 0;
+    }
+
+    if (shadowDepthResources.framebuffer != 0) {
+        glDeleteFramebuffers(1, &shadowDepthResources.framebuffer);
+        shadowDepthResources.framebuffer = 0;
+    }
+
+    shadowDepthResources.width = 0;
+    shadowDepthResources.height = 0;
 }
 
 /* ----- Update step ----- */
