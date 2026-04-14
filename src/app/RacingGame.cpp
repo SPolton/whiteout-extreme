@@ -357,12 +357,14 @@ void RacingGame::initAudio()
     audioManager->loadSound("assets/audio/intro_cinematic_v2.mp3", false, false, true);
     introChannelID = audioManager->playSounds("assets/audio/intro_cinematic_v2.mp3", { 0,0,0 }, -5.0f);
     // load menu background looop sound
-    audioManager->loadSound("assets/audio/menu_background_loop.mp3", false, false, true);
+    audioManager->loadSound("assets/audio/menu_background_loop.mp3", false, true, true);
     menuBackgroundChannelID = audioManager->playSounds("assets/audio/menu_background_loop.mp3", { 0,0,0 }, -8.0f);
     audioManager->pauseChannel(menuBackgroundChannelID);
     // load the main menu game music
-    audioManager->loadSound("assets/audio/game-music-loop-12.mp3", false, true, true);
-    musicChannelID = audioManager->playSounds("assets/audio/game-music-loop-12.mp3", { 0,0,0 }, -8.0f);
+    //audioManager->loadSound("assets/audio/game-music-loop-12.mp3", false, true, true);
+    //musicChannelID = audioManager->playSounds("assets/audio/game-music-loop-12.mp3", { 0,0,0 }, -8.0f);
+    audioManager->loadSound("assets/audio/incompetech/neolith.mp3", false, true, true);
+    musicChannelID = audioManager->playSounds("assets/audio/incompetech/neolith.mp3", { 0,0,0 }, -8.0f);
     audioManager->pauseChannel(musicChannelID);
 
     // load the in-game music
@@ -961,6 +963,7 @@ void RacingGame::updateMenuAudioState()
 
     if (gameState == GameState::MainMenu) {
         if (menuVideo->wasRewind) {
+            audioManager->resumeChannel(menuBackgroundChannelID);
             audioManager->restartSound(menuBackgroundChannelID);
             menuVideo->wasRewind = false;
             menuVideo->setPaused(false);
