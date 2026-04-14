@@ -1,0 +1,148 @@
+{
+  "sounds": [
+    {
+      "id": "menu.intro",
+      "file": "assets/audio/intro_cinematic_v2.mp3",
+      "3d": false,
+      "looping": false,
+      "stream": true,
+      "volumeDb": -5.0
+    },
+    {
+      "id": "menu.background",
+      "file": "assets/audio/menu_background_loop.mp3",
+      "3d": false,
+      "looping": false,
+      "stream": true,
+      "volumeDb": -8.0
+    },
+    {
+      "id": "menu.music",
+      "file": "assets/audio/incompetech/in-a-heartbeat.mp3",
+      "3d": false,
+      "looping": true,
+      "stream": true,
+      "volumeDb": -6.0
+    },
+    {
+      "id": "game.music",
+      "file": "assets/audio/in-game-music.mp3",
+      "3d": false,
+      "looping": true,
+      "stream": true,
+      "volumeDb": -8.0
+    },
+    {
+      "id": "race.avalanche.loop",
+      "file": "assets/audio/rock-avalanche-2.wav",
+      "3d": false,
+      "looping": true,
+      "stream": true,
+      "volumeDb": -15.0
+    },
+    {
+      "id": "race.ai.engine",
+      "file": "assets/audio/snowmobiles-1-trimmed.wav",
+      "3d": false,
+      "looping": true,
+      "stream": true,
+      "volumeDb": -55.0
+    },
+    {
+      "id": "vehicle.boost.loop",
+      "file": "assets/audio/boost.wav",
+      "3d": false,
+      "looping": true,
+      "stream": true,
+      "volumeDb": -8.0
+    },
+    {
+      "id": "vehicle.overheat",
+      "file": "assets/audio/overheat.mp3",
+      "3d": false,
+      "looping": false,
+      "stream": false,
+      "volumeDb": -6.0
+    },
+    {
+      "id": "vehicle.apex.vent",
+      "file": "assets/audio/apex-vent.mp3",
+      "3d": false,
+      "looping": false,
+      "stream": false,
+      "volumeDb": -16.0
+    },
+    {
+      "id": "vehicle.engine.loop",
+      "file": "assets/audio/snowmobile-player.wav",
+      "3d": false,
+      "looping": true,
+      "stream": true,
+      "volumeDb": -12.0
+    },
+    {
+      "id": "vehicle.engine.end",
+      "file": "assets/audio/snowmobile-player-end.wav",
+      "3d": false,
+      "looping": false,
+      "stream": false,
+      "volumeDb": 5.0
+    },
+    {
+      "id": "vehicle.boost.start",
+      "file": "assets/audio/nitro-start.wav",
+      "3d": false,
+      "looping": false,
+      "stream": false,
+      "volumeDb": -10.0
+    },
+    {
+      "id": "vehicle.boost.end",
+      "file": "assets/audio/boost-end.wav",
+      "3d": false,
+      "looping": false,
+      "stream": false,
+      "volumeDb": -10.0
+    },
+    {
+      "id": "ui.menu.button",
+      "file": "assets/audio/menu-button.mp3",
+      "3d": false,
+      "looping": false,
+      "stream": false,
+      "volumeDb": -8.0
+    },
+    {
+      "id": "ui.game.start",
+      "file": "assets/audio/game-start.mp3",
+      "3d": false,
+      "looping": false,
+      "stream": false,
+      "volumeDb": -8.0
+    },
+    {
+      "id": "gameplay.snowball.throw",
+      "file": "assets/audio/snowball-throw.mp3",
+      "3d": false,
+      "looping": false,
+      "stream": false,
+      "volumeDb": 10.0
+    },
+    {
+      "id": "gameplay.snowball.hit",
+      "file": "assets/audio/snowball-hit.wav",
+      "3d": false,
+      "looping": false,
+      "stream": false,
+      "volumeDb": -10.0
+    },
+    {
+      "id": "physics.crash",
+      "file": "assets/audio/snowmobile-crash.mp3",
+      "3d": false,
+      "looping": false,
+      "stream": false,
+      "volumeDb": -8.0
+    }
+  ]
+}

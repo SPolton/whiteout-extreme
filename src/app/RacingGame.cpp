@@ -353,29 +353,16 @@ void RacingGame::initUiSystems()
 void RacingGame::initAudio()
 {
     audioManager->init();
-    // load intro cinematic sound
-    audioManager->loadSound("assets/audio/intro_cinematic_v2.mp3", false, false, true);
-    introChannelID = audioManager->playSounds("assets/audio/intro_cinematic_v2.mp3", { 0,0,0 }, -5.0f);
-    // load menu background looop sound
-    audioManager->loadSound("assets/audio/menu_background_loop.mp3", false, true, true);
-    menuBackgroundChannelID = audioManager->playSounds("assets/audio/menu_background_loop.mp3", { 0,0,0 }, -8.0f);
-    audioManager->pauseChannel(menuBackgroundChannelID);
-    // load the main menu game music
-    //audioManager->loadSound("assets/audio/game-music-loop-12.mp3", false, true, true);
-    //musicChannelID = audioManager->playSounds("assets/audio/game-music-loop-12.mp3", { 0,0,0 }, -8.0f);
-    //audioManager->loadSound("assets/audio/incompetech/neolith.mp3", false, true, true);
-    //musicChannelID = audioManager->playSounds("assets/audio/incompetech/neolith.mp3", { 0,0,0 }, -8.0f);
-    audioManager->loadSound("assets/audio/incompetech/in-a-heartbeat.mp3", false, true, true);
-    musicChannelID = audioManager->playSounds("assets/audio/incompetech/in-a-heartbeat.mp3", { 0,0,0 }, -6.0f);
-    audioManager->pauseChannel(musicChannelID);
+    audioManager->loadSoundRegistry();
 
-    // load the in-game music
-    audioManager->loadSound("assets/audio/in-game-music.mp3", false, true, true);
-    inGameMusicChannelID = audioManager->playSounds("assets/audio/in-game-music.mp3", { 0,0,0 }, -15.0f);
+    introChannelID = audioManager->jsonSound("menu.intro");
+    menuBackgroundChannelID = audioManager->jsonSound("menu.background");
+    musicChannelID = audioManager->jsonSound("menu.music");
+    inGameMusicChannelID = audioManager->jsonSound("game.music");
+    avalancheChannelID = audioManager->jsonSound("race.avalanche.loop");
+    audioManager->pauseChannel(menuBackgroundChannelID);
+    audioManager->pauseChannel(musicChannelID);
     audioManager->pauseChannel(inGameMusicChannelID);
-    // load avalanche sound
-    audioManager->loadSound("assets/audio/rock-avalanche-2.wav", false, true, true);
-    avalancheChannelID = audioManager->playSounds("assets/audio/rock-avalanche-2.wav", { 0,0,0 }, -16.0f);
     audioManager->pauseChannel(avalancheChannelID);
 
     // call functions that will load sounds this component will use
@@ -383,21 +370,10 @@ void RacingGame::initAudio()
     vehicleControlSystem->loadVehicleSounds();
 
     // play ai racer sounds
-    audioManager->loadSound("assets/audio/snowmobiles-1-trimmed.wav", false, true, true);
-    aiEngineChannelID1 = audioManager->playSounds("assets/audio/snowmobiles-1-trimmed.wav", { 0,0,0 }, -20.0f);
-    aiEngineChannelID2 = audioManager->playSounds("assets/audio/snowmobiles-1-trimmed.wav", { 0,0,0 }, -20.0f);
+    aiEngineChannelID1 = audioManager->jsonSound("race.ai.engine");
+    aiEngineChannelID2 = audioManager->jsonSound("race.ai.engine");
     audioManager->pauseChannel(aiEngineChannelID1);
-    audioManager->pauseChannel(aiEngineChannelID2);
-
-    // boost sounds
-    audioManager->loadSound("assets/audio/apex-vent.mp3", false, false, false);
-    audioManager->loadSound("assets/audio/overheat.mp3", false, false, false);
-
-    // collision sounds
-    audioManager->loadSound("assets/audio/snowball-hit.wav", false, false, false);
-    audioManager->loadSound("assets/audio/snowmobile-crash.mp3", false, false, false);
-
-    updateMenuAudioState();
+    audioManager->pauseChannel(aiEngineChannelID1);
 }
 
 void RacingGame::initImGui()
@@ -691,7 +667,7 @@ void RacingGame::updateInGameAudioState(float playerSpeed)
     // Player engine sound speed gating
     if (!vehicleControlSystem->stopPlayerEngine && playerSpeed > 1.0f) {
         if (!enginePlaying) {
-            engineChannelID = audioManager->playSounds("assets/audio/snowmobile-player.wav", { 0,0,0 }, -15.0f);
+            engineChannelID = audioManager->jsonSound("vehicle.engine.loop");
             enginePlaying = true;
         }
         else {

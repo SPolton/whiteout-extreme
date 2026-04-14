@@ -3,7 +3,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
 
-#include <iostream>
+#include "utils/logger.h"
 
 Texture::Texture(std::string path, GLint interpolation, GLint wrapMode)
 	: textureID(), path(path), interpolation(interpolation)
@@ -35,7 +35,7 @@ Texture::Texture(std::string path, GLint interpolation, GLint wrapMode)
 			format = GL_RED;
 			break;
 		default:
-			std::cout << "Invalid Texture Format" << std::endl;
+			logger::error("Invalid Texture Format");
 			break;
 		};
 		//Loads texture data into bound texture

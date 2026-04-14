@@ -57,7 +57,7 @@ void VehicleControlSystem::update(float deltaTime)
 
         // on first time playing boost sound, start the audio file
         if (vehicle.isBoosting && firstTimePlaying) {
-            boostChannelID = audioManager->playSounds("assets/audio/boost.wav", { 0,0,0 }, -7.f);
+            boostChannelID = audioManager->jsonSound("vehicle.boost.loop");
             firstTimePlaying = false;
         }
         // otherwise resume and pause boost channel based on vehicle boosting state
@@ -85,7 +85,7 @@ void VehicleControlSystem::update(float deltaTime)
                 boostPlaying = false;
 
                 if (entity == playerVehicleEntity) {
-                    overheatChannelID = audioManager->playSounds("assets/audio/overheat.mp3", { 0,0,0 }, -6.0f);
+                    overheatChannelID = audioManager->jsonSound("vehicle.overheat");
                 }
                 vehicle.engineHeat = 1.0f;
                 vehicle.isOverheated = true;
@@ -130,7 +130,7 @@ void VehicleControlSystem::update(float deltaTime)
             // - APEX-VENT -
             if (vehicle.engineHeat > 0.90f && !vehicle.isOverheated) {
                 if (entity == playerVehicleEntity) {
-                    apexVentChannelID = audioManager->playSounds("assets/audio/apex-vent.mp3", { 0,0,0 }, -13.0f);
+                    apexVentChannelID = audioManager->jsonSound("vehicle.apex.vent");
                 }
                 vehicle.boostMaster = true;
                 vehicle.timeSinceBoostMaster = 0.0f;
@@ -319,7 +319,7 @@ void VehicleControlSystem::processControllerInput()
     // if the key is currently NOT pressed down and previously WAS, play the engine ending sound
     if (!(throttleIsPressed > 0.0f) && (throttleWasPressedController > 0.0f)) {
         // when ending acceleration, play fade out engine
-        engineEndChannelID = audioManager->playSounds("assets/audio/snowmobile-player-end.wav", { 0,0,0 }, 5.f);
+        engineEndChannelID = audioManager->jsonSound("vehicle.engine.end");
         // warn to stop looping engine sound
         stopPlayerEngine = true;
     }
@@ -358,12 +358,12 @@ void VehicleControlSystem::processControllerInput()
 
     // if the button is currently pressed down and previously wasn't, play the nitro starting sound
     if (boostIsPressed && !boostWasPressedController) {
-        boostStartChannelID = audioManager->playSounds("assets/audio/nitro-start.wav", { 0,0,0 }, -8.0f);
+        boostStartChannelID = audioManager->jsonSound("vehicle.boost.start");
     }
     // if the button is currently NOT pressed down and previously WAS, play the nitro ending sound
     else if (!boostIsPressed && boostWasPressedController) {
         // when ending boost, play fade out boost
-        boostEndChannelID = audioManager->playSounds("assets/audio/boost-end.wav", { 0,0,0 }, -7.f);
+        boostEndChannelID = audioManager->jsonSound("vehicle.boost.end");
     }
 
     // if boost button(s) pressed, activate boost
@@ -408,7 +408,7 @@ void VehicleControlSystem::processKeyboardInput()
     // if the key is currently NOT pressed down and previously WAS, play the engine ending sound
     if (!throttleIsPressed && throttleWasPressedKeybaord) {
         // when ending acceleration, play fade out engine
-        engineEndChannelID = audioManager->playSounds("assets/audio/snowmobile-player-end.wav", { 0,0,0 }, 5.f);
+        engineEndChannelID = audioManager->jsonSound("vehicle.engine.end");
         // warn to stop looping engine sound
         stopPlayerEngine = true;
     }
@@ -442,12 +442,12 @@ void VehicleControlSystem::processKeyboardInput()
 
     // if the key is currently pressed down and previously wasn't, play the nitro starting sound
     if (boostIsPressed && !boostWasPressedKeybaord) {
-        boostStartChannelID = audioManager->playSounds("assets/audio/nitro-start.wav", { 0,0,0 }, -8.0f);
+        boostStartChannelID = audioManager->jsonSound("vehicle.boost.start");
     }
     // if the key is currently NOT pressed down and previously WAS, play the nitro ending sound
     else if (!boostIsPressed && boostWasPressedKeybaord) {
         // when ending boost, play fade out boost
-        boostEndChannelID = audioManager->playSounds("assets/audio/boost-end.wav", { 0,0,0 }, -7.f);
+        boostEndChannelID = audioManager->jsonSound("vehicle.boost.end");
     }
 
     // can boost and throw at the same time
@@ -548,16 +548,7 @@ void VehicleControlSystem::boost()
 // load basic vehicle sounds
 void VehicleControlSystem::loadVehicleSounds()
 {
-    // for acceleration
-    audioManager->loadSound("assets/audio/snowmobile-player.wav", false, true, true);
-    // for deceleration
-    audioManager->loadSound("assets/audio/snowmobile-player-end.wav", false, false, false);
-    // for throwing snowball
-    audioManager->loadSound("assets/audio/snowball-throw.mp3", false, false, false);
-    // for boost
-    audioManager->loadSound("assets/audio/boost.wav", false, true, true);
-    audioManager->loadSound("assets/audio/nitro-start.wav", false, false, false);
-    audioManager->loadSound("assets/audio/boost-end.wav", false, false, false);
+    audioManager->loadSoundRegistry();
 }
 
 // called from RacingGame to pause boost and engine audio

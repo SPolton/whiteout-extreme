@@ -1,11 +1,18 @@
 #include "AudioEngine.h"
 
+#include "utils/logger.h"
+
+Implementation* sgpImplementation = nullptr;
+
+constexpr const char* kDefaultSoundRegistryPath = "assets/audio/sounds.json";
+
 // Implementation struct methods
 //=============================================================================================================//
 // Implementation constructor
 Implementation::Implementation() {
     mpStudioSystem = NULL;
     mnNextChannelId = 0;
+    mJsonRegistryPath = kDefaultSoundRegistryPath;
     // check that all FMOD calls are successful
     AudioEngine::errorCheck(FMOD::Studio::System::create(&mpStudioSystem));
     AudioEngine::errorCheck(mpStudioSystem->initialize(32, FMOD_STUDIO_INIT_LIVEUPDATE, FMOD_INIT_PROFILE_ENABLE, NULL));
@@ -24,12 +31,15 @@ Implementation::~Implementation() {
 // checks if channel has stop playing, then destroy
 // updates event sounds
 void Implementation::update() {
-    vector<ChannelMap::iterator> pStoppedChannels;
+    std::vector<ChannelMap::iterator> pStoppedChannels;
     for (auto it = mChannels.begin(), itEnd = mChannels.end(); it != itEnd; ++it)
     {
         bool bIsPlaying = false;
         it->second->isPlaying(&bIsPlaying);
-        if (!bIsPlaying)
+        bool bIsPaused = false;
+        it->second->getPaused(&bIsPaused);
+
+        if (!bIsPlaying && !bIsPaused)
         {
             pStoppedChannels.push_back(it);
         }
@@ -42,8 +52,6 @@ void Implementation::update() {
     AudioEngine::errorCheck(mpSystem->update());
 }
 
-Implementation* sgpImplementation = nullptr;
-
 // Audio Engine methods
 //=============================================================================================================//
 void AudioEngine::init() {
@@ -55,6 +63,24 @@ void AudioEngine::init() {
 
 void AudioEngine::update() {
     sgpImplementation->update();
+}
+
+bool AudioEngine::loadSoundRegistry(const std::string& manifestPath)
+{
+    if (!sgpImplementation) {
+        return false;
+    }
+
+    sgpImplementation->mJsonRegistryLoadAttempted = true;
+    sgpImplementation->mJsonRegistryPath = manifestPath;
+    sgpImplementation->mJsonRegistryLoaded = false;
+
+    if (!parser::loadSoundRegistry(manifestPath, sgpImplementation->mJsonSounds)) {
+        return false;
+    }
+
+    sgpImplementation->mJsonRegistryLoaded = true;
+    return true;
 }
 
 // to load sounds with filename
@@ -91,7 +117,6 @@ void AudioEngine::unLoadSound(const std::string& strSoundName)
 // find open channel and play sound
 int AudioEngine::playSounds(const std::string& strSoundName, const Vector3& vPos, float fVolumeDB)
 {
-    int nChannelId = sgpImplementation->mnNextChannelId++;
     auto tFoundIt = sgpImplementation->mSounds.find(strSoundName);
     if (tFoundIt == sgpImplementation->mSounds.end())
     {
@@ -99,9 +124,22 @@ int AudioEngine::playSounds(const std::string& strSoundName, const Vector3& vPos
         tFoundIt = sgpImplementation->mSounds.find(strSoundName);
         if (tFoundIt == sgpImplementation->mSounds.end())
         {
-            return nChannelId;
+            return sgpImplementation->mnNextChannelId++;
         }
     }
+
+    return playSoundByName(strSoundName, vPos, fVolumeDB, false);
+}
+
+int AudioEngine::playSoundByName(const std::string& strSoundName, const Vector3& vPos, float fVolumeDB, bool startPaused)
+{
+    int nChannelId = sgpImplementation->mnNextChannelId++;
+    auto tFoundIt = sgpImplementation->mSounds.find(strSoundName);
+    if (tFoundIt == sgpImplementation->mSounds.end())
+    {
+        return nChannelId;
+    }
+
     FMOD::Channel* pChannel = nullptr;
     AudioEngine::errorCheck(sgpImplementation->mpSystem->playSound(tFoundIt->second, nullptr, true, &pChannel));
     if (pChannel)
@@ -112,11 +150,57 @@ int AudioEngine::playSounds(const std::string& strSoundName, const Vector3& vPos
             FMOD_VECTOR position = vectorToFmod(vPos);
             AudioEngine::errorCheck(pChannel->set3DAttributes(&position, nullptr));
         }
+
         AudioEngine::errorCheck(pChannel->setVolume(dbToVolume(fVolumeDB)));
-        AudioEngine::errorCheck(pChannel->setPaused(false));
+        AudioEngine::errorCheck(pChannel->setPaused(startPaused));
         sgpImplementation->mChannels[nChannelId] = pChannel;
     }
+
     return nChannelId;
+}
+
+int AudioEngine::jsonSound(const std::string& soundId, bool startPaused)
+{
+    if (!sgpImplementation) {
+        return -1;
+    }
+
+    if (!sgpImplementation->mJsonRegistryLoaded && !sgpImplementation->mJsonRegistryLoadAttempted) {
+        loadSoundRegistry(sgpImplementation->mJsonRegistryPath.empty() ? kDefaultSoundRegistryPath : sgpImplementation->mJsonRegistryPath);
+    }
+
+    auto definitionIt = sgpImplementation->mJsonSounds.find(soundId);
+    if (definitionIt == sgpImplementation->mJsonSounds.end()) {
+        logger::error("Unknown sound id '{}'", soundId);
+        return -1;
+    }
+
+    const parser::json::SoundDefinition& definition = definitionIt->second;
+    loadSound(definition.filePath, definition.is3d, definition.looping, definition.stream);
+
+    return playSoundByName(definition.filePath, Vector3{ 0, 0, 0 }, definition.defaultVolumeDb, startPaused);
+}
+
+int AudioEngine::jsonSound(const std::string& soundId, const Vector3& vPos, bool startPaused)
+{
+    if (!sgpImplementation) {
+        return -1;
+    }
+
+    if (!sgpImplementation->mJsonRegistryLoaded && !sgpImplementation->mJsonRegistryLoadAttempted) {
+        loadSoundRegistry(sgpImplementation->mJsonRegistryPath.empty() ? kDefaultSoundRegistryPath : sgpImplementation->mJsonRegistryPath);
+    }
+
+    auto definitionIt = sgpImplementation->mJsonSounds.find(soundId);
+    if (definitionIt == sgpImplementation->mJsonSounds.end()) {
+        logger::error("Unknown sound id '{}'", soundId);
+        return -1;
+    }
+
+    const parser::json::SoundDefinition& definition = definitionIt->second;
+    loadSound(definition.filePath, definition.is3d, definition.looping, definition.stream);
+
+    return playSoundByName(definition.filePath, vPos, definition.defaultVolumeDb, startPaused);
 }
 
 // based on given channel, pauses the sound
@@ -247,10 +331,9 @@ float  AudioEngine::volumeToDB(float volume)
 
 int AudioEngine::errorCheck(FMOD_RESULT result) {
     if (result != FMOD_OK) {
-        cout << "FMOD ERROR " << result << endl;
+        logger::error("FMOD ERROR {}", static_cast<int>(result));
         return 1;
     }
-    // cout << "FMOD all good" << endl;
     return 0;
 }
 
