@@ -1,5 +1,7 @@
 #include "AudioEngine.h"
 
+#include "utils/logger.h"
+
 Implementation* sgpImplementation = nullptr;
 
 // Implementation struct methods
@@ -239,10 +241,9 @@ float  AudioEngine::volumeToDB(float volume)
 
 int AudioEngine::errorCheck(FMOD_RESULT result) {
     if (result != FMOD_OK) {
-        std::cout << "FMOD ERROR " << result << std::endl;
+        logger::error("FMOD ERROR {}", static_cast<int>(result));
         return 1;
     }
-    // std::cout << "FMOD all good" << std::endl;
     return 0;
 }
 
