@@ -599,6 +599,11 @@ void RenderingSystem::uploadLightingUniforms(
     );
 
     glUniform1i(
+        glGetUniformLocation(*shader, "directionalLight"),
+        frameContext.lighting.directionalLight ? 1 : 0
+    );
+
+    glUniform1i(
         glGetUniformLocation(*shader, "shadowsEnabled"),
         frameContext.lighting.shadowsEnabled ? 1 : 0
     );

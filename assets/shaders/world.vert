@@ -13,16 +13,19 @@ layout (location = 3) in vec2 inUV;
 out vec2 texCoord;
 out vec3 normal;
 out vec3 fragPos;
+out vec4 fragPosLightSpace;
 
 uniform mat4 normalMatrix;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+uniform mat4 lightViewProjection;
 
 void main()
 {
 	gl_Position = projection * view * model * vec4(inPosition, 1.0);
 	fragPos = vec3(model * vec4(inPosition, 1.0)); // The actual fragment's position
+	fragPosLightSpace = lightViewProjection * vec4(fragPos, 1.0);
 
 	texCoord = inUV;
 	normal = vec3(normalMatrix * vec4(inNormal, 1.0));
