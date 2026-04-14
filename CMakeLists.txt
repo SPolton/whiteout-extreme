@@ -14,6 +14,16 @@ set(APP_NAME "WhiteoutExtreme")
 project(${APP_NAME} LANGUAGES C CXX)
 
 # --------------------------------------------------
+# Compiler options & warnings
+if(MSVC)
+    message(STATUS "Using MSVC compile options")
+    add_compile_options(/W4 /EHsc /MP) 
+else()
+    message(STATUS "Using default compile options")
+    add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
+# --------------------------------------------------
 # Use static runtime library to match PhysX
 # Our PhysX is built with /MT (Release) and /MTd (Debug)
 set(MT_CONFIG "MultiThreaded$<$<CONFIG:Debug>:Debug>")
