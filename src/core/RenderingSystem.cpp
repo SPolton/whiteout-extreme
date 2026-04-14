@@ -69,7 +69,7 @@ Renderable RenderingSystem::getCubeRenderable(const std::string& texturePath)
         .geometry = assetManager.loadGeometry("cube", ShapeGenerator::cube()),
         .cpuData = assetManager.getCPUGeometry("cube"),
         .material = RenderMaterial{
-            .shader = assetManager.loadShader("textured"),
+            .shader = assetManager.loadShader("world"),
             .baseTexture = assetManager.loadTexture(texturePath, GL_LINEAR),
         }
     };
@@ -107,7 +107,7 @@ Entity RenderingSystem::createPlaneEntity(const std::string& texturePath, const 
             .geometry = assetManager.loadGeometry(geomKey, planeCPU),
             .cpuData = assetManager.getCPUGeometry(geomKey),
             .material = RenderMaterial{
-                .shader = assetManager.loadShader("textured"),
+                .shader = assetManager.loadShader("world"),
                 .baseTexture = assetManager.loadTexture(texturePath, config.textureFilterMode, config.textureWrapMode),
             }
         }
@@ -427,6 +427,9 @@ void RenderingSystem::renderRenderableEntity(Entity entity, const RenderFrameCon
 
     glm::mat4 const modelMatrix = buildModelMatrix(transform, localOffset);
     uploadCommonMatrices(renderable.material.shader, modelMatrix, frameContext.view, frameContext.projection);
+    if (!renderable.isSkybox) {
+        uploadLightingUniforms(renderable.material.shader, frameContext);
+    }
 
     renderable.geometry->bind();
 
@@ -498,6 +501,15 @@ void RenderingSystem::bindMaterial(const RenderMaterial& material) const
         glGetUniformLocation(*material.shader, "textureScrollOffset"),
         1, glm::value_ptr(textureScrollOffset)
     );
+
+    if (shadowDepthResources.depthTexture != 0) {
+        glActiveTexture(GL_TEXTURE0 + shadowMapTextureUnit);
+        glBindTexture(GL_TEXTURE_2D, shadowDepthResources.depthTexture);
+        glUniform1i(
+            glGetUniformLocation(*material.shader, "shadowMap"),
+            shadowMapTextureUnit
+        );
+    }
 }
 
 glm::mat4 RenderingSystem::buildModelMatrix(const PhysxTransform& transform, const glm::vec3& localOffset) const
@@ -527,6 +539,12 @@ void RenderingSystem::uploadCommonMatrices(const std::shared_ptr<ShaderProgram>&
         glGetUniformLocation(*shader, "projection"),
         1, GL_FALSE, &projection[0][0]
     );
+
+    glm::mat4 const normalMatrix = glm::transpose(glm::inverse(model));
+    glUniformMatrix4fv(
+        glGetUniformLocation(*shader, "normalMatrix"),
+        1, GL_FALSE, &normalMatrix[0][0]
+    );
 }
 
 void RenderingSystem::uploadLightingUniforms(
@@ -549,6 +567,21 @@ void RenderingSystem::uploadLightingUniforms(
     glUniform3fv(
         glGetUniformLocation(*shader, "viewPos"),
         1, glm::value_ptr(frameContext.cameraPosition)
+    );
+
+    glUniform1f(
+        glGetUniformLocation(*shader, "ambientStrength"),
+        0.2f
+    );
+
+    glUniform1f(
+        glGetUniformLocation(*shader, "specularStrength"),
+        0.5f
+    );
+
+    glUniform1f(
+        glGetUniformLocation(*shader, "shininess"),
+        32.0f
     );
 
     // Shadow-related uniforms

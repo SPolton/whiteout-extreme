@@ -129,6 +129,8 @@ public:
     int vHeight;
 
 private:
+    const GLint shadowMapTextureUnit = 15;
+
     RenderingStats statsData{};
     LightingState lightingState{};
     ShadowDepthResources shadowDepthResources{};
