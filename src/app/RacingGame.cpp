@@ -383,6 +383,7 @@ void RacingGame::initImGui()
         logger::error("ImGui Init Failed");
     }
     imguiPanel = std::make_unique<ImGuiPanel>();
+    imguiPanel->setLightingState(renderingSystem->getLightingState());
     logger::info("ImGui initialized");
 
 #ifdef NDEBUG

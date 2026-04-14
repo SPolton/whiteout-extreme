@@ -1,4 +1,5 @@
 #include "ImGuiPanel.hpp"
+#include "core/RenderingSystem.hpp"
 #include <filesystem>
 #include <iostream>
 #include <set>
@@ -25,6 +26,7 @@ void ImGuiPanel::update()
         ImGui::Begin("Settings", &showSettingsWindow);
         renderRenderSettings();
         renderCameraInfo();
+        renderLightingSettings();
         renderControls();
         renderVehiclePhysx();
         ImGui::End();
@@ -99,6 +101,45 @@ void ImGuiPanel::setVehicle(std::shared_ptr<VehicleFourWheelDrive> v) {
         defaultParams.base = vehicle->getVehicleData().mBaseParams;
         defaultParams.engine = vehicle->getVehicleData().mEngineDriveParams;
         defaultParams.isSet = true;
+    }
+}
+
+void ImGuiPanel::setLightingState(LightingState* lighting)
+{
+    lightingState = lighting;
+}
+
+void ImGuiPanel::renderLightingSettings()
+{
+    if (!lightingState) {
+        return;
+    }
+
+    if (ImGui::CollapsingHeader("Lighting", ImGuiTreeNodeFlags_DefaultOpen)) {
+        ImGui::Checkbox("Directional Light (Shadow Base)", &lightingState->directionalLight);
+        ImGui::SameLine();
+        ImGui::Checkbox("Shadows Enabled", &lightingState->shadowsEnabled);
+        ImGui::ColorEdit3("Light Color", &lightingState->lightColor.x);
+
+        if (lightingState->directionalLight) {
+            ImGui::TextUnformatted("Light Position is ignored in directional mode.");
+        } else {
+            ImGui::SliderFloat3("Light Position", &lightingState->lightPosition.x, -5000.0f, 5000.0f);
+        }
+
+        if (ImGui::SliderFloat3("Light Direction", &lightingState->lightDirection.x, -1.0f, 1.0f)) {
+            const float len2 = glm::dot(lightingState->lightDirection, lightingState->lightDirection);
+            if (len2 > 1e-6f) {
+                lightingState->lightDirection = glm::normalize(lightingState->lightDirection);
+            }
+        }
+
+        if (lightingState->shadowsEnabled) {
+            ImGui::SliderInt("Shadow Map Resolution", &lightingState->shadowMapResolution, 256, 8192);
+            ImGui::SliderFloat("Shadow Near Plane", &lightingState->shadowNearPlane, 0.01f, 500.0f);
+            ImGui::SliderFloat("Shadow Far Plane", &lightingState->shadowFarPlane, 10.0f, 10000.0f);
+            ImGui::SliderFloat("Shadow Ortho Range", &lightingState->shadowOrthoRange, 10.0f, 5000.0f);
+        }
     }
 }
 

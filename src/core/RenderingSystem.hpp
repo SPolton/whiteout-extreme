@@ -120,6 +120,7 @@ public:
     glm::vec3 getCameraForward() const { return activeCamera->forward(); };
     glm::vec3 getCameraRight() const { return activeCamera->right(); };
     std::string getActiveCameraInfo() const { return activeCamera->toString(); };
+    LightingState* getLightingState() { return &lightingState; }
 
     // Parameters changed by Imgui in the syncImgui method of RacingGame
     float camSpeed = 1.0f;
