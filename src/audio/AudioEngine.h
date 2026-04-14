@@ -11,6 +11,7 @@
 #include <math.h>
 #include <iostream>
 
+#include "utils/parser.hpp"
 
 // initailizes and shutsdown FMOD
 // will have map of all sounds and events
@@ -29,11 +30,16 @@ struct Implementation {
     typedef std::map<int, FMOD::Channel*> ChannelMap;
     typedef std::map<std::string, FMOD::Studio::EventInstance*> EventMap;
     typedef std::map<std::string, FMOD::Studio::Bank*> BankMap;
+    typedef parser::json::SoundMap JsonSoundMap;
 
     BankMap mBanks;
     EventMap mEvents;
     SoundMap mSounds;
     ChannelMap mChannels;
+    JsonSoundMap mJsonSounds;
+    bool mJsonRegistryLoaded = false;
+    bool mJsonRegistryLoadAttempted = false;
+    std::string mJsonRegistryPath;
 };
 
 // Audio engine
@@ -55,9 +61,14 @@ public:
     static void shutdown();
     static int errorCheck(FMOD_RESULT result);
 
+    bool loadSoundRegistry(const std::string& manifestPath = "assets/audio/sounds.json");
     void loadSound(const std::string& strSoundName, bool b3d = true, bool bLooping = false, bool bStream = false);
     void unLoadSound(const std::string& strSoundName);
+
     int playSounds(const std::string& strSoundName, const Vector3& vPos = Vector3{ 0, 0, 0 }, float fVolumeDB = 0.0f);
+    int playSoundByName(const std::string& strSoundName, const Vector3& vPos, float fVolumeDB, bool startPaused);
+    int jsonSound(const std::string& soundId, bool startPaused = false);
+    int jsonSound(const std::string& soundId, const Vector3& vPos, float fVolumeDB, bool startPaused = false);
 
     void pauseChannel(int nChannelId);
     void resumeChannel(int nChannelId);
