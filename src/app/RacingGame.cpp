@@ -77,6 +77,9 @@ void RacingGame::initVideos() {
     menuVideo = std::make_unique<VideoPlayer>();
     menuVideo->load("assets/video/menu_background_loop.mpeg");
     menuVideo->setLoop(true);
+    menuVideo->setPaused(false);
+    menuVideo->update(0.001f);
+    menuVideo->setPaused(true);
 }
 
 void RacingGame::initEcsAndSystems()
@@ -351,11 +354,17 @@ void RacingGame::initAudio()
 {
     audioManager->init();
     // load intro cinematic sound
-    audioManager->loadSound("assets/audio/intro_cinematic_v2.mp3", false, true, true);
+    audioManager->loadSound("assets/audio/intro_cinematic_v2.mp3", false, false, true);
     introChannelID = audioManager->playSounds("assets/audio/intro_cinematic_v2.mp3", { 0,0,0 }, -5.0f);
+    // load menu background looop sound
+    audioManager->loadSound("assets/audio/menu_background_loop.mp3", false, false, true);
+    menuBackgroundChannelID = audioManager->playSounds("assets/audio/menu_background_loop.mp3", { 0,0,0 }, -8.0f);
+    audioManager->pauseChannel(menuBackgroundChannelID);
     // load the main menu game music
     audioManager->loadSound("assets/audio/game-music-loop-12.mp3", false, true, true);
     musicChannelID = audioManager->playSounds("assets/audio/game-music-loop-12.mp3", { 0,0,0 }, -8.0f);
+    audioManager->pauseChannel(musicChannelID);
+
     // load the in-game music
     audioManager->loadSound("assets/audio/in-game-music.mp3", false, true, true);
     inGameMusicChannelID = audioManager->playSounds("assets/audio/in-game-music.mp3", { 0,0,0 }, -15.0f);
@@ -474,17 +483,22 @@ void RacingGame::updateInGame()
 
 void RacingGame::updateInMenu(MenuAction actionButtons)
 {
-    gameTime.update(glfwGetTime());
-    menuVideo->update(gameTime.getRealDeltaTime(glfwGetTime()));
-    renderingSystem->drawFullscreenQuad(menuVideo->getTextureID());
-
     if (gameState == GameState::Intro) {
+        gameTime.update(glfwGetTime());
+
+        menuVideo->setPaused(true);
+
+        introVideo->update(gameTime.frameTimeF());
+        renderingSystem->drawFullscreenQuad(introVideo->getTextureID());
         updateIntro(actionButtons);
     }
     else {
+        menuVideo->setPaused(false);
+        float videoDt = std::min(gameTime.getRealDeltaTime(glfwGetTime()), 0.033f);
+        menuVideo->update(videoDt);
+        renderingSystem->drawFullscreenQuad(menuVideo->getTextureID());
         // Reset to prevent big delta spike when returning to gameplay
         gameTime.updatePause(glfwGetTime());
-
 
         if (gameState == GameState::MainMenu) {
             updateMainMenu(actionButtons);
@@ -508,15 +522,16 @@ void RacingGame::updateInMenu(MenuAction actionButtons)
 }
 
 void RacingGame::updateIntro(MenuAction actionButtons) {
-    //gameTime.update(glfwGetTime());
-    introVideo->update(gameTime.getRealDeltaTime(glfwGetTime()));
-    renderingSystem->drawFullscreenQuad(introVideo->getTextureID());
+   
 
     audioManager->resumeChannel(introChannelID);
 
     if (introVideo->isFinished() || actionButtons == MenuAction::GoToMainMenu) {
-        audioManager->pauseChannel(introChannelID);
+        introVideo->setPaused(true);
+        audioManager->stopChannel(introChannelID);
         audioManager->resumeChannel(musicChannelID);
+        menuVideo->setPaused(false);
+        menuVideo->rewind();
         gameState = GameState::MainMenu;
     }
 
@@ -525,9 +540,6 @@ void RacingGame::updateIntro(MenuAction actionButtons) {
 
 void RacingGame::updateMainMenu(MenuAction actionButtons)
 {
-    
-
-
 
     MenuAction actionCursor = menus->renderMainMenu();
 
@@ -536,9 +548,15 @@ void RacingGame::updateMainMenu(MenuAction actionButtons)
         racingSystem->restart();
         audioManager->resumeChannel(inGameMusicChannelID);
         gameState = GameState::InGame;
+        audioManager->pauseChannel(menuBackgroundChannelID);
+        menuVideo->rewind();
+        menuVideo->setPaused(true);
     }
     else if (actionButtons == MenuAction::GoToHelpMenu || actionCursor == MenuAction::GoToHelpMenu) {
         gameState = GameState::HelpMenu;
+        audioManager->pauseChannel(menuBackgroundChannelID);
+        menuVideo->rewind();
+        menuVideo->setPaused(true);
     }
 
     updateMenuAudioState();
@@ -940,6 +958,15 @@ void RacingGame::updateMenuAudioState()
         audioManager->resumeChannel(musicChannelID);
         audioManager->pauseChannel(introChannelID);
     }
+
+    if (gameState == GameState::MainMenu) {
+        if (menuVideo->wasRewind) {
+            audioManager->restartSound(menuBackgroundChannelID);
+            menuVideo->wasRewind = false;
+            menuVideo->setPaused(false);
+        }
+    }
+
 }
 
 void RacingGame::updateImGui() {

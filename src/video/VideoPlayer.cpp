@@ -42,11 +42,13 @@ bool VideoPlayer::load(const std::string& filename) {
 void VideoPlayer::rewind() {
     if (plm) {
         plm_rewind(plm);
+        setPaused(false);
+        wasRewind = true;
     }
 }
 
 void VideoPlayer::update(float dt) {
-    if (plm) {
+    if (plm && !isPaused) {
         plm_decode(plm, (double)dt);
 
         if (isLooping && plm_has_ended(plm)) {

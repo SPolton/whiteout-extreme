@@ -111,6 +111,7 @@ private:
     std::unique_ptr<VideoPlayer> menuVideo;
 
     int introChannelID = -1;
+    int menuBackgroundChannelID = -1;
     int musicChannelID = -1;
     int inGameMusicChannelID = -1;
     int avalancheChannelID = -1;

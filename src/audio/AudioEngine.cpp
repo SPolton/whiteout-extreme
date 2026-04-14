@@ -190,6 +190,14 @@ void AudioEngine::stopChannel(int nChannelId)
     }
 }
 
+void AudioEngine::restartSound(int nChannelId) {
+    auto tFoundIt = sgpImplementation->mChannels.find(nChannelId);
+    if (tFoundIt != sgpImplementation->mChannels.end()) {
+        AudioEngine::errorCheck(tFoundIt->second->setPosition(0, FMOD_TIMEUNIT_MS));
+        AudioEngine::errorCheck(tFoundIt->second->setPaused(false));
+    }
+}
+
 // set volume and position of sound
 void AudioEngine::setChannel3dPosition(int nChannelId, const Vector3& vPos)
 {
