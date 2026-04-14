@@ -110,7 +110,7 @@
 			"3d": false,
 			"looping": false,
 			"stream": false,
-			"volumeDb": 0.0
+			"volumeDb": 5.0
 		},
 		{
 			"id": "gameplay.snowball.hit",
@@ -118,7 +118,7 @@
 			"3d": false,
 			"looping": false,
 			"stream": false,
-			"volumeDb": -10.0
+			"volumeDb": -15.0
 		},
 		{
 			"id": "physics.crash",
