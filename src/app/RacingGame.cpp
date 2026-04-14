@@ -753,6 +753,9 @@ void RacingGame::renderInGameHUD()
     float screenHeight = 1440.f;
     float topY = screenHeight - 50.f;
 
+    float centerX = screenHeight / 2.0f;
+    float centerY = screenHeight / 2.0f;
+
     // --- Debug & System Info ---
 #ifndef NDEBUG
     textSystem->renderText(
@@ -762,15 +765,47 @@ void RacingGame::renderInGameHUD()
     textSystem->renderText(
         "Physics Frames: " + std::to_string(gameTime.physicsFrameCount),
         { marginX, topY - 40.f, 0.40f }, { 0.5f, 0.2f, 0.8f });
-#endif
+
     textSystem->renderText(
         "Game FPS: " + std::to_string(static_cast<int>(gameTime.fpsF())),
         { marginX, topY - 75.f, 0.75f }, { 0.9f, 0.9f, 0.4f });
+#endif
+
+    float timeVal = gameTime.frameCount / 100.f;
+    std::string displayString = "";
+
+    if (timeVal <= 0.0f) {
+        displayString = "";
+    }
+    else if (timeVal < 2.0f) {
+        displayString = "  3";
+    }
+    else if (timeVal < 4.0f) {
+        displayString = "  2";
+    }
+    else if (timeVal < 6.0f) {
+        displayString = "  1";
+    }
+    else if (timeVal < 9.0f) {
+        displayString = "GO!";
+    }
+
+    textSystem->renderText(
+        displayString,
+        { centerX - 150.f, centerY + 115.f - 3.5f, 4.1f },
+        { 1.f, 1.f, 1.f }
+    );
+    textSystem->renderText(
+        displayString,
+        { centerX - 150.f, centerY + 115.f, 4.0f },
+        { 0.407f, 0.238f, 0.831f }
+    );
 
     // --- Leaderboard Section ---
-    float lbYStart = topY - 250.f;
-    textSystem->renderText("LEADERBOARD :", { marginX + 2.0f, lbYStart - 2.0f, 0.85f }, { 1.f, 1.f, 1.f });
-    textSystem->renderText("LEADERBOARD :", { marginX, lbYStart, 0.85f }, { 0.15f, 0.7f, 0.6f });
+    float lbXStart = centerX * 1.4f;
+    float lbYStart = topY - 25.f;
+    textSystem->renderText("LEADERBOARD", { lbXStart + 2.0f, lbYStart - 2.0f, 0.85f }, { 0.0f, 0.0f, 0.0f });
+    textSystem->renderText("LEADERBOARD", { lbXStart, lbYStart, 0.85f }, { 0.407f, 0.238f, 0.831f });
 
     for (size_t i = 0; i < racingSystem->leaderboard.size(); ++i) {
         Entity e = racingSystem->leaderboard[i];
@@ -782,7 +817,7 @@ void RacingGame::renderInGameHUD()
         std::string name = (vehicle.playerID == 0) ? "PLAYER" : "AI_" + std::to_string(e);
         std::string entry = std::to_string(i + 1) + ". " + name + (racer.engulfed ? " X engulfed" : "") + ", at " + std::to_string(static_cast<int>(racer.raceCompletion * 100)) + "%";
 
-        float textX = marginX;
+        float textX = lbXStart;
         float textY = lbYStart - 50.f - (i * 50.f);
         float scale = 0.75f;
 
@@ -791,16 +826,14 @@ void RacingGame::renderInGameHUD()
     }
 
     // -- Snowball throw --
-    float centerX = screenHeight / 2.0f;
-    float centerY = screenHeight / 2.0f;
-
     float snowballX = centerX * 1.4f;
     float snowballY = 275.f;
     float snowBallCoolDownPlayer = gCoordinator.GetComponent<VehicleComponent>(playerVehicleEntity).snowBallCooldown;
-    textSystem->renderText("SNOWBALL", {snowballX + 2.f, snowballY - 2.f, 1.0f}, {1.0f, 1.0f, 1.0f});
-    textSystem->renderText("SNOWBALL", { snowballX, snowballY, 1.0f }, { 0.05f, 0.55f, 0.65f });
-    textSystem->renderText((snowBallCoolDownPlayer > 0.f ? std::format(" in {:.1f}s", snowBallCoolDownPlayer) : " READY !"), { snowballX + 2.f + 10.f, snowballY - 2.f - 50.f, 1.0f }, { 1.0f, 1.0f, 1.0f });
-    textSystem->renderText((snowBallCoolDownPlayer > 0.f ? std::format(" in {:.1f}s", snowBallCoolDownPlayer) : " READY !"), { snowballX + 10.f, snowballY - 50.f, 1.0f }, { 0.05f, 0.55f, 0.65f });
+    glm::vec3 snowballColor = snowBallCoolDownPlayer > 0.f ? glm::vec3{ 1.0f, 0.55f, 0.0f } : glm::vec3{ 0.35f, 1.0f, 0.65f };
+    textSystem->renderText("SNOWBALL", {snowballX + 2.f, snowballY - 2.f, 1.0f}, {0.0f, 0.0f, 0.0f});
+    textSystem->renderText("SNOWBALL", { snowballX, snowballY, 1.0f }, snowballColor);
+    textSystem->renderText((snowBallCoolDownPlayer > 0.f ? std::format(" in {:.1f}s", snowBallCoolDownPlayer) : " READY !"), { snowballX + 2.f + 10.f, snowballY - 2.f - 50.f, 1.0f }, { 0.0f, 0.0f, 0.0f });
+    textSystem->renderText((snowBallCoolDownPlayer > 0.f ? std::format(" in {:.1f}s", snowBallCoolDownPlayer) : " READY !"), { snowballX + 10.f, snowballY - 50.f, 1.0f }, snowballColor);
 
     // -- BOOST GAUGE --
     // -- Engine Heat Logic --
@@ -925,8 +958,9 @@ void RacingGame::renderInGameHUD()
     
 
     // --- Crosshair / Center UI ---
-    textSystem->renderText("^", { centerX - 7.f, centerY - 7.f, 1.25f }, { 0.35f, 0.50f, 0.6f });
+    if(timeVal > 6.f) textSystem->renderText("^", { centerX - 15.f, centerY - 7.f, 1.25f }, { 0.35f, 0.50f, 0.6f });
 
+    /*
     // --- Input Controls Info (Top Right) ---
     float controlX = centerX * 1.4f;
     glm::vec3 controlsColor{ 0.35f, 0.55f, 0.10f };
@@ -939,6 +973,7 @@ void RacingGame::renderInGameHUD()
     textSystem->renderText("Boost: Y-Btn / SHIFT", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
     textSystem->renderText("Shoot: X-Btn / SPACE", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
     textSystem->renderText("Pause: Start / P", { controlX, topY - (offset += controlsOffset), contolsSize }, controlsColor);
+    */
 
     textSystem->endText();
 }
