@@ -1,5 +1,7 @@
 #include "AudioEngine.h"
 
+Implementation* sgpImplementation = nullptr;
+
 // Implementation struct methods
 //=============================================================================================================//
 // Implementation constructor
@@ -24,7 +26,7 @@ Implementation::~Implementation() {
 // checks if channel has stop playing, then destroy
 // updates event sounds
 void Implementation::update() {
-    vector<ChannelMap::iterator> pStoppedChannels;
+    std::vector<ChannelMap::iterator> pStoppedChannels;
     for (auto it = mChannels.begin(), itEnd = mChannels.end(); it != itEnd; ++it)
     {
         bool bIsPlaying = false;
@@ -41,8 +43,6 @@ void Implementation::update() {
     AudioEngine::errorCheck(mpStudioSystem->update());
     AudioEngine::errorCheck(mpSystem->update());
 }
-
-Implementation* sgpImplementation = nullptr;
 
 // Audio Engine methods
 //=============================================================================================================//
@@ -239,10 +239,10 @@ float  AudioEngine::volumeToDB(float volume)
 
 int AudioEngine::errorCheck(FMOD_RESULT result) {
     if (result != FMOD_OK) {
-        cout << "FMOD ERROR " << result << endl;
+        std::cout << "FMOD ERROR " << result << std::endl;
         return 1;
     }
-    // cout << "FMOD all good" << endl;
+    // std::cout << "FMOD all good" << std::endl;
     return 0;
 }
 

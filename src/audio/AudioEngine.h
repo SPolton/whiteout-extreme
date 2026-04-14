@@ -11,14 +11,6 @@
 #include <math.h>
 #include <iostream>
 
-// make life easier, no need to use std::
-using namespace std;
-
-struct Vector3 {
-    float x;
-    float y;
-    float z;
-};
 
 // initailizes and shutsdown FMOD
 // will have map of all sounds and events
@@ -33,10 +25,10 @@ struct Implementation {
 
     int mnNextChannelId;
 
-    typedef map<string, FMOD::Sound*> SoundMap;
-    typedef map<int, FMOD::Channel*> ChannelMap;
-    typedef map<string, FMOD::Studio::EventInstance*> EventMap;
-    typedef map<string, FMOD::Studio::Bank*> BankMap;
+    typedef std::map<std::string, FMOD::Sound*> SoundMap;
+    typedef std::map<int, FMOD::Channel*> ChannelMap;
+    typedef std::map<std::string, FMOD::Studio::EventInstance*> EventMap;
+    typedef std::map<std::string, FMOD::Studio::Bank*> BankMap;
 
     BankMap mBanks;
     EventMap mEvents;
@@ -51,14 +43,22 @@ struct Implementation {
 */
 class AudioEngine {
 public:
+    // TODO: replace with glm::vec3
+    struct Vector3 {
+        float x;
+        float y;
+        float z;
+    };
+
     static void init();
     static void update();
     static void shutdown();
     static int errorCheck(FMOD_RESULT result);
 
-    void loadSound(const string& strSoundName, bool b3d = true, bool bLooping = false, bool bStream = false);
-    void unLoadSound(const string& strSoundName);
-    int playSounds(const string& strSoundName, const Vector3& vPos = Vector3{ 0, 0, 0 }, float fVolumeDB = 0.0f);
+    void loadSound(const std::string& strSoundName, bool b3d = true, bool bLooping = false, bool bStream = false);
+    void unLoadSound(const std::string& strSoundName);
+    int playSounds(const std::string& strSoundName, const Vector3& vPos = Vector3{ 0, 0, 0 }, float fVolumeDB = 0.0f);
+
     void pauseChannel(int nChannelId);
     void resumeChannel(int nChannelId);
     void stopChannel(int nChannelId);
