@@ -34,10 +34,11 @@
 extern Coordinator gCoordinator;
 
 struct LightingState {
-    glm::vec3 lightPosition = glm::vec3(1000.f); // ignored for directional light
     glm::vec3 lightColor = glm::vec3(1.f, 0.97f, 0.92f);
-    glm::vec3 lightDirection = glm::normalize(glm::vec3(0.35f, .55f, -0.75f));
-    bool directionalLight = true;
+    // Set to roughly the sun direction in our particular skybox
+    glm::vec3 lightDirection = glm::normalize(glm::vec3(0.35f, -0.55f, -0.75f)); // ignored for point light
+    glm::vec3 lightPosition = -lightDirection * 10000.f; // ignored for directional light
+    bool directionalLight = false;
     bool shadowsEnabled = false;
     int shadowMapResolution = 2048 * 2;
     float shadowNearPlane = 1.0f;

@@ -223,6 +223,8 @@ RenderFrameContext RenderingSystem::buildFrameContext() const
     const float aspectRatio = static_cast<float>(vWidth) / static_cast<float>(vHeight);
     const float nearPlane = 0.1f;
     const float farPlane = 5000.0f;
+    const float kMinShadowNear = 0.01f;
+    const float kMinShadowDepthSpan = 0.1f;
 
     RenderFrameContext frameContext{};
     frameContext.view = activeCamera->viewMatrix();
@@ -232,15 +234,16 @@ RenderFrameContext RenderingSystem::buildFrameContext() const
     frameContext.lighting = lightingState;
 
     if (frameContext.lighting.shadowsEnabled) {
+        float shadowNear = std::max(frameContext.lighting.shadowNearPlane, kMinShadowNear);
+        float shadowFar = std::max(frameContext.lighting.shadowFarPlane, shadowNear + kMinShadowDepthSpan);
+
         glm::vec3 const lightDirection = glm::normalize(frameContext.lighting.lightDirection);
         glm::vec3 lightPosition = frameContext.lighting.lightPosition;
         glm::vec3 lightTarget = frameContext.cameraPosition;
 
         if (frameContext.lighting.directionalLight) {
             // Directional light: center shadow depth span around camera to keep near/far sliders intuitive.
-            float const lightDistance = 0.5f * (
-                frameContext.lighting.shadowNearPlane + frameContext.lighting.shadowFarPlane
-            );
+            float const lightDistance = 0.5f * (shadowNear + shadowFar);
             lightPosition = frameContext.cameraPosition - lightDirection * lightDistance;
             lightTarget = frameContext.cameraPosition;
         }
@@ -257,10 +260,12 @@ RenderFrameContext RenderingSystem::buildFrameContext() const
             range,
             -range,
             range,
-            frameContext.lighting.shadowNearPlane,
-            frameContext.lighting.shadowFarPlane
+            shadowNear,
+            shadowFar
         );
 
+        frameContext.lighting.shadowNearPlane = shadowNear;
+        frameContext.lighting.shadowFarPlane = shadowFar;
         frameContext.lighting.lightPosition = lightPosition;
         frameContext.lighting.lightViewProjection = lightProjection * lightView;
     }
