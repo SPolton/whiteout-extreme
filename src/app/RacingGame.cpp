@@ -338,32 +338,19 @@ void RacingGame::initUiSystems()
 void RacingGame::initAudio()
 {
     audioManager->init();
-    // load the main menu game music
-    audioManager->loadSound("assets/audio/game-music-loop-12.mp3", false, true, true);
-    musicChannelID = audioManager->playSounds("assets/audio/game-music-loop-12.mp3", { 0,0,0 }, -8.0f);
-    // load the in-game music
-    audioManager->loadSound("assets/audio/in-game-music.mp3", false, true, true);
-    inGameMusicChannelID = audioManager->playSounds("assets/audio/in-game-music.mp3", { 0,0,0 }, -15.0f);
-    // load avalanche sound
-    audioManager->loadSound("assets/audio/rock-avalanche-2.wav", false, true, true);
-    avalancheChannelID = audioManager->playSounds("assets/audio/rock-avalanche-2.wav", { 0,0,0 }, -20.0f);
+    audioManager->loadSoundRegistry();
+
+    musicChannelID = audioManager->jsonSound("menu.music");
+    inGameMusicChannelID = audioManager->jsonSound("game.music");
+    avalancheChannelID = audioManager->jsonSound("race.avalanche.loop");
 
     // call functions that will load sounds this component will use
     menus->loadMenuSounds();
     vehicleControlSystem->loadVehicleSounds();
 
     // play ai racer sounds
-    audioManager->loadSound("assets/audio/snowmobiles-1-trimmed.wav", false, true, true);
-    aiEngineChannelID1 = audioManager->playSounds("assets/audio/snowmobiles-1-trimmed.wav", { 0,0,0 }, -20.0f);
-    aiEngineChannelID2 = audioManager->playSounds("assets/audio/snowmobiles-1-trimmed.wav", { 0,0,0 }, -20.0f);
-
-    // boost sounds
-    audioManager->loadSound("assets/audio/apex-vent.mp3", false, false, false);
-    audioManager->loadSound("assets/audio/overheat.mp3", false, false, false);
-
-    // collision sounds
-    audioManager->loadSound("assets/audio/snowball-hit.wav", false, false, false);
-    audioManager->loadSound("assets/audio/snowmobile-crash.mp3", false, false, false);
+    aiEngineChannelID1 = audioManager->jsonSound("race.ai.engine");
+    aiEngineChannelID2 = audioManager->jsonSound("race.ai.engine");
 }
 
 void RacingGame::initImGui()
@@ -612,7 +599,7 @@ void RacingGame::updateInGameAudioState(float playerSpeed)
     // Player engine sound speed gating
     if (!vehicleControlSystem->stopPlayerEngine && playerSpeed > 1.0f) {
         if (!enginePlaying) {
-            engineChannelID = audioManager->playSounds("assets/audio/snowmobile-player.wav", { 0,0,0 }, -15.0f);
+            engineChannelID = audioManager->jsonSound("vehicle.engine.loop");
             enginePlaying = true;
         }
         else {

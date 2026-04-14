@@ -36,7 +36,10 @@ void Implementation::update() {
     {
         bool bIsPlaying = false;
         it->second->isPlaying(&bIsPlaying);
-        if (!bIsPlaying)
+        bool bIsPaused = false;
+        it->second->getPaused(&bIsPaused);
+
+        if (!bIsPlaying && !bIsPaused)
         {
             pStoppedChannels.push_back(it);
         }
@@ -178,7 +181,7 @@ int AudioEngine::jsonSound(const std::string& soundId, bool startPaused)
     return playSoundByName(definition.filePath, Vector3{ 0, 0, 0 }, definition.defaultVolumeDb, startPaused);
 }
 
-int AudioEngine::jsonSound(const std::string& soundId, const Vector3& vPos, float fVolumeDB, bool startPaused)
+int AudioEngine::jsonSound(const std::string& soundId, const Vector3& vPos, bool startPaused)
 {
     if (!sgpImplementation) {
         return -1;
@@ -197,7 +200,7 @@ int AudioEngine::jsonSound(const std::string& soundId, const Vector3& vPos, floa
     const parser::json::SoundDefinition& definition = definitionIt->second;
     loadSound(definition.filePath, definition.is3d, definition.looping, definition.stream);
 
-    return playSoundByName(definition.filePath, vPos, fVolumeDB, startPaused);
+    return playSoundByName(definition.filePath, vPos, definition.defaultVolumeDb, startPaused);
 }
 
 // based on given channel, pauses the sound

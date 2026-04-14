@@ -68,7 +68,7 @@ public:
     int playSounds(const std::string& strSoundName, const Vector3& vPos = Vector3{ 0, 0, 0 }, float fVolumeDB = 0.0f);
     int playSoundByName(const std::string& strSoundName, const Vector3& vPos, float fVolumeDB, bool startPaused);
     int jsonSound(const std::string& soundId, bool startPaused = false);
-    int jsonSound(const std::string& soundId, const Vector3& vPos, float fVolumeDB, bool startPaused = false);
+    int jsonSound(const std::string& soundId, const Vector3& vPos, bool startPaused = false);
 
     void pauseChannel(int nChannelId);
     void resumeChannel(int nChannelId);
