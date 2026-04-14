@@ -233,9 +233,17 @@ RenderFrameContext RenderingSystem::buildFrameContext() const
 
     if (frameContext.lighting.shadowsEnabled) {
         glm::vec3 const lightDirection = glm::normalize(frameContext.lighting.lightDirection);
-        // Keep the sun shadow frustum anchored in world space (not camera space).
-        glm::vec3 const lightTarget = frameContext.lighting.lightPosition;
-        glm::vec3 const lightPosition = lightTarget - lightDirection * 150.0f;
+        glm::vec3 lightPosition = frameContext.lighting.lightPosition;
+        glm::vec3 lightTarget = frameContext.cameraPosition;
+
+        if (frameContext.lighting.directionalLight) {
+            // Directional light: center shadow depth span around camera to keep near/far sliders intuitive.
+            float const lightDistance = 0.5f * (
+                frameContext.lighting.shadowNearPlane + frameContext.lighting.shadowFarPlane
+            );
+            lightPosition = frameContext.cameraPosition - lightDirection * lightDistance;
+            lightTarget = frameContext.cameraPosition;
+        }
 
         glm::mat4 const lightView = glm::lookAt(
             lightPosition,
@@ -598,6 +606,16 @@ void RenderingSystem::uploadLightingUniforms(
     glUniformMatrix4fv(
         glGetUniformLocation(*shader, "lightViewProjection"),
         1, GL_FALSE, glm::value_ptr(frameContext.lighting.lightViewProjection)
+    );
+
+    glUniform1f(
+        glGetUniformLocation(*shader, "shadowNearPlane"),
+        frameContext.lighting.shadowNearPlane
+    );
+
+    glUniform1f(
+        glGetUniformLocation(*shader, "shadowFarPlane"),
+        frameContext.lighting.shadowFarPlane
     );
 }
 

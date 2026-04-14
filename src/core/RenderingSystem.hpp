@@ -34,11 +34,12 @@
 extern Coordinator gCoordinator;
 
 struct LightingState {
-    glm::vec3 lightPosition = glm::vec3(0.0f, 20.0f, 0.0f);
-    glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
-    glm::vec3 lightDirection = glm::vec3(-0.2f, -1.0f, -0.3f);
+    glm::vec3 lightPosition = glm::vec3(1000.f); // ignored for directional light
+    glm::vec3 lightColor = glm::vec3(1.f, 0.97f, 0.92f);
+    glm::vec3 lightDirection = glm::normalize(glm::vec3(0.35f, .55f, -0.75f));
+    bool directionalLight = true;
     bool shadowsEnabled = false;
-    int shadowMapResolution = 2048;
+    int shadowMapResolution = 2048 * 2;
     float shadowNearPlane = 1.0f;
     float shadowFarPlane = 600.0f;
     float shadowOrthoRange = 200.0f;
