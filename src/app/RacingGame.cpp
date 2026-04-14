@@ -30,7 +30,7 @@ RacingGame::RacingGame()
         return;
     }
 
-    initVideo();
+    initVideos();
     initEcsAndSystems();
     createWorldEntities();
     initUiSystems();
@@ -69,11 +69,14 @@ bool RacingGame::initPlatformAndWindow()
     return true;
 }
 
-void RacingGame::initVideo() {
-    introPlayer = std::make_unique<VideoPlayer>();
-    if (!introPlayer->load("assets/video/intro_cinematic_v2.mpeg")) {
-        logger::error("Failed to load intro video!");
-    }
+void RacingGame::initVideos() {
+    introVideo = std::make_unique<VideoPlayer>();
+    introVideo->load("assets/video/intro_cinematic_v2.mpeg");
+    introVideo->setLoop(false);
+
+    menuVideo = std::make_unique<VideoPlayer>();
+    menuVideo->load("assets/video/menu_background_loop.mpeg");
+    menuVideo->setLoop(true);
 }
 
 void RacingGame::initEcsAndSystems()
@@ -376,6 +379,8 @@ void RacingGame::initAudio()
     // collision sounds
     audioManager->loadSound("assets/audio/snowball-hit.wav", false, false, false);
     audioManager->loadSound("assets/audio/snowmobile-crash.mp3", false, false, false);
+
+    updateMenuAudioState();
 }
 
 void RacingGame::initImGui()
@@ -406,7 +411,7 @@ void RacingGame::initImGui()
 /// Main game loop
 void RacingGame::run()
 {
-    gameTime.reset(glfwGetTime());
+    gameTime.reset(glfwGetTime());    
 
     while (!window->shouldClose())
     {
@@ -469,12 +474,17 @@ void RacingGame::updateInGame()
 
 void RacingGame::updateInMenu(MenuAction actionButtons)
 {
+    gameTime.update(glfwGetTime());
+    menuVideo->update(gameTime.getRealDeltaTime(glfwGetTime()));
+    renderingSystem->drawFullscreenQuad(menuVideo->getTextureID());
+
     if (gameState == GameState::Intro) {
         updateIntro(actionButtons);
     }
     else {
         // Reset to prevent big delta spike when returning to gameplay
         gameTime.updatePause(glfwGetTime());
+
 
         if (gameState == GameState::MainMenu) {
             updateMainMenu(actionButtons);
@@ -498,14 +508,13 @@ void RacingGame::updateInMenu(MenuAction actionButtons)
 }
 
 void RacingGame::updateIntro(MenuAction actionButtons) {
-    gameTime.update(glfwGetTime());
-    introPlayer->update(gameTime.frameTimeF());
-
-    renderingSystem->drawFullscreenQuad(introPlayer->getTextureID());
+    //gameTime.update(glfwGetTime());
+    introVideo->update(gameTime.getRealDeltaTime(glfwGetTime()));
+    renderingSystem->drawFullscreenQuad(introVideo->getTextureID());
 
     audioManager->resumeChannel(introChannelID);
 
-    if (introPlayer->isFinished() || actionButtons == MenuAction::GoToMainMenu) {
+    if (introVideo->isFinished() || actionButtons == MenuAction::GoToMainMenu) {
         audioManager->pauseChannel(introChannelID);
         audioManager->resumeChannel(musicChannelID);
         gameState = GameState::MainMenu;
@@ -516,6 +525,10 @@ void RacingGame::updateIntro(MenuAction actionButtons) {
 
 void RacingGame::updateMainMenu(MenuAction actionButtons)
 {
+    
+
+
+
     MenuAction actionCursor = menus->renderMainMenu();
 
     if (actionButtons == MenuAction::StartGame || actionCursor == MenuAction::StartGame) {

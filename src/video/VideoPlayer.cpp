@@ -39,9 +39,19 @@ bool VideoPlayer::load(const std::string& filename) {
     return true;
 }
 
+void VideoPlayer::rewind() {
+    if (plm) {
+        plm_rewind(plm);
+    }
+}
+
 void VideoPlayer::update(float dt) {
     if (plm) {
         plm_decode(plm, (double)dt);
+
+        if (isLooping && plm_has_ended(plm)) {
+            rewind();
+        }
     }
 }
 

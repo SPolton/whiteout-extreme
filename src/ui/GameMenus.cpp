@@ -301,8 +301,9 @@ MenuAction GameMenus::pollInputs() {
 MenuAction GameMenus::renderMainMenu()
 {
     // Clear buffers
-    glClearColor(0.6f, 0.8f, 1.0f, 0.8f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //glClearColor(0.6f, 0.8f, 1.0f, 0.8f);
+    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT);
 
     // when in a menu, check for cursor position to highlight "buttons"
     // get cursor position
@@ -318,6 +319,7 @@ MenuAction GameMenus::renderMainMenu()
 
     textSystem->loadFont("LuckiestGuy-Regular.ttf", 120);
 
+    /*
     // create vao to draw menu background
     GPU_Geometry gpuQuadBackground;
     gpuQuadBackground.Update2D(quad); // update it with our basic quad info
@@ -354,20 +356,23 @@ MenuAction GameMenus::renderMainMenu()
 
     // draw quad
     glDrawArrays(GL_TRIANGLES, 0, 6);
+    */
 
     // create vao to draw menu logo
     GPU_Geometry gpuQuad;
     gpuQuad.Update2D(quad); // update it with our basic quad info
-
+    
     shader->use();
 
     // bind texture
     glActiveTexture(GL_TEXTURE0);
     logoTexture->bind();
     glUniform1i(glGetUniformLocation(*shader, "sample"), 0);
+    
 
     // translations
     float translateY = 0.25f;
+    
 
     // static model to pass to shader, renders png as is
     glm::mat4 logoModel = glm::mat4(

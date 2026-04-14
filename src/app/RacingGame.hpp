@@ -32,7 +32,7 @@ public:
 private:
     // Constructor phase
     bool initPlatformAndWindow();
-    void initVideo();
+    void initVideos();
     void initEcsAndSystems();
     void createWorldEntities();
     void initUiSystems();
@@ -107,7 +107,8 @@ private:
 
     // sound
     std::shared_ptr<AudioEngine> audioManager;
-    std::unique_ptr<VideoPlayer> introPlayer;
+    std::unique_ptr<VideoPlayer> introVideo;
+    std::unique_ptr<VideoPlayer> menuVideo;
 
     int introChannelID = -1;
     int musicChannelID = -1;

@@ -14,11 +14,15 @@ public:
     GLuint getTextureID() const { return textureID_RGB; }
     bool isFinished() const;
 
+    void setLoop(bool loop) { isLooping = loop; }
+    void rewind();
+
 private:
     plm_t* plm = nullptr;
     GLuint textureID_RGB = 0;
     int width = 0;
     int height = 0;
+    bool isLooping = false;
 
     friend void on_video_frame(plm_t* plm, plm_frame_t* frame, void* user);
 };

@@ -15,6 +15,13 @@ struct GameTime {
     float gameTimeF() const { return static_cast<float>(gameTime); }
     float totalTimeF() const { return static_cast<float>(totalTime); }
 
+    float getRealDeltaTime(double dt) {
+        double currentTime = dt;
+        double realDelta = currentTime - realTimeLastFrame;
+        realTimeLastFrame = currentTime;
+        return static_cast<float>(realDelta);
+    }
+
     void reset(double newTime = 0.0) {
         totalTime = newTime;
         gameTime = 0.0;
@@ -86,6 +93,8 @@ private:
     double lastFrameTime = 0.0; // duration of the last frame
     double accumulator = 0.0;   // physics time step accumulator
     double fps = 0.0;           // smoothed frames per second
+
+    double realTimeLastFrame = 0.0;
 
     // Discard excess accumulator when performance is poor
     void discardExcessAccumulator() {
