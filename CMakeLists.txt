@@ -21,11 +21,17 @@ if(MSVC)
 else()
     message(STATUS "Using default compile options")
     add_compile_options(-Wall -Wextra -Wpedantic)
+    
+    # Platform-specific debug symbols for Linux
+    if(UNIX AND NOT APPLE AND NOT CMAKE_BUILD_TYPE MATCHES "Release")
+        add_compile_options(-g3 -fno-omit-frame-pointer)
+        message(STATUS "Using enhanced debug symbols for Linux")
+    endif()
 endif()
 
 # --------------------------------------------------
-# Use static runtime library to match PhysX
-# Our PhysX is built with /MT (Release) and /MTd (Debug)
+# Use static runtime library to match PhysX on Windows
+# Our Windows PhysX builds use /MT (Release) and /MTd (Debug)
 set(MT_CONFIG "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 if(MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY ${MT_CONFIG})
@@ -89,7 +95,7 @@ target_include_directories(${APP_NAME} PRIVATE ${LIB_DIR}/stb)
 # fmt.dev, vivid
 include(cmake/text.cmake)
 
-# rapidjson, Assimp
+# AssImp, RapidJSON
 include(cmake/in.cmake)
 
 # OpenGL, GLAD, GLFW, GLM
@@ -107,6 +113,11 @@ include(cmake/fmod.cmake)
 # XInput (Windows only)
 if (WIN32)
     target_link_libraries(${APP_NAME} PRIVATE Xinput9_1_0)
+endif()
+
+if(UNIX AND NOT APPLE)
+    # Linux PhysX/FMOD static and shared dependencies require these system libs.
+    target_link_libraries(${APP_NAME} PRIVATE pthread dl)
 endif()
 
 # --------------------------------------------------
