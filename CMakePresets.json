@@ -56,10 +56,6 @@
             "name": "linux-base",
             "inherits": "os-base",
             "hidden": true,
-            "cacheVariables": {
-                "CMAKE_C_COMPILER": "gcc",
-                "CMAKE_CXX_COMPILER": "g++"
-            },
             "condition": {
                 "type": "equals",
                 "lhs": "${hostSystemName}",
@@ -71,6 +67,8 @@
             "displayName": "Linux GCC Debug",
             "inherits": "linux-base",
             "cacheVariables": {
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++",
                 "CMAKE_BUILD_TYPE": "Debug"
             }
         },
@@ -87,7 +85,7 @@
         },
         {
             "name": "linux-gcc-make",
-            "displayName": "Linux GCC Make",
+            "displayName": "Linux GCC Makefiles",
             "inherits": "linux-gcc-release",
             "generator": "Unix Makefiles"
         },
@@ -96,9 +94,9 @@
             "displayName": "Linux Clang Debug",
             "inherits": "linux-base",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_C_COMPILER": "clang",
-                "CMAKE_CXX_COMPILER": "clang++"
+                "CMAKE_CXX_COMPILER": "clang++",
+                "CMAKE_BUILD_TYPE": "Debug"
             }
         },
         {
@@ -114,7 +112,7 @@
         },
         {
             "name": "linux-clang-make",
-            "displayName": "Linux Clang Make",
+            "displayName": "Linux Clang Makefiles",
             "inherits": "linux-clang-release",
             "generator": "Unix Makefiles"
         }

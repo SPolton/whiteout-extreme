@@ -13,21 +13,7 @@ set(OpenGL_GL_PREFERENCE GLVND)
 set(APP_NAME "WhiteoutExtreme")
 project(${APP_NAME} LANGUAGES C CXX)
 
-# --------------------------------------------------
-# Compiler options & warnings
-if(MSVC)
-    message(STATUS "Using MSVC compile options")
-    add_compile_options(/W4 /EHsc /MP) 
-else()
-    message(STATUS "Using default compile options")
-    add_compile_options(-Wall -Wextra -Wpedantic)
-    
-    # Platform-specific debug symbols for Linux
-    if(UNIX AND NOT APPLE AND NOT CMAKE_BUILD_TYPE MATCHES "Release")
-        add_compile_options(-g3 -fno-omit-frame-pointer)
-        message(STATUS "Using enhanced debug symbols for Linux")
-    endif()
-endif()
+# Keep global compile flags minimal so external dependencies don't inherit unwanted flags.
 
 # --------------------------------------------------
 # Use static runtime library to match PhysX on Windows
@@ -124,7 +110,6 @@ endif()
 # Enable Hot Reload for MSVC compilers if supported.
 # if (POLICY CMP0141)
 #   cmake_policy(SET CMP0141 NEW)
-#   set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
 # endif()
 
 if (WIN32)
@@ -136,11 +121,18 @@ if (WIN32)
 endif()
 
 # --------------------------------------------------
-# Compiler warnings
+# Compiler warnings and options
 if(MSVC)
     message(STATUS "Using MSVC compile options")
-    target_compile_options(${APP_NAME} PRIVATE /W4)
+    target_compile_options(${APP_NAME} PRIVATE /W4 /EHsc /MP)
 else()
-    message(STATUS "Using default compile options")
-    target_compile_options(${APP_NAME} PRIVATE -Wall -Wextra -Wpedantic)
+    message(STATUS "Using default compile options for ${APP_NAME}")
+    target_compile_options(${APP_NAME} PRIVATE -Wall -Wextra -pedantic)
+
+    if(UNIX AND NOT APPLE)
+        target_compile_options(${APP_NAME} PRIVATE
+            $<$<CONFIG:Debug>:-g3>
+            $<$<CONFIG:Debug>:-fno-omit-frame-pointer>
+        )
+    endif()
 endif()
