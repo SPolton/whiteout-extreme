@@ -2,6 +2,16 @@
 
 Survival Racing Game
 
+### Play
+
+Download the latest
+[release](https://github.com/SPolton/whiteout-extreme/releases)
+for Windows. Extract the zip archive and run the `exe` to play.
+
+### Contributing
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+
 ## Development Environment Setup
 
 ### Requirements
@@ -10,6 +20,7 @@ Survival Racing Game
 - **Windows 10/11**
 - **CMake 3.20+**
 - **Visual Studio 2022** (recommended) or compatible C++20 compiler
+- **OpenGL** Graphics library provided by the system
 - **PhysX SDK 5.6.1** (Omniverse PhysX 107.3)
 - **FMOD Engine 2.03.12**
 
@@ -33,9 +44,9 @@ Survival Racing Game
 Follow these steps to set up NVIDIA PhysX for physics simulation:
 
 1. **Download PhysX SDK**
-    - Visit the [NVIDIA PhysX GitHub repository](https://github.com/NVIDIA-Omniverse/PhysX)
-    - Download or clone `Omniverse PhysX 107.3 and PhysX SDK 5.6.1`
-    - Move the `physx` folder into the `libraries` folder or root directory of this project.
+    - Visit the [NVIDIA PhysX GitHub repository](https://github.com/NVIDIA-Omniverse/PhysX/releases/tag/107.3-physx-5.6.1)
+    - Download and extract the source zip for `PhysX SDK 5.6.1`
+    - Move the internal `physx` folder into the `libraries/physx` folder of this project.
 
 2. **Generate PhysX Project Files**
     - Locate `physx/generate_projects.bat` and run it.
@@ -49,8 +60,8 @@ Follow these steps to set up NVIDIA PhysX for physics simulation:
       - **Debug** configuration with `/MTd` (Multi-Threaded Debug static runtime)
       - **Checked** configuration with `/MT` (Multi-Threaded static runtime)
 
-4. **Check Physx Setup**
-    - Confirm the PhysX headers exist in `physx/include/`
+4. **Check PhysX Setup**
+    - Confirm the PhysX headers exist in `libraries/physx/include/`
     - Confirm the compiled `.dll` binaries and `.lib` libraries exist in:
     ```
     physx/bin/win.x86_64.vc143.mt/debug/
@@ -62,24 +73,30 @@ Follow these steps to set up NVIDIA PhysX for physics simulation:
 Follow these steps to set up FMOD for audio integration:
 
 1. Download [FMOD Engine 2.x](https://www.fmod.com/download#fmodengine) (Requires free account).
-2. Run the `exe` to install
-3. Find the FMOD install location and navigate to the `api` folder.
-4. Copy the `api` folder and place in the `libraries/fmod/api` directory of this project.
+2. Extract the archive, or run the `exe` installer for your platform.
+3. Find the FMOD install location and navigate to the `api` folder (contains `core` and `studio`).
+4. Copy the `api` folder and paste into the `libraries/fmod/api` directory of this project.
 
 ### Dependencies
 
+Manual setup needed:
+- **PhysX 5.6.1** - Physics engine
+- **FMOD Engine 2.03.12** - Audio engine
+
 Most dependencies are automatically fetched by CMake:
-- **GLAD** for gl 4.6 - OpenGL loader (included in `libraries/`)
-- **GLFW 3.4** - Window and input management (fetched automatically)
-- **GLM 1.0.3** - Mathematics library (fetched automatically)
-- **Freetype 2.14.1** - Font rendering library (fetched automatically)
-- **ImGui 1.92.5** - UI library (fetched automatically)
-- **PhysX 5.6.1** - Physics engine (manual setup required)
-- **FMOD Engine 2.03.12** - Audio engine (manual setup required)
+- **GLFW 3.4** - Window and input
+- **GLM 1.0.3** - Mathematics library
+- **FreeType 2.14.1** - Font rendering
+- **ImGui 1.92.5** - Debug panels
+- **Assimp 6.0.4** - Asset import
+- **rapidjson 1.1.0** - JSON parsing
+- **fmt 11.2.0** - Format strings
+- **vivid 3.1.0** - Color output
 
-### Contributing
-
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+Bundled in project `libraries/` folder:
+- [GLAD](https://glad.dav1d.de/) - OpenGL (4.6) loader
+- [pl_mpeg](https://github.com/phoboslab/pl_mpeg) - MPEG playback
+- [stb](https://github.com/nothings/stb) - Image helpers
 
 # Sources
 
