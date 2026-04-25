@@ -143,6 +143,8 @@ See below for detailed the API documentation.
 #ifndef PL_MPEG_H
 #define PL_MPEG_H
 
+#include <cstddef>
+#include <cstdio>
 #include <stdint.h>
 
 

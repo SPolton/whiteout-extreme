@@ -1,7 +1,8 @@
 #pragma once
-#include <string>
+
 #include <glad/glad.h>
-#include "../libraries/pl_mpeg/pl_mpeg.h"
+#include <pl_mpeg.h>
+#include <string>
 
 class VideoPlayer {
 public:
