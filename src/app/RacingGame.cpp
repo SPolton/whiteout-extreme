@@ -14,7 +14,6 @@
 
 // test FMOD initialization
 #include <fmod.hpp>
-#include <iostream>
 #include <fmod_studio_common.h>
 // test FMOD initialization
 
@@ -52,6 +51,10 @@ RacingGame::~RacingGame()
 
 bool RacingGame::initPlatformAndWindow()
 {
+    glfwSetErrorCallback([](int code, const char* description) {
+        logger::error("GLFW error {}: {}", code, description ? description : "<no description>");
+    });
+
     if (!glfwInit()) {
         logger::error("GLFW Init Failed");
         return false;
@@ -437,7 +440,7 @@ void RacingGame::updateInGame()
     }
 
     // Get player state for audio and camera updates
-    glm::vec3 playerPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
+    // glm::vec3 playerPos = gCoordinator.GetComponent<PhysxTransform>(playerVehicleEntity).pos;
     glm::vec3 const playerVelocity = gCoordinator.GetComponent<RigidBody>(playerVehicleEntity).linearVelocity;
     float const speed = glm::length(playerVelocity);
 
@@ -722,7 +725,6 @@ void RacingGame::renderInGameHUD()
     textSystem->beginText();
     textSystem->loadFont("arial.ttf", 48);
 
-    float marginX = 30.f;
     float screenHeight = 1440.f;
     float topY = screenHeight - 50.f;
 
@@ -746,7 +748,7 @@ void RacingGame::renderInGameHUD()
 
     float elapsed = gameTime.gameTimeF();
 
-    float fraction = elapsed - std::floor(elapsed);
+    // float fraction = elapsed - std::floor(elapsed);
     float dynamicScale = 4.0f;
 
     std::string displayString = "";
@@ -852,8 +854,6 @@ void RacingGame::renderInGameHUD()
     glm::vec3 cooledDownBackground{ 0.65f, 0.80f, 1.0f };
     glm::vec3 backgroundColor = engineFreezing? cooledDownBackground : glm::vec3{ 0.35f, 0.4f, 0.50f }; // Muted blue-grey
     textSystem->renderText(backgroundBarString, { startX, startY, baseScale }, backgroundColor);
-
-    glm::vec3 boostMasterColor{ 0.60f, 1.0f, 0.9f };
 
 
     // 2. --- DYNAMIC COLOR LOGIC (Multi-stage Palette) ---

@@ -1,9 +1,9 @@
 #define PL_MPEG_IMPLEMENTATION
 #include "VideoPlayer.hpp"
 #include <vector>
-#include <iostream>
 
 void on_video_frame(plm_t* plm, plm_frame_t* frame, void* user) {
+    (void)plm;
     VideoPlayer* player = static_cast<VideoPlayer*>(user);
 
     std::vector<uint8_t> rgb_data(frame->width * frame->height * 3);
