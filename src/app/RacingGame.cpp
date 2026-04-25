@@ -27,7 +27,7 @@ Entity aiVehicleEntity2;
 RacingGame::RacingGame()
 {
     if (!initPlatformAndWindow()) {
-        return;
+        throw std::runtime_error("Failed to initialize platform/window");
     }
 
     initVideos();
@@ -43,7 +43,9 @@ RacingGame::~RacingGame()
     logger::info("Shutting down systems...");
     
     // shut down audio engine
-    audioManager->shutdown();
+    if (audioManager) {
+        audioManager->shutdown();
+    }
 }
 
 // ----- Initialization ----- //
@@ -60,11 +62,6 @@ bool RacingGame::initPlatformAndWindow()
     inputManager = std::make_shared<InputManager>();
     window = std::make_shared<Window>(inputManager, 1080, 720, "Whiteout Extreme");
     window->makeContextCurrent();
-
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        logger::error("GLAD Init Failed");
-        return false;
-    }
 
     return true;
 }
