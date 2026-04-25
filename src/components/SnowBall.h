@@ -1,10 +1,11 @@
 #pragma once
-#include <memory>
+
+#include "ecs/Types.hpp"
 #include <glm/glm.hpp>
 
 struct SnowBall {
-    Entity launcher;            // Who shot the snowball
+    Entity launcher{};  // Who shot the snowball
     float damage = 5.0f;
     float maxDistance = 100.0f;
-    glm::vec3 spawnPos;
+    glm::vec3 spawnPos{};
 };

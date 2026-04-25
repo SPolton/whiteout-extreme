@@ -5,8 +5,8 @@
 #include <glm/gtx/quaternion.hpp>
 
 struct PhysxTransform {
-    glm::vec3 pos;
-    glm::quat rot;
+    glm::vec3 pos{};
+    glm::quat rot{};
     glm::vec3 scale{ 1.f };
 
     glm::mat4 toMatrix() const {
