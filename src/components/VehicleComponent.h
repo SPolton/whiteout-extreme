@@ -1,10 +1,10 @@
 #pragma once
 
+#include "ecs/Types.hpp"
 #include "physics/VehicleFourWheelDrive.hpp"
+
 #include <memory>
 #include <random>
-#include "ecs/Types.hpp"
-
 
 /**
  * @brief ECS handle for a vehicle plus lightweight gameplay state.
@@ -12,7 +12,7 @@
 struct VehicleComponent {
     int playerID = 0;  // Optional: Unique identifier for the vehicle
 
-    std::shared_ptr<VehicleFourWheelDrive> instance;
+    std::shared_ptr<VehicleFourWheelDrive> instance{};
 
     // Visual smoothing states (for rendering purposes, not used in physics)
     float visualSteer = 0.0f;

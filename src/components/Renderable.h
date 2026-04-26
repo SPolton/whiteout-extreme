@@ -8,17 +8,17 @@
 
 // Shared material
 struct RenderMaterial {
-    std::shared_ptr<ShaderProgram> shader;
-    std::shared_ptr<Texture> baseTexture;
+    std::shared_ptr<ShaderProgram> shader{};
+    std::shared_ptr<Texture> baseTexture{};
     glm::vec2 textureScrollOffset{};
     bool useTextureScroll = false;
     bool useModelLighting = false;
 };
 
 struct Renderable {
-    std::shared_ptr<GPU_Geometry> geometry;
-    std::shared_ptr<CPU_Geometry> cpuData;
-    RenderMaterial material;
+    std::shared_ptr<GPU_Geometry> geometry{};
+    std::shared_ptr<CPU_Geometry> cpuData{};
+    RenderMaterial material{};
     bool isSkybox = false;
 
     // For rolling texture effect
@@ -40,8 +40,8 @@ struct Renderable {
 // Unlike the simple Renderable component which uses pre-generated geometry,
 // this component owns a loaded Model with multiple meshes and textures
 struct ModelRenderable {
-    std::shared_ptr<ModelLoader> modelLoader;  // Shared ownership
-    RenderMaterial material;
+    std::shared_ptr<ModelLoader> modelLoader{};  // Shared ownership
+    RenderMaterial material{};
 
     glm::vec3 visualOffsetPos = glm::vec3(0.0f);
 };

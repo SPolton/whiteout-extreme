@@ -1,5 +1,5 @@
 #include "FreeCamera.hpp"
-#include "utils/logger.h"
+#include "fmt/format.h"
 
 #include <algorithm>
 

@@ -39,8 +39,16 @@ set(GLFW_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 set(GLFW_USE_STATIC_CRT ON CACHE BOOL "" FORCE)
 
 # Disable Vulkan support (only using OpenGL)
-set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_X11 OFF CACHE BOOL "" FORCE)
+set(GLFW_VULKAN_STATIC OFF CACHE BOOL "" FORCE)
+
+# On Linux, allow GLFW to use native window backends.
+if(UNIX AND NOT APPLE)
+    set(GLFW_BUILD_WAYLAND ON CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_X11 ON CACHE BOOL "" FORCE)
+else()
+    set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_X11 OFF CACHE BOOL "" FORCE)
+endif()
 
 FetchContent_Declare(
     glfw

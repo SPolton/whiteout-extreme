@@ -85,17 +85,14 @@ private:
 
     // button selected states on main menu
     // 0 = start, 1 = help
-    int defaultMainMenuOption = 0;
     int selectedMenuOption = 0;
 
     // button selected states on pause menu
     // 0 = resume, 1 = quit
-    int defaultPauseMenuOption = 0;
     int selectedPauseMenuOption = 0;
 
     // button selected states on help menu
     // 0 = keyboard, 1 = controller, 2 = back
-    int defaultHelpMenuOption = 2;
     int selectedHelpMenuOption = 2;
 
     // variable to keep track whether stick movement was detected

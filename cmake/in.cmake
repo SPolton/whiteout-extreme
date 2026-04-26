@@ -1,22 +1,4 @@
-# rapidjson (header-only)
-message(STATUS "Using rapidjson via FetchContent")
-
-set(RAPIDJSON_BUILD_DOC OFF CACHE BOOL "" FORCE)
-set(RAPIDJSON_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(RAPIDJSON_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-
-FetchContent_Declare(
-    rapidjson
-    GIT_REPOSITORY https://github.com/Tencent/rapidjson.git
-    GIT_TAG v1.1.0
-    GIT_SHALLOW TRUE
-)
-FetchContent_MakeAvailable(rapidjson)
-
-target_include_directories(${APP_NAME} SYSTEM PRIVATE ${rapidjson_SOURCE_DIR}/include)
-
-
-# Assimp
+# AssImp
 message(STATUS "Using Assimp via FetchContent")
 
 set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -43,3 +25,24 @@ if(MSVC)
 endif()
 
 target_link_libraries(${APP_NAME} PRIVATE assimp)
+
+
+# RapidJSON (header-only)
+# message(STATUS "Using rapidjson via FetchContent")
+
+set(RAPIDJSON_BUILD_DOC OFF CACHE BOOL "" FORCE)
+set(RAPIDJSON_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(RAPIDJSON_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+
+# FetchContent_Declare(
+#     rapidjson
+#     GIT_REPOSITORY https://github.com/Tencent/rapidjson.git
+#     GIT_TAG v1.1.0
+#     GIT_SHALLOW TRUE
+# )
+# FetchContent_MakeAvailable(rapidjson)
+# target_include_directories(${APP_NAME} SYSTEM PRIVATE ${rapidjson_SOURCE_DIR}/include)
+
+# Reuse the RapidJSON copy bundled with Assimp instead of fetching the old upstream v1.1.0 release.
+# Assimp vendors it here: https://github.com/assimp/assimp/tree/v6.0.4/contrib/rapidjson
+target_include_directories(${APP_NAME} SYSTEM PRIVATE ${assimp_SOURCE_DIR}/contrib/rapidjson/include)

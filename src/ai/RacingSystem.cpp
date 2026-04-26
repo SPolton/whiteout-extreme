@@ -381,11 +381,8 @@ float RacingSystem::getDistanceToGateLine(const glm::vec3& racerPos, const Gate&
 void RacingSystem::checkRacerEngulfment(Racer& racer, PhysxTransform& racerTransf)
 {
     if (racer.engulfed) return;
-    // Get the player position in world space
-    glm::vec3 playerPos = racerTransf.pos;
 
     // Calculate the rotation quaternion from direction
-    glm::vec3 defaultForward(0.f, 0.f, 1.f);
     glm::quat avalancheRotation = avalanche->mRotation;// = glm::rotation(defaultForward, avalanche->mDirection);
 
     // Transform player position into avalanche's local space

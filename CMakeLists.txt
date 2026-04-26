@@ -13,19 +13,11 @@ set(OpenGL_GL_PREFERENCE GLVND)
 set(APP_NAME "WhiteoutExtreme")
 project(${APP_NAME} LANGUAGES C CXX)
 
-# --------------------------------------------------
-# Compiler options & warnings
-if(MSVC)
-    message(STATUS "Using MSVC compile options")
-    add_compile_options(/W4 /EHsc /MP) 
-else()
-    message(STATUS "Using default compile options")
-    add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
+# Keep global compile flags minimal so external dependencies don't inherit unwanted flags.
 
 # --------------------------------------------------
-# Use static runtime library to match PhysX
-# Our PhysX is built with /MT (Release) and /MTd (Debug)
+# Use static runtime library to match PhysX on Windows
+# Our Windows PhysX builds use /MT (Release) and /MTd (Debug)
 set(MT_CONFIG "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 if(MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY ${MT_CONFIG})
@@ -89,7 +81,7 @@ target_include_directories(${APP_NAME} PRIVATE ${LIB_DIR}/stb)
 # fmt.dev, vivid
 include(cmake/text.cmake)
 
-# rapidjson, Assimp
+# AssImp, RapidJSON
 include(cmake/in.cmake)
 
 # OpenGL, GLAD, GLFW, GLM
@@ -109,11 +101,15 @@ if (WIN32)
     target_link_libraries(${APP_NAME} PRIVATE Xinput9_1_0)
 endif()
 
+if(UNIX AND NOT APPLE)
+    # Linux PhysX/FMOD static and shared dependencies require these system libs.
+    target_link_libraries(${APP_NAME} PRIVATE pthread dl)
+endif()
+
 # --------------------------------------------------
 # Enable Hot Reload for MSVC compilers if supported.
 # if (POLICY CMP0141)
 #   cmake_policy(SET CMP0141 NEW)
-#   set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
 # endif()
 
 if (WIN32)
@@ -125,11 +121,18 @@ if (WIN32)
 endif()
 
 # --------------------------------------------------
-# Compiler warnings
+# Compiler warnings and options
 if(MSVC)
     message(STATUS "Using MSVC compile options")
-    target_compile_options(${APP_NAME} PRIVATE /W4)
+    target_compile_options(${APP_NAME} PRIVATE /W4 /EHsc /MP)
 else()
-    message(STATUS "Using default compile options")
-    target_compile_options(${APP_NAME} PRIVATE -Wall -Wextra -Wpedantic)
+    message(STATUS "Using default compile options for ${APP_NAME}")
+    target_compile_options(${APP_NAME} PRIVATE -Wall -Wextra -pedantic)
+
+    if(UNIX AND NOT APPLE)
+        target_compile_options(${APP_NAME} PRIVATE
+            $<$<CONFIG:Debug>:-g3>
+            $<$<CONFIG:Debug>:-fno-omit-frame-pointer>
+        )
+    endif()
 endif()

@@ -9,8 +9,7 @@ using namespace physx;
 PhysicsSystem::PhysicsSystem(
     std::shared_ptr<InputManager> inputManager,
     std::shared_ptr<AudioEngine> audioManager)
-    : inputManager(inputManager),
-    audioManager(audioManager)
+    : audioManager(audioManager), inputManager(inputManager)
 {
     // Core PhysX Initialization only (Foundation, PVD, Physics, Scene)
     initPhysX();

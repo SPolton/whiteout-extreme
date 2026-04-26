@@ -310,9 +310,6 @@ MenuAction GameMenus::renderMainMenu()
     // get scaling factor
     glm::vec2 scalingFactor = getScale();
 
-    // always take the smaller scaling factor
-    float finalScale = std::min(scalingFactor.x, scalingFactor.y);
-
     textSystem->beginText();
 
     textSystem->loadFont("LuckiestGuy-Regular.ttf", 120);
@@ -371,6 +368,8 @@ MenuAction GameMenus::renderMainMenu()
     // translations
     float translateY = 0.25f;
     
+    // always take the smaller scaling factor
+    float finalScale = std::min(scalingFactor.x, scalingFactor.y);
 
     // static model to pass to shader, renders png as is
     glm::mat4 logoModel = glm::mat4(

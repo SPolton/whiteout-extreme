@@ -1,12 +1,14 @@
 #pragma once
-#include <memory>
+
+#include "ecs/Types.hpp"
 #include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 struct SnowCannon {
-    glm::quat restRotation;     // Original roation
-    Entity currentTarget;       // Who aggroed the snow cannon
-    float aggroTimer = 0.0f;    // Aggro time left
+    glm::quat restRotation{};       // Original roation
+    Entity currentTarget{};         // Who aggroed the snow cannon
+    float aggroTimer = 0.0f;        // Aggro time left
     float fireCooldown = 0.5f;
-    float coolingPower = 10.0f; // Impact on the engines
+    float coolingPower = 10.0f;     // Impact on the engines
     float oscillationTimer = 0.0f;
 };
