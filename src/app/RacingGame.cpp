@@ -733,6 +733,8 @@ void RacingGame::renderInGameHUD()
 
     // --- Debug & System Info ---
 #ifndef NDEBUG
+    float marginX = 30.f;
+
     textSystem->renderText(
         "Rendered Frames: " + std::to_string(gameTime.frameCount),
         { marginX, topY - 20.f, 0.40f }, { 0.2f, 0.5f, 0.8f });
