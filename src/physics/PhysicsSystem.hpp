@@ -7,7 +7,6 @@
 #include "components/Physics.hpp"
 #include "components/Renderable.h"
 #include "components/Transform.h"
-#include "components/RigidBody.h"
 #include "components/VehicleComponent.h"
 
 #include "input/glfw/InputManager.hpp"
