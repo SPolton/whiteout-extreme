@@ -1,5 +1,8 @@
 #include "GameMenus.hpp"
+
 #include "app/GameState.hpp"
+#include "utils/logger.h"
+
 #include <gtc/type_ptr.hpp>
 
 GameMenus::GameMenus(Text* textSystem, InputManager* inputManager, AudioEngine* audioManager, Window* window, GameState& gameState)

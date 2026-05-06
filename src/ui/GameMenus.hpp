@@ -9,7 +9,6 @@
 #include "core/assets/Texture.hpp"
 #include "core/buffer/Geometry.hpp"
 #include "core/render/ShaderProgram.hpp"
-#include "core/scene/Transform.hpp"
 
 // types of actions to take
 enum class MenuAction {

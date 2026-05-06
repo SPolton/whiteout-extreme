@@ -1,23 +1,13 @@
 #pragma once
 
-#include "Avalanche.hpp"
+#include <PxPhysicsAPI.h>
 #include "common/PhysicsCallback.hpp"
-#include "VehicleFourWheelDrive.hpp"
 
+#include "audio/AudioEngine.h"
 #include "components/Physics.hpp"
 #include "components/Renderable.h"
-#include "components/Transform.h"
-#include "components/VehicleComponent.h"
-
-#include "input/glfw/InputManager.hpp"
-#include "audio/AudioEngine.h"
-
 #include "ecs/Coordinator.hpp"
-
-#include <PxPhysicsAPI.h>
-#include <iostream>
-#include <memory>
-#include <vector>
+#include "input/glfw/InputManager.hpp"
 
 extern Coordinator gCoordinator;
 

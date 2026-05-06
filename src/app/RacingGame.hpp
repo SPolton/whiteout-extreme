@@ -1,26 +1,25 @@
 ﻿#pragma once
 
-#include "app/GameTime.hpp"
+#include "GameState.hpp"
+#include "GameTime.hpp"
+
+#include "ai/AISystem.hpp"
+#include "ai/RacingSystem.hpp"
+#include "audio/AudioEngine.h"
 #include "core/RenderingSystem.hpp"
 #include "core/Text.h"
-#include "ai/RacingSystem.hpp"
-#include "ai/AISystem.hpp"
-#include "input/VehicleControlSystem.hpp"
+#include "gameplay/SnowBallisticSystem.hpp"
 #include "physics/PhysicsSystem.hpp"
-#include "audio/AudioEngine.h"
 #include "ui/GameMenus.hpp"
 #include "vfx/SnowVfxSystem.hpp"
-#include "gameplay/SnowBallisticSystem.hpp"
-#include "GameState.hpp"
+
 #include "input/glfw/Window.hpp"
 #include "input/glfw/InputManager.hpp"
 #include "input/panel/ImGuiWrapper.hpp"
 #include "input/panel/ImGuiPanel.hpp"
+#include "input/VehicleControlSystem.hpp"
 #include "video/VideoPlayer.hpp"
 
-#include <iostream>
-#include <memory>
-#include <format>
 
 class RacingGame {
 public:

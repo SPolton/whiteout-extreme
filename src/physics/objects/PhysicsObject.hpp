@@ -1,8 +1,8 @@
 #pragma once
 
-#include "PxPhysicsAPI.h"
 #include "components/Transform.h"
 
+#include <PxRigidActor.h>
 #include <memory>
 #include <string>
 

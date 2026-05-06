@@ -1,9 +1,12 @@
 #include "AISystem.hpp"
-#include "utils/logger.h"
-#include <glm/glm.hpp>
-#include <glm/gtc/constants.hpp>
 
-#include <GLFW/glfw3.h>
+#include "components/Racer.h"
+#include "components/VehicleComponent.h"
+#include "gameplay/SnowBallisticSystem.hpp"
+#include "input/VehicleControlSystem.hpp"
+#include "utils/logger.h"
+
+#include <glm/gtc/constants.hpp>
 
 extern Coordinator gCoordinator;
 

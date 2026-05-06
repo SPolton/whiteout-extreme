@@ -1,26 +1,22 @@
 #pragma once
 
+#include "components/Renderable.h"
+#include "components/Transform.h"
+
 #include "core/assets/AssetManager.hpp"
-#include "core/assets/ModelLoader.hpp"
-#include "core/assets/Texture.hpp"
 #include "core/buffer/Geometry.hpp"
 #include "core/render/ShaderProgram.hpp"
 #include "core/render/SnowRenderer.hpp"
 #include "core/render/ShapeConfig.hpp"
-#include "core/scene/TurnTableCamera.hpp"
 #include "core/scene/FreeCamera.hpp"
 #include "core/scene/RacingCamera.hpp"
+#include "core/scene/TurnTableCamera.hpp"
 #include "core/scene/Transform.hpp"
-
-#include "components/Renderable.h"
 
 #include "ecs/Coordinator.hpp"
 #include "ecs/System.hpp"
 
 #include "input/glfw/InputManager.hpp"
-#include "input/glfw/Window.hpp"
-#include "input/panel/ImGuiPanel.hpp"
-#include "input/panel/ImGuiWrapper.hpp"
 #include "vfx/SnowParticle.hpp"
 
 #include <glm/glm.hpp>
@@ -29,7 +25,6 @@
 #include <chrono>
 #include <memory>
 #include <string>
-#include <vector>
 
 extern Coordinator gCoordinator;
 

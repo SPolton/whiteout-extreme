@@ -1,7 +1,7 @@
 #include "FreeCamera.hpp"
-#include "fmt/format.h"
 
 #include <algorithm>
+#include <fmt/format.h>
 
 FreeCamera::FreeCamera()
     : FreeCamera(Params{})

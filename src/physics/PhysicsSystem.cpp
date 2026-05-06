@@ -1,4 +1,10 @@
 #include "PhysicsSystem.hpp"
+
+#include "Avalanche.hpp"
+#include "components/Physics.hpp"
+#include "components/Transform.h"
+#include "components/VehicleComponent.h"
+
 #include "common/Flags.hpp"
 #include "common/PVD.h"
 #include "utils/logger.h"
