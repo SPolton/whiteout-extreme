@@ -1,6 +1,6 @@
 #include "ImGuiPanel.hpp"
+
 #include <filesystem>
-#include <iostream>
 #include <set>
 #include <vector>
 

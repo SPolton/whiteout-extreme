@@ -7,8 +7,9 @@
 
 #pragma once
 
-#include "core/assets/AssetPath.hpp"
-#include "utils/logger.h"
+#include <ext/matrix_float4x4.hpp>
+#include <ext/vector_float3.hpp>
+#include <memory>
 
 // Transform class that contains information for each 3D object.
 // This includes local position, uniform scale, and local rotation.

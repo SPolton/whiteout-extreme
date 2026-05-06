@@ -1,13 +1,7 @@
 #pragma once
 
-#include "components/Racer.h"
-#include "components/VehicleComponent.h"
-#include <memory>
-#include "ecs/Coordinator.hpp"
 #include "core/RenderingSystem.hpp"
 #include "physics/PhysicsSystem.hpp"
-#include "input/VehicleControlSystem.hpp"
-#include "gameplay/SnowBallisticSystem.hpp"
 
 class AISystem : public System {
 public:

@@ -1,11 +1,10 @@
 #include "ShaderProgram.hpp"
 
-#include <iostream>
-#include <stdexcept>
-#include <vector>
-
 #include "core/assets/AssetPath.hpp"
 #include "utils/logger.h"
+
+#include <stdexcept>
+#include <vector>
 
 ShaderProgram::ShaderProgram(const std::string &vertexPath,
                              const std::string &fragmentPath)

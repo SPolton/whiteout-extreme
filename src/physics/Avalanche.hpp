@@ -1,13 +1,10 @@
 #pragma once
 
 #include "components/Racer.h"
-#include "components/Transform.h"
-#include "ecs/Types.hpp"
 
 #include <PxPhysicsAPI.h>
 #include <glm/glm.hpp>
-#include <vector>
-#include <limits>
+#include <glm/gtx/quaternion.hpp>
 
 class Avalanche {
 public:

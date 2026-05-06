@@ -5,17 +5,12 @@
 //#include "components/CameraComponent.h"
 #include "components/Physics.hpp"
 #include "components/Renderable.h"
+#include "components/SnowBall.h"
+#include "components/SnowCannon.h"
 #include "components/SnowEmitter.h"
 #include "components/Transform.h"
 #include "components/VehicleComponent.h"
-#include "components/SnowCannon.h"
-#include "components/SnowBall.h"
 #include "ecs/Coordinator.hpp"
-
-// test FMOD initialization
-#include <fmod.hpp>
-#include <fmod_studio_common.h>
-// test FMOD initialization
 
 //ECS global coordinator
 Coordinator gCoordinator;

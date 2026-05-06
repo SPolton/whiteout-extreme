@@ -1,6 +1,7 @@
 #include "RacingCamera.hpp"
 
-#include "utils/logger.h"
+#include <ext/matrix_transform.hpp>
+#include <fmt/format.h>
 
 // The core math is equivalent to this article for a force-at-rest spring system
 // https://phramebuffer.wordpress.com/third-person-camera-with-spring-system/

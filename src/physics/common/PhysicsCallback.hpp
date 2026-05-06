@@ -1,8 +1,9 @@
+#include <PxActor.h>
 #include <PxSimulationEventCallback.h>
-#include "utils/logger.h"
 
 #include "audio/AudioEngine.h"
 #include "input/glfw/InputManager.hpp"
+#include "utils/logger.h"
 
 class ContactReportCallback : public physx::PxSimulationEventCallback {
 public:

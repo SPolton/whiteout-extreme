@@ -1,12 +1,9 @@
 #pragma once
 
-#include "components/VehicleComponent.h"
-#include "input/glfw/InputManager.hpp"
-#include <memory>
-#include "ecs/Coordinator.hpp"
-#include "core/RenderingSystem.hpp"
-#include "physics/PhysicsSystem.hpp"
 #include "audio/AudioEngine.h"
+#include "core/RenderingSystem.hpp"
+#include "input/glfw/InputManager.hpp"
+#include "physics/PhysicsSystem.hpp"
 
 class SnowBallisticSystem;
 

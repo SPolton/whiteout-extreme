@@ -1,9 +1,10 @@
 #include "RacingSystem.hpp"
+
+#include "components/VehicleComponent.h"
 #include "utils/logger.h"
 #include "utils/math.hpp"
-#include <glm/gtx/projection.hpp>
 
-#include <GLFW/glfw3.h>
+#include <glm/gtx/projection.hpp>
 
 extern Coordinator gCoordinator;
 extern Entity playerVehicleEntity;

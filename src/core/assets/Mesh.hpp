@@ -1,8 +1,8 @@
 #pragma once
 
 #include "Texture.hpp"
-#include "core/render/ShaderProgram.hpp"
 #include "core/buffer/VertexBuffer.hpp"
+#include "core/render/ShaderProgram.hpp"
 #include "core/gl/GLHandles.hpp"
 
 #include <glad/glad.h>

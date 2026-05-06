@@ -5,7 +5,6 @@
 
 #include <glad/glad.h>
 #include <string>
-#include <optional>
 
 
 class ShaderProgram {

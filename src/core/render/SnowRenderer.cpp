@@ -1,7 +1,5 @@
 #include "SnowRenderer.hpp"
 
-#include "core/render/ShaderProgram.hpp"
-
 #include <glad/glad.h>
 
 SnowRenderer::SnowRenderer()

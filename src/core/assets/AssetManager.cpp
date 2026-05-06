@@ -1,5 +1,4 @@
 #include "AssetManager.hpp"
-#include "AssetPath.hpp"
 #include "utils/logger.h"
 
 std::shared_ptr<Texture>

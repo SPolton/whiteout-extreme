@@ -1,17 +1,9 @@
 #pragma once
 
-#include <memory>
-#include "ecs/Coordinator.hpp"
-
+#include "audio/AudioEngine.h"
+#include "components/SnowCannon.h"
 #include "core/RenderingSystem.hpp"
 #include "input/VehicleControlSystem.hpp"
-#include "audio/AudioEngine.h"
-
-#include "components/VehicleComponent.h"
-#include "components/SnowCannon.h"
-#include "components/SnowBall.h"
-#include "components/SnowEmitter.h"
-
 
 class SnowBallisticSystem : public System {
 public:

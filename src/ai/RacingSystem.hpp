@@ -1,11 +1,9 @@
 #pragma once
 
-#include "physics/Avalanche.hpp"
 #include "components/Racer.h"
 #include "components/Physics.hpp"
-#include <memory>
-#include "ecs/Coordinator.hpp"
 #include "core/RenderingSystem.hpp"
+#include "physics/Avalanche.hpp"
 #include "physics/PhysicsSystem.hpp"
 
 class RacingSystem : public System {

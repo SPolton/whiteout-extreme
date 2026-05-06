@@ -1,3 +1,9 @@
+#pragma once
+
+#include "core/gl/GLHandles.hpp"
+#include <ext/vector_float3.hpp>
+#include <glm/gtx/quaternion.hpp>
+
 namespace render
 {
 
