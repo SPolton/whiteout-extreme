@@ -105,7 +105,7 @@ void SnowVfxSystem::spawnParticlesFromGridBox(Entity entity, float deltaTime)
     std::vector<glm::vec3> gridPoints = generateGridSpawnPoints(gridBox);
 
     // Distribute spawns across grid points.
-    for (int i = 0; i < gridPoints.size(); ++i) {
+    for (size_t i = 0; i < gridPoints.size(); ++i) {
         const glm::vec3& gridLocalOffset = gridPoints[i % gridPoints.size()];
         emitter.localOffset = gridLocalOffset;
         spawnParticlesFromEmitter(entity, deltaTime);

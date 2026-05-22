@@ -296,8 +296,10 @@ void AudioEngine::setChannel3dPosition(int nChannelId, const Vector3& vPos)
 // set listener position
 void AudioEngine::set3dListenerAndOrientation(const Vector3& vPos, float fVolumeDB)
 {
+    // TODO: use position for distance attenuation
     (void)fVolumeDB;
     FMOD_VECTOR position = vectorToFmod(vPos);
+    (void)position;
 };
 
 void AudioEngine::setChannelVolume(int nChannelId, float fVolumeDB)

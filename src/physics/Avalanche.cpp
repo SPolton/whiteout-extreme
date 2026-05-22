@@ -102,8 +102,6 @@ void Avalanche::setOrientation(const glm::vec3& lookDir, float deltaTime)
         glm::quat tiltRotation = glm::angleAxis(tiltAngle, glm::vec3(1.0f, 0.0f, 0.0f));
         targetRot = targetRot * tiltRotation;
 
-        glm::vec3 defaultForward(0.f, 0.f, 1.f);
-
         if (!std::isnan(targetRot.w)) {
             mRotation = glm::slerp(mRotation, targetRot, deltaTime * 2.0f);
         }

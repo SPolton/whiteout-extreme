@@ -2,8 +2,10 @@
 
 ### Development environment
 
-The main development environment is Windows 10/11.
-The prefered editor is Visual Studio 2022.
+The main development environment is **Windows 10/11**.
+The preferred editor is **Visual Studio 2022**.
+
+However, both **VSCode** and **Linux x86_64** have been tested, specifically on Fedora 42 KDE Wayland.
 
 ### Coding standards
 
@@ -33,7 +35,7 @@ Write a Good Commit Message:
 * When improving performance, explain what caused the bad performance, and how it was improved.
 * And so on...
 
-It is recommended to format your commit message according to
+Format your commit message according to
 [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
 and the
 [Commits Cheatsheet](https://gist.github.com/qoomon/5dfcdf8eec66a051ecd85625518cfd13)

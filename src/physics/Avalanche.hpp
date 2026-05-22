@@ -72,5 +72,5 @@ private:
     
     // Constants
     const float mDeathThresholdTime = 5.f;
-    const float mSafeDistance = 15.0f;
+    // const float mSafeDistance = 15.0f;
 };

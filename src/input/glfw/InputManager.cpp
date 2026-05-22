@@ -3,8 +3,10 @@
 #include "utils/logger.h"
 #include <utility>
 
+#if defined(_WIN32)
 #include <Windows.h>
 #include <Xinput.h>
+#endif
 
 InputManager::InputManager(
     ResizeCallback resizeCallback,
@@ -233,6 +235,7 @@ void InputManager::rumble(float motorValue)
 // send vibration feedback to the controller (values of 0.0f to 1.0f only)
 void InputManager::rumble(float leftMotorValue, float rightMotorValue)
 {
+#if defined(_WIN32)
     // initialize variable to store vibration values
     XINPUT_VIBRATION vibration = {};
 
@@ -251,6 +254,14 @@ void InputManager::rumble(float leftMotorValue, float rightMotorValue)
 
     // send vibration feedback to controller 0
     XInputSetState(0, &vibration);
+#else
+    (void)leftMotorValue;
+    (void)rightMotorValue;
+
+    // Rumble is a no-op for now.
+    mLeftMotor = 0.0f;
+    mRightMotor = 0.0f;
+#endif
 }
 
 // check whether controller is rumbling

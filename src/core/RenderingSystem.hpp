@@ -133,7 +133,6 @@ private:
     std::shared_ptr<InputManager> inputManager;
     glm::dvec2 previousCursorPosition{};
     bool cursorPositionIsSetOnce = false;
-    float lastFrameDeltaTime = 1.0f / 60.0f;
 
     bool init();
     void render();

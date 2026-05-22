@@ -59,7 +59,7 @@ private:
     float mShakeJerkAtMax = 300.0f;     // m/s^3 that maps to full shake intensity
     float mShakeMinFreqHz = 5.0f;       // Min shake frequency
     float mShakeMaxFreqHz = 12.0f;      // Max shake frequency
-    float mShakeLambda = 15.0f;         // Response speed for shake intensity
+    // float mShakeLambda = 15.0f;         // Response speed for shake intensity
     float mShakeDecay = 5.0f;           // Decay rate for shake intensity (higher = faster decay)
 
     // Shake smoothing and thresholds

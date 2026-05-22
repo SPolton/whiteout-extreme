@@ -9,10 +9,10 @@ public:
     ContactReportCallback(
         std::shared_ptr<InputManager> inputManager,
         std::shared_ptr<AudioEngine> audioManager,
-        float* gameTime)
-        : inputManager(inputManager),
-        audioManager(audioManager),
-        gameTime(gameTime) {}
+        float* gameTime) :
+            audioManager(audioManager),
+            inputManager(inputManager),
+            gameTime(gameTime) {}
 
     void onContact(const physx::PxContactPairHeader& pairHeader, const physx::PxContactPair* pairs, physx::PxU32 nbPairs)
     {

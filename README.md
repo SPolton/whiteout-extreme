@@ -17,9 +17,10 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 ### Requirements
 
 - Git LFS: `git lfs install`
-- **Windows 10/11**
+- **Windows 10/11** or **Linux x86_64**
 - **CMake 3.20+**
-- **Visual Studio 2022** (recommended) or compatible C++20 compiler
+- **Ninja**
+- **Visual Studio 2022** (Windows) or compatible C++20 compiler (`gcc`/`clang` on Linux)
 - **OpenGL** Graphics library provided by the system
 - **PhysX SDK 5.6.1** (Omniverse PhysX 107.3)
 - **FMOD Engine 2.03.12**
@@ -30,13 +31,28 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details.
     - SSH: `git clone git@github.com:SPolton/whiteout-extreme.git`
     - HTTPS: `git clone https://github.com/SPolton/whiteout-extreme.git`
 
-2. **Configure with CMake**
-    - Visual Studio handles the build system generation automatically.
-    - If using command line, run:
+2. **Setup Dependencies**
+    - See *Setting Up PhysX* and *FMOD* below.
+
+3. **Configure with CMake**
+    - **Windows**: Visual Studio handles generation automatically.
+    - **Linux**: Use CMake presets:
     ```bash
-    cmake -B build
-    cmake --build build --config Debug
-    cmake --build build --config Checked
+    cmake --preset linux-gcc-debug
+    cmake --build --preset linux-gcc-debug
+
+    cmake --preset linux-gcc-release
+    cmake --build --preset linux-gcc-release
+    ```
+
+    - Several presets are available:
+    ```sh
+    cmake --list-presets
+    ```
+
+    - If using VSCode, set this in `.vscode/settings.json` for `src` indexing
+    ```json
+    "cmake.copyCompileCommands": "${workspaceFolder}/compile_commands.json"
     ```
 
 ### Setting Up PhysX
@@ -49,24 +65,29 @@ Follow these steps to set up NVIDIA PhysX for physics simulation:
     - Move the internal `physx` folder into the `libraries/physx` folder of this project.
 
 2. **Generate PhysX Project Files**
-    - Locate `physx/generate_projects.bat` and run it.
-    - Choose `VC17`, the default compiler for Visual Studio 2022.
-    - This creates folders in `physx/compiler`
+    - **Windows:** run `libraries/physx/generate_projects.bat`, choose a `VC17...` preset for Visual Studio.
+    - **Linux:** run `sh libraries/physx/generate_projects.sh`, choose a Linux preset for your system.
+    - This creates per-config folders in `libraries/physx/compiler/`.
 
 3. **Build PhysX Libraries**
-    - Locate `physx/compiler/vc17win64` or `physx/compiler/vc17win64-cpu-only`
-    - Open the `PhysXSDK.sln` file in Visual Studio
-    - Build the following configurations:
-      - **Debug** configuration with `/MTd` (Multi-Threaded Debug static runtime)
-      - **Checked** configuration with `/MT` (Multi-Threaded static runtime)
+    - **Windows:**
+        - Open `libraries/physx/compiler/<vc17-preset>/PhysXSDK.sln`.
+        - Build `Checked` (`/MT`) and `Debug` (`/MTd`) in Visual Studio.
+    - **Linux:**
+        - Build each generated config folder with `make`:
+        ```bash
+        make -C libraries/physx/compiler/linux-gcc-cpu-only-checked -j $(nproc --ignore=1)
+        make -C libraries/physx/compiler/linux-gcc-cpu-only-debug -j $(nproc --ignore=1)
+        ```
 
 4. **Check PhysX Setup**
     - Confirm the PhysX headers exist in `libraries/physx/include/`
-    - Confirm the compiled `.dll` binaries and `.lib` libraries exist in:
+    - Confirm the compiled binaries/libraries exist in:
+    ```sh
+    libraries/physx/bin/win.x86_64.vc143.mt/<config>/
+    libraries/physx/bin/linux.x86_64/<config>/
     ```
-    physx/bin/win.x86_64.vc143.mt/debug/
-    physx/bin/win.x86_64.vc143.mt/checked/
-    ```
+    - **Note:** `Release` builds are configured to use `Checked` PhysX binaries.
 
 ### Setting Up FMOD
 
@@ -77,7 +98,9 @@ Follow these steps to set up FMOD for audio integration:
 3. Find the FMOD install location and navigate to the `api` folder (contains `core` and `studio`).
 4. Copy the `api` folder and paste into the `libraries/fmod/api` directory of this project.
 
-### Dependencies
+# Sources
+
+## Dependencies
 
 Manual setup needed:
 - **PhysX 5.6.1** - Physics engine
@@ -88,8 +111,8 @@ Most dependencies are automatically fetched by CMake:
 - **GLM 1.0.3** - Mathematics library
 - **FreeType 2.14.1** - Font rendering
 - **ImGui 1.92.5** - Debug panels
-- **Assimp 6.0.4** - Asset import
-- **rapidjson 1.1.0** - JSON parsing
+- **AssImp 6.0.4** - Asset import
+- **RapidJSON** - JSON parsing
 - **fmt 11.2.0** - Format strings
 - **vivid 3.1.0** - Color output
 
@@ -97,8 +120,6 @@ Bundled in project `libraries/` folder:
 - [GLAD](https://glad.dav1d.de/) - OpenGL (4.6) loader
 - [pl_mpeg](https://github.com/phoboslab/pl_mpeg) - MPEG playback
 - [stb](https://github.com/nothings/stb) - Image helpers
-
-# Sources
 
 ## Assets
 

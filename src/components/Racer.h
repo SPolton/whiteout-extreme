@@ -3,13 +3,13 @@
 #include <glm/glm.hpp>
 
 struct Gate {
-    int id;
+    int id = 0;
 
-    glm::vec3 leftPoint;
-    glm::vec3 rightPoint;
+    glm::vec3 leftPoint = glm::vec3(0.0f);
+    glm::vec3 rightPoint = glm::vec3(0.0f);
 
-    float width;
-    glm::vec3 position;
+    float width = 0.0f;
+    glm::vec3 position = glm::vec3(0.0f);
 
     glm::vec3 lane = glm::vec3(0.0f);
     float laneLength = 0.0f;
