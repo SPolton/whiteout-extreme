@@ -531,8 +531,8 @@ void RacingGame::updateMainMenu(MenuAction actionButtons)
         audioManager->pauseChannel(menuBackgroundChannelID);
         menuVideo->rewind();
         menuVideo->setPaused(true);
-        // set this variable to true so we know that we need to play the countdown
-        playCountdown = true;
+        // reset countdown channel so it plays again on the new race
+        countdownChannelID = -1;
     }
     else if (actionButtons == MenuAction::GoToHelpMenu || actionCursor == MenuAction::GoToHelpMenu) {
         gameState = GameState::HelpMenu;
@@ -650,11 +650,9 @@ void RacingGame::updateInGameAudioState(float playerSpeed)
     audioManager->resumeChannel(inGameMusicChannelID);
     audioManager->resumeChannel(avalancheChannelID);
 
-    // play the countdown if it is not already playing and we have marked to play it earlier
-    if (!countdownPlaying && playCountdown) {
+    // play the countdown if it hasn't been played yet
+    if (countdownChannelID == -1) {
         countdownChannelID = audioManager->jsonSound("countdown");
-        countdownPlaying = true;
-        playCountdown = false;
     }
     // otherwise we just need to resume the audio
     else {
@@ -989,7 +987,6 @@ void RacingGame::updateMenuAudioState()
     audioManager->pauseChannel(avalancheChannelID);
     // no countdown sound effect in menus
     audioManager->pauseChannel(countdownChannelID);
-    countdownPlaying = false; // update state tracker for countdown sound effect
     // no engine sounds in menus
     audioManager->pauseChannel(engineChannelID);
     audioManager->pauseChannel(aiEngineChannelID1);

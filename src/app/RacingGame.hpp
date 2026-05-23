@@ -124,7 +124,4 @@ private:
     int aiEngineChannelID1 = -1;
     int aiEngineChannelID2 = -1;
 
-    // tracks whether countdown should play (only at beginning of race)
-    bool playCountdown = false;
-    bool countdownPlaying = false;
 };
