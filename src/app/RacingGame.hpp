@@ -114,6 +114,7 @@ private:
     int musicChannelID = -1;
     int inGameMusicChannelID = -1;
     int avalancheChannelID = -1;
+    int countdownChannelID = -1;
     // keep track of engine sound playing state
     int engineChannelID = -1;
     bool enginePlaying = false;
@@ -122,4 +123,8 @@ private:
     // ai engine
     int aiEngineChannelID1 = -1;
     int aiEngineChannelID2 = -1;
+
+    // tracks whether countdown should play (only at beginning of race)
+    bool playCountdown = false;
+    bool countdownPlaying = false;
 };
