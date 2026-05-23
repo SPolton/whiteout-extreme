@@ -143,6 +143,14 @@
       "looping": false,
       "stream": false,
       "volumeDb": -8.0
+    },
+    {
+      "id": "countdown",
+      "file": "assets/audio/countdown.mp3",
+      "3d": false,
+      "looping": false,
+      "stream": false,
+      "volumeDb": -5.0
     }
   ]
 }
