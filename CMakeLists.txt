@@ -78,6 +78,10 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 message(STATUS "Using stb headers in ${LIB_FOLDER}")
 target_include_directories(${APP_NAME} PRIVATE ${LIB_DIR}/stb)
 
+# pl_mpeg https://github.com/phoboslab/pl_mpeg
+message(STATUS "Using pl_mpeg headers in ${LIB_FOLDER}")
+target_include_directories(${APP_NAME} PRIVATE ${LIB_DIR}/pl_mpeg)
+
 # fmt.dev, vivid
 include(cmake/text.cmake)
 

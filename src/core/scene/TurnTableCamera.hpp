@@ -1,7 +1,5 @@
 #pragma once
 
-#include "utils/math.hpp"
-
 #include "BaseCamera.hpp"
 #include "Transform.hpp"
 

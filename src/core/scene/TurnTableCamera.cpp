@@ -1,7 +1,8 @@
 #include "TurnTableCamera.hpp"
 
-#include "utils/logger.h"
+#include "utils/math.hpp"
 
+#include <fmt/format.h>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/scalar_constants.hpp>
 

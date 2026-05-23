@@ -1,7 +1,5 @@
 #include "VertexBuffer.hpp"
 
-#include <utility>
-
 VertexBuffer::VertexBuffer(GLuint index, GLint size, GLenum dataType)
 	: bufferID{}
 	, attributeIndex(index)

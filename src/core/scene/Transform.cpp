@@ -1,4 +1,5 @@
 #include "Transform.hpp"
+#include <ext/matrix_transform.hpp>
 
 // Initialize with reasonable defaults
 SceneTransform::SceneTransform()

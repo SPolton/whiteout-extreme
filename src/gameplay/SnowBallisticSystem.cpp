@@ -1,12 +1,15 @@
 #include "SnowBallisticSystem.hpp"
+
+#include "components/SnowBall.h"
+#include "components/SnowEmitter.h"
+#include "components/VehicleComponent.h"
 #include "utils/logger.h"
+
+#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 #include <glm/gtx/projection.hpp>
-
 #include <vector>
-
-#include <GLFW/glfw3.h>
 
 extern Coordinator gCoordinator;
 

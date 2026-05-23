@@ -1,6 +1,5 @@
 #pragma once
 
-#include "PxPhysicsAPI.h"
 #include "objects/PhysicsObject.hpp"
 #include "vehiclecommon/SnippetVehicleHelpers.h"
 #include "vehiclecommon/enginedrivetrain/EngineDrivetrain.h"
