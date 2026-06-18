@@ -337,17 +337,8 @@ MenuAction GameMenus::renderMainMenu()
         0.0f, 0.0f, 0.f, 1.0f
     );
 
-    // base matrix
-    glm::mat4 backgroundProj = glm::mat4(
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
-    );
-
     // pass matrices to shaders
     glUniformMatrix4fv(glGetUniformLocation(*shader, "model"), 1, GL_FALSE, glm::value_ptr(backgroundModel));
-    glUniformMatrix4fv(glGetUniformLocation(*shader, "projection"), 1, GL_FALSE, glm::value_ptr(backgroundProj));
 
     // bind vao
     gpuQuadBackground.bind();
@@ -385,17 +376,8 @@ MenuAction GameMenus::renderMainMenu()
     // get aspect ratio of current window size, cast to float since they are ints
     float aspectRatio = window->getAspectRatio();
 
-    // orthogonal projection for logo to keep it from stretching past its' original size ratio
-    glm::mat4 logoProj = glm::mat4(
-        1.0f / aspectRatio, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
-    );
-
     // pass matrices to shader
     glUniformMatrix4fv(glGetUniformLocation(*shader, "model"), 1, GL_FALSE, glm::value_ptr(logoModel));
-    glUniformMatrix4fv(glGetUniformLocation(*shader, "projection"), 1, GL_FALSE, glm::value_ptr(logoProj));
 
     // bind vao
     gpuQuad.bind();
@@ -866,24 +848,31 @@ MenuAction GameMenus::renderControllerHelp()
     controllerTexture->bind();
     glUniform1i(glGetUniformLocation(*shader, "sample"), 0);
 
-    // static model to pass to shader, renders png as is
+    // get the dimensions of the texture to calculate aspect ratio
+    glm::ivec2 textureDimensions = controllerTexture->getDimensions();
+
+    // normalize the aspect ratio based on the size of the window
+    float textureScaleX = static_cast<float>(textureDimensions.x) / window->getWidth();
+    float textureScaleY = static_cast<float>(textureDimensions.y) / window->getHeight();
+
+    // get the scale based on window size relative to default window ratio
+    float windowScale = std::min(
+        window->getWidth()  / defaultWindowWidth,
+        window->getHeight() / defaultWindowHeight
+    );
+
+    // image scale = the size of the window * the size of the image
+    float imageScale = 0.50f * windowScale;
+
+    // static model to pass to shader, renders png with aspect scaling
     glm::mat4 model = glm::mat4(
-        0.8f, 0.0f, 0.0f, 0.0f,
-        0.0f, 0.8f, 0.0f, 0.0f,
+        textureScaleX * imageScale, 0.0f, 0.0f, 0.0f,
+        0.0f, textureScaleY * imageScale, 0.0f, 0.0f,
         0.f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.15f, 0.f, 1.0f
     );
 
-    // base matrix
-    glm::mat4 proj = glm::mat4(
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
-    );
-
     glUniformMatrix4fv(glGetUniformLocation(*shader, "model"), 1, GL_FALSE, glm::value_ptr(model));
-    glUniformMatrix4fv(glGetUniformLocation(*shader, "projection"), 1, GL_FALSE, glm::value_ptr(proj));
 
     // bind vao
     gpuQuad.bind();
@@ -955,24 +944,31 @@ MenuAction GameMenus::renderKeyboardHelp()
     keyboardTexture->bind();
     glUniform1i(glGetUniformLocation(*shader, "sample"), 0);
 
-    // static model to pass to shader, renders png as is
+    // get the dimensions of the texture to calculate aspect ratio
+    glm::ivec2 textureDimensions = keyboardTexture->getDimensions();
+
+    // normalize the aspect ratio based on the size of the window
+    float textureScaleX = static_cast<float>(textureDimensions.x) / window->getWidth();
+    float textureScaleY = static_cast<float>(textureDimensions.y) / window->getHeight();
+
+    // get the scale based on window size relative to default window ratio
+    float windowScale = std::min(
+        window->getWidth()  / defaultWindowWidth,
+        window->getHeight() / defaultWindowHeight
+    );
+
+    // image scale = the size of the window * the size of the image
+    float imageScale = 0.50f * windowScale;
+
+    // static model to pass to shader, renders png with aspect scaling
     glm::mat4 model = glm::mat4(
-        0.8f, 0.0f, 0.0f, 0.0f,
-        0.0f, 0.8f, 0.0f, 0.0f,
+        textureScaleX * imageScale, 0.0f, 0.0f, 0.0f,
+        0.0f, textureScaleY * imageScale, 0.0f, 0.0f,
         0.f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.15f, 0.f, 1.0f
     );
 
-    // base matrix
-    glm::mat4 proj = glm::mat4(
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
-    );
-
     glUniformMatrix4fv(glGetUniformLocation(*shader, "model"), 1, GL_FALSE, glm::value_ptr(model));
-    glUniformMatrix4fv(glGetUniformLocation(*shader, "projection"), 1, GL_FALSE, glm::value_ptr(proj));
 
     // bind vao
     gpuQuad.bind();
